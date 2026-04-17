@@ -53,7 +53,7 @@ else if (_model is not null)
     protected override async Task OnParametersSetAsync()
     {
         var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
-        if (result.Success)
+        if (result.IsSuccess)
             _model = result.Value is not null
                 ? new PostFormModel { Title = result.Value.Title, Content = result.Value.Content }
                 : null;
@@ -65,7 +65,7 @@ else if (_model is not null)
     {
         if (_model is null) return;
         var result = await Sender.Send(new EditBlogPostCommand(Id, _model.Title, _model.Content));
-        if (result.Success)
+        if (result.IsSuccess)
             Navigation.NavigateTo("/blog");
         else
             _error = result.Error;

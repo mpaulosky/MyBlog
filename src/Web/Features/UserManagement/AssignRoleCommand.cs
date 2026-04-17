@@ -1,5 +1,5 @@
 using MediatR;
-using Domain.Abstractions;
+using MyBlog.Domain.Common;
 
 namespace MyBlog.Web.Features.UserManagement;
 

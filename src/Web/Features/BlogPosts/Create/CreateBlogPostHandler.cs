@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using MyBlog.Domain.Entities;
 using MyBlog.Domain.Interfaces;
-using Domain.Abstractions;
+using MyBlog.Domain.Common;
 
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
@@ -20,11 +20,11 @@ public sealed class CreateBlogPostHandler(
             await repo.AddAsync(post, ct);
             localCache.Remove("blog:all");
             _ = distributedCache.RemoveAsync("blog:all", ct);
-            return Result.Ok(post.Id);
+            return Result<Guid>.Success(post.Id);
         }
         catch (Exception ex)
         {
-            return Result.Fail<Guid>(ex.Message);
+            return Result<Guid>.Failure(ex.Message);
         }
     }
 }
