@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <link rel="stylesheet" href="@Assets["css/app.css"]" />
     <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -17,6 +17,32 @@
 <body>
     <Routes />
     <ReconnectModal />
+    <script>
+      (function () {
+        // Restore dark mode
+        if (localStorage.getItem("darkMode") === "true") {
+          document.documentElement.classList.add("dark");
+        }
+        // Restore colour theme (default: blue)
+        var theme = localStorage.getItem("colorTheme") || "theme-blue";
+        document.body.classList.add(theme);
+
+        // Called from Blazor via IJSRuntime.InvokeVoidAsync("setTheme", "theme-red")
+        window.setTheme = function (t) {
+          ["theme-red", "theme-blue", "theme-green", "theme-yellow"].forEach(function (c) {
+            document.body.classList.remove(c);
+          });
+          document.body.classList.add(t);
+          localStorage.setItem("colorTheme", t);
+        };
+
+        // Called from Blazor via IJSRuntime.InvokeVoidAsync("toggleDark")
+        window.toggleDark = function () {
+          var isDark = document.documentElement.classList.toggle("dark");
+          localStorage.setItem("darkMode", String(isDark));
+        };
+      })();
+    </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

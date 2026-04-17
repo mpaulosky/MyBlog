@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/* ─── Content source scanning ────────────────────────────────────────────── */
+/* Required because this CSS file lives in wwwroot/css/, outside the default  */
+/* scan boundary relative to the CLI working directory (the repo root).       */
+@source "../../Components/**/*.{razor,html,cshtml}";
+@source "../../Features/**/*.{razor,html,cshtml}";
+
+/* ─── Dark mode: class strategy ──────────────────────────────────────────── */
+/* Adds the dark: variant; dark utilities activate when <html class="dark">. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Safelist dynamic theme classes ─────────────────────────────────────── */
+/* These class names are applied to <body> by JavaScript at runtime.          */
+/* The scanner cannot detect them statically; @source inline prevents purge.  */
+@source inline("theme-red theme-blue theme-green theme-yellow");
+
+/* ─── Semantic design tokens ─────────────────────────────────────────────── */
+/* @theme inline creates real Tailwind utility classes backed by CSS vars:    */
+/*   bg-canvas      text-canvas      border-canvas                            */
+/*   bg-surface     text-surface     border-surface                           */
+/*   bg-primary     text-primary     border-primary                           */
+/*   hover:bg-primary-hover  etc.                                             */
+/* Changing the underlying CSS var at runtime (theme switch, dark mode)       */
+/* automatically updates every utility class that references it.              */
+@theme inline {
+  --color-canvas:        var(--color-canvas);
+  --color-surface:       var(--color-surface);
+  --color-content:       var(--color-content);
+  --color-muted:         var(--color-muted);
+  --color-edge:          var(--color-edge);
+  --color-primary:       var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+}
+
+/* ─── Default values: blue theme, light mode ─────────────────────────────── */
+@layer base {
+  :root {
+    --color-canvas:        #f9fafb;  /* gray-50   */
+    --color-surface:       #ffffff;  /* white     */
+    --color-content:       #111827;  /* gray-900  */
+    --color-muted:         #6b7280;  /* gray-500  */
+    --color-edge:          #e5e7eb;  /* gray-200  */
+    --color-primary:       #2563eb;  /* blue-600  */
+    --color-primary-hover: #1d4ed8;  /* blue-700  */
+  }
+
+  html.dark {
+    --color-canvas:  #111827;  /* gray-900 */
+    --color-surface: #1f2937;  /* gray-800 */
+    --color-content: #f3f4f6;  /* gray-100 */
+    --color-muted:   #9ca3af;  /* gray-400 */
+    --color-edge:    #374151;  /* gray-700 */
+  }
+
+  /* Color theme overrides — applied to <body> via JS */
+  body.theme-red    { --color-primary: #dc2626; --color-primary-hover: #b91c1c; }
+  body.theme-blue   { --color-primary: #2563eb; --color-primary-hover: #1d4ed8; }
+  body.theme-green  { --color-primary: #16a34a; --color-primary-hover: #15803d; }
+  body.theme-yellow { --color-primary: #ca8a04; --color-primary-hover: #a16207; }
+
+  body {
+    @apply bg-canvas text-content;
+  }
+}
+
+@layer components {
+  /* ─── Blazor form validation ─── */
+  /* EditForm / InputBase components emit these classes automatically.
+     Bootstrap styled them; Tailwind does not. These rules are required
+     or form validation feedback will be invisible after migration. */
+  .valid.modified:not([type=checkbox]) {
+    @apply outline outline-1 outline-green-500;
+  }
+  .invalid {
+    @apply outline outline-1 outline-red-500;
+  }
+  .validation-message {
+    @apply text-red-600 text-sm mt-1;
+  }
+
+  /* ─── NavLink active state ─── */
+  /* Blazor's <NavLink> adds the 'active' CSS class to the current page anchor.
+     Bootstrap styled .nav-link.active automatically; Tailwind does not. */
+  .nav-link.active {
+    @apply font-semibold border-b-2 border-current;
+  }
+
+  /* ─── Blazor error UI ─── */
+  #blazor-error-ui {
+    @apply hidden fixed bottom-0 left-0 right-0 z-50;
+    @apply bg-red-600 text-white px-4 py-3 text-sm;
+  }
+  #blazor-error-ui[style*="display: block"],
+  #blazor-error-ui.blazor-error-boundary {
+    @apply flex items-center justify-between;
+  }
+  #blazor-error-ui .reload {
+    @apply underline font-semibold ml-2;
+  }
+  #blazor-error-ui .dismiss {
+    @apply ml-4 cursor-pointer;
+  }
+}
