@@ -29,4 +29,15 @@ public class DomainLayerTests
 
         result.IsSuccessful.Should().BeTrue();
     }
+
+    [Fact]
+    public void Domain_Should_Not_Have_InMemoryRepository()
+    {
+        var types = Types.InAssembly(typeof(BlogPost).Assembly)
+            .That()
+            .HaveNameEndingWith("InMemory")
+            .GetTypes();
+
+        types.Should().BeEmpty("InMemoryBlogPostRepository should have been deleted");
+    }
 }

@@ -896,11 +896,35 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "Aspire.MongoDB.Driver": {
+              "target": "Package",
+              "version": "[13.2.2, )"
+            },
+            "Aspire.StackExchange.Redis.DistributedCaching": {
+              "target": "Package",
+              "version": "[13.2.2, )"
+            },
+            "Auth0.AspNetCore.Authentication": {
+              "target": "Package",
+              "version": "[1.7.0, )"
+            },
+            "Auth0.ManagementApi": {
+              "target": "Package",
+              "version": "[7.46.0, )"
+            },
+            "MediatR": {
+              "target": "Package",
+              "version": "[14.1.0, )"
+            },
             "Microsoft.AspNetCore.App.Internal.Assets": {
               "suppressParent": "All",
               "target": "Package",
               "version": "[10.0.6, )",
               "autoReferenced": true
+            },
+            "MongoDB.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[10.0.1, )"
             }
           },
           "imports": [
