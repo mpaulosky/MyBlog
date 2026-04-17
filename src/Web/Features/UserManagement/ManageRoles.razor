@@ -1,0 +1,114 @@
+@page "/admin/users"
+@using MediatR
+@using MyBlog.Web.Features.UserManagement
+@using Microsoft.AspNetCore.Authorization
+@inject ISender Sender
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Manage User Roles</PageTitle>
+
+<h1>Manage User Roles</h1>
+
+@if (_loading)
+{
+    <p>Loading users...</p>
+}
+else
+{
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            @_error
+            <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+        </div>
+    }
+
+    @if (_availableRoles.Any())
+    {
+        <p class="text-muted">Available roles: @string.Join(", ", _availableRoles.Select(r => r.Name))</p>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Current Roles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in _users)
+            {
+                <tr>
+                    <td>@user.Name</td>
+                    <td>@user.Email</td>
+                    <td>@string.Join(", ", user.Roles)</td>
+                    <td>
+                        @foreach (var role in _availableRoles.Where(r => !user.Roles.Contains(r.Name)))
+                        {
+                            <button class="btn btn-sm btn-outline-success me-1"
+                                    @onclick="() => AssignRole(user.UserId, role.Id)">
+                                + @role.Name
+                            </button>
+                        }
+                        @foreach (var role in _availableRoles.Where(r => user.Roles.Contains(r.Name)))
+                        {
+                            <button class="btn btn-sm btn-outline-danger me-1"
+                                    @onclick="() => RemoveRole(user.UserId, role.Id)">
+                                - @role.Name
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<UserWithRolesDto> _users = [];
+    private IReadOnlyList<RoleDto> _availableRoles = [];
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var usersTask = Sender.Send(new GetUsersWithRolesQuery());
+        var rolesTask = Sender.Send(new GetAvailableRolesQuery());
+        await Task.WhenAll(usersTask, rolesTask);
+
+        var usersResult = await usersTask;
+        var rolesResult = await rolesTask;
+
+        if (usersResult.Success) _users = usersResult.Value!;
+        else _error = usersResult.Error;
+
+        if (rolesResult.Success) _availableRoles = rolesResult.Value!;
+        else _error ??= rolesResult.Error;
+
+        _loading = false;
+    }
+
+    private async Task AssignRole(string userId, string roleId)
+    {
+        var result = await Sender.Send(new AssignRoleCommand(userId, roleId));
+        if (result.Failure) { _error = result.Error; return; }
+        await RefreshAsync();
+    }
+
+    private async Task RemoveRole(string userId, string roleId)
+    {
+        var result = await Sender.Send(new RemoveRoleCommand(userId, roleId));
+        if (result.Failure) { _error = result.Error; return; }
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        var result = await Sender.Send(new GetUsersWithRolesQuery());
+        if (result.Success) _users = result.Value!;
+        StateHasChanged();
+    }
+}

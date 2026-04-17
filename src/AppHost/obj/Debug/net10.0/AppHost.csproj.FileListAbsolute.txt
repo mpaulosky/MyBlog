@@ -123,3 +123,15 @@
 /home/mpaulosky/Repos/MyBlog/src/AppHost/obj/Debug/net10.0/AppHost.pdb
 /home/mpaulosky/Repos/MyBlog/src/AppHost/obj/Debug/net10.0/AppHost.genruntimeconfig.cache
 /home/mpaulosky/Repos/MyBlog/src/AppHost/obj/Debug/net10.0/ref/AppHost.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/Aspire.Hosting.MongoDB.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/Aspire.Hosting.Redis.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/HealthChecks.MongoDb.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/HealthChecks.Redis.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/DnsClient.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/MongoDB.Bson.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/MongoDB.Driver.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/Pipelines.Sockets.Unofficial.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/SharpCompress.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/Snappier.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/StackExchange.Redis.dll
+/home/mpaulosky/Repos/MyBlog/src/AppHost/bin/Debug/net10.0/ZstdSharp.dll

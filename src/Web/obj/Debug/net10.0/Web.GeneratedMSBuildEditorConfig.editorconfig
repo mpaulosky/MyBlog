@@ -26,18 +26,6 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/mpaulosky/Repos/MyBlog/src/Web/Components/Pages/BlogPosts/Create.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9CbG9nUG9zdHMvQ3JlYXRlLnJhem9y
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/mpaulosky/Repos/MyBlog/src/Web/Components/Pages/BlogPosts/Edit.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9CbG9nUG9zdHMvRWRpdC5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/mpaulosky/Repos/MyBlog/src/Web/Components/Pages/BlogPosts/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9CbG9nUG9zdHMvSW5kZXgucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
 [/home/mpaulosky/Repos/MyBlog/src/Web/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Db3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -62,12 +50,36 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9Sb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/mpaulosky/Repos/MyBlog/src/Web/Components/Shared/ConfirmDeleteDialog.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9TaGFyZWQvQ29uZmlybURlbGV0ZURpYWxvZy5yYXpvcg==
+[/home/mpaulosky/Repos/MyBlog/src/Web/Components/Shared/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9TaGFyZWQvUmVkaXJlY3RUb0xvZ2luLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/mpaulosky/Repos/MyBlog/src/Web/Components/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9fSW1wb3J0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/mpaulosky/Repos/MyBlog/src/Web/Features/BlogPosts/Create/Create.razor]
+build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXMvQmxvZ1Bvc3RzL0NyZWF0ZS9DcmVhdGUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/mpaulosky/Repos/MyBlog/src/Web/Features/BlogPosts/Delete/ConfirmDeleteDialog.razor]
+build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXMvQmxvZ1Bvc3RzL0RlbGV0ZS9Db25maXJtRGVsZXRlRGlhbG9nLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/mpaulosky/Repos/MyBlog/src/Web/Features/BlogPosts/Edit/Edit.razor]
+build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXMvQmxvZ1Bvc3RzL0VkaXQvRWRpdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/mpaulosky/Repos/MyBlog/src/Web/Features/BlogPosts/List/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXMvQmxvZ1Bvc3RzL0xpc3QvSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/mpaulosky/Repos/MyBlog/src/Web/Features/UserManagement/ManageRoles.razor]
+build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXMvVXNlck1hbmFnZW1lbnQvTWFuYWdlUm9sZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/mpaulosky/Repos/MyBlog/src/Web/Features/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = RmVhdHVyZXMvX0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/mpaulosky/Repos/MyBlog/src/Web/Components/Layout/MainLayout.razor]

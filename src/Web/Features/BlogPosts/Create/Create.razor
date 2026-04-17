@@ -1,13 +1,23 @@
 @page "/blog/create"
-@using MyBlog.Domain.Entities
-@using MyBlog.Domain.Interfaces
-@inject IBlogPostRepository Repository
+@using MediatR
+@using MyBlog.Web.Features.BlogPosts.Create
+@using Microsoft.AspNetCore.Authorization
+@inject ISender Sender
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Author,Admin")]
 
 <PageTitle>Create Post</PageTitle>
 
 <h1>Create Post</h1>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @_error
+        <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+    </div>
+}
 
 <EditForm Model="_model" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
@@ -32,12 +42,15 @@
 
 @code {
     private readonly PostFormModel _model = new();
+    private string? _error;
 
     private async Task HandleSubmit()
     {
-        var post = BlogPost.Create(_model.Title, _model.Content, _model.Author);
-        await Repository.AddAsync(post);
-        Navigation.NavigateTo("/blog");
+        var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
+        if (result.Success)
+            Navigation.NavigateTo("/blog");
+        else
+            _error = result.Error;
     }
 
     private sealed class PostFormModel

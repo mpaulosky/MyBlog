@@ -5,12 +5,22 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.MongoDB.Driver" Version="13.2.2" />
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.2.2" />
+    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="7.46.0" />
+    <PackageReference Include="MediatR" Version="14.1.0" />
+    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <RootNamespace>MyBlog.Web</RootNamespace>
+    <UserSecretsId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</UserSecretsId>
   </PropertyGroup>
 
 </Project>

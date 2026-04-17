@@ -6,12 +6,18 @@ How to decide who handles what.
 
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
-| {domain 1} | {Name} | {example tasks} |
-| {domain 2} | {Name} | {example tasks} |
-| {domain 3} | {Name} | {example tasks} |
-| Code review | {Name} | Review PRs, check quality, suggest improvements |
-| Testing | {Name} | Write tests, find edge cases, verify fixes |
-| Scope & priorities | {Name} | What to build next, trade-offs, decisions |
+| Architecture decisions, ADRs, PR gates, triage | Aragorn | Solution design, dependency rules, PR review, breaking changes |
+| Domain model, backend services, data layer | Sam | BlogPost entity, repositories, EF Core, caching, Aspire wiring |
+| Blazor UI, components, features, layout | Legolas | Feature slices, pages, components, Auth UI, NavMenu |
+| Unit, Architecture & Integration tests | Gimli | xUnit, FluentAssertions, NSubstitute, NetArchTest, coverage |
+| CI/CD, build pipeline, Aspire config, infra | Boromir | GitHub Actions workflows, AppHost resources, Docker |
+| Code review gate, quality assurance | Gandalf | PR approval/rejection, coding standards, pattern enforcement |
+| Auth0, security, secrets management | Frodo | Auth0 roles, Management API, token claims, secrets |
+| Docs, README, ADRs, changelogs, summaries | Pippin | README.md, ARCHITECTURE.md, CONTRIBUTING.md, release notes |
+| Research, spikes, POCs, library evaluation | Bilbo | Technology comparisons, proof-of-concept prototypes |
+| Code review | Gandalf | Review PRs, check quality, suggest improvements |
+| Testing | Gimli | Write tests, find edge cases, verify fixes |
+| Scope & priorities | Aragorn | What to build next, trade-offs, decisions |
 | Session logging | Scribe | Automatic — never needs routing |
 
 ## Issue Routing

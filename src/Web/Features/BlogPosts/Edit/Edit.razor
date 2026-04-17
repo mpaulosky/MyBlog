@@ -1,19 +1,30 @@
 @page "/blog/edit/{Id:guid}"
-@using MyBlog.Domain.Entities
-@using MyBlog.Domain.Interfaces
-@inject IBlogPostRepository Repository
+@using MediatR
+@using MyBlog.Web.Data
+@using MyBlog.Web.Features.BlogPosts.Edit
+@using Microsoft.AspNetCore.Authorization
+@inject ISender Sender
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Author,Admin")]
 
 <PageTitle>Edit Post</PageTitle>
 
 <h1>Edit Post</h1>
 
-@if (_model is null)
+@if (_error is not null)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @_error
+        <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+    </div>
+}
+
+@if (_model is null && _error is null)
 {
     <p>Loading...</p>
 }
-else
+else if (_model is not null)
 {
     <EditForm Model="_model" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
@@ -37,21 +48,27 @@ else
     [Parameter] public Guid Id { get; set; }
 
     private PostFormModel? _model;
-    private BlogPost? _post;
+    private string? _error;
 
     protected override async Task OnParametersSetAsync()
     {
-        _post = await Repository.GetByIdAsync(Id);
-        if (_post is not null)
-            _model = new PostFormModel { Title = _post.Title, Content = _post.Content };
+        var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
+        if (result.Success)
+            _model = result.Value is not null
+                ? new PostFormModel { Title = result.Value.Title, Content = result.Value.Content }
+                : null;
+        else
+            _error = result.Error;
     }
 
     private async Task HandleSubmit()
     {
-        if (_post is null || _model is null) return;
-        _post.Update(_model.Title, _model.Content);
-        await Repository.UpdateAsync(_post);
-        Navigation.NavigateTo("/blog");
+        if (_model is null) return;
+        var result = await Sender.Send(new EditBlogPostCommand(Id, _model.Title, _model.Content));
+        if (result.Success)
+            Navigation.NavigateTo("/blog");
+        else
+            _error = result.Error;
     }
 
     private sealed class PostFormModel

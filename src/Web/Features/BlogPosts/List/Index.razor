@@ -1,0 +1,124 @@
+@page "/blog"
+@using MediatR
+@using MyBlog.Web.Data
+@using MyBlog.Web.Features.BlogPosts.Delete
+@using MyBlog.Web.Features.BlogPosts.List
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ISender Sender
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+
+<PageTitle>Blog Posts</PageTitle>
+
+<h1>Blog Posts</h1>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @_error
+        <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+    </div>
+}
+
+<AuthorizeView Roles="Author,Admin">
+    <Authorized>
+        <a href="/blog/create" class="btn btn-primary mb-3">New Post</a>
+    </Authorized>
+</AuthorizeView>
+
+@if (_posts is null)
+{
+    <p>Loading...</p>
+}
+else if (!_posts.Any())
+{
+    <p>No posts yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Published</th>
+                <th>Created</th>
+                <AuthorizeView Roles="Author,Admin">
+                    <Authorized>
+                        <th></th>
+                    </Authorized>
+                </AuthorizeView>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var post in _posts)
+            {
+                <tr>
+                    <td>@post.Title</td>
+                    <td>@post.Author</td>
+                    <td>@(post.IsPublished ? "Yes" : "No")</td>
+                    <td>@post.CreatedAt.ToShortDateString()</td>
+                    <AuthorizeView Roles="Author,Admin">
+                        <Authorized>
+                            <td>
+                                <a href="/blog/edit/@post.Id" class="btn btn-sm btn-secondary">Edit</a>
+                                <button class="btn btn-sm btn-danger"
+                                        @onclick="() => ConfirmDelete(post)">Delete</button>
+                            </td>
+                        </Authorized>
+                    </AuthorizeView>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<ConfirmDeleteDialog
+    IsVisible="_showDeleteDialog"
+    PostTitle="@(_postToDelete?.Title ?? string.Empty)"
+    OnConfirm="ExecuteDelete"
+    OnCancel="@(() => _showDeleteDialog = false)" />
+
+@code {
+    private IReadOnlyList<BlogPostDto>? _posts;
+    private BlogPostDto? _postToDelete;
+    private bool _showDeleteDialog;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Sender.Send(new GetBlogPostsQuery());
+        if (result.Success)
+            _posts = result.Value;
+        else
+            _error = result.Error;
+    }
+
+    private void ConfirmDelete(BlogPostDto post)
+    {
+        _postToDelete = post;
+        _showDeleteDialog = true;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (_postToDelete is not null)
+        {
+            var result = await Sender.Send(new DeleteBlogPostCommand(_postToDelete.Id));
+            if (result.Failure)
+            {
+                _error = result.Error;
+                _showDeleteDialog = false;
+                _postToDelete = null;
+                return;
+            }
+        }
+        _showDeleteDialog = false;
+        _postToDelete = null;
+        var listResult = await Sender.Send(new GetBlogPostsQuery());
+        if (listResult.Success)
+            _posts = listResult.Value;
+        else
+            _error = listResult.Error;
+    }
+}
