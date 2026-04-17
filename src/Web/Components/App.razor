@@ -18,19 +18,30 @@
     <ReconnectModal />
     <script>
       (function () {
-        // Restore dark mode
-        if (localStorage.getItem("darkMode") === "true") {
-          document.documentElement.classList.add("dark");
+        var themes = ["theme-red", "theme-blue", "theme-green", "theme-yellow"];
+
+        function applyTheme() {
+          // Restore dark mode
+          if (localStorage.getItem("darkMode") === "true") {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+          // Restore colour theme (default: blue)
+          themes.forEach(function (c) { document.body.classList.remove(c); });
+          var theme = localStorage.getItem("colorTheme") || "theme-blue";
+          document.body.classList.add(theme);
         }
-        // Restore colour theme (default: blue)
-        var theme = localStorage.getItem("colorTheme") || "theme-blue";
-        document.body.classList.add(theme);
+
+        // Apply on initial page load
+        applyTheme();
+
+        // Re-apply after every Blazor enhanced navigation (patches the DOM from server HTML)
+        document.addEventListener("enhancedload", applyTheme);
 
         // Called from Blazor via IJSRuntime.InvokeVoidAsync("setTheme", "theme-red")
         window.setTheme = function (t) {
-          ["theme-red", "theme-blue", "theme-green", "theme-yellow"].forEach(function (c) {
-            document.body.classList.remove(c);
-          });
+          themes.forEach(function (c) { document.body.classList.remove(c); });
           document.body.classList.add(t);
           localStorage.setItem("colorTheme", t);
         };
@@ -39,6 +50,7 @@
         window.toggleDark = function () {
           var isDark = document.documentElement.classList.toggle("dark");
           localStorage.setItem("darkMode", String(isDark));
+          return isDark;
         };
       })();
     </script>
