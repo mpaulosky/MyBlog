@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using MyBlog.Domain.Interfaces;
@@ -35,6 +36,12 @@ public sealed class EditBlogPostHandler(
             await distributedCache.RemoveAsync("blog:all", ct);
             await distributedCache.RemoveAsync($"blog:{request.Id}", ct);
             return Result.Ok();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result.Fail(
+                "This post was modified by another user. Please reload and try again.",
+                ResultErrorCode.Concurrency);
         }
         catch (Exception ex)
         {

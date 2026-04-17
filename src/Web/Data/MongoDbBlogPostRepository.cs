@@ -32,7 +32,11 @@ public sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext> c
     public async Task UpdateAsync(BlogPost post, CancellationToken ct = default)
     {
         await using var ctx = await contextFactory.CreateDbContextAsync(ct);
-        ctx.BlogPosts.Update(post);
+        var entry = ctx.Attach(post);
+        // Version was incremented by post.Update(); the original value in the DB is Version - 1.
+        // EF Core uses OriginalValue in the WHERE filter to detect concurrent modifications.
+        entry.Property(p => p.Version).OriginalValue = post.Version - 1;
+        entry.State = EntityState.Modified;
         await ctx.SaveChangesAsync(ct);
     }
 

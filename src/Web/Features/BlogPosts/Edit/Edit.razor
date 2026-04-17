@@ -20,6 +20,15 @@
     </div>
 }
 
+@if (_concurrencyError)
+{
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <strong>Concurrency Conflict:</strong> This post was modified by another user. 
+        Please reload the page to get the latest version.
+        <button type="button" class="btn-close" @onclick="() => _concurrencyError = false"></button>
+    </div>
+}
+
 @if (_model is null && _error is null)
 {
     <p>Loading...</p>
@@ -49,6 +58,7 @@ else if (_model is not null)
 
     private PostFormModel? _model;
     private string? _error;
+    private bool _concurrencyError;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -68,7 +78,11 @@ else if (_model is not null)
         if (result.Success)
             Navigation.NavigateTo("/blog");
         else
+        {
+            if (result.ErrorCode == global::Domain.Abstractions.ResultErrorCode.Concurrency)
+                _concurrencyError = true;
             _error = result.Error;
+        }
     }
 
     private sealed class PostFormModel

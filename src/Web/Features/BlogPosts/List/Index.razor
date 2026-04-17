@@ -20,6 +20,15 @@
     </div>
 }
 
+@if (_concurrencyError)
+{
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <strong>Concurrency Conflict:</strong> This post was modified by another user. 
+        Please reload the page to get the latest version.
+        <button type="button" class="btn-close" @onclick="() => _concurrencyError = false"></button>
+    </div>
+}
+
 <AuthorizeView Roles="Author,Admin">
     <Authorized>
         <a href="/blog/create" class="btn btn-primary mb-3">New Post</a>
@@ -84,6 +93,7 @@ else
     private BlogPostDto? _postToDelete;
     private bool _showDeleteDialog;
     private string? _error;
+    private bool _concurrencyError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,6 +118,8 @@ else
             if (result.Failure)
             {
                 _error = result.Error;
+                if (result.ErrorCode == global::Domain.Abstractions.ResultErrorCode.Concurrency)
+                    _concurrencyError = true;
                 _showDeleteDialog = false;
                 _postToDelete = null;
                 return;

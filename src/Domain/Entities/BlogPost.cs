@@ -9,6 +9,7 @@ public sealed class BlogPost
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     public bool IsPublished { get; private set; }
+    public int Version { get; private set; }
 
     private BlogPost() { }
 
@@ -35,6 +36,7 @@ public sealed class BlogPost
         Title = title;
         Content = content;
         UpdatedAt = DateTime.UtcNow;
+        Version++;
     }
 
     public void Publish() => IsPublished = true;

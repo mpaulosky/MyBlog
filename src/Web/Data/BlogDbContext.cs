@@ -13,5 +13,6 @@ public sealed class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbC
         var entity = modelBuilder.Entity<BlogPost>();
         entity.ToCollection("blogposts");
         entity.HasKey(p => p.Id);
+        entity.Property(p => p.Version).IsConcurrencyToken();
     }
 }

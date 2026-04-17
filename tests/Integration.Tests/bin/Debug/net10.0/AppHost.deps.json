@@ -9,6 +9,8 @@
       "AppHost/1.0.0": {
         "dependencies": {
           "Aspire.Hosting.AppHost": "13.2.2",
+          "Aspire.Hosting.MongoDB": "13.2.2",
+          "Aspire.Hosting.Redis": "13.2.2",
           "ServiceDefaults": "1.0.0"
         },
         "runtime": {
@@ -105,11 +107,96 @@
           }
         }
       },
+      "Aspire.Hosting.MongoDB/13.2.2": {
+        "dependencies": {
+          "AspNetCore.HealthChecks.MongoDb": "9.0.0",
+          "AspNetCore.HealthChecks.Uris": "9.0.0",
+          "Aspire.Hosting": "13.2.2",
+          "DnsClient": "1.8.0",
+          "Google.Protobuf": "3.33.5",
+          "Grpc.AspNetCore": "2.76.0",
+          "Grpc.Net.ClientFactory": "2.76.0",
+          "Humanizer.Core": "2.14.1",
+          "JsonPatch.Net": "3.3.0",
+          "KubernetesClient": "18.0.13",
+          "Microsoft.Extensions.Hosting": "10.0.5",
+          "ModelContextProtocol": "1.0.0",
+          "MongoDB.Driver": "3.6.0",
+          "Newtonsoft.Json": "13.0.4",
+          "Polly.Core": "8.6.5",
+          "Semver": "3.0.0",
+          "StreamJsonRpc": "2.22.23",
+          "System.IO.Hashing": "10.0.3"
+        },
+        "runtime": {
+          "lib/net8.0/Aspire.Hosting.MongoDB.dll": {
+            "assemblyVersion": "13.2.2.0",
+            "fileVersion": "13.200.226.20702"
+          }
+        }
+      },
+      "Aspire.Hosting.Redis/13.2.2": {
+        "dependencies": {
+          "AspNetCore.HealthChecks.Redis": "9.0.0",
+          "AspNetCore.HealthChecks.Uris": "9.0.0",
+          "Aspire.Hosting": "13.2.2",
+          "Google.Protobuf": "3.33.5",
+          "Grpc.AspNetCore": "2.76.0",
+          "Grpc.Net.ClientFactory": "2.76.0",
+          "Humanizer.Core": "2.14.1",
+          "JsonPatch.Net": "3.3.0",
+          "KubernetesClient": "18.0.13",
+          "Microsoft.Extensions.Hosting": "10.0.5",
+          "ModelContextProtocol": "1.0.0",
+          "Newtonsoft.Json": "13.0.4",
+          "Polly.Core": "8.6.5",
+          "Semver": "3.0.0",
+          "StackExchange.Redis": "2.11.0",
+          "StreamJsonRpc": "2.22.23",
+          "System.IO.Hashing": "10.0.3"
+        },
+        "runtime": {
+          "lib/net8.0/Aspire.Hosting.Redis.dll": {
+            "assemblyVersion": "13.2.2.0",
+            "fileVersion": "13.200.226.20702"
+          }
+        }
+      },
+      "AspNetCore.HealthChecks.MongoDb/9.0.0": {
+        "dependencies": {
+          "MongoDB.Driver": "3.6.0"
+        },
+        "runtime": {
+          "lib/net8.0/HealthChecks.MongoDb.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "AspNetCore.HealthChecks.Redis/9.0.0": {
+        "dependencies": {
+          "StackExchange.Redis": "2.11.0"
+        },
+        "runtime": {
+          "lib/net8.0/HealthChecks.Redis.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
       "AspNetCore.HealthChecks.Uris/9.0.0": {
         "runtime": {
           "lib/net8.0/HealthChecks.Uris.dll": {
             "assemblyVersion": "9.0.0.0",
             "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "DnsClient/1.8.0": {
+        "runtime": {
+          "lib/net8.0/DnsClient.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
           }
         }
       },
@@ -531,6 +618,29 @@
           }
         }
       },
+      "MongoDB.Bson/3.6.0": {
+        "runtime": {
+          "lib/net6.0/MongoDB.Bson.dll": {
+            "assemblyVersion": "3.6.0.0",
+            "fileVersion": "3.6.0.0"
+          }
+        }
+      },
+      "MongoDB.Driver/3.6.0": {
+        "dependencies": {
+          "DnsClient": "1.8.0",
+          "MongoDB.Bson": "3.6.0",
+          "SharpCompress": "0.30.1",
+          "Snappier": "1.0.0",
+          "ZstdSharp.Port": "0.7.3"
+        },
+        "runtime": {
+          "lib/net6.0/MongoDB.Driver.dll": {
+            "assemblyVersion": "3.6.0.0",
+            "fileVersion": "3.6.0.0"
+          }
+        }
+      },
       "Nerdbank.Streams/2.12.87": {
         "dependencies": {
           "Microsoft.VisualStudio.Threading.Only": "17.13.61",
@@ -636,6 +746,14 @@
           }
         }
       },
+      "Pipelines.Sockets.Unofficial/2.2.8": {
+        "runtime": {
+          "lib/net5.0/Pipelines.Sockets.Unofficial.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "2.2.8.1080"
+          }
+        }
+      },
       "Polly.Core/8.6.5": {
         "runtime": {
           "lib/net8.0/Polly.Core.dll": {
@@ -671,6 +789,34 @@
           "lib/net5.0/Semver.dll": {
             "assemblyVersion": "3.0.0.0",
             "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "SharpCompress/0.30.1": {
+        "runtime": {
+          "lib/net5.0/SharpCompress.dll": {
+            "assemblyVersion": "0.30.1.0",
+            "fileVersion": "0.30.1.0"
+          }
+        }
+      },
+      "Snappier/1.0.0": {
+        "runtime": {
+          "lib/net5.0/Snappier.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "StackExchange.Redis/2.11.0": {
+        "dependencies": {
+          "Pipelines.Sockets.Unofficial": "2.2.8",
+          "System.IO.Hashing": "10.0.3"
+        },
+        "runtime": {
+          "lib/net8.0/StackExchange.Redis.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.11.0.39147"
           }
         }
       },
@@ -756,6 +902,14 @@
           }
         }
       },
+      "ZstdSharp.Port/0.7.3": {
+        "runtime": {
+          "lib/net7.0/ZstdSharp.dll": {
+            "assemblyVersion": "0.7.3.0",
+            "fileVersion": "0.7.3.0"
+          }
+        }
+      },
       "ServiceDefaults/1.0.0": {
         "dependencies": {
           "Microsoft.Extensions.Http.Resilience": "10.2.0",
@@ -795,12 +949,47 @@
       "path": "aspire.hosting.apphost/13.2.2",
       "hashPath": "aspire.hosting.apphost.13.2.2.nupkg.sha512"
     },
+    "Aspire.Hosting.MongoDB/13.2.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-5wqYi6dZxRgTHCr6oCMtwhKc23u0vNmNR+LDXnZsieKZM0kCXR2QbHozvRMVEsK9/HnRYwyCU0LXjxaI9L12jw==",
+      "path": "aspire.hosting.mongodb/13.2.2",
+      "hashPath": "aspire.hosting.mongodb.13.2.2.nupkg.sha512"
+    },
+    "Aspire.Hosting.Redis/13.2.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mWkOX3V4qDC2QdCAfyLLsUc04yVF8Um0WxRbCF5f0+T5tGJUm5ABLRTrLRDFnihCMzBR8gWEpjHpq9VD3nZkMQ==",
+      "path": "aspire.hosting.redis/13.2.2",
+      "hashPath": "aspire.hosting.redis.13.2.2.nupkg.sha512"
+    },
+    "AspNetCore.HealthChecks.MongoDb/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WAmROqEXlVzjgCdEa9Zor2l6T29jsnKMJQPGbTnkrgpyqPcjwOomuh91CiAebmeWJ/CKenVX+fV/VFffnskgvw==",
+      "path": "aspnetcore.healthchecks.mongodb/9.0.0",
+      "hashPath": "aspnetcore.healthchecks.mongodb.9.0.0.nupkg.sha512"
+    },
+    "AspNetCore.HealthChecks.Redis/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yNH0h8GLRbAf+PU5HNVLZ5hNeyq9mDVmRKO9xuZsme/znUYoBJlQvI0gq45gaZNlLncCHkMhR4o90MuT+gxxPw==",
+      "path": "aspnetcore.healthchecks.redis/9.0.0",
+      "hashPath": "aspnetcore.healthchecks.redis.9.0.0.nupkg.sha512"
+    },
     "AspNetCore.HealthChecks.Uris/9.0.0": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-XYdNlA437KeF8p9qOpZFyNqAN+c0FXt/JjTvzH/Qans0q0O3pPE8KPnn39ucQQjR/Roum1vLTP3kXiUs8VHyuA==",
       "path": "aspnetcore.healthchecks.uris/9.0.0",
       "hashPath": "aspnetcore.healthchecks.uris.9.0.0.nupkg.sha512"
+    },
+    "DnsClient/1.8.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RRwtaCXkXWsx0mmsReGDqCbRLtItfUbkRJlet1FpdciVhyMGKcPd57T1+8Jki9ojHlq9fntVhXQroOOgRak8DQ==",
+      "path": "dnsclient/1.8.0",
+      "hashPath": "dnsclient.1.8.0.nupkg.sha512"
     },
     "Fractions/7.3.0": {
       "type": "package",
@@ -1047,6 +1236,20 @@
       "path": "modelcontextprotocol.core/1.0.0",
       "hashPath": "modelcontextprotocol.core.1.0.0.nupkg.sha512"
     },
+    "MongoDB.Bson/3.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lP+nZHej9cGFVsZSZQhSdBpD60q7a/ZiLBJcfd+CRWs36BHYteaMx6m1qaHCBWT1wft640r9I4SexqpMc3VscA==",
+      "path": "mongodb.bson/3.6.0",
+      "hashPath": "mongodb.bson.3.6.0.nupkg.sha512"
+    },
+    "MongoDB.Driver/3.6.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-MzEVPUo9FJ3A2fvXdKr0vGllbiAGvpyLa8bU6bucKSKndraSjfgGDn/J+ek/SrUK4A3yozYZBkwJZm8qe36VmQ==",
+      "path": "mongodb.driver/3.6.0",
+      "hashPath": "mongodb.driver.3.6.0.nupkg.sha512"
+    },
     "Nerdbank.Streams/2.12.87": {
       "type": "package",
       "serviceable": true,
@@ -1117,6 +1320,13 @@
       "path": "opentelemetry.instrumentation.runtime/1.15.0",
       "hashPath": "opentelemetry.instrumentation.runtime.1.15.0.nupkg.sha512"
     },
+    "Pipelines.Sockets.Unofficial/2.2.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zG2FApP5zxSx6OcdJQLbZDk2AVlN2BNQD6MorwIfV6gVj0RRxWPEp2LXAxqDGZqeNV1Zp0BNPcNaey/GXmTdvQ==",
+      "path": "pipelines.sockets.unofficial/2.2.8",
+      "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
+    },
     "Polly.Core/8.6.5": {
       "type": "package",
       "serviceable": true,
@@ -1145,6 +1355,27 @@
       "path": "semver/3.0.0",
       "hashPath": "semver.3.0.0.nupkg.sha512"
     },
+    "SharpCompress/0.30.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XqD4TpfyYGa7QTPzaGlMVbcecKnXy4YmYLDWrU+JIj7IuRNl7DH2END+Ll7ekWIY8o3dAMWLFDE1xdhfIWD1nw==",
+      "path": "sharpcompress/0.30.1",
+      "hashPath": "sharpcompress.0.30.1.nupkg.sha512"
+    },
+    "Snappier/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-rFtK2KEI9hIe8gtx3a0YDXdHOpedIf9wYCEYtBEmtlyiWVX3XlCNV03JrmmAi/Cdfn7dxK+k0sjjcLv4fpHnqA==",
+      "path": "snappier/1.0.0",
+      "hashPath": "snappier.1.0.0.nupkg.sha512"
+    },
+    "StackExchange.Redis/2.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-tCYDmkaCpEc48MZHh/FgQKavX/kqjpBAIyEFxeO9LTuHRV0flJndXcKpfbgUKahKuk/OI6TEXM6NwKu0gi6xjQ==",
+      "path": "stackexchange.redis/2.11.0",
+      "hashPath": "stackexchange.redis.2.11.0.nupkg.sha512"
+    },
     "StreamJsonRpc/2.22.23": {
       "type": "package",
       "serviceable": true,
@@ -1172,6 +1403,13 @@
       "sha512": "sha512-SgMOdxbz8X65z8hraIs6hOEdnkH6hESTAIUa7viEngHOYaH+6q5XJmwr1+yb9vJpNQ19hCQY69xbFsLtXpobQA==",
       "path": "yamldotnet/16.3.0",
       "hashPath": "yamldotnet.16.3.0.nupkg.sha512"
+    },
+    "ZstdSharp.Port/0.7.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-U9Ix4l4cl58Kzz1rJzj5hoVTjmbx1qGMwzAcbv1j/d3NzrFaESIurQyg+ow4mivCgkE3S413y+U9k4WdnEIkRA==",
+      "path": "zstdsharp.port/0.7.3",
+      "hashPath": "zstdsharp.port.0.7.3.nupkg.sha512"
     },
     "ServiceDefaults/1.0.0": {
       "type": "project",

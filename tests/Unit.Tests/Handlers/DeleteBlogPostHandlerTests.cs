@@ -1,5 +1,6 @@
 using Domain.Abstractions;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using MyBlog.Domain.Interfaces;
@@ -55,5 +56,22 @@ public class DeleteBlogPostHandlerTests
         // Assert
         result.Failure.Should().BeTrue();
         result.Error.Should().Contain("delete failed");
+    }
+
+    [Fact]
+    public async Task Handle_ConcurrentDelete_ReturnsConcurrencyErrorCode()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var command = new DeleteBlogPostCommand(id);
+        _repo.DeleteAsync(id, Arg.Any<CancellationToken>())
+            .ThrowsAsync(new DbUpdateConcurrencyException("conflict", new Exception()));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Failure.Should().BeTrue();
+        result.ErrorCode.Should().Be(ResultErrorCode.Concurrency);
     }
 }
