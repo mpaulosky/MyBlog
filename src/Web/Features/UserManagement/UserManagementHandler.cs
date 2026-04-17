@@ -2,7 +2,7 @@ using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
 using Auth0.ManagementApi.Paging;
 using MediatR;
-using MyBlog.Domain.Common;
+using Domain.Abstractions;
 using System.Net.Http.Json;
 
 namespace MyBlog.Web.Features.UserManagement;
@@ -32,11 +32,11 @@ public sealed class UserManagementHandler(
                     user.FullName ?? user.Email ?? string.Empty,
                     roles.Select(r => r.Name ?? string.Empty).ToList()));
             }
-            return Result<IReadOnlyList<UserWithRolesDto>>.Success(result);
+            return Result.Ok<IReadOnlyList<UserWithRolesDto>>(result);
         }
         catch (Exception ex)
         {
-            return Result<IReadOnlyList<UserWithRolesDto>>.Failure(ex.Message);
+            return Result.Fail<IReadOnlyList<UserWithRolesDto>>(ex.Message);
         }
     }
 
@@ -47,11 +47,11 @@ public sealed class UserManagementHandler(
             var client = await GetManagementClientAsync(ct);
             await client.Users.AssignRolesAsync(request.UserId,
                 new AssignRolesRequest { Roles = [request.RoleId] }, ct);
-            return Result.Success();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Failure(ex.Message);
+            return Result.Fail(ex.Message);
         }
     }
 
@@ -62,11 +62,11 @@ public sealed class UserManagementHandler(
             var client = await GetManagementClientAsync(ct);
             await client.Users.RemoveRolesAsync(request.UserId,
                 new AssignRolesRequest { Roles = [request.RoleId] }, ct);
-            return Result.Success();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Failure(ex.Message);
+            return Result.Fail(ex.Message);
         }
     }
 
@@ -76,12 +76,12 @@ public sealed class UserManagementHandler(
         {
             var client = await GetManagementClientAsync(ct);
             var roles = await client.Roles.GetAllAsync(new GetRolesRequest(), new PaginationInfo(), ct);
-            return Result<IReadOnlyList<RoleDto>>.Success(
+            return Result.Ok<IReadOnlyList<RoleDto>>(
                 roles.Select(r => new RoleDto(r.Id ?? string.Empty, r.Name ?? string.Empty)).ToList());
         }
         catch (Exception ex)
         {
-            return Result<IReadOnlyList<RoleDto>>.Failure(ex.Message);
+            return Result.Fail<IReadOnlyList<RoleDto>>(ex.Message);
         }
     }
 

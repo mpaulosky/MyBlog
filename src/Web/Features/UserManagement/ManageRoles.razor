@@ -82,10 +82,10 @@ else
         var usersResult = await usersTask;
         var rolesResult = await rolesTask;
 
-        if (usersResult.IsSuccess) _users = usersResult.Value!;
+        if (usersResult.Success) _users = usersResult.Value!;
         else _error = usersResult.Error;
 
-        if (rolesResult.IsSuccess) _availableRoles = rolesResult.Value!;
+        if (rolesResult.Success) _availableRoles = rolesResult.Value!;
         else _error ??= rolesResult.Error;
 
         _loading = false;
@@ -94,21 +94,21 @@ else
     private async Task AssignRole(string userId, string roleId)
     {
         var result = await Sender.Send(new AssignRoleCommand(userId, roleId));
-        if (result.IsFailure) { _error = result.Error; return; }
+        if (result.Failure) { _error = result.Error; return; }
         await RefreshAsync();
     }
 
     private async Task RemoveRole(string userId, string roleId)
     {
         var result = await Sender.Send(new RemoveRoleCommand(userId, roleId));
-        if (result.IsFailure) { _error = result.Error; return; }
+        if (result.Failure) { _error = result.Error; return; }
         await RefreshAsync();
     }
 
     private async Task RefreshAsync()
     {
         var result = await Sender.Send(new GetUsersWithRolesQuery());
-        if (result.IsSuccess) _users = result.Value!;
+        if (result.Success) _users = result.Value!;
         StateHasChanged();
     }
 }

@@ -98,8 +98,6 @@
 /home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/wn7tfq2zxw-{0}-cyz5k529gx-cyz5k529gx.gz
 /home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/dvmvd6hs63-{0}-qcnkhbt5lj-qcnkhbt5lj.gz
 /home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/9dvhe18ksu-{0}-12rnbzdyyc-12rnbzdyyc.gz
-/home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/w0u4xjpyxz-{0}-9aepkalhx9-9aepkalhx9.gz
-/home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/k89rhi3gy1-{0}-9aepkalhx9-9aepkalhx9.gz
 /home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/staticwebassets.build.json
 /home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/staticwebassets.build.json.cache
 /home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/staticwebassets.development.json
@@ -144,3 +142,5 @@
 /home/mpaulosky/Repos/MyBlog/src/Web/bin/Debug/net10.0/System.IdentityModel.Tokens.Jwt.dll
 /home/mpaulosky/Repos/MyBlog/src/Web/bin/Debug/net10.0/System.IO.Hashing.dll
 /home/mpaulosky/Repos/MyBlog/src/Web/bin/Debug/net10.0/ZstdSharp.dll
+/home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/w0u4xjpyxz-{0}-obwb3w2bs7-obwb3w2bs7.gz
+/home/mpaulosky/Repos/MyBlog/src/Web/obj/Debug/net10.0/compressed/k89rhi3gy1-{0}-obwb3w2bs7-obwb3w2bs7.gz

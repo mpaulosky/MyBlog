@@ -4,7 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using MyBlog.Domain.Interfaces;
 using MyBlog.Web.Data;
-using MyBlog.Domain.Common;
+using Domain.Abstractions;
 
 namespace MyBlog.Web.Features.BlogPosts.Edit;
 
@@ -27,18 +27,18 @@ public sealed class EditBlogPostHandler(
         {
             var post = await repo.GetByIdAsync(request.Id, ct);
             if (post is null)
-                return Result.Failure($"BlogPost {request.Id} not found.");
+                return Result.Fail($"BlogPost {request.Id} not found.");
             post.Update(request.Title, request.Content);
             await repo.UpdateAsync(post, ct);
             localCache.Remove("blog:all");
             localCache.Remove($"blog:{request.Id}");
             await distributedCache.RemoveAsync("blog:all", ct);
             await distributedCache.RemoveAsync($"blog:{request.Id}", ct);
-            return Result.Success();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Failure(ex.Message);
+            return Result.Fail(ex.Message);
         }
     }
 
@@ -48,27 +48,27 @@ public sealed class EditBlogPostHandler(
         {
             var key = $"blog:{request.Id}";
             if (localCache.TryGetValue(key, out BlogPostDto? cached) && cached is not null)
-                return Result<BlogPostDto?>.Success(cached);
+                return Result.Ok<BlogPostDto?>(cached);
 
             var bytes = await distributedCache.GetAsync(key, ct);
             if (bytes is not null)
             {
                 var dto = JsonSerializer.Deserialize<BlogPostDto>(bytes, JsonOpts)!;
                 localCache.Set(key, dto, LocalOpts);
-                return Result<BlogPostDto?>.Success(dto);
+                return Result.Ok<BlogPostDto?>(dto);
             }
 
             var post = await repo.GetByIdAsync(request.Id, ct);
-            if (post is null) return Result<BlogPostDto?>.Success(null);
+            if (post is null) return Result.Ok<BlogPostDto?>(null);
             var result = post.ToDto();
             localCache.Set(key, result, LocalOpts);
             await distributedCache.SetAsync(key,
                 JsonSerializer.SerializeToUtf8Bytes(result, JsonOpts), RedisOpts, ct);
-            return Result<BlogPostDto?>.Success(result);
+            return Result.Ok<BlogPostDto?>(result);
         }
         catch (Exception ex)
         {
-            return Result<BlogPostDto?>.Failure(ex.Message);
+            return Result.Fail<BlogPostDto?>(ex.Message);
         }
     }
 }

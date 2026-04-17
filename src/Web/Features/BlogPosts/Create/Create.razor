@@ -47,7 +47,7 @@
     private async Task HandleSubmit()
     {
         var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
-        if (result.IsSuccess)
+        if (result.Success)
             Navigation.NavigateTo("/blog");
         else
             _error = result.Error;

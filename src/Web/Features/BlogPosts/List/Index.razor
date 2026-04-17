@@ -88,7 +88,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         var result = await Sender.Send(new GetBlogPostsQuery());
-        if (result.IsSuccess)
+        if (result.Success)
             _posts = result.Value;
         else
             _error = result.Error;
@@ -105,7 +105,7 @@ else
         if (_postToDelete is not null)
         {
             var result = await Sender.Send(new DeleteBlogPostCommand(_postToDelete.Id));
-            if (result.IsFailure)
+            if (result.Failure)
             {
                 _error = result.Error;
                 _showDeleteDialog = false;
@@ -116,7 +116,7 @@ else
         _showDeleteDialog = false;
         _postToDelete = null;
         var listResult = await Sender.Send(new GetBlogPostsQuery());
-        if (listResult.IsSuccess)
+        if (listResult.Success)
             _posts = listResult.Value;
         else
             _error = listResult.Error;

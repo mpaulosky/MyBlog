@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using MyBlog.Domain.Interfaces;
-using MyBlog.Domain.Common;
+using Domain.Abstractions;
 
 namespace MyBlog.Web.Features.BlogPosts.Delete;
 
@@ -20,11 +20,11 @@ public sealed class DeleteBlogPostHandler(
             localCache.Remove($"blog:{request.Id}");
             await distributedCache.RemoveAsync("blog:all", ct);
             await distributedCache.RemoveAsync($"blog:{request.Id}", ct);
-            return Result.Success();
+            return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Failure(ex.Message);
+            return Result.Fail(ex.Message);
         }
     }
 }

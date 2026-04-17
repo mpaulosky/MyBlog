@@ -1,6 +1,6 @@
 using MediatR;
 using MyBlog.Web.Data;
-using MyBlog.Domain.Common;
+using Domain.Abstractions;
 
 namespace MyBlog.Web.Features.BlogPosts.Edit;
 

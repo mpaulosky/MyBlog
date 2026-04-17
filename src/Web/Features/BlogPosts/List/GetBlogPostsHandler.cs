@@ -4,7 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using MyBlog.Domain.Interfaces;
 using MyBlog.Web.Data;
-using MyBlog.Domain.Common;
+using Domain.Abstractions;
 
 namespace MyBlog.Web.Features.BlogPosts.List;
 
@@ -26,14 +26,14 @@ public sealed class GetBlogPostsHandler(
         try
         {
             if (localCache.TryGetValue(CacheKey, out List<BlogPostDto>? cached) && cached is not null)
-                return Result<IReadOnlyList<BlogPostDto>>.Success(cached);
+                return Result.Ok<IReadOnlyList<BlogPostDto>>(cached);
 
             var bytes = await distributedCache.GetAsync(CacheKey, ct);
             if (bytes is not null)
             {
                 var fromRedis = JsonSerializer.Deserialize<List<BlogPostDto>>(bytes, JsonOpts)!;
                 localCache.Set(CacheKey, fromRedis, LocalOpts);
-                return Result<IReadOnlyList<BlogPostDto>>.Success(fromRedis);
+                return Result.Ok<IReadOnlyList<BlogPostDto>>(fromRedis);
             }
 
             var posts = await repo.GetAllAsync(ct);
@@ -41,11 +41,11 @@ public sealed class GetBlogPostsHandler(
             localCache.Set(CacheKey, dtos, LocalOpts);
             await distributedCache.SetAsync(CacheKey,
                 JsonSerializer.SerializeToUtf8Bytes(dtos, JsonOpts), RedisOpts, ct);
-            return Result<IReadOnlyList<BlogPostDto>>.Success(dtos);
+            return Result.Ok<IReadOnlyList<BlogPostDto>>(dtos);
         }
         catch (Exception ex)
         {
-            return Result<IReadOnlyList<BlogPostDto>>.Failure(ex.Message);
+            return Result.Fail<IReadOnlyList<BlogPostDto>>(ex.Message);
         }
     }
 }
