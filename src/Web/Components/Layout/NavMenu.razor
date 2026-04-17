@@ -53,17 +53,17 @@
 
                 @* Theme colour switcher *@
                 <div class="flex items-center gap-1" aria-label="Colour theme">
-                    <button @onclick='() => JS.InvokeVoidAsync("setTheme", "theme-red")'
-                            class="w-5 h-5 rounded-full bg-red-600 hover:ring-2 ring-red-400 transition"
+                    <button @onclick='() => SetTheme("theme-red")'
+                            class="@ThemeBtnClass("theme-red", "bg-red-600", "ring-red-400")"
                             aria-label="Red theme" title="Red theme"></button>
-                    <button @onclick='() => JS.InvokeVoidAsync("setTheme", "theme-blue")'
-                            class="w-5 h-5 rounded-full bg-blue-600 hover:ring-2 ring-blue-400 transition"
+                    <button @onclick='() => SetTheme("theme-blue")'
+                            class="@ThemeBtnClass("theme-blue", "bg-blue-600", "ring-blue-400")"
                             aria-label="Blue theme" title="Blue theme"></button>
-                    <button @onclick='() => JS.InvokeVoidAsync("setTheme", "theme-green")'
-                            class="w-5 h-5 rounded-full bg-green-600 hover:ring-2 ring-green-400 transition"
+                    <button @onclick='() => SetTheme("theme-green")'
+                            class="@ThemeBtnClass("theme-green", "bg-green-600", "ring-green-400")"
                             aria-label="Green theme" title="Green theme"></button>
-                    <button @onclick='() => JS.InvokeVoidAsync("setTheme", "theme-yellow")'
-                            class="w-5 h-5 rounded-full bg-yellow-500 hover:ring-2 ring-yellow-300 transition"
+                    <button @onclick='() => SetTheme("theme-yellow")'
+                            class="@ThemeBtnClass("theme-yellow", "bg-yellow-500", "ring-yellow-300")"
                             aria-label="Yellow theme" title="Yellow theme"></button>
                 </div>
 
@@ -135,14 +135,23 @@
 
 @code {
     private bool _isDark = false;
+    private string _currentTheme = "theme-blue";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             _isDark = await JS.InvokeAsync<bool>("eval", "document.documentElement.classList.contains('dark')");
+            var stored = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('colorTheme')");
+            _currentTheme = string.IsNullOrEmpty(stored) ? "theme-blue" : stored;
             StateHasChanged();
         }
+    }
+
+    private async Task SetTheme(string theme)
+    {
+        _currentTheme = theme;
+        await JS.InvokeVoidAsync("setTheme", theme);
     }
 
     private async Task ToggleDark()
@@ -150,4 +159,9 @@
         _isDark = !_isDark;
         await JS.InvokeVoidAsync("toggleDark");
     }
+
+    private string ThemeBtnClass(string theme, string bg, string ring) =>
+        $"w-5 h-5 rounded-full {bg} transition {(_currentTheme == theme
+            ? $"ring-2 ring-offset-1 {ring} scale-110"
+            : $"hover:ring-2 {ring}")}";
 }

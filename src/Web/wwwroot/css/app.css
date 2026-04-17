@@ -53,6 +53,12 @@
     --color-edge:    #374151;  /* gray-700 */
   }
 
+  /* Dark canvas/surface tints per theme */
+  html.dark body.theme-blue   { --color-canvas: #0f1e33; --color-surface: #162f52; }
+  html.dark body.theme-red    { --color-canvas: #1f0d0d; --color-surface: #38100f; }
+  html.dark body.theme-green  { --color-canvas: #0d1f11; --color-surface: #153221; }
+  html.dark body.theme-yellow { --color-canvas: #1e1b0c; --color-surface: #312d14; }
+
   /* Color theme overrides — applied to <body> via JS */
   /* Primary accent colour (both light and dark modes) */
   body.theme-red    { --color-primary: #dc2626; --color-primary-hover: #b91c1c; }

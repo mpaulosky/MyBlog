@@ -21,35 +21,53 @@
         var themes = ["theme-red", "theme-blue", "theme-green", "theme-yellow"];
 
         function applyTheme() {
-          // Restore dark mode
           if (localStorage.getItem("darkMode") === "true") {
             document.documentElement.classList.add("dark");
           } else {
             document.documentElement.classList.remove("dark");
           }
-          // Restore colour theme (default: blue)
           themes.forEach(function (c) { document.body.classList.remove(c); });
-          var theme = localStorage.getItem("colorTheme") || "theme-blue";
-          document.body.classList.add(theme);
+          document.body.classList.add(localStorage.getItem("colorTheme") || "theme-blue");
         }
 
-        // Apply on initial page load
         applyTheme();
 
-        // Re-apply after every Blazor enhanced navigation (patches the DOM from server HTML)
+        // Re-apply after Blazor enhanced navigation (both known event names)
         document.addEventListener("enhancedload", applyTheme);
+        document.addEventListener("blazor:navigated", applyTheme);
 
-        // Called from Blazor via IJSRuntime.InvokeVoidAsync("setTheme", "theme-red")
+        // Defensive: MutationObserver catches any remaining cases where Blazor
+        // strips the classes we added (e.g. timing edge cases in DOM patching)
+        var observer = new MutationObserver(function () {
+          var needsDark = localStorage.getItem("darkMode") === "true";
+          if (needsDark !== document.documentElement.classList.contains("dark")) {
+            needsDark
+              ? document.documentElement.classList.add("dark")
+              : document.documentElement.classList.remove("dark");
+          }
+          var savedTheme = localStorage.getItem("colorTheme") || "theme-blue";
+          if (!document.body.classList.contains(savedTheme)) {
+            themes.forEach(function (c) { document.body.classList.remove(c); });
+            document.body.classList.add(savedTheme);
+          }
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+        observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+        // Update localStorage BEFORE modifying the class so the observer
+        // always reads consistent state and doesn't fight the toggle
         window.setTheme = function (t) {
+          localStorage.setItem("colorTheme", t);
           themes.forEach(function (c) { document.body.classList.remove(c); });
           document.body.classList.add(t);
-          localStorage.setItem("colorTheme", t);
         };
 
-        // Called from Blazor via IJSRuntime.InvokeVoidAsync("toggleDark")
         window.toggleDark = function () {
-          var isDark = document.documentElement.classList.toggle("dark");
+          var isDark = !document.documentElement.classList.contains("dark");
           localStorage.setItem("darkMode", String(isDark));
+          isDark
+            ? document.documentElement.classList.add("dark")
+            : document.documentElement.classList.remove("dark");
           return isDark;
         };
       })();
