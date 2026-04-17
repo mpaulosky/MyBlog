@@ -2,39 +2,29 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-    <ResourcePreloader />
-    <link rel="stylesheet" href="css/tailwind.css" />
-    <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
-    <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
-</head>
-
-<body>
-    <Routes />
-    <ReconnectModal />
-    <script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/" />
+  <script>
       (function () {
         var STORAGE_KEY = "tailwind-color-theme";
         var VALID_THEMES = [
           "theme-blue-light", "theme-blue-dark",
-          "theme-red-light",  "theme-red-dark",
-          "theme-green-light","theme-green-dark",
-          "theme-yellow-light","theme-yellow-dark"
+          "theme-red-light", "theme-red-dark",
+          "theme-green-light", "theme-green-dark",
+          "theme-yellow-light", "theme-yellow-dark"
         ];
 
         // Migrate old storage keys (colorTheme + darkMode) → new unified key
         if (!localStorage.getItem(STORAGE_KEY)) {
           var oldColor = (localStorage.getItem("colorTheme") || "theme-blue").replace("theme-", "");
-          if (["red","blue","green","yellow"].indexOf(oldColor) === -1) oldColor = "blue";
+          if (["red", "blue", "green", "yellow"].indexOf(oldColor) === -1) oldColor = "blue";
           var brightness = localStorage.getItem("darkMode") === "true" ? "dark" : "light";
           localStorage.setItem(STORAGE_KEY, "theme-" + oldColor + "-" + brightness);
         }
 
-        // Apply immediately for anti-FOUC (theme.js will also call initialize())
+        // Apply BEFORE stylesheets load — true anti-FOUC: theme class is on <html>
+        // when the browser first calculates styles, so no flash of light mode occurs.
         var theme = localStorage.getItem(STORAGE_KEY) || "theme-blue-light";
         if (VALID_THEMES.indexOf(theme) === -1) theme = "theme-blue-light";
         var html = document.documentElement;
@@ -56,9 +46,20 @@
           if (window.themeManager) window.themeManager.applyTheme();
         });
       })();
-    </script>
-    <script src="js/theme.js"></script>
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+  </script>
+  <ResourcePreloader />
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
+  <ImportMap />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <HeadOutlet />
+</head>
+
+<body>
+  <Routes />
+  <ReconnectModal />
+  <script src="js/theme.js"></script>
+  <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>
