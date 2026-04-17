@@ -1,0 +1,19 @@
+@if (IsVisible)
+{
+    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center">
+        <div style="background:white;padding:2rem;border-radius:8px;max-width:400px;width:90%">
+            <h3>Delete Post?</h3>
+            <p>Are you sure you want to delete "<strong>@PostTitle</strong>"?
+               This action cannot be undone.</p>
+            <button class="btn btn-danger me-2" @onclick="OnConfirm">Delete</button>
+            <button class="btn btn-secondary" @onclick="OnCancel">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string PostTitle { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+}

@@ -1,0 +1,54 @@
+@page "/blog/create"
+@using MyBlog.Domain.Entities
+@using MyBlog.Domain.Interfaces
+@inject IBlogPostRepository Repository
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Create Post</PageTitle>
+
+<h1>Create Post</h1>
+
+<EditForm Model="_model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <InputText class="form-control" @bind-Value="_model.Title" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Author</label>
+        <InputText class="form-control" @bind-Value="_model.Author" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Content</label>
+        <InputTextArea class="form-control" rows="8" @bind-Value="_model.Content" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="/blog" class="btn btn-secondary ms-2">Cancel</a>
+</EditForm>
+
+@code {
+    private readonly PostFormModel _model = new();
+
+    private async Task HandleSubmit()
+    {
+        var post = BlogPost.Create(_model.Title, _model.Content, _model.Author);
+        await Repository.AddAsync(post);
+        Navigation.NavigateTo("/blog");
+    }
+
+    private sealed class PostFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Title { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Author { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Content { get; set; } = string.Empty;
+    }
+}

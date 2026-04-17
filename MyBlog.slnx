@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MyBlog.AppHost/MyBlog.AppHost.csproj" />
+    <Project Path="src/MyBlog.Domain/MyBlog.Domain.csproj" />
+    <Project Path="src/MyBlog.ServiceDefaults/MyBlog.ServiceDefaults.csproj" />
+    <Project Path="src/MyBlog.Web/MyBlog.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyBlog.Architecture.Tests/MyBlog.Architecture.Tests.csproj" />
+    <Project Path="tests/MyBlog.Integration.Tests/MyBlog.Integration.Tests.csproj" />
+    <Project Path="tests/MyBlog.Unit.Tests/MyBlog.Unit.Tests.csproj" />
+  </Folder>
+</Solution>

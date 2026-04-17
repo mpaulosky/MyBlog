@@ -1,0 +1,65 @@
+@page "/blog/edit/{Id:guid}"
+@using MyBlog.Domain.Entities
+@using MyBlog.Domain.Interfaces
+@inject IBlogPostRepository Repository
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Edit Post</PageTitle>
+
+<h1>Edit Post</h1>
+
+@if (_model is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <InputText class="form-control" @bind-Value="_model.Title" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Content</label>
+            <InputTextArea class="form-control" rows="8" @bind-Value="_model.Content" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/blog" class="btn btn-secondary ms-2">Cancel</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private PostFormModel? _model;
+    private BlogPost? _post;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _post = await Repository.GetByIdAsync(Id);
+        if (_post is not null)
+            _model = new PostFormModel { Title = _post.Title, Content = _post.Content };
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_post is null || _model is null) return;
+        _post.Update(_model.Title, _model.Content);
+        await Repository.UpdateAsync(_post);
+        Navigation.NavigateTo("/blog");
+    }
+
+    private sealed class PostFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Title { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Content { get; set; } = string.Empty;
+    }
+}
