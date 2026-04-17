@@ -54,10 +54,17 @@
   }
 
   /* Color theme overrides — applied to <body> via JS */
+  /* Primary accent colour (both light and dark modes) */
   body.theme-red    { --color-primary: #dc2626; --color-primary-hover: #b91c1c; }
   body.theme-blue   { --color-primary: #2563eb; --color-primary-hover: #1d4ed8; }
   body.theme-green  { --color-primary: #16a34a; --color-primary-hover: #15803d; }
   body.theme-yellow { --color-primary: #ca8a04; --color-primary-hover: #a16207; }
+
+  /* Canvas/surface tints — light mode only (html:not(.dark) guards keep dark mode untouched) */
+  html:not(.dark) body.theme-red    { --color-canvas: #fff1f2; --color-surface: #ffe4e6; }
+  html:not(.dark) body.theme-blue   { --color-canvas: #eff6ff; --color-surface: #dbeafe; }
+  html:not(.dark) body.theme-green  { --color-canvas: #f0fdf4; --color-surface: #dcfce7; }
+  html:not(.dark) body.theme-yellow { --color-canvas: #fefce8; --color-surface: #fef9c3; }
 
   body {
     @apply bg-canvas text-content;
