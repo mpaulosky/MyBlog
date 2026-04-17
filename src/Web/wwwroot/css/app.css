@@ -1,29 +1,28 @@
 @import "tailwindcss";
 
 /* ─── Content source scanning ────────────────────────────────────────────── */
-/* Required because this CSS file lives in wwwroot/css/, outside the default  */
-/* scan boundary relative to the CLI working directory (the repo root).       */
 @source "../../Components/**/*.{razor,html,cshtml}";
 @source "../../Features/**/*.{razor,html,cshtml}";
 
 /* ─── Dark mode: class strategy ──────────────────────────────────────────── */
-/* Adds the dark: variant; dark utilities activate when <html class="dark">. */
+/* dark: utilities activate when <html class="dark">                          */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Safelist dynamic theme classes ─────────────────────────────────────── */
-/* These class names are applied to <body> by JavaScript at runtime.          */
-/* The scanner cannot detect them statically; @source inline prevents purge.  */
-@source inline("theme-red theme-blue theme-green theme-yellow");
-
-/* ─── Semantic design tokens ─────────────────────────────────────────────── */
-/* @theme inline creates real Tailwind utility classes backed by CSS vars:    */
-/*   bg-canvas      text-canvas      border-canvas                            */
-/*   bg-surface     text-surface     border-surface                           */
-/*   bg-primary     text-primary     border-primary                           */
-/*   hover:bg-primary-hover  etc.                                             */
-/* Changing the underlying CSS var at runtime (theme switch, dark mode)       */
-/* automatically updates every utility class that references it.              */
+/* ─── Tailwind design tokens (runtime CSS var resolution) ────────────────── */
+/* @theme inline generates utility classes (bg-primary-400, text-primary-50,  */
+/* etc.) whose values resolve from CSS vars at runtime — not circular.        */
 @theme inline {
+  --color-primary-50:    var(--color-primary-50);
+  --color-primary-100:   var(--color-primary-100);
+  --color-primary-200:   var(--color-primary-200);
+  --color-primary-300:   var(--color-primary-300);
+  --color-primary-400:   var(--color-primary-400);
+  --color-primary-500:   var(--color-primary-500);
+  --color-primary-600:   var(--color-primary-600);
+  --color-primary-700:   var(--color-primary-700);
+  --color-primary-800:   var(--color-primary-800);
+  --color-primary-900:   var(--color-primary-900);
+  --color-primary-950:   var(--color-primary-950);
   --color-canvas:        var(--color-canvas);
   --color-surface:       var(--color-surface);
   --color-content:       var(--color-content);
@@ -33,44 +32,217 @@
   --color-primary-hover: var(--color-primary-hover);
 }
 
-/* ─── Default values: blue theme, light mode ─────────────────────────────── */
 @layer base {
+  /* ─── Neutral colors (shared across all themes) ──────────────────────────── */
   :root {
-    --color-canvas:        #f9fafb;  /* gray-50   */
-    --color-surface:       #ffffff;  /* white     */
-    --color-content:       #111827;  /* gray-900  */
-    --color-muted:         #6b7280;  /* gray-500  */
-    --color-edge:          #e5e7eb;  /* gray-200  */
-    --color-primary:       #2563eb;  /* blue-600  */
-    --color-primary-hover: #1d4ed8;  /* blue-700  */
+    --color-neutral-50:  oklch(97.1% 0.001 0);
+    --color-neutral-100: oklch(94.2% 0.002 0);
+    --color-neutral-200: oklch(89.4% 0.005 0);
+    --color-neutral-300: oklch(84.1% 0.008 0);
+    --color-neutral-400: oklch(76.3% 0.012 0);
+    --color-neutral-500: oklch(64.2% 0.015 0);
+    --color-neutral-600: oklch(52.8% 0.014 0);
+    --color-neutral-700: oklch(42.3% 0.012 0);
+    --color-neutral-800: oklch(30.1% 0.010 0);
+    --color-neutral-900: oklch(20.2% 0.008 0);
+    --color-neutral-950: oklch(10.1% 0.004 0);
+
+    /* ─── Fallback: blue-light values (prevents FOUC before theme.js runs) ─── */
+    --color-primary-50:   oklch(98.3% 0.008 264.52);
+    --color-primary-100:  oklch(96.1% 0.018 266.34);
+    --color-primary-200:  oklch(93.5% 0.035 267.89);
+    --color-primary-300:  oklch(89.8% 0.052 269.12);
+    --color-primary-400:  oklch(83.6% 0.095 270.22);
+    --color-primary-500:  oklch(77.2% 0.135 271.01);
+    --color-primary-600:  oklch(70.1% 0.156 272.45);
+    --color-primary-700:  oklch(62.4% 0.158 273.98);
+    --color-primary-800:  oklch(52.3% 0.145 274.65);
+    --color-primary-900:  oklch(42.1% 0.125 275.34);
+    --color-primary-950:  oklch(35.2% 0.095 276.12);
+    --color-primary:       var(--color-primary-600);
+    --color-primary-hover: var(--color-primary-700);
+    --color-canvas:        var(--color-primary-50);
+    --color-surface:       var(--color-primary-100);
+    --color-content:       oklch(20.2% 0.008 0);  /* neutral-900 */
+    --color-muted:         oklch(64.2% 0.015 0);  /* neutral-500 */
+    --color-edge:          oklch(89.4% 0.005 0);  /* neutral-200 */
   }
 
-  html.dark {
-    --color-canvas:  #111827;  /* gray-900 */
-    --color-surface: #1f2937;  /* gray-800 */
-    --color-content: #f3f4f6;  /* gray-100 */
-    --color-muted:   #9ca3af;  /* gray-400 */
-    --color-edge:    #374151;  /* gray-700 */
+  /* ─── Blue Light ──────────────────────────────────────────────────────────── */
+  :root.theme-blue-light {
+    --color-primary-50:   oklch(98.3% 0.008 264.52);
+    --color-primary-100:  oklch(96.1% 0.018 266.34);
+    --color-primary-200:  oklch(93.5% 0.035 267.89);
+    --color-primary-300:  oklch(89.8% 0.052 269.12);
+    --color-primary-400:  oklch(83.6% 0.095 270.22);
+    --color-primary-500:  oklch(77.2% 0.135 271.01);
+    --color-primary-600:  oklch(70.1% 0.156 272.45);
+    --color-primary-700:  oklch(62.4% 0.158 273.98);
+    --color-primary-800:  oklch(52.3% 0.145 274.65);
+    --color-primary-900:  oklch(42.1% 0.125 275.34);
+    --color-primary-950:  oklch(35.2% 0.095 276.12);
+    --color-primary:       var(--color-primary-600);
+    --color-primary-hover: var(--color-primary-700);
+    --color-canvas:        var(--color-primary-50);
+    --color-surface:       var(--color-primary-100);
+    --color-content:       oklch(20.2% 0.008 0);
+    --color-muted:         oklch(64.2% 0.015 0);
+    --color-edge:          oklch(89.4% 0.005 0);
   }
 
-  /* Dark canvas/surface tints per theme */
-  html.dark body.theme-blue   { --color-canvas: #0f1e33; --color-surface: #162f52; }
-  html.dark body.theme-red    { --color-canvas: #1f0d0d; --color-surface: #38100f; }
-  html.dark body.theme-green  { --color-canvas: #0d1f11; --color-surface: #153221; }
-  html.dark body.theme-yellow { --color-canvas: #1e1b0c; --color-surface: #312d14; }
+  /* ─── Blue Dark ───────────────────────────────────────────────────────────── */
+  :root.theme-blue-dark {
+    --color-primary-50:   oklch(97.2% 0.016 264.52);
+    --color-primary-100:  oklch(93.5% 0.038 266.34);
+    --color-primary-200:  oklch(87.8% 0.075 267.89);
+    --color-primary-300:  oklch(79.4% 0.125 269.12);
+    --color-primary-400:  oklch(68.5% 0.195 270.22);
+    --color-primary-500:  oklch(59.7% 0.245 271.01);
+    --color-primary-600:  oklch(51.8% 0.258 272.45);
+    --color-primary-700:  oklch(43.2% 0.242 273.98);
+    --color-primary-800:  oklch(34.5% 0.215 274.65);
+    --color-primary-900:  oklch(25.8% 0.165 275.34);
+    --color-primary-950:  oklch(19.2% 0.125 276.12);
+    --color-primary:       var(--color-primary-400);
+    --color-primary-hover: var(--color-primary-300);
+    --color-canvas:        var(--color-primary-950);
+    --color-surface:       var(--color-primary-900);
+    --color-content:       oklch(94.2% 0.002 0);
+    --color-muted:         oklch(76.3% 0.012 0);
+    --color-edge:          oklch(42.3% 0.012 0);
+  }
 
-  /* Color theme overrides — applied to <body> via JS */
-  /* Primary accent colour (both light and dark modes) */
-  body.theme-red    { --color-primary: #dc2626; --color-primary-hover: #b91c1c; }
-  body.theme-blue   { --color-primary: #2563eb; --color-primary-hover: #1d4ed8; }
-  body.theme-green  { --color-primary: #16a34a; --color-primary-hover: #15803d; }
-  body.theme-yellow { --color-primary: #ca8a04; --color-primary-hover: #a16207; }
+  /* ─── Red Light ───────────────────────────────────────────────────────────── */
+  :root.theme-red-light {
+    --color-primary-50:   oklch(98.5% 0.006 17.38);
+    --color-primary-100:  oklch(96.2% 0.015 17.72);
+    --color-primary-200:  oklch(93.8% 0.030 18.33);
+    --color-primary-300:  oklch(90.2% 0.048 19.57);
+    --color-primary-400:  oklch(84.6% 0.080 22.22);
+    --color-primary-500:  oklch(78.5% 0.120 25.33);
+    --color-primary-600:  oklch(72.1% 0.140 27.10);
+    --color-primary-700:  oklch(65.3% 0.150 28.96);
+    --color-primary-800:  oklch(55.2% 0.120 32.46);
+    --color-primary-900:  oklch(45.1% 0.100 35.08);
+    --color-primary-950:  oklch(35.2% 0.080 36.50);
+    --color-primary:       var(--color-primary-600);
+    --color-primary-hover: var(--color-primary-700);
+    --color-canvas:        var(--color-primary-50);
+    --color-surface:       var(--color-primary-100);
+    --color-content:       oklch(20.2% 0.008 0);
+    --color-muted:         oklch(64.2% 0.015 0);
+    --color-edge:          oklch(89.4% 0.005 0);
+  }
 
-  /* Canvas/surface tints — light mode only (html:not(.dark) guards keep dark mode untouched) */
-  html:not(.dark) body.theme-red    { --color-canvas: #fff1f2; --color-surface: #ffe4e6; }
-  html:not(.dark) body.theme-blue   { --color-canvas: #eff6ff; --color-surface: #dbeafe; }
-  html:not(.dark) body.theme-green  { --color-canvas: #f0fdf4; --color-surface: #dcfce7; }
-  html:not(.dark) body.theme-yellow { --color-canvas: #fefce8; --color-surface: #fef9c3; }
+  /* ─── Red Dark ────────────────────────────────────────────────────────────── */
+  :root.theme-red-dark {
+    --color-primary-50:   oklch(97.1% 0.013 17.38);
+    --color-primary-100:  oklch(93.6% 0.032 17.72);
+    --color-primary-200:  oklch(88.5% 0.062 18.33);
+    --color-primary-300:  oklch(80.8% 0.114 19.57);
+    --color-primary-400:  oklch(70.4% 0.191 22.22);
+    --color-primary-500:  oklch(63.7% 0.237 25.33);
+    --color-primary-600:  oklch(56.2% 0.240 26.83);
+    --color-primary-700:  oklch(47.3% 0.222 27.65);
+    --color-primary-800:  oklch(38.1% 0.198 28.01);
+    --color-primary-900:  oklch(28.4% 0.145 29.23);
+    --color-primary-950:  oklch(22.1% 0.098 31.05);
+    --color-primary:       var(--color-primary-400);
+    --color-primary-hover: var(--color-primary-300);
+    --color-canvas:        var(--color-primary-950);
+    --color-surface:       var(--color-primary-900);
+    --color-content:       oklch(94.2% 0.002 0);
+    --color-muted:         oklch(76.3% 0.012 0);
+    --color-edge:          oklch(42.3% 0.012 0);
+  }
+
+  /* ─── Green Light ─────────────────────────────────────────────────────────── */
+  :root.theme-green-light {
+    --color-primary-50:   oklch(98.2% 0.007 146.71);
+    --color-primary-100:  oklch(95.9% 0.018 148.45);
+    --color-primary-200:  oklch(93.1% 0.032 149.87);
+    --color-primary-300:  oklch(89.2% 0.055 151.23);
+    --color-primary-400:  oklch(82.5% 0.105 153.12);
+    --color-primary-500:  oklch(75.8% 0.142 155.34);
+    --color-primary-600:  oklch(68.3% 0.152 156.89);
+    --color-primary-700:  oklch(60.2% 0.148 158.12);
+    --color-primary-800:  oklch(49.8% 0.135 159.45);
+    --color-primary-900:  oklch(39.5% 0.115 160.67);
+    --color-primary-950:  oklch(32.1% 0.088 161.23);
+    --color-primary:       var(--color-primary-600);
+    --color-primary-hover: var(--color-primary-700);
+    --color-canvas:        var(--color-primary-50);
+    --color-surface:       var(--color-primary-100);
+    --color-content:       oklch(20.2% 0.008 0);
+    --color-muted:         oklch(64.2% 0.015 0);
+    --color-edge:          oklch(89.4% 0.005 0);
+  }
+
+  /* ─── Green Dark ──────────────────────────────────────────────────────────── */
+  :root.theme-green-dark {
+    --color-primary-50:   oklch(97.1% 0.014 146.71);
+    --color-primary-100:  oklch(93.4% 0.038 148.45);
+    --color-primary-200:  oklch(87.5% 0.068 149.87);
+    --color-primary-300:  oklch(78.9% 0.118 151.23);
+    --color-primary-400:  oklch(67.2% 0.195 153.12);
+    --color-primary-500:  oklch(57.5% 0.252 155.34);
+    --color-primary-600:  oklch(49.1% 0.268 156.89);
+    --color-primary-700:  oklch(40.3% 0.248 158.12);
+    --color-primary-800:  oklch(31.5% 0.215 159.45);
+    --color-primary-900:  oklch(23.8% 0.165 160.67);
+    --color-primary-950:  oklch(17.9% 0.125 161.23);
+    --color-primary:       var(--color-primary-400);
+    --color-primary-hover: var(--color-primary-300);
+    --color-canvas:        var(--color-primary-950);
+    --color-surface:       var(--color-primary-900);
+    --color-content:       oklch(94.2% 0.002 0);
+    --color-muted:         oklch(76.3% 0.012 0);
+    --color-edge:          oklch(42.3% 0.012 0);
+  }
+
+  /* ─── Yellow Light ────────────────────────────────────────────────────────── */
+  :root.theme-yellow-light {
+    --color-primary-50:   oklch(98.8% 0.004 104.23);
+    --color-primary-100:  oklch(97.2% 0.012 107.45);
+    --color-primary-200:  oklch(94.8% 0.028 109.87);
+    --color-primary-300:  oklch(91.2% 0.048 112.34);
+    --color-primary-400:  oklch(85.9% 0.090 115.12);
+    --color-primary-500:  oklch(79.6% 0.125 117.89);
+    --color-primary-600:  oklch(72.3% 0.135 119.45);
+    --color-primary-700:  oklch(64.1% 0.128 121.23);
+    --color-primary-800:  oklch(54.2% 0.115 123.12);
+    --color-primary-900:  oklch(43.8% 0.095 124.67);
+    --color-primary-950:  oklch(36.5% 0.075 125.34);
+    --color-primary:       var(--color-primary-600);
+    --color-primary-hover: var(--color-primary-700);
+    --color-canvas:        var(--color-primary-50);
+    --color-surface:       var(--color-primary-100);
+    --color-content:       oklch(20.2% 0.008 0);
+    --color-muted:         oklch(64.2% 0.015 0);
+    --color-edge:          oklch(89.4% 0.005 0);
+  }
+
+  /* ─── Yellow Dark ─────────────────────────────────────────────────────────── */
+  :root.theme-yellow-dark {
+    --color-primary-50:   oklch(97.3% 0.008 104.23);
+    --color-primary-100:  oklch(93.8% 0.028 107.45);
+    --color-primary-200:  oklch(88.5% 0.062 109.87);
+    --color-primary-300:  oklch(80.2% 0.108 112.34);
+    --color-primary-400:  oklch(69.4% 0.185 115.12);
+    --color-primary-500:  oklch(59.8% 0.245 117.89);
+    --color-primary-600:  oklch(51.2% 0.258 119.45);
+    --color-primary-700:  oklch(42.5% 0.242 121.23);
+    --color-primary-800:  oklch(33.8% 0.215 123.12);
+    --color-primary-900:  oklch(25.1% 0.165 124.67);
+    --color-primary-950:  oklch(18.9% 0.125 125.34);
+    --color-primary:       var(--color-primary-400);
+    --color-primary-hover: var(--color-primary-300);
+    --color-canvas:        var(--color-primary-950);
+    --color-surface:       var(--color-primary-900);
+    --color-content:       oklch(94.2% 0.002 0);
+    --color-muted:         oklch(76.3% 0.012 0);
+    --color-edge:          oklch(42.3% 0.012 0);
+  }
 
   body {
     @apply bg-canvas text-content;
@@ -78,10 +250,7 @@
 }
 
 @layer components {
-  /* ─── Blazor form validation ─── */
-  /* EditForm / InputBase components emit these classes automatically.
-     Bootstrap styled them; Tailwind does not. These rules are required
-     or form validation feedback will be invisible after migration. */
+  /* ─── Blazor form validation ─────────────────────────────────────────────── */
   .valid.modified:not([type=checkbox]) {
     @apply outline outline-1 outline-green-500;
   }
@@ -92,17 +261,15 @@
     @apply text-red-600 text-sm mt-1;
   }
 
-  /* ─── NavLink active state ─── */
-  /* Blazor's <NavLink> adds the 'active' CSS class to the current page anchor.
-     Bootstrap styled .nav-link.active automatically; Tailwind does not. */
+  /* ─── NavLink active state ───────────────────────────────────────────────── */
   .nav-link {
-    @apply text-primary;
+    @apply text-primary-50;
   }
   .nav-link.active {
-    @apply font-semibold border-b-2 border-current;
+    @apply font-semibold border-b-2 border-primary-50;
   }
 
-  /* ─── Blazor error UI ─── */
+  /* ─── Blazor error UI ────────────────────────────────────────────────────── */
   #blazor-error-ui {
     @apply hidden fixed bottom-0 left-0 right-0 z-50;
     @apply bg-red-600 text-white px-4 py-3 text-sm;

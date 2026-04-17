@@ -126,3 +126,33 @@
 - Build integration works for full builds, developer hot reload workflow documented
 
 **Filed:** `.squad/decisions/inbox/legolas-tailwind-migration-complete.md`
+
+---
+
+## 2025-07-19 — CSS Folder Restructure (wwwroot/css/)
+
+## Learnings
+
+**CSS output folder moved to wwwroot/css/:**
+- `app.css` (source) and `tailwind.css` (compiled output) both moved from `wwwroot/` root to `wwwroot/css/`
+- The `@source` directives in `app.css` are relative to the CSS file location — moving one folder deeper requires changing `"../Components/**"` to `"../../Components/**"` and `"../Features/**"` to `"../../Features/**"`
+- `App.razor` link tag changes from `href="tailwind.css"` to `href="css/tailwind.css"` (no leading slash needed — Blazor resolves from base href)
+- `App.razor` `@Assets["app.css"]` also changes to `@Assets["css/app.css"]` for fingerprinting
+- `package.json` scripts at repo root must update both `-i` and `-o` paths
+- `.gitignore` entry must also be updated to `src/Web/wwwroot/css/tailwind.css`
+- `dotnet build` confirmed: Tailwind CLI compiled 64ms, build succeeded with 0 warnings
+
+**wwwroot/lib/ was NOT empty — it contained full Bootstrap distribution:**
+- `lib/bootstrap/dist/css/` had ~20 Bootstrap CSS files (full, minified, RTL, grid, reboot, utilities)
+- `lib/bootstrap/dist/js/` had ~10 Bootstrap JS files (bundle, ESM, regular)
+- These were installed by libman and were stale after migration — deleted in this session
+- `rm -rf src/Web/wwwroot/lib/` removed all 60+ files in one operation
+
+**SKILL.md updates applied:**
+- All `wwwroot/app.css` / `wwwroot/tailwind.css` references updated to `wwwroot/css/`
+- @source directives in Step 3 template updated to `../../` depth
+- Step 8 cleanup now includes `rm -rf src/Web/wwwroot/lib/` after Bootstrap removal
+- Files table updated with correct paths and lib/ entry changed to full directory
+
+**Filed:** `.squad/decisions/inbox/legolas-css-folder-restructure.md`
+

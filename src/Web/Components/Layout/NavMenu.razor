@@ -2,13 +2,13 @@
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
-<nav class="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-edge shadow-sm"
+<nav class="fixed top-0 left-0 right-0 z-50 bg-primary-400 shadow-sm"
      aria-label="Main navigation">
     <div class="mx-auto max-w-7xl px-4">
         <div class="flex items-center justify-between h-16">
 
             @* Brand *@
-            <NavLink class="text-primary text-xl font-bold hover:opacity-80 transition-opacity"
+            <NavLink class="text-primary-50 text-xl font-bold hover:opacity-80 transition-opacity"
                      href="" Match="NavLinkMatch.All">
                 MyBlog
             </NavLink>
@@ -16,9 +16,8 @@
             @* Mobile hamburger (pure CSS peer toggle — no JS required) *@
             <input type="checkbox" id="menu-toggle" class="peer sr-only" aria-hidden="true" />
             <label for="menu-toggle"
-                   class="md:hidden cursor-pointer p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                   class="md:hidden cursor-pointer p-2 rounded hover:bg-primary-300 text-primary-50"
                    aria-label="Toggle navigation">
-                @* Heroicon: bars-3 *@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M4 6h16M4 12h16M4 18h16" />
@@ -53,19 +52,32 @@
 
                 @* Theme colour switcher *@
                 <select @onchange="OnThemeChanged"
-                        class="text-sm rounded border border-edge bg-surface text-content px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                        class="text-sm rounded border border-primary-300 bg-primary-300 text-primary-950 px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-50"
                         aria-label="Colour theme" title="Select colour theme">
-                    <option value="theme-red"    selected="@(_currentTheme == "theme-red")">🔴 Red</option>
-                    <option value="theme-blue"   selected="@(_currentTheme == "theme-blue")">🔵 Blue</option>
-                    <option value="theme-green"  selected="@(_currentTheme == "theme-green")">🟢 Green</option>
-                    <option value="theme-yellow" selected="@(_currentTheme == "theme-yellow")">🟡 Yellow</option>
+                    <option value="red"    selected="@(_currentColor == "red")">🔴 Red</option>
+                    <option value="blue"   selected="@(_currentColor == "blue")">🔵 Blue</option>
+                    <option value="green"  selected="@(_currentColor == "green")">🟢 Green</option>
+                    <option value="yellow" selected="@(_currentColor == "yellow")">🟡 Yellow</option>
                 </select>
 
-                @* Dark mode toggle *@
+                @* Dark mode toggle — sun icon in dark mode, moon in light *@
                 <button @onclick="ToggleDark"
-                        class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                        class="p-1.5 rounded hover:bg-primary-300 text-primary-50 transition"
                         aria-label="Toggle dark mode" title="Toggle dark mode">
-                    @(_isDark ? "☀️" : "🌙")
+                    @if (_currentBrightness == "dark")
+                    {
+                        @* Sun — click to switch to light *@
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        @* Moon — click to switch to dark *@
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    }
                 </button>
 
                 @* Login / Logout *@
@@ -128,29 +140,35 @@
 </nav>
 
 @code {
-    private bool _isDark = false;
-    private string _currentTheme = "theme-blue";
+    private string _currentColor = "blue";
+    private string _currentBrightness = "light";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _isDark = await JS.InvokeAsync<bool>("eval", "document.documentElement.classList.contains('dark')");
-            var stored = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('colorTheme')");
-            _currentTheme = string.IsNullOrEmpty(stored) ? "theme-blue" : stored;
-            StateHasChanged();
+            try
+            {
+                _currentColor = await JS.InvokeAsync<string>("themeManager.getColor") ?? "blue";
+                _currentBrightness = await JS.InvokeAsync<string>("themeManager.getBrightness") ?? "light";
+                StateHasChanged();
+            }
+            catch { }
         }
     }
 
     private async Task OnThemeChanged(ChangeEventArgs e)
     {
-        _currentTheme = e.Value?.ToString() ?? "theme-blue";
-        await JS.InvokeVoidAsync("setTheme", _currentTheme);
+        _currentColor = e.Value?.ToString() ?? "blue";
+        await JS.InvokeVoidAsync("themeManager.setColor", _currentColor);
     }
 
     private async Task ToggleDark()
     {
-        _isDark = !_isDark;
-        await JS.InvokeVoidAsync("toggleDark");
+        var newBrightness = _currentBrightness == "light" ? "dark" : "light";
+        await JS.InvokeVoidAsync("themeManager.setBrightness", newBrightness);
+        // Read back to stay in sync with JS truth
+        _currentBrightness = await JS.InvokeAsync<string>("themeManager.getBrightness") ?? newBrightness;
+        StateHasChanged();
     }
 }

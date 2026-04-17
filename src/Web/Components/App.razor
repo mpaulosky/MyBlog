@@ -18,60 +18,46 @@
     <ReconnectModal />
     <script>
       (function () {
-        var themes = ["theme-red", "theme-blue", "theme-green", "theme-yellow"];
+        var STORAGE_KEY = "tailwind-color-theme";
+        var VALID_THEMES = [
+          "theme-blue-light", "theme-blue-dark",
+          "theme-red-light",  "theme-red-dark",
+          "theme-green-light","theme-green-dark",
+          "theme-yellow-light","theme-yellow-dark"
+        ];
 
-        function applyTheme() {
-          if (localStorage.getItem("darkMode") === "true") {
-            document.documentElement.classList.add("dark");
-          } else {
-            document.documentElement.classList.remove("dark");
-          }
-          themes.forEach(function (c) { document.body.classList.remove(c); });
-          document.body.classList.add(localStorage.getItem("colorTheme") || "theme-blue");
+        // Migrate old storage keys (colorTheme + darkMode) → new unified key
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          var oldColor = (localStorage.getItem("colorTheme") || "theme-blue").replace("theme-", "");
+          if (["red","blue","green","yellow"].indexOf(oldColor) === -1) oldColor = "blue";
+          var brightness = localStorage.getItem("darkMode") === "true" ? "dark" : "light";
+          localStorage.setItem(STORAGE_KEY, "theme-" + oldColor + "-" + brightness);
         }
 
-        applyTheme();
+        // Apply immediately for anti-FOUC (theme.js will also call initialize())
+        var theme = localStorage.getItem(STORAGE_KEY) || "theme-blue-light";
+        if (VALID_THEMES.indexOf(theme) === -1) theme = "theme-blue-light";
+        var html = document.documentElement;
+        VALID_THEMES.forEach(function (t) { html.classList.remove(t); });
+        html.classList.add(theme);
+        if (theme.indexOf("-dark") !== -1) {
+          html.classList.add("dark");
+          html.classList.remove("light");
+        } else {
+          html.classList.remove("dark");
+          html.classList.add("light");
+        }
 
-        // Re-apply after Blazor enhanced navigation (both known event names)
-        document.addEventListener("enhancedload", applyTheme);
-        document.addEventListener("blazor:navigated", applyTheme);
-
-        // Defensive: MutationObserver catches any remaining cases where Blazor
-        // strips the classes we added (e.g. timing edge cases in DOM patching)
-        var observer = new MutationObserver(function () {
-          var needsDark = localStorage.getItem("darkMode") === "true";
-          if (needsDark !== document.documentElement.classList.contains("dark")) {
-            needsDark
-              ? document.documentElement.classList.add("dark")
-              : document.documentElement.classList.remove("dark");
-          }
-          var savedTheme = localStorage.getItem("colorTheme") || "theme-blue";
-          if (!document.body.classList.contains(savedTheme)) {
-            themes.forEach(function (c) { document.body.classList.remove(c); });
-            document.body.classList.add(savedTheme);
-          }
+        // Re-apply after Blazor enhanced navigation
+        document.addEventListener("enhancedload", function () {
+          if (window.themeManager) window.themeManager.applyTheme();
         });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-        observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-
-        // Update localStorage BEFORE modifying the class so the observer
-        // always reads consistent state and doesn't fight the toggle
-        window.setTheme = function (t) {
-          localStorage.setItem("colorTheme", t);
-          themes.forEach(function (c) { document.body.classList.remove(c); });
-          document.body.classList.add(t);
-        };
-
-        window.toggleDark = function () {
-          var isDark = !document.documentElement.classList.contains("dark");
-          localStorage.setItem("darkMode", String(isDark));
-          isDark
-            ? document.documentElement.classList.add("dark")
-            : document.documentElement.classList.remove("dark");
-          return isDark;
-        };
+        document.addEventListener("blazor:navigated", function () {
+          if (window.themeManager) window.themeManager.applyTheme();
+        });
       })();
     </script>
+    <script src="js/theme.js"></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
