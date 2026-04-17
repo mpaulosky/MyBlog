@@ -82,6 +82,9 @@
   /* ─── NavLink active state ─── */
   /* Blazor's <NavLink> adds the 'active' CSS class to the current page anchor.
      Bootstrap styled .nav-link.active automatically; Tailwind does not. */
+  .nav-link {
+    @apply text-primary;
+  }
   .nav-link.active {
     @apply font-semibold border-b-2 border-current;
   }
