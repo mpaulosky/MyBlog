@@ -14,10 +14,22 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Auth0 authentication
+var auth0Domain = builder.Configuration["Auth0:Domain"];
+var auth0ClientId = builder.Configuration["Auth0:ClientId"];
+
+if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+{
+    throw new InvalidOperationException(
+        "Auth0 configuration is missing or incomplete. Set these user secrets for the Web project:\n" +
+        "  dotnet user-secrets set \"Auth0:Domain\" \"<your-tenant>.auth0.com\" --project src/Web\n" +
+        "  dotnet user-secrets set \"Auth0:ClientId\" \"<your-client-id>\" --project src/Web\n" +
+        "  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
+}
+
 builder.Services.AddAuth0WebAppAuthentication(opts =>
 {
-    opts.Domain = builder.Configuration["Auth0:Domain"]!;
-    opts.ClientId = builder.Configuration["Auth0:ClientId"]!;
+    opts.Domain = auth0Domain;
+    opts.ClientId = auth0ClientId;
     opts.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
     opts.CallbackPath = "/signin-auth0";
 });
