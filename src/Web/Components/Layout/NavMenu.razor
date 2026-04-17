@@ -52,20 +52,14 @@
                 </AuthorizeView>
 
                 @* Theme colour switcher *@
-                <div class="flex items-center gap-1" aria-label="Colour theme">
-                    <button @onclick='() => SetTheme("theme-red")'
-                            class="@ThemeBtnClass("theme-red", "bg-red-600", "ring-red-400")"
-                            aria-label="Red theme" title="Red theme"></button>
-                    <button @onclick='() => SetTheme("theme-blue")'
-                            class="@ThemeBtnClass("theme-blue", "bg-blue-600", "ring-blue-400")"
-                            aria-label="Blue theme" title="Blue theme"></button>
-                    <button @onclick='() => SetTheme("theme-green")'
-                            class="@ThemeBtnClass("theme-green", "bg-green-600", "ring-green-400")"
-                            aria-label="Green theme" title="Green theme"></button>
-                    <button @onclick='() => SetTheme("theme-yellow")'
-                            class="@ThemeBtnClass("theme-yellow", "bg-yellow-500", "ring-yellow-300")"
-                            aria-label="Yellow theme" title="Yellow theme"></button>
-                </div>
+                <select @onchange="OnThemeChanged"
+                        class="text-sm rounded border border-edge bg-surface text-content px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                        aria-label="Colour theme" title="Select colour theme">
+                    <option value="theme-red"    selected="@(_currentTheme == "theme-red")">🔴 Red</option>
+                    <option value="theme-blue"   selected="@(_currentTheme == "theme-blue")">🔵 Blue</option>
+                    <option value="theme-green"  selected="@(_currentTheme == "theme-green")">🟢 Green</option>
+                    <option value="theme-yellow" selected="@(_currentTheme == "theme-yellow")">🟡 Yellow</option>
+                </select>
 
                 @* Dark mode toggle *@
                 <button @onclick="ToggleDark"
@@ -148,10 +142,10 @@
         }
     }
 
-    private async Task SetTheme(string theme)
+    private async Task OnThemeChanged(ChangeEventArgs e)
     {
-        _currentTheme = theme;
-        await JS.InvokeVoidAsync("setTheme", theme);
+        _currentTheme = e.Value?.ToString() ?? "theme-blue";
+        await JS.InvokeVoidAsync("setTheme", _currentTheme);
     }
 
     private async Task ToggleDark()
@@ -159,9 +153,4 @@
         _isDark = !_isDark;
         await JS.InvokeVoidAsync("toggleDark");
     }
-
-    private string ThemeBtnClass(string theme, string bg, string ring) =>
-        $"w-5 h-5 rounded-full {bg} transition {(_currentTheme == theme
-            ? $"ring-2 ring-offset-1 {ring} scale-110"
-            : $"hover:ring-2 {ring}")}";
 }
