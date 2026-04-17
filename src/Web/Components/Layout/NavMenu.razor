@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IJSRuntime JS
+@inject NavigationManager Nav
+@implements IDisposable
 @rendermode InteractiveServer
 
 <nav class="fixed top-0 left-0 right-0 z-50 bg-primary-400 shadow-sm"
@@ -143,18 +145,33 @@
     private string _currentColor = "blue";
     private string _currentBrightness = "light";
 
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            try
-            {
-                _currentColor = await JS.InvokeAsync<string>("themeManager.getColor") ?? "blue";
-                _currentBrightness = await JS.InvokeAsync<string>("themeManager.getBrightness") ?? "light";
-                StateHasChanged();
-            }
-            catch { }
+            await SyncThemeFromJs();
         }
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await InvokeAsync(SyncThemeFromJs);
+    }
+
+    private async Task SyncThemeFromJs()
+    {
+        try
+        {
+            _currentColor = await JS.InvokeAsync<string>("themeManager.getColor") ?? "blue";
+            _currentBrightness = await JS.InvokeAsync<string>("themeManager.getBrightness") ?? "light";
+            StateHasChanged();
+        }
+        catch { }
     }
 
     private async Task OnThemeChanged(ChangeEventArgs e)
@@ -167,8 +184,12 @@
     {
         var newBrightness = _currentBrightness == "light" ? "dark" : "light";
         await JS.InvokeVoidAsync("themeManager.setBrightness", newBrightness);
-        // Read back to stay in sync with JS truth
         _currentBrightness = await JS.InvokeAsync<string>("themeManager.getBrightness") ?? newBrightness;
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
     }
 }
