@@ -33,3 +33,38 @@ Conducted a detailed review of `/home/mpaulosky/.config/squad/.github/skills/tai
 5. Resolve v3/v4 version ambiguity and fix content glob
 
 **Findings written to:** `.squad/decisions/inbox/aragorn-tailwind-skill-review.md`
+
+## 2026-01-XX — Copyright Header Implementation
+
+Successfully implemented standardized copyright headers across the entire MyBlog solution.
+
+### Key Learnings
+
+**Copyright header format (7-line pattern):**
+```csharp
+//=======================================================
+//Copyright (c) {year}. All rights reserved.
+//File Name :     {filename}
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  {project}
+//=======================================================
+```
+
+**Implementation details:**
+- Applied to all 46 C# files across 7 projects (AppHost, Domain, ServiceDefaults, Web, Architecture.Tests, Integration.Tests, Unit.Tests)
+- Year derived from git log first commit (repository shows 2026 due to system time)
+- Project name automatically detected from directory structure
+- Headers inserted at line 1, followed by blank line before code
+- Existing headers (if any) are replaced completely
+- All projects build successfully with zero errors and zero warnings
+
+**Process automation:**
+- Created Python script to process files in batch
+- Git log used to determine file creation year: `git log --follow --format=%ad --date=format:%Y --diff-filter=A -- {file}`
+- Project mapping based on directory prefixes (src/Web → Web, tests/Unit.Tests → Unit.Tests, etc.)
+
+**PR created:** https://github.com/mpaulosky/MyBlog/pull/7
+
+**Decision record:** `.squad/decisions/inbox/aragorn-copyright-headers.md`
