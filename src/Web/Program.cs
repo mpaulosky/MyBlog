@@ -1,9 +1,12 @@
 using Auth0.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using MyBlog.Domain.Interfaces;
 using MyBlog.Web.Components;
 using MyBlog.Web.Data;
+using MyBlog.Web.Security;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,12 +29,32 @@ if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
         "  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
 }
 
+var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
+
 builder.Services.AddAuth0WebAppAuthentication(opts =>
 {
     opts.Domain = auth0Domain;
     opts.ClientId = auth0ClientId;
     opts.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
     opts.CallbackPath = "/signin-auth0";
+});
+
+builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
+
+    var existingOnTokenValidated = options.Events.OnTokenValidated;
+    options.Events.OnTokenValidated = async context =>
+    {
+        await existingOnTokenValidated(context);
+
+        if (context.Principal?.Identity is not ClaimsIdentity identity)
+        {
+            return;
+        }
+
+        RoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);
+    };
 });
 
 builder.Services.AddCascadingAuthenticationState();
@@ -90,7 +113,7 @@ app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
     await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props);
 }).AllowAnonymous();
 
-app.MapGet("/Account/Logout", async (HttpContext ctx) =>
+app.MapGet("/Account/Logout", async ctx =>
 {
     var props = new LogoutAuthenticationPropertiesBuilder()
         .WithRedirectUri("/")
@@ -104,4 +127,3 @@ app.MapRazorComponents<App>()
 
 app.MapDefaultEndpoints();
 app.Run();
-
