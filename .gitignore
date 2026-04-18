@@ -7,6 +7,7 @@
 *.nupkg
 *.snupkg
 TestResults/
+*.cobertura.xml
 .DS_Store
 
 # Node.js
