@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     BlogPost.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Domain
+//=======================================================
+
 namespace MyBlog.Domain.Entities;
 
 public sealed class BlogPost
