@@ -25,3 +25,23 @@
 7. **[CLEAN] Auth middleware order** — UseAuthentication → UseAuthorization → UseAntiforgery is correct.
 
 8. **[CLEAN] ManageRoles and Profile authorization** — Both pages correctly gated with `[Authorize(Roles = "Admin")]` and `[Authorize]` respectively.
+
+### PR #11 & #12 Security Review — 2026-04-18
+
+**PR #11** — `squad/cleanup-uncommitted-changes` → `dev` (3 files: boromir history, ManageRoles.razor, tailwind.css)
+
+**Verdict:** NEEDS_HUMAN_DECISION
+
+- **[CLEAN] ManageRoles.razor** — Removed redundant `@using MyBlog.Web.Features.UserManagement` (already in `_Imports.razor` per Decision #1). `[Authorize(Roles = "Admin")]` gate remains intact. No security impact.
+- **[CLEAN] No secrets** — No credentials or tokens in any changed file.
+- **[INFO] Non-minified tailwind.css** — Committed CSS expanded from 1 minified line to 1918 pretty-printed lines with nested CSS syntax. Not a security issue, but the nested `&:` syntax may have browser compatibility implications. Needs Legolas (frontend) to confirm this is intentional and not a build artifact mismatch.
+
+**PR #12** — `squad/prepush-gate` → `dev` (8 files: pre-push hook, install-hooks.sh, CONTRIBUTING.md, SKILL.md, PR template, squad docs)
+
+**Verdict:** APPROVE_READY
+
+- **[CLEAN] Shell script security** — `install-hooks.sh` and `.github/hooks/pre-push` use proper variable quoting, no eval/exec of user input, `set -e` / `set -uo pipefail`, and no injection vectors.
+- **[CLEAN] No secrets** — No credentials committed. PR template checklist correctly includes secrets check.
+- **[LOW] Shebang portability** — `install-hooks.sh:1` uses `#!/bin/bash`; pre-push hook uses `#!/usr/bin/env bash`. Minor inconsistency, not a security issue.
+- **[LOW] Stale Azurite reference** — `pre-push:116` mentions Azurite but only MongoDB Testcontainers are used. Misleading, not dangerous.
+- **[LOW] Dead playbook link** — `SKILL.md:17,75` references `.squad/playbooks/pre-push-process.md` which does not exist.
