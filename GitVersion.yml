@@ -13,8 +13,6 @@ branches:
     label: ''
     increment: Patch
     is-mainline: true
-    prevent-increment:
-      of-merged-branch: true
     source-branches: [ dev ]
 
   dev:
