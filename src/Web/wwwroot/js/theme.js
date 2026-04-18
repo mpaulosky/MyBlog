@@ -1,34 +1,31 @@
 // Copyright (c) 2024-2025. MyBlog Project.
 // Theme management for color and brightness preferences
-// Ported from IssueTrackerApp theme architecture
+// Simplified architecture: CSS custom property swap for color, native dark: variant for brightness
 // SPDX-License-Identifier: MIT
 
 /**
- * Theme Manager - Handles color + brightness theme combinations
- * 4 colors (blue, red, green, yellow) × 2 brightness (light, dark) = 8 themes
- * Stores preferences in localStorage and applies classes to the DOM
+ * Theme Manager - Simplified color + brightness management
+ * 4 colors (blue, red, green, yellow) × 2 brightness (light, dark)
+ * Color controlled by :root.color-{name} class
+ * Brightness controlled by Tailwind's native dark: variant via .dark class
+ * Stores preferences in localStorage as two separate keys
  */
 window.themeManager = {
-	THEMES: [
-		'theme-blue-light', 'theme-blue-dark',
-		'theme-red-light', 'theme-red-dark',
-		'theme-green-light', 'theme-green-dark',
-		'theme-yellow-light', 'theme-yellow-dark'
-	],
-
 	COLORS: ['blue', 'red', 'green', 'yellow'],
 	BRIGHTNESS: ['light', 'dark'],
-	STORAGE_KEY: 'tailwind-color-theme',
-	DEFAULT_THEME: 'theme-blue-light',
+	COLOR_KEY: 'theme-color',
+	BRIGHTNESS_KEY: 'theme-mode',
+	DEFAULT_COLOR: 'blue',
+	DEFAULT_BRIGHTNESS: 'light',
 
 	/**
 	 * Gets the current color from localStorage
 	 * @returns {string} The current color (blue, red, green, yellow)
 	 */
 	getColor: function () {
-		var theme = this.getCurrentTheme();
-		var parts = theme.replace('theme-', '').split('-');
-		return parts[0] || 'blue';
+		var color = localStorage.getItem(this.COLOR_KEY) || this.DEFAULT_COLOR;
+		if (this.COLORS.indexOf(color) === -1) color = this.DEFAULT_COLOR;
+		return color;
 	},
 
 	/**
@@ -36,17 +33,13 @@ window.themeManager = {
 	 * @returns {string} The current brightness (light, dark)
 	 */
 	getBrightness: function () {
-		var theme = this.getCurrentTheme();
-		var parts = theme.replace('theme-', '').split('-');
-		return parts[1] || 'light';
-	},
-
-	/**
-	 * Gets the full current theme name
-	 * @returns {string} The current theme (e.g., 'theme-blue-light')
-	 */
-	getCurrentTheme: function () {
-		return localStorage.getItem(this.STORAGE_KEY) || this.DEFAULT_THEME;
+		var brightness = localStorage.getItem(this.BRIGHTNESS_KEY);
+		if (!brightness) {
+			// Default to system preference
+			brightness = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		}
+		if (this.BRIGHTNESS.indexOf(brightness) === -1) brightness = this.DEFAULT_BRIGHTNESS;
+		return brightness;
 	},
 
 	/**
@@ -62,8 +55,18 @@ window.themeManager = {
 	 * @param {string} color - The color: 'blue', 'red', 'green', 'yellow'
 	 */
 	setColor: function (color) {
-		var brightness = this.getBrightness();
-		this.setTheme('theme-' + color + '-' + brightness);
+		if (this.COLORS.indexOf(color) === -1) color = this.DEFAULT_COLOR;
+		
+		var html = document.documentElement;
+		
+		// Remove all color classes
+		for (var i = 0; i < this.COLORS.length; i++) {
+			html.classList.remove('color-' + this.COLORS[i]);
+		}
+		
+		// Add the selected color class
+		html.classList.add('color-' + color);
+		localStorage.setItem(this.COLOR_KEY, color);
 	},
 
 	/**
@@ -71,47 +74,28 @@ window.themeManager = {
 	 * @param {string} brightness - The brightness: 'light' or 'dark'
 	 */
 	setBrightness: function (brightness) {
-		var color = this.getColor();
-		this.setTheme('theme-' + color + '-' + brightness);
-	},
-
-	/**
-	 * Sets the full theme and applies it
-	 * @param {string} themeName - Full theme name (e.g., 'theme-blue-light')
-	 */
-	setTheme: function (themeName) {
-		if (this.THEMES.indexOf(themeName) === -1) {
-			themeName = this.DEFAULT_THEME;
-		}
-
+		if (this.BRIGHTNESS.indexOf(brightness) === -1) brightness = this.DEFAULT_BRIGHTNESS;
+		
 		var html = document.documentElement;
-
-		// Remove all theme classes
-		for (var i = 0; i < this.THEMES.length; i++) {
-			html.classList.remove(this.THEMES[i]);
-		}
-
-		// Add the selected theme class
-		html.classList.add(themeName);
-		localStorage.setItem(this.STORAGE_KEY, themeName);
-
-		// Sync dark/light class for Tailwind dark: variant
-		var isDark = themeName.includes('-dark');
-		if (isDark) {
+		
+		// Toggle dark class for Tailwind's dark: variant
+		if (brightness === 'dark') {
 			html.classList.add('dark');
-			html.classList.remove('light');
 		} else {
 			html.classList.remove('dark');
-			html.classList.add('light');
 		}
+		
+		localStorage.setItem(this.BRIGHTNESS_KEY, brightness);
 	},
 
 	/**
 	 * Applies the saved theme from localStorage
 	 */
 	applyTheme: function () {
-		var theme = this.getCurrentTheme();
-		this.setTheme(theme);
+		var color = this.getColor();
+		var brightness = this.getBrightness();
+		this.setColor(color);
+		this.setBrightness(brightness);
 	},
 
 	/**
@@ -137,12 +121,13 @@ window.themeManager = {
 
 	/**
 	 * Gets the display-friendly current theme label
-	 * @returns {string} e.g., "BLUE Light"
+	 * @returns {string} e.g., "Blue Dark"
 	 */
 	getCurrentLabel: function () {
-		var color = this.getColor().toUpperCase();
+		var color = this.getColor();
 		var brightness = this.getBrightness();
-		return color + ' ' + brightness.charAt(0).toUpperCase() + brightness.slice(1);
+		return color.charAt(0).toUpperCase() + color.slice(1) + ' ' + 
+		       brightness.charAt(0).toUpperCase() + brightness.slice(1);
 	},
 
 	/**

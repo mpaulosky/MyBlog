@@ -7,13 +7,31 @@ source: "earned — feature/tailwind-migration branch, confirmed working by user
 tools: []
 ---
 
+## ⚠️ DEPRECATION NOTICE
+
+**This skill documents the OLD 8-theme system which has been replaced.**
+
+**Current Architecture (2025-01-29):**
+- **4 color swap classes**: `:root.color-blue`, `:root.color-red`, `:root.color-green`, `:root.color-yellow`
+- **Native dark mode**: Uses `.dark` class + Tailwind's `dark:` variant
+- **Split storage keys**: `theme-color` + `theme-mode` (not unified `tailwind-color-theme`)
+- **Standard Tailwind palettes**: Uses Tailwind's default hex colors (not custom OKLCH)
+- **CSS custom properties**: Swap `--primary-50` through `--primary-950` based on color class
+- **Common elements**: Standardized `body`, `a`, `h1-h3`, `.nav-link`, `.btn-primary`, `.card` with light/dark variants
+
+**See:** `.squad/decisions/inbox/legolas-simplified-theme-architecture.md` for full details.
+
+**Old patterns documented below (for reference only):**
+
+---
+
 ## Context
 
 Applies to Blazor Server apps using Tailwind CSS for multi-color theme support (light/dark + color palette). Blazor's enhanced navigation (`enhancedload` / `blazor:navigated` events) and DOM reconciliation can strip `<html>` class attributes mid-session, causing theme resets and FOUC. This skill covers the full solution.
 
-## Patterns
+## Patterns (DEPRECATED)
 
-### 1. Unified Storage Key
+### 1. Unified Storage Key (DEPRECATED — use split keys)
 
 Use a single `localStorage` key that encodes both color and brightness:
 

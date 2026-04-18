@@ -7,35 +7,53 @@
   <base href="/" />
   <script>
       (function () {
-        var STORAGE_KEY = "tailwind-color-theme";
-        var VALID_THEMES = [
-          "theme-blue-light", "theme-blue-dark",
-          "theme-red-light", "theme-red-dark",
-          "theme-green-light", "theme-green-dark",
-          "theme-yellow-light", "theme-yellow-dark"
-        ];
+        var COLOR_KEY = "theme-color";
+        var BRIGHTNESS_KEY = "theme-mode";
+        var VALID_COLORS = ["red", "blue", "green", "yellow"];
+        var VALID_BRIGHTNESS = ["light", "dark"];
 
         function applyThemeFromStorage() {
-          var theme = localStorage.getItem(STORAGE_KEY) || "theme-blue-light";
-          if (VALID_THEMES.indexOf(theme) === -1) theme = "theme-blue-light";
+          var color = localStorage.getItem(COLOR_KEY) || "blue";
+          if (VALID_COLORS.indexOf(color) === -1) color = "blue";
+
+          var brightness = localStorage.getItem(BRIGHTNESS_KEY);
+          if (!brightness) {
+            // Default to system preference
+            brightness = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          if (VALID_BRIGHTNESS.indexOf(brightness) === -1) brightness = "light";
+
           var html = document.documentElement;
-          VALID_THEMES.forEach(function (t) { html.classList.remove(t); });
-          html.classList.add(theme);
-          if (theme.indexOf("-dark") !== -1) {
+
+          // Remove all color classes
+          VALID_COLORS.forEach(function (c) { html.classList.remove("color-" + c); });
+
+          // Add selected color class
+          html.classList.add("color-" + color);
+
+          // Toggle dark class for Tailwind dark: variant
+          if (brightness === "dark") {
             html.classList.add("dark");
-            html.classList.remove("light");
           } else {
             html.classList.remove("dark");
-            html.classList.add("light");
           }
         }
 
-        // Migrate old storage keys (colorTheme + darkMode) → new unified key
-        if (!localStorage.getItem(STORAGE_KEY)) {
-          var oldColor = (localStorage.getItem("colorTheme") || "theme-blue").replace("theme-", "");
-          if (["red", "blue", "green", "yellow"].indexOf(oldColor) === -1) oldColor = "blue";
-          var brightness = localStorage.getItem("darkMode") === "true" ? "dark" : "light";
-          localStorage.setItem(STORAGE_KEY, "theme-" + oldColor + "-" + brightness);
+        // Migrate old unified key (theme-blue-dark) → new split keys
+        var oldKey = "tailwind-color-theme";
+        if (localStorage.getItem(oldKey) && !localStorage.getItem(COLOR_KEY)) {
+          var oldTheme = localStorage.getItem(oldKey);
+          var parts = oldTheme.replace("theme-", "").split("-");
+          if (parts.length === 2) {
+            var oldColor = parts[0];
+            var oldBrightness = parts[1];
+            if (VALID_COLORS.indexOf(oldColor) !== -1) {
+              localStorage.setItem(COLOR_KEY, oldColor);
+            }
+            if (VALID_BRIGHTNESS.indexOf(oldBrightness) !== -1) {
+              localStorage.setItem(BRIGHTNESS_KEY, oldBrightness);
+            }
+          }
         }
 
         // Apply BEFORE stylesheets load — true anti-FOUC
@@ -70,8 +88,8 @@
         window._themeObserver = new MutationObserver(function () {
           if (_reapplying) return;
           var html = document.documentElement;
-          var hasTheme = VALID_THEMES.some(function (t) { return html.classList.contains(t); });
-          if (!hasTheme) {
+          var hasColor = VALID_COLORS.some(function (c) { return html.classList.contains("color-" + c); });
+          if (!hasColor) {
             _reapplying = true;
             applyThemeFromStorage();
             _reapplying = false;

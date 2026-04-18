@@ -156,3 +156,59 @@
 
 **Filed:** `.squad/decisions/inbox/legolas-css-folder-restructure.md`
 
+
+---
+
+## 2025-01-29 — Simplified Theme Architecture Implementation
+
+### What I Learned
+
+**Theme system can be dramatically simplified by separating orthogonal concerns:**
+- The 8-theme system (theme-blue-dark, theme-red-light, etc.) was over-engineered
+- Color selection and brightness control are independent concerns that don't need to be tightly coupled
+- Using CSS custom property swapping (`:root.color-{name}`) + Tailwind's native `dark:` variant is more idiomatic than custom theme classes
+- Split storage keys (`theme-color` + `theme-mode`) are easier to reason about than unified format (`tailwind-color-theme: 'theme-blue-dark'`)
+
+**Tailwind v4 CSS custom properties work perfectly for theme swapping:**
+- `@theme inline` generates utility classes from CSS variables at build time
+- `:root { --primary-400: 59 130 246; }` → `:root.color-red { --primary-400: 239 68 68; }` swaps the color palette
+- Components use `bg-primary-400 dark:bg-primary-800` and Tailwind handles the rest
+- Standard Tailwind hex colors (converted to RGB for `rgb(var(--primary-400))` syntax) are more maintainable than custom OKLCH values
+
+**Migration strategy preserved existing user preferences:**
+- Anti-FOUC IIFE checks for old `tailwind-color-theme` key and splits it into new keys on first load
+- MutationObserver pattern still works but now watches for `color-{name}` classes instead of `theme-{color}-{brightness}`
+- Existing architecture (IIFE + event listeners + MutationObserver) didn't need major changes, just parameter updates
+
+**Semantic CSS variables are a maintenance burden:**
+- Old system used `--color-canvas`, `--color-surface`, `--color-content`, `--color-muted`, `--color-edge` to abstract colors
+- These tightly coupled to the 8-theme system and didn't translate well to the simplified approach
+- Better to use explicit Tailwind classes (`bg-white dark:bg-gray-800`) than maintain semantic layers
+
+**Common element standardization reduces duplication:**
+- Adding base styles for `body`, `a`, `h1-h3` with `dark:` variants eliminates repetitive class application
+- Component classes like `.nav-link`, `.btn-primary`, `.card` centralize patterns used across multiple files
+- This is a Tailwind v4 best practice — use `@layer components` for repeated patterns, utilities for one-offs
+
+**Files requiring updates after theme system changes:**
+- All form pages (Create.razor, Edit.razor) that used semantic vars
+- All list/table pages (Index.razor, ManageRoles.razor, Weather.razor) with old `odd:bg-canvas even:bg-surface` patterns
+- Layout components (NavMenu.razor, MainLayout.razor) with hardcoded theme-specific classes
+- Special CSS files (ReconnectModal.razor.css) with `var(--color-*)` references
+- Sample pages (Counter.razor, Weather.razor) for consistency
+
+**Grep patterns that catch theme system remnants:**
+```bash
+theme-blue-|theme-red-|theme-green-|theme-yellow-  # Old 8 theme classes
+color-canvas|color-surface|color-content|color-muted|color-edge  # Semantic CSS vars
+bg-canvas|bg-surface|text-content|text-muted|border-edge  # Semantic utility classes
+bg-primary-hover  # Old custom hover state (now use dark: variant)
+```
+
+**Build verification is critical:**
+- Running `npm run tw:build` confirms CSS variables generate expected utilities
+- Checking `tailwind.css` for `bg-primary-*`, `text-primary-*` patterns verifies the custom properties work
+- Tailwind v4 build is fast (64ms) so no excuse not to verify after CSS changes
+
+**Filed:** `.squad/decisions/inbox/legolas-simplified-theme-architecture.md`
+

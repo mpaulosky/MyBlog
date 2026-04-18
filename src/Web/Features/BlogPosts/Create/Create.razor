@@ -19,27 +19,27 @@
     </div>
 }
 
-<div class="rounded-lg shadow p-6 bg-surface max-w-2xl">
+<div class="rounded-lg shadow p-6 bg-white dark:bg-gray-800 max-w-2xl">
     <EditForm Model="_model" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary class="mb-4" />
 
         <div class="mb-4">
-            <label class="block text-sm font-medium text-content mb-1">Title</label>
-            <InputText class="w-full rounded border border-edge bg-surface text-content px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" @bind-Value="_model.Title" />
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Title</label>
+            <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Title" />
         </div>
         <div class="mb-4">
-            <label class="block text-sm font-medium text-content mb-1">Author</label>
-            <InputText class="w-full rounded border border-edge bg-surface text-content px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" @bind-Value="_model.Author" />
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Author</label>
+            <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Author" />
         </div>
         <div class="mb-4">
-            <label class="block text-sm font-medium text-content mb-1">Content</label>
-            <InputTextArea class="w-full rounded border border-edge bg-surface text-content px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" rows="8" @bind-Value="_model.Content" />
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Content</label>
+            <InputTextArea class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" rows="8" @bind-Value="_model.Content" />
         </div>
 
         <div class="flex gap-2">
-            <button type="submit" class="px-4 py-2 rounded font-medium text-white bg-primary hover:bg-primary-hover transition">Create</button>
-            <a href="/blog" class="px-4 py-2 rounded font-medium border border-edge text-content hover:bg-surface transition">Cancel</a>
+            <button type="submit" class="btn-primary">Create</button>
+            <a href="/blog" class="px-4 py-2 rounded font-medium border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</a>
         </div>
     </EditForm>
 </div>

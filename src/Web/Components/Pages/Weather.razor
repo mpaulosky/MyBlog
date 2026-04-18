@@ -5,17 +5,17 @@
 
 <h1 class="text-3xl font-bold mb-6">Weather</h1>
 
-<p class="mb-4 text-content">This component demonstrates showing data.</p>
+<p class="mb-4 text-gray-900 dark:text-gray-50">This component demonstrates showing data.</p>
 
 @if (forecasts == null)
 {
-    <p class="text-muted"><em>Loading...</em></p>
+    <p class="text-gray-600 dark:text-gray-400"><em>Loading...</em></p>
 }
 else
 {
-    <div class="rounded-lg shadow bg-surface overflow-hidden">
-        <table class="w-full text-sm text-left text-content">
-            <thead class="bg-canvas text-muted border-b border-edge">
+    <div class="rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden">
+        <table class="w-full text-sm text-left text-gray-900 dark:text-gray-50">
+            <thead class="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                     <th class="px-4 py-3">Date</th>
                     <th class="px-4 py-3" aria-label="Temperature in Celsius">Temp. (C)</th>
@@ -26,7 +26,7 @@ else
             <tbody>
                 @foreach (var forecast in forecasts)
                 {
-                    <tr class="odd:bg-canvas even:bg-surface border-b border-edge">
+                    <tr class="odd:bg-white odd:dark:bg-gray-800 even:bg-gray-50 even:dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                         <td class="px-4 py-3">@forecast.Date.ToShortDateString()</td>
                         <td class="px-4 py-3">@forecast.TemperatureC</td>
                         <td class="px-4 py-3">@forecast.TemperatureF</td>

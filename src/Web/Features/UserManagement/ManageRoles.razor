@@ -12,7 +12,7 @@
 
 @if (_loading)
 {
-    <p class="text-muted">Loading users...</p>
+    <p class="text-gray-600 dark:text-gray-400">Loading users...</p>
 }
 else
 {
@@ -20,18 +20,18 @@ else
     {
         <div class="rounded-lg border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm mb-4 flex items-center justify-between" role="alert">
             <span>@_error</span>
-            <button type="button" class="ml-4 cursor-pointer text-red-700 hover:text-red-900" @onclick="() => _error = null">&times;</button>
+            <button type="button" class="ml-4 cursor-pointer text-red-700 hover:text-red-900" aria-label="Close error" @onclick="() => _error = null">&times;</button>
         </div>
     }
 
     @if (_availableRoles.Any())
     {
-        <p class="text-muted mb-4">Available roles: @string.Join(", ", _availableRoles.Select(r => r.Name))</p>
+        <p class="text-gray-600 dark:text-gray-400 mb-4">Available roles: @string.Join(", ", _availableRoles.Select(r => r.Name))</p>
     }
 
-    <div class="rounded-lg shadow bg-surface overflow-hidden">
-        <table class="w-full text-sm text-left text-content">
-            <thead class="bg-canvas text-muted border-b border-edge">
+    <div class="rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden">
+        <table class="w-full text-sm text-left text-gray-900 dark:text-gray-50">
+            <thead class="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                     <th class="px-4 py-3">User</th>
                     <th class="px-4 py-3">Email</th>
@@ -42,7 +42,7 @@ else
             <tbody>
                 @foreach (var user in _users)
                 {
-                    <tr class="odd:bg-canvas even:bg-surface border-b border-edge hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <tr class="odd:bg-white odd:dark:bg-gray-800 even:bg-gray-50 even:dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-primary-950 transition">
                         <td class="px-4 py-3">@user.Name</td>
                         <td class="px-4 py-3">@user.Email</td>
                         <td class="px-4 py-3">@string.Join(", ", user.Roles)</td>

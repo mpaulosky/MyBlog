@@ -5,9 +5,9 @@
 
 <h1 class="text-3xl font-bold mb-6">Counter</h1>
 
-<p role="status" class="mb-4 text-content">Current count: @currentCount</p>
+<p role="status" class="mb-4 text-gray-900 dark:text-gray-50">Current count: @currentCount</p>
 
-<button class="px-4 py-2 rounded font-medium text-white bg-primary hover:bg-primary-hover transition" @onclick="IncrementCount">Click me</button>
+<button class="btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
     private int currentCount = 0;

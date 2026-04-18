@@ -50,6 +50,7 @@ public static class RoleClaimsHelper
             }
             catch (JsonException)
             {
+                return [];
             }
         }
 
@@ -80,7 +81,8 @@ public static class RoleClaimsHelper
 
     public static IReadOnlyList<string> GetRoles(ClaimsPrincipal user, IEnumerable<string>? roleClaimTypes = null)
     {
-        var types = (roleClaimTypes ?? DefaultRoleClaimTypes.Append(ClaimTypes.Role))
+        var types = (roleClaimTypes ?? DefaultRoleClaimTypes)
+            .Append(ClaimTypes.Role)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
