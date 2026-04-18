@@ -212,3 +212,63 @@ bg-primary-hover  # Old custom hover state (now use dark: variant)
 
 **Filed:** `.squad/decisions/inbox/legolas-simplified-theme-architecture.md`
 
+---
+
+## 2025-01-29 — Razor @using Directives Consolidation
+
+### What I Learned
+
+**_Imports.razor files provide namespace inheritance for directory subtrees:**
+- `src/Web/Components/_Imports.razor` applies to all files under `Components/` (Pages/, Layout/, Shared/)
+- `src/Web/Features/_Imports.razor` applies to all files under `Features/` (BlogPosts/, UserManagement/)
+- These are hierarchical — child directories inherit parent _Imports directives
+- Common pattern: base framework usings in root _Imports, feature-specific in subdirectory _Imports
+
+**Common usings identified across Feature pages:**
+- `@using MediatR` appeared in 4 files (Create.razor, Index.razor, Edit.razor, ManageRoles.razor) — all Feature pages use MediatR for CQRS commands/queries
+- `@using Microsoft.AspNetCore.Authorization` appeared in 4 files (Create.razor, Edit.razor, ManageRoles.razor, Profile.razor) — auth attributes are common
+- `@using MyBlog.Web.Data` was already in Features/_Imports.razor, found redundantly in Index.razor and Edit.razor
+- `@using Microsoft.AspNetCore.Components.Authorization` appeared in Index.razor and NavMenu.razor — already in both _Imports files
+
+**File-specific usings should NOT be centralized:**
+- Feature namespace usings like `@using MyBlog.Web.Features.BlogPosts.Create` are unique to that page
+- Specialized types like `@using System.Security.Claims` in Profile.razor only used there
+- Component-specific usings like `@using MyBlog.Web.Security` for helper classes
+- These provide no DRY benefit and make dependencies less obvious
+
+**ConfirmDeleteDialog.razor had redundant using:**
+- `@using Microsoft.AspNetCore.Components` was present but unnecessary
+- Base component types (RenderFragment, EventCallback, Parameter attribute) are automatically available
+- Removing it didn't break the build — Blazor provides these by default
+
+**Components/_Imports.razor already comprehensive:**
+- Already included MediatR, Authorization, Components.Authorization, and other commonly-used namespaces
+- NavMenu.razor and Routes.razor both had redundant `@using Microsoft.AspNetCore.Components.Authorization`
+- No changes needed to Components/_Imports.razor itself
+
+**Updated files pattern:**
+1. Added common usings to Features/_Imports.razor (MediatR, Authorization)
+2. Removed those usings from individual feature pages
+3. Kept feature-namespace and specialized usings in individual files
+4. Verified build succeeded with 0 errors
+
+**Build verification critical for Razor changes:**
+- `dotnet build MyBlog.slnx --configuration Release` confirms no missing usings
+- Razor compiler errors are clear when a namespace is missing
+- Fast feedback loop (8 seconds for full build)
+
+**Files changed (9 total):**
+- `Features/_Imports.razor` — added MediatR and Authorization
+- `Features/BlogPosts/Create/Create.razor` — removed 2 usings
+- `Features/BlogPosts/List/Index.razor` — removed 3 usings
+- `Features/BlogPosts/Edit/Edit.razor` — removed 3 usings
+- `Features/UserManagement/ManageRoles.razor` — removed 2 usings
+- `Features/UserManagement/Profile.razor` — removed 1 using
+- `Features/BlogPosts/Delete/ConfirmDeleteDialog.razor` — removed 1 using
+- `Components/Layout/NavMenu.razor` — removed 1 using
+- `Components/Routes.razor` — removed 1 using
+
+**Total reduction: 14 redundant @using directives eliminated**
+
+**Filed:** `.squad/decisions/inbox/legolas-razor-imports.md`
+
