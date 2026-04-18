@@ -6,13 +6,23 @@ set -e
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="$REPO_ROOT/.github/hooks/pre-push"
-HOOKS_DIR="$(git -C "$REPO_ROOT" rev-parse --git-path hooks)"
+HOOKS_DIR_RAW="$(git -C "$REPO_ROOT" rev-parse --git-path hooks)"
+case "$HOOKS_DIR_RAW" in
+  /*)
+    HOOKS_DIR="$HOOKS_DIR_RAW"
+    ;;
+  *)
+    HOOKS_DIR="$REPO_ROOT/$HOOKS_DIR_RAW"
+    ;;
+esac
 DEST="$HOOKS_DIR/pre-push"
 
 if [[ ! -f "$SOURCE" ]]; then
   echo "❌  Source hook not found: $SOURCE"
   exit 1
 fi
+
+mkdir -p "$HOOKS_DIR"
 
 if [[ -f "$DEST" ]] && cmp -s "$SOURCE" "$DEST"; then
   echo "✅  Pre-push hook is already up-to-date. Nothing to do."

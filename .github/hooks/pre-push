@@ -47,7 +47,7 @@ while [[ $BUILD_ATTEMPT -lt $MAX_ATTEMPTS ]]; do
   BUILD_EXIT=$?
 
   if [[ $BUILD_EXIT -ne 0 ]]; then
-    echo -e "  ↻ Auto-retrying build once (clearing incremental state)..."
+    echo -e "  ↻ Auto-retrying build once..."
     dotnet build MyBlog.slnx --configuration Release
     BUILD_EXIT=$?
   fi
