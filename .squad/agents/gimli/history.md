@@ -99,3 +99,49 @@ Review PR #2 test files for compliance with Gimli's Critical Rules and team conv
 3. **bUnit test structure** — `BunitContext` base class + test helpers (like `TestAuthorizationService`) + `RenderForUser` patterns create clean, reusable component test setup.
 
 4. **Test namespace convention** — `MyBlog.Unit.Tests.{Folder}` matches the charter requirement for unit test namespace pattern.
+
+## Session: Remove Weather and Counter Tests (2026-04)
+
+### Task
+Remove ALL test code related to Weather and Counter from the test projects. These are Blazor default template leftovers.
+
+### Work Done
+**Coordination:** Worked on shared branch `squad/remove-weather-counter` created by Legolas.
+
+**Discovery:** Legolas had already completed ALL test cleanup in commit `4dc0b08`:
+- Removed 2 test methods from `tests/Unit.Tests/Components/RazorSmokeTests.cs`:
+  - `Counter_Increments_WhenButtonClicked()` — tested the Counter component increment behavior
+  - `Weather_LoadsForecasts()` — tested Weather component forecast loading
+
+**Verification:**
+- Searched entire `tests/` directory — NO remaining Weather or Counter references found
+- Architecture tests (`tests/Architecture.Tests/`) — clean
+- Integration tests (`tests/Integration.Tests/`) — clean
+- Unit tests (`tests/Unit.Tests/`) — only RazorSmokeTests.cs was modified
+
+**Build & Test Results:**
+✅ Build: SUCCESS (0 warnings, 0 errors)
+✅ Tests: ALL PASSING
+- Architecture.Tests: 6 tests passed
+- Unit.Tests: 59 tests passed (down from 61 after removing 2 Weather/Counter tests)
+- Integration.Tests: 9 tests passed
+- Code coverage: 91.64% line coverage maintained
+
+**PR Created:** https://github.com/mpaulosky/MyBlog/pull/6
+
+### Learnings
+
+1. **Team coordination** — When working on a shared branch, another team member may complete overlapping work. Always check existing commits before starting work.
+
+2. **No Weather/Counter integration/architecture tests existed** — The template leftovers were only tested in unit tests (RazorSmokeTests.cs). No cleanup needed in Architecture.Tests or Integration.Tests.
+
+3. **Test count tracking** — After removing template tests:
+   - BEFORE: 61 unit tests (including Counter + Weather)
+   - AFTER: 59 unit tests (real blog functionality only)
+   - Net reduction: 2 tests removed
+
+4. **Shared branch workflow** — When working with Legolas on the same branch:
+   - Check if branch exists remotely before creating locally
+   - Pull latest changes to avoid duplication
+   - Review what's been done already (via `git log`, `git show`)
+   - Add complementary work if needed, or verify and open PR if complete
