@@ -1,3 +1,11 @@
+// ============================================
+// Copyright (c) 2025. All rights reserved.
+// File Name :     ProfileTests.cs
+// Company :       mpaulosky
+// Author :        mpaulosky
+// Solution Name : MyBlog
+// Project Name :  Unit.Tests
+// =============================================
 using System.Security.Claims;
 using Bunit;
 using FluentAssertions;
@@ -11,6 +19,7 @@ public class ProfileTests : BunitContext
     [Fact]
     public void Profile_RendersIdentityDetailsRolesPictureAndClaims()
     {
+        // Arrange
         var principal = CreatePrincipal(
             name: "Admin User",
             email: "admin@example.com",
@@ -19,8 +28,10 @@ public class ProfileTests : BunitContext
             rolesJson: "[\"Admin\",\"Author\"]",
             extraClaims: [new Claim("department", "Engineering")]);
 
+        // Act
         var cut = RenderForUser(principal);
 
+        // Assert
         cut.Markup.Should().Contain("Admin User");
         cut.Markup.Should().Contain("admin@example.com");
         cut.Markup.Should().Contain("auth0|123");
@@ -34,6 +45,7 @@ public class ProfileTests : BunitContext
     [Fact]
     public void Profile_UsesFallbackValues_WhenOptionalClaimsAreMissing()
     {
+        // Arrange
         var principal = CreatePrincipal(
             name: null,
             email: null,
@@ -42,8 +54,10 @@ public class ProfileTests : BunitContext
             rolesJson: null,
             extraClaims: []);
 
+        // Act
         var cut = RenderForUser(principal);
 
+        // Assert
         cut.Markup.Should().Contain("Unknown User");
         cut.Markup.Should().Contain("No email claim found");
         cut.Markup.Should().Contain("No roles found in the current claims.");

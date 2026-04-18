@@ -1,3 +1,11 @@
+// ============================================
+// Copyright (c) 2025. All rights reserved.
+// File Name :     RazorSmokeTests.cs
+// Company :       mpaulosky
+// Author :        mpaulosky
+// Solution Name : MyBlog
+// Project Name :  Unit.Tests
+// =============================================
 using Bunit;
 using Domain.Abstractions;
 using FluentAssertions;
@@ -33,8 +41,11 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void Home_RendersWelcomeMessage()
     {
+        // Arrange (none)
+        // Act
         var cut = Render<Home>();
 
+        // Assert
         cut.Markup.Should().Contain("Hello, users!");
         cut.Markup.Should().Contain("Welcome to your new app.");
     }
@@ -42,8 +53,11 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void Counter_Increments_WhenButtonClicked()
     {
+        // Arrange (none)
+        // Act
         var cut = Render<Counter>();
 
+        // Assert
         cut.Markup.Should().Contain("Current count: 0");
         cut.Find("button").Click();
         cut.Markup.Should().Contain("Current count: 1");
@@ -52,8 +66,11 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void Weather_LoadsForecasts()
     {
+        // Arrange (none)
+        // Act
         var cut = Render<Weather>();
 
+        // Assert
         cut.WaitForAssertion(() =>
         {
             cut.Markup.Should().Contain("Temp. (C)");
@@ -64,21 +81,27 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void Error_UsesCascadingHttpContextTraceIdentifier()
     {
+        // Arrange
         var httpContext = new DefaultHttpContext
         {
             TraceIdentifier = "trace-123"
         };
 
+        // Act
         var cut = Render<Error>(parameters => parameters.AddCascadingValue(httpContext));
 
+        // Assert
         cut.Markup.Should().Contain("trace-123");
     }
 
     [Fact]
     public void NotFound_RendersNotFoundMessage()
     {
+        // Arrange (none)
+        // Act
         var cut = Render<NotFound>();
 
+        // Assert
         cut.Markup.Should().Contain("Not Found");
         cut.Markup.Should().Contain("does not exist");
     }
@@ -86,10 +109,13 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void ConfirmDeleteDialog_ShowsDialog_WhenVisible()
     {
+        // Arrange (none)
+        // Act
         var cut = Render<ConfirmDeleteDialog>(parameters => parameters
             .Add(p => p.IsVisible, true)
             .Add(p => p.PostTitle, "My Post"));
 
+        // Assert
         cut.Markup.Should().Contain("Confirm Delete");
         cut.Markup.Should().Contain("My Post");
     }
@@ -97,19 +123,25 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void RedirectToLogin_NavigatesToLoginWithReturnUrl()
     {
+        // Arrange
         var navigation = Services.GetRequiredService<NavigationManager>();
 
+        // Act
         Render<RedirectToLogin>();
 
+        // Assert
         navigation.Uri.Should().Contain("/Account/Login?returnUrl=");
     }
 
     [Fact]
     public void MainLayout_RendersMainContentTargetAndFooter()
     {
+        // Arrange (none)
+        // Act
         var cut = RenderWithUser<MainLayout>(CreatePrincipal("Layout User", ["Author"]), parameters => parameters
             .Add(layout => layout.Body, (RenderFragment)(builder => builder.AddContent(0, "Body content"))));
 
+        // Assert
         cut.Markup.Should().Contain("id=\"main-content\"");
         cut.Markup.Should().Contain("Body content");
         cut.Markup.Should().Contain("Training Project");
@@ -118,6 +150,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void BlogIndex_RendersPostsForAuthorizedUser_AndCanOpenDeleteDialog()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var posts = new[]
         {
@@ -129,8 +162,10 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
+        // Assert
         cut.Markup.Should().Contain("First");
         cut.Markup.Should().Contain("Edit");
         cut.Find("button").Click();
@@ -140,20 +175,24 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void BlogIndex_ShowsEmptyState_WhenNoPostsExist()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(Array.Empty<BlogPostDto>())));
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
+        // Assert
         cut.Markup.Should().Contain("No posts yet.");
     }
 
     [Fact]
     public void BlogIndex_ConfirmDelete_SendsDeleteCommandAndRefreshesList()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var postId = Guid.NewGuid();
         var posts = new[]
@@ -170,11 +209,13 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
         cut.Find("button").Click();
         cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
 
+        // Assert
         sender.Received(1).Send(Arg.Is<DeleteBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
         cut.WaitForAssertion(() => cut.Markup.Should().Contain("No posts yet."));
     }
@@ -182,6 +223,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void BlogIndex_ShowsConcurrencyWarning_WhenDeleteFailsWithConcurrency()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var postId = Guid.NewGuid();
         var posts = new[]
@@ -196,11 +238,13 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
         cut.Find("button").Click();
         cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
 
+        // Assert
         cut.WaitForAssertion(() =>
         {
             cut.Markup.Should().Contain("Concurrency Conflict");
@@ -211,10 +255,13 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void CreatePost_RendersForm()
     {
+        // Arrange
         Services.AddSingleton(Substitute.For<ISender>());
 
+        // Act
         var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
+        // Assert
         cut.Markup.Should().Contain("Create Post");
         cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(2);
         cut.Find("textarea");
@@ -223,12 +270,15 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void CreatePost_SubmitsAndNavigatesToBlog_WhenCommandSucceeds()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         sender.Send(Arg.Any<CreateBlogPostCommand>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(Result.Ok(Guid.NewGuid())));
         Services.AddSingleton(sender);
 
         var navigation = Services.GetRequiredService<NavigationManager>();
+
+        // Act
         var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
         cut.FindAll("input")[0].Change("My title");
@@ -236,6 +286,7 @@ public class RazorSmokeTests : BunitContext
         cut.Find("textarea").Change("Hello world");
         cut.Find("form").Submit();
 
+        // Assert
         sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
             command.Title == "My title" &&
             command.Author == "Alice" &&
@@ -246,6 +297,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void EditPost_LoadsExistingPost()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var postId = Guid.NewGuid();
         var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
@@ -255,8 +307,10 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
 
+        // Assert
         cut.Markup.Should().Contain("Edit Post");
         cut.Markup.Should().Contain("Existing title");
         cut.Markup.Should().Contain("Existing content");
@@ -265,6 +319,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void EditPost_ShowsConcurrencyMessage_WhenSaveFailsWithConcurrency()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var postId = Guid.NewGuid();
         var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
@@ -276,16 +331,19 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
 
         cut.Find("form").Submit();
 
+        // Assert
         cut.WaitForAssertion(() => cut.Markup.Should().Contain("Concurrency Conflict"));
     }
 
     [Fact]
     public void EditPost_SubmitsAndNavigatesToBlog_WhenSaveSucceeds()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var postId = Guid.NewGuid();
         var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
@@ -298,10 +356,13 @@ public class RazorSmokeTests : BunitContext
         Services.AddSingleton(sender);
 
         var navigation = Services.GetRequiredService<NavigationManager>();
+
+        // Act
         var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
 
         cut.Find("form").Submit();
 
+        // Assert
         sender.Received(1).Send(Arg.Is<EditBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
         navigation.Uri.Should().EndWith("/blog");
     }
@@ -309,6 +370,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void ManageRoles_RendersUsersAndAvailableRoles()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var users = new[]
         {
@@ -327,8 +389,10 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
+        // Assert
         cut.Markup.Should().Contain("Manage User Roles");
         cut.Markup.Should().Contain("Available roles: Admin, Author");
         cut.Markup.Should().Contain("admin@example.com");
@@ -337,6 +401,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void ManageRoles_AssignButton_SendsCommandAndRefreshesUsers()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var users = new[]
         {
@@ -363,10 +428,12 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
         cut.FindAll("button").First(button => button.TextContent.Contains("+ Author")).Click();
 
+        // Assert
         sender.Received(1).Send(Arg.Is<AssignRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
         cut.WaitForAssertion(() => cut.Markup.Should().Contain("Admin, Author"));
     }
@@ -374,6 +441,7 @@ public class RazorSmokeTests : BunitContext
     [Fact]
     public void ManageRoles_RemoveButton_SendsCommandAndRefreshesUsers()
     {
+        // Arrange
         var sender = Substitute.For<ISender>();
         var users = new[]
         {
@@ -400,10 +468,12 @@ public class RazorSmokeTests : BunitContext
 
         Services.AddSingleton(sender);
 
+        // Act
         var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
         cut.FindAll("button").First(button => button.TextContent.Contains("- Author")).Click();
 
+        // Assert
         sender.Received(1).Send(Arg.Is<RemoveRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
         cut.WaitForAssertion(() =>
         {

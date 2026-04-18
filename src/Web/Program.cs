@@ -46,7 +46,8 @@ builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.Authenticati
     var existingOnTokenValidated = options.Events.OnTokenValidated;
     options.Events.OnTokenValidated = async context =>
     {
-        await existingOnTokenValidated(context);
+        if (existingOnTokenValidated is not null)
+            await existingOnTokenValidated(context);
 
         if (context.Principal?.Identity is not ClaimsIdentity identity)
         {
@@ -107,8 +108,12 @@ app.MapStaticAssets();
 // Auth0 login/logout endpoints
 app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 {
+    var safeReturn = !string.IsNullOrEmpty(returnUrl)
+        && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+        ? returnUrl
+        : "/";
     var props = new LoginAuthenticationPropertiesBuilder()
-        .WithRedirectUri(returnUrl ?? "/")
+        .WithRedirectUri(safeReturn)
         .Build();
     await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props);
 }).AllowAnonymous();

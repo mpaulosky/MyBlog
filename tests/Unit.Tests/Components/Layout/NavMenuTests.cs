@@ -1,3 +1,11 @@
+// ============================================
+// Copyright (c) 2025. All rights reserved.
+// File Name :     NavMenuTests.cs
+// Company :       mpaulosky
+// Author :        mpaulosky
+// Solution Name : MyBlog
+// Project Name :  Unit.Tests
+// =============================================
 using System.Security.Claims;
 using Bunit;
 using FluentAssertions;
@@ -21,6 +29,8 @@ public class NavMenuTests : BunitContext
     [Fact]
     public void UnauthenticatedUser_SeesLoginAndNoProtectedLinks()
     {
+        // Arrange (none)
+        // Act
         var cut = RenderForUser(CreatePrincipal(authenticated: false));
 
         cut.Markup.Should().Contain("Login");
@@ -32,6 +42,8 @@ public class NavMenuTests : BunitContext
     [Fact]
     public void AuthenticatedAdmin_UsesDisplayNameAsProfileLabel_AndShowsAdminLinks()
     {
+        // Arrange (none)
+        // Act
         var cut = RenderForUser(CreatePrincipal(name: "Admin User", roles: ["Admin"]));
 
         cut.Markup.Should().Contain("Admin User");
@@ -44,6 +56,8 @@ public class NavMenuTests : BunitContext
     [Fact]
     public void AuthenticatedUser_WithoutName_FallsBackToProfileLabel()
     {
+        // Arrange (none)
+        // Act
         var cut = RenderForUser(CreatePrincipal(roles: ["Author"]));
 
         cut.Markup.Should().Contain(">Profile<");
@@ -54,12 +68,15 @@ public class NavMenuTests : BunitContext
     [Fact]
     public void NavMenu_LoadsThemeFromJs_AndAllowsThemeInteraction()
     {
+        // Arrange
         JSInterop.Mode = JSRuntimeMode.Loose;
         JSInterop.Setup<string>("themeManager.getColor").SetResult("green");
         JSInterop.Setup<string>("themeManager.getBrightness").SetResult("dark");
 
+        // Act
         var cut = RenderForUser(CreatePrincipal(name: "Theme User", roles: ["Admin"]));
 
+        // Assert
         cut.WaitForAssertion(() => cut.Markup.Should().Contain("Theme User"));
         cut.Find("select").Change("yellow");
         cut.FindAll("button").Last().Click();

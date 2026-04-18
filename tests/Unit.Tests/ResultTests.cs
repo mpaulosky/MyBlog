@@ -1,3 +1,11 @@
+// ============================================
+// Copyright (c) 2025. All rights reserved.
+// File Name :     ResultTests.cs
+// Company :       mpaulosky
+// Author :        mpaulosky
+// Solution Name : MyBlog
+// Project Name :  Unit.Tests
+// =============================================
 using Domain.Abstractions;
 using FluentAssertions;
 
@@ -8,6 +16,8 @@ public class ResultTests
     [Fact]
     public void Ok_CreatesSuccessfulNonGenericResult()
     {
+        // Arrange (none)
+        // Act
         var result = Result.Ok();
 
         result.Success.Should().BeTrue();
@@ -19,6 +29,8 @@ public class ResultTests
     [Fact]
     public void Fail_CreatesFailedNonGenericResultWithCodeAndDetails()
     {
+        // Arrange (none)
+        // Act
         var result = Result.Fail("boom", ResultErrorCode.Validation, new { Field = "Title" });
 
         result.Success.Should().BeFalse();
@@ -31,6 +43,8 @@ public class ResultTests
     [Fact]
     public void GenericOk_CarriesValue()
     {
+        // Arrange (none)
+        // Act
         var result = Result.Ok("hello");
 
         result.Success.Should().BeTrue();
@@ -40,6 +54,8 @@ public class ResultTests
     [Fact]
     public void GenericFail_CreatesFailedResultWithCode()
     {
+        // Arrange (none)
+        // Act
         var result = Result.Fail<string>("missing", ResultErrorCode.NotFound);
 
         result.Success.Should().BeFalse();
@@ -51,8 +67,10 @@ public class ResultTests
     [Fact]
     public void FromValue_ReturnsFailedResultWhenValueIsNull()
     {
+        // Arrange
         string? value = null;
 
+        // Act
         var result = Result.FromValue(value);
 
         result.Success.Should().BeFalse();
@@ -62,9 +80,13 @@ public class ResultTests
     [Fact]
     public void ImplicitConversions_WorkForGenericResult()
     {
+        // Arrange
         Result<string> result = "hello";
+
+        // Act
         string? value = result;
 
+        // Assert
         value.Should().Be("hello");
         result.Value.Should().Be("hello");
     }
