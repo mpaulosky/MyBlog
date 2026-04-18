@@ -272,3 +272,41 @@ bg-primary-hover  # Old custom hover state (now use dark: variant)
 
 **Filed:** `.squad/decisions/inbox/legolas-razor-imports.md`
 
+---
+
+## 2025-01-29 — Remove Weather and Counter Template Pages
+
+### What I Learned
+
+**Blazor template pages cleanup is straightforward:**
+- The default Blazor template includes Counter and Weather demo pages at `src/Web/Components/Pages/`
+- These are not relevant to the MyBlog application and should be removed early in development
+- Deleting the `.razor` files automatically removes their routes (no manual routing cleanup needed)
+- NavMenu.razor had already been updated earlier (no Weather/Counter links present)
+
+**Test files must be updated when components are deleted:**
+- `tests/Unit.Tests/Components/RazorSmokeTests.cs` had two test methods for the deleted components
+- `Counter_Increments_WhenButtonClicked()` tested the Counter component
+- `Weather_LoadsForecasts()` tested the Weather component
+- These tests must be removed to allow the build to pass
+- While Gimli owns test code, removing obsolete tests for deleted components is part of component deletion
+
+**Files deleted (2):**
+- `src/Web/Components/Pages/Counter.razor` — Interactive counter demo (20 lines)
+- `src/Web/Components/Pages/Weather.razor` — Weather forecast table demo (67 lines)
+
+**Files modified (1):**
+- `tests/Unit.Tests/Components/RazorSmokeTests.cs` — Removed 2 obsolete test methods (26 lines)
+
+**Build verification successful:**
+- `dotnet build src/Web/Web.csproj --configuration Release` succeeded
+- `dotnet build tests/Unit.Tests/Unit.Tests.csproj --configuration Release` succeeded
+- Total cleanup: 113 lines removed from the codebase
+
+**Note on slnx build issue:**
+- `dotnet build MyBlog.slnx` encountered Internal CLR error (0x80131506)
+- Individual project builds succeeded — slnx issue is unrelated to this cleanup
+- Build verification done via direct project file builds instead
+
+**Filed:** `.squad/decisions/inbox/legolas-remove-weather-counter.md`
+
