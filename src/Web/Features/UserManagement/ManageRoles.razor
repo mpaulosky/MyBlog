@@ -1,7 +1,5 @@
 @page "/admin/users"
-@using MediatR
 @using MyBlog.Web.Features.UserManagement
-@using Microsoft.AspNetCore.Authorization
 @inject ISender Sender
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Admin")]
