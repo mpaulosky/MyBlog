@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     CreateBlogPostHandler.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Web
+//=======================================================
+
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
 public sealed class CreateBlogPostHandler(

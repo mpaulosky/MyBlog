@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     DomainLayerTests.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Architecture.Tests
+//=======================================================
+
 namespace MyBlog.Architecture.Tests;
 
 public class DomainLayerTests

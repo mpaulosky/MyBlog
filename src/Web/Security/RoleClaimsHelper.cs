@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     RoleClaimsHelper.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Web
+//=======================================================
+
 using System.Security.Claims;
 using System.Text.Json;
 

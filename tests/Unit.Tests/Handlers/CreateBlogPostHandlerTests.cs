@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     CreateBlogPostHandlerTests.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Unit.Tests
+//=======================================================
+
 using MyBlog.Web.Features.BlogPosts.Create;
 
 namespace MyBlog.Unit.Tests.Handlers;

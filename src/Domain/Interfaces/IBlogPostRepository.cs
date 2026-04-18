@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     IBlogPostRepository.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Domain
+//=======================================================
+
 using MyBlog.Domain.Entities;
 
 namespace MyBlog.Domain.Interfaces;

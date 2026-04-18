@@ -41,6 +41,67 @@ Consolidate common `@using` directives into the appropriate `_Imports.razor` fil
 - **Build time:** No change
 
 ---
+### 1. Remove Blazor Template Demo Pages (Weather & Counter)
+
+**Status:** ✅ Implemented  
+**PR:** https://github.com/mpaulosky/MyBlog/pull/6  
+**Date:** 2026-04-18
+
+The MyBlog project was initialized from the Blazor Server template, which includes demo pages (Counter and Weather) for learning Blazor. These pages are not relevant to the blog application and have been removed to keep the codebase clean.
+
+**Changes:**
+- Deleted `src/Web/Components/Pages/Counter.razor`
+- Deleted `src/Web/Components/Pages/Weather.razor`
+- Removed 2 template test methods from `tests/Unit.Tests/Components/RazorSmokeTests.cs`
+
+**Impact:**
+- 113 lines removed from codebase
+- All 74 tests passing (Architecture 6, Unit 59, Integration 9)
+- Code coverage: 91.64%
+- Cleaner project structure focused on blog functionality
+
+### 2. Standardized Copyright Headers for C# Files
+
+**Status:** ✅ Implemented  
+**PR:** https://github.com/mpaulosky/MyBlog/pull/7  
+**Date:** 2026-04-18
+
+Adopted standardized 7-line copyright header format for all C# (`.cs`) files in the MyBlog solution.
+
+**Header Format:**
+```csharp
+//=======================================================
+//Copyright (c) {year}. All rights reserved.
+//File Name :     {filename}
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  {project}
+//=======================================================
+```
+
+**Scope:**
+- All 46 `.cs` files across 7 projects (AppHost, Domain, ServiceDefaults, Web, Architecture.Tests, Integration.Tests, Unit.Tests)
+- Year derived from git log (file creation date)
+- Project name auto-detected from directory structure
+- Excluded: Razor files, build artifacts
+
+**Rationale:**
+1. Legal clarity on copyright ownership and date
+2. Professional appearance for code reviews and portfolio
+3. Attribution to Matthew Paulosky on every file
+4. Consistency across all projects
+5. Compliant with charter rule #6
+
+**Implementation:**
+- Python script for batch processing (not committed)
+- Git log command: `git log --follow --format=%ad --date=format:%Y --diff-filter=A -- {file}`
+- All projects build successfully with zero errors and warnings
+
+**Impact:**
+- Clear copyright and ownership on every file
+- 9 additional lines per file (header + blank line separator)
+- Requires maintenance for new files (can be automated)
 
 ## Governance
 

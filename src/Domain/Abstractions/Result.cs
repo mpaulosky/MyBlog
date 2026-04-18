@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     Result.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Domain
+//=======================================================
+
 // =======================================================
 // Copyright (c) 2025. All rights reserved.
 // File Name :     Result.cs

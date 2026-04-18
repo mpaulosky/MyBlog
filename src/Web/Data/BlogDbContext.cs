@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     BlogDbContext.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Web
+//=======================================================
+
 using MongoDB.EntityFrameworkCore.Extensions;
 
 namespace MyBlog.Web.Data;

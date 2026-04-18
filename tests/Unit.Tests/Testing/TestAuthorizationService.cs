@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     TestAuthorizationService.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Unit.Tests
+//=======================================================
+
 // ============================================
 // Copyright (c) 2025. All rights reserved.
 // File Name :     TestAuthorizationService.cs

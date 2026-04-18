@@ -1,3 +1,12 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     Program.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Web
+//=======================================================
+
 using System.Security.Claims;
 
 using Auth0.AspNetCore.Authentication;
