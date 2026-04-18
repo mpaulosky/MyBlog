@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pre-push gate: mirrors CI checks to catch failures before they reach GitHub
-# Runs: untracked-file check → Release build → unit tests (loop until pass or abort)
+# Runs: branch protection → untracked-file check → Release build → unit/architecture tests → integration tests
 # NOTE: git provides refspecs on stdin; interactive prompts must use /dev/tty.
 set -uo pipefail
 
@@ -70,7 +70,7 @@ if [[ "$BUILD_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 3: Unit + bUnit + Architecture tests ──────────────────────────────
+# ── Gate 3: Unit + Architecture tests ──────────────────────────────────────
 TEST_PROJECTS=(
   "tests/Architecture.Tests/Architecture.Tests.csproj"
   "tests/Unit.Tests/Unit.Tests.csproj"
@@ -104,9 +104,8 @@ if [[ "$TESTS_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 4: Docker integration tests + Playwright E2E ─────────────────────
-# Requires Docker daemon. Uses Testcontainers (mongo:7.0, Azurite) and Aspire DCP.
-# AppHost.Tests runs here — Aspire boots internally via DistributedApplicationTestingBuilder.
+# ── Gate 4: Docker-backed integration tests ────────────────────────────────
+# Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
   "tests/Integration.Tests/Integration.Tests.csproj"
 )
