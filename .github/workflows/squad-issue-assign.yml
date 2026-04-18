@@ -125,8 +125,8 @@ jobs:
             const issue_number = context.payload.issue.number;
 
             // Get the default branch name (main, master, etc.)
-            const { data: repoData } = await github.rest.repos.get({ owner, repo });
-            const baseBranch = repoData.default_branch;
+            // Hardcoded to 'dev' as per MyBlog branch strategy
+            const baseBranch = 'dev';
 
             try {
               await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
