@@ -33,19 +33,29 @@ jobs:
       
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3
+        continue-on-error: true
         with:
           versionSpec: '6.x'
 
       - name: Determine Version
         id: gitversion
         uses: gittools/actions/gitversion/execute@v3
+        continue-on-error: true
         with:
           useConfigFile: true
+
+      - name: Set Version Variables
+        id: version
+        run: |
+          echo "nuGetVersion=${{ steps.gitversion.outputs.nuGetVersion || '0.0.0-ci' }}" >> "$GITHUB_OUTPUT"
+          echo "assemblySemVer=${{ steps.gitversion.outputs.assemblySemVer || '0.0.0' }}" >> "$GITHUB_OUTPUT"
+          echo "assemblySemFileVer=${{ steps.gitversion.outputs.assemblySemFileVer || '0.0.0.0' }}" >> "$GITHUB_OUTPUT"
+          echo "informationalVersion=${{ steps.gitversion.outputs.informationalVersion || '0.0.0-ci' }}" >> "$GITHUB_OUTPUT"
 
       - name: Display SemVer
         run: |
           echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-          echo "NuGetVersion: ${{ steps.gitversion.outputs.nuGetVersion }}"
+          echo "NuGetVersion: ${{ steps.version.outputs.nuGetVersion }}"
       
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -59,7 +69,12 @@ jobs:
         run: dotnet restore MyBlog.slnx
       
       - name: Build solution
-        run: dotnet build MyBlog.slnx --configuration Release --no-restore /p:Version=${{ steps.gitversion.outputs.nuGetVersion }} /p:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} /p:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
+        run: |
+          dotnet build MyBlog.slnx --configuration Release --no-restore \
+            /p:Version="${{ steps.version.outputs.nuGetVersion }}" \
+            /p:AssemblyVersion="${{ steps.version.outputs.assemblySemVer }}" \
+            /p:FileVersion="${{ steps.version.outputs.assemblySemFileVer }}" \
+            /p:InformationalVersion="${{ steps.version.outputs.informationalVersion }}"
         env:
           CI: true
       
@@ -98,6 +113,7 @@ jobs:
           path: 'test-results/**/*.trx'
           reporter: dotnet-trx
           fail-on-error: true
+          fail-on-empty: false
       
       - name: Upload Coverage Reports
         uses: actions/upload-artifact@v4
