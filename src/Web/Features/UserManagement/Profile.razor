@@ -125,6 +125,11 @@ else
 	private IReadOnlyList<string> _roles = [];
 	private IReadOnlyList<Claim> _claims = [];
 
+	private static readonly HashSet<string> _sensitiveClaimTypes = new(StringComparer.OrdinalIgnoreCase)
+	{
+		"nonce", "c_hash", "at_hash", "aud", "azp", "auth_time", "iat", "exp", "nbf"
+	};
+
 	protected override async Task OnInitializedAsync()
 	{
 		if (AuthenticationStateTask is null)
@@ -157,7 +162,11 @@ else
 
 		_initials = GetInitials(_displayName, _emailAddress);
 		_roles = RoleClaimsHelper.GetRoles(_user);
-		_claims = _user.Claims.OrderBy(c => c.Type).ThenBy(c => c.Value).ToList();
+		_claims = _user.Claims
+			.Where(c => !_sensitiveClaimTypes.Contains(c.Type))
+			.OrderBy(c => c.Type)
+			.ThenBy(c => c.Value)
+			.ToList();
 	}
 
 	private static string? GetFirstClaimValue(ClaimsPrincipal user, params string[] claimTypes)

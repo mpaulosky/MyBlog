@@ -41,6 +41,7 @@ internal sealed class TestAuthorizationService : IAuthorizationService
 
     public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
     {
+        // Policy evaluation not implemented; grants access to authenticated users only.
         return Task.FromResult(user.Identity?.IsAuthenticated == true
             ? AuthorizationResult.Success()
             : AuthorizationResult.Failed());
