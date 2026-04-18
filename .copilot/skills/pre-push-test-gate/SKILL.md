@@ -74,5 +74,5 @@ chmod +x .git/hooks/pre-push
 - **Hook source:** `.github/hooks/pre-push`
 - **Execution playbook:** `.squad/playbooks/pre-push-process.md`
 - **Build repair prompt:** `.github/prompts/build-repair.prompt.md`
-- **Contributing guide:** `CONTRIBUTING.md` (Pre-Push Gates section)
+- **Contributing guide:** `docs/CONTRIBUTING.md` (Pre-Push Gates section)
 - **Ceremonies:** `.squad/ceremonies.md` (Build Repair Check)

@@ -1,188 +1,129 @@
 # Contributing to MyBlog
 
-Thank you for your interest in contributing to MyBlog — a learning project for .NET development!
+Thank you for your interest in contributing to MyBlog! This document is the
+canonical contributor guide for project setup, workflow, and pull request
+expectations.
 
-## Table of Contents
+## Initial Setup
 
-- [Code of Conduct](#code-of-conduct)
-- [Before You Start](#before-you-start)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Design Decisions](#design-decisions)
-- [How to Contribute](#how-to-contribute)
-- [Testing Requirements](#testing-requirements)
-- [Code Style](#code-style)
+### 1. Clone the Repository
 
-## Welcome
-
-MyBlog is a **training project**. We welcome contributions that:
-- Keep the project focused on learning (no production complexity)
-- Follow clean architecture principles
-- Include tests for all new functionality
-- Have clear, descriptive commit messages
-
-## Code of Conduct
-
-We have adopted the Contributor Covenant. Contributors are expected to adhere to this code. Please report unwanted behavior to [@mpaulosky](mailto:matthew.paulosky@outlook.com).
-
-## Before You Start
-
-This is a learning project for practicing:
-- .NET Aspire orchestration
-- Blazor Server rendering
-- Clean architecture (Domain/Web layer separation)
-- Test-driven development with xUnit, FluentAssertions, NetArchTest.Rules
-
-**Key principle**: Keep it simple. We use an in-memory repository by design — no database, no authentication, no external services.
-
-## Quick Start
-
-1. **Fork** the repository: https://github.com/mpaulosky/MyBlog/fork
-2. **Clone** your fork and create a feature branch:
-   ```bash
-   git clone https://github.com/<your-username>/MyBlog.git
-   cd MyBlog
-   git checkout -b feature/your-feature-name
-   ```
-3. **Make your changes** following the code style guidelines
-4. **Add or update tests** (required for all code changes)
-5. **Run the full test suite**:
-   ```bash
-   dotnet test
-   ```
-6. **Commit** with clear messages (present tense, reference issues if applicable):
-   ```bash
-   git commit -m "Add blog post filtering feature"
-   ```
-7. **Push** and open a Pull Request to `main`
-
-## Project Structure
-
-```
-MyBlog/
-├── src/
-│   ├── AppHost/              # .NET Aspire orchestration entry point
-│   ├── Domain/               # BlogPost entity, repository interfaces, in-memory implementation
-│   ├── ServiceDefaults/      # Aspire shared configuration (OpenTelemetry, health checks)
-│   └── Web/                  # Blazor Server application
-│       └── Components/
-│           ├── Pages/BlogPosts/  # Index, Create, Edit Razor pages
-│           ├── Pages/            # Home, Error, NotFound
-│           ├── Shared/           # ConfirmDeleteDialog
-│           └── Layout/           # MainLayout, NavMenu, ReconnectModal
-├── tests/
-│   ├── Unit.Tests/           # Entity and repository unit tests
-│   ├── Architecture.Tests/    # Layer dependency validation
-│   └── Integration.Tests/     # Stubbed for future Aspire integration
-├── docs/                     # Documentation
-├── Directory.Build.props     # Centralized build settings
-├── global.json               # .NET SDK version lock
-└── MyBlog.slnx               # Solution file
-```
-
-## Design Decisions
-
-This project adheres to these core principles:
-
-1. **Blazor Server** for interactive server rendering — simplest way to learn Aspire + dynamic UI together
-2. **In-memory repository only** — training project, no database setup required
-3. **.NET Aspire orchestration** — learn service composition and health checks
-4. **Clean architecture** — Domain and Web layers clearly separated
-5. **Repository pattern** — `IBlogPostRepository` interface with in-memory implementation
-6. **Repository naming** (`MyBlog` context) vs project names** — `AppHost`, `Domain`, `Web` have no `MyBlog.` prefix (intentional: repo name provides context)
-
-If you have architectural suggestions, please open an issue to discuss first.
-
-## How to Contribute
-
-### Report a Bug
-
-[Create an issue](https://github.com/mpaulosky/MyBlog/issues):
-- Use the **Bug** label
-- Include steps to reproduce, expected behavior, and actual behavior
-- Attach screenshots if helpful
-
-### Suggest an Enhancement
-
-[Create an issue](https://github.com/mpaulosky/MyBlog/issues):
-- Use the **Enhancement** label
-- Explain the use case and why it aligns with the project's learning goals
-
-### Write Code
-
-1. Link your work to an open issue (create one if needed)
-2. Follow the [Testing Requirements](#testing-requirements)
-3. Follow the [Code Style](#code-style) guidelines
-4. Keep changes focused and clear
-
-### Write Documentation
-
-Help keep `/docs` and [README.md](../README.md) accurate:
-- Update docs if you change architecture or features
-- Add architecture decision records (ADRs) for significant changes
-- Link documentation from the main README
-
-## Testing Requirements
-
-**All new code must include tests. Pull requests without tests will be delayed.**
-
-### Unit Tests
-
-- Add tests in `tests/Unit.Tests/`
-- Use **xUnit** for test framework
-- Use **FluentAssertions** for assertions (e.g., `result.Should().BeTrue()`)
-- Use **NSubstitute** for mocks
-- Follow the **AAA pattern**: Arrange / Act / Assert
-
-Example:
-```csharp
-[Fact]
-public void Create_WithValidTitle_ReturnsNewBlogPost()
-{
-    // Arrange
-    var title = "My First Post";
-    var content = "Content here";
-    var author = "Me";
-
-    // Act
-    var post = BlogPost.Create(title, content, author);
-
-    // Assert
-    post.Title.Should().Be(title);
-    post.IsPublished.Should().BeFalse();
-}
-```
-
-### Architecture Tests
-
-- Use **NetArchTest.Rules** to verify layer dependencies
-- Ensure Domain does not reference Web
-- Ensure tests don't reference implementation details unnecessarily
-
-Run all tests before pushing:
 ```bash
-dotnet test
+git clone https://github.com/mpaulosky/MyBlog.git
+cd MyBlog
 ```
 
-## Code Style
+### 2. Install Git Hooks
 
-- **Namespaces**: Follow the RootNamespace pattern (e.g., `MyBlog.Domain`, `MyBlog.Web`)
-- **Formatting**: Follow C# conventions (use `.editorconfig` if configured)
-- **Comments**: Only comment complex logic; clean code is self-documenting
-- **Methods**: Prefer small, focused methods with clear names
-- **Async/Await**: Use `async` for I/O operations; use `.Result` is discouraged
-- **Short project names**: No `MyBlog.` prefix on folder/project names; repo context provides clarity
+**Important:** After cloning the repository, run the hook installation script:
 
-## PR Review Checklist
+```bash
+./scripts/install-hooks.sh
+```
 
-Before opening a PR:
-- [ ] All tests pass: `dotnet test`
-- [ ] Code follows style guidelines
-- [ ] New features have unit tests
-- [ ] Documentation updated if applicable
-- [ ] Commit messages are clear and present-tense
-- [ ] No unrelated changes included
+This installs a **pre-push gate** that validates your code before it reaches
+GitHub.
 
----
+### What the Pre-Push Gate Does
 
-Thank you for contributing to MyBlog! Questions? Open an issue or reach out to [@mpaulosky](https://github.com/mpaulosky).
+The pre-push hook automatically runs before every `git push` and enforces
+**5 gates**:
+
+| Gate | Name | Action |
+|------|------|--------|
+| **0** | Branch protection | Blocks direct pushes to `main` or `dev` |
+| **1** | Untracked source files | Warns about untracked `.razor`/`.cs` files |
+| **2** | Release build | `dotnet build MyBlog.slnx --configuration Release` |
+| **3** | Unit/Arch tests | `tests/Architecture.Tests`, `tests/Unit.Tests` |
+| **4** | Integration tests | `tests/Integration.Tests` (Docker required) |
+
+Gates 2-4 allow up to 3 attempts. The hook pauses between failures so you can
+fix and retry without restarting the whole push.
+
+### Bypassing the Gate (Emergency Only)
+
+In rare cases where you need to push despite build or test failures:
+
+```bash
+git push --no-verify
+```
+
+**Use this sparingly.** It bypasses local validation. CI will still catch
+issues, but fixing them locally is preferred.
+
+## Development Workflow
+
+### Prerequisites
+
+- **.NET 10 SDK** — [Download](https://dotnet.microsoft.com/en-us/download)
+- **Docker** — Required for `tests/Integration.Tests`
+- **Auth0 account** — See [AUTH0_SETUP.md](AUTH0_SETUP.md) for configuration
+
+### Building and Testing
+
+```bash
+# Restore dependencies
+dotnet restore MyBlog.slnx
+
+# Build the solution
+dotnet build MyBlog.slnx --configuration Release
+
+# Run all tests
+dotnet test MyBlog.slnx --configuration Release
+
+# Run the application (via Aspire AppHost)
+cd src/AppHost
+dotnet run
+```
+
+### Branch Strategy
+
+- **`main`** — Release-only branch, protected with strict rules
+- **`dev`** — Primary development branch
+- **`squad/*`** — Feature branches for squad members and Copilot agents
+
+Create feature branches from `dev`:
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b squad/my-feature
+```
+
+### Pull Requests
+
+1. Create a PR from your `squad/*` branch to `dev`
+2. Ensure all CI checks pass (build, tests, coverage)
+3. Address code review feedback
+4. Squash and merge once approved
+
+## Code Standards
+
+### .NET Conventions
+
+- Follow .NET naming conventions (PascalCase for types, camelCase for locals)
+- Use C# 14 features where appropriate
+- Keep methods focused and testable
+
+### Testing
+
+- Write unit tests for new domain logic
+- Maintain or improve code coverage
+- Use xUnit, FluentAssertions, and NSubstitute
+
+### Architecture Rules
+
+- Domain layer must not depend on Web layer
+- Use repository and feature-slice patterns already present in the solution
+- Keep Blazor components focused on presentation concerns
+
+## Resources
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Solution structure and design decisions
+- [AUTH0_SETUP.md](AUTH0_SETUP.md) — Auth0 configuration guide
+- [README.md](../README.md) — Project overview and getting started
+
+## Questions?
+
+Open an issue or reach out to
+[@mpaulosky](https://github.com/mpaulosky).
