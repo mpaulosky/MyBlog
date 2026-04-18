@@ -9,6 +9,12 @@
 TestResults/
 .DS_Store
 
+# Node.js
+node_modules/
+
+# Tailwind CSS compiled output
+src/Web/wwwroot/css/tailwind.css
+
 # Squad: ignore runtime state (logs, inbox, sessions)
 .squad/orchestration-log/
 .squad/log/
@@ -16,3 +22,5 @@ TestResults/
 .squad/sessions/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+
+.fake

@@ -2,22 +2,118 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-    <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
-    <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
-    <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/" />
+  <script>
+      (function () {
+        var COLOR_KEY = "theme-color";
+        var BRIGHTNESS_KEY = "theme-mode";
+        var VALID_COLORS = ["red", "blue", "green", "yellow"];
+        var VALID_BRIGHTNESS = ["light", "dark"];
+
+        function applyThemeFromStorage() {
+          var color = localStorage.getItem(COLOR_KEY) || "blue";
+          if (VALID_COLORS.indexOf(color) === -1) color = "blue";
+
+          var brightness = localStorage.getItem(BRIGHTNESS_KEY);
+          if (!brightness) {
+            // Default to system preference
+            brightness = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          if (VALID_BRIGHTNESS.indexOf(brightness) === -1) brightness = "light";
+
+          var html = document.documentElement;
+
+          // Remove all color classes
+          VALID_COLORS.forEach(function (c) { html.classList.remove("color-" + c); });
+
+          // Add selected color class
+          html.classList.add("color-" + color);
+
+          // Toggle dark class for Tailwind dark: variant
+          if (brightness === "dark") {
+            html.classList.add("dark");
+          } else {
+            html.classList.remove("dark");
+          }
+        }
+
+        // Migrate old unified key (theme-blue-dark) → new split keys
+        var oldKey = "tailwind-color-theme";
+        if (localStorage.getItem(oldKey) && !localStorage.getItem(COLOR_KEY)) {
+          var oldTheme = localStorage.getItem(oldKey);
+          var parts = oldTheme.replace("theme-", "").split("-");
+          if (parts.length === 2) {
+            var oldColor = parts[0];
+            var oldBrightness = parts[1];
+            if (VALID_COLORS.indexOf(oldColor) !== -1) {
+              localStorage.setItem(COLOR_KEY, oldColor);
+            }
+            if (VALID_BRIGHTNESS.indexOf(oldBrightness) !== -1) {
+              localStorage.setItem(BRIGHTNESS_KEY, oldBrightness);
+            }
+          }
+        }
+
+        // Apply BEFORE stylesheets load — true anti-FOUC
+        applyThemeFromStorage();
+
+        // Re-apply after Blazor enhanced navigation (immediate + delayed to handle
+        // any post-navigation DOM reconciliation that may strip the theme class)
+        function onNavigation() {
+          if (window.themeManager) {
+            window.themeManager.applyTheme();
+          } else {
+            applyThemeFromStorage();
+          }
+          setTimeout(function () {
+            if (window.themeManager) {
+              window.themeManager.applyTheme();
+            } else {
+              applyThemeFromStorage();
+            }
+          }, 100);
+        }
+
+        document.addEventListener("enhancedload", onNavigation);
+        document.addEventListener("blazor:navigated", onNavigation);
+
+        // MutationObserver: if Blazor's DOM reconciliation strips the theme class
+        // from <html>, re-apply immediately from localStorage.
+        if (window._themeObserver) {
+          window._themeObserver.disconnect();
+        }
+        var _reapplying = false;
+        window._themeObserver = new MutationObserver(function () {
+          if (_reapplying) return;
+          var html = document.documentElement;
+          var hasColor = VALID_COLORS.some(function (c) { return html.classList.contains("color-" + c); });
+          if (!hasColor) {
+            _reapplying = true;
+            applyThemeFromStorage();
+            _reapplying = false;
+          }
+        });
+        window._themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"]
+        });
+      })();
+  </script>
+  <ResourcePreloader />
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
+  <ImportMap />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <HeadOutlet />
 </head>
 
 <body>
-    <Routes />
-    <ReconnectModal />
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+  <Routes />
+  <ReconnectModal />
+  <script src="js/theme.js"></script>
+  <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>

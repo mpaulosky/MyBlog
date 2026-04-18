@@ -9,36 +9,40 @@
 
 <PageTitle>Create Post</PageTitle>
 
-<h1>Create Post</h1>
+<h1 class="text-3xl font-bold mb-6">Create Post</h1>
 
 @if (_error is not null)
 {
-    <div class="alert alert-danger alert-dismissible" role="alert">
-        @_error
-        <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+    <div class="rounded-lg border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm mb-4 flex items-center justify-between" role="alert">
+        <span>@_error</span>
+        <button type="button" class="ml-4 cursor-pointer text-red-700 hover:text-red-900" @onclick="() => _error = null">&times;</button>
     </div>
 }
 
-<EditForm Model="_model" OnValidSubmit="HandleSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<div class="rounded-lg shadow p-6 bg-white dark:bg-gray-800 max-w-2xl">
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="mb-4" />
 
-    <div class="mb-3">
-        <label class="form-label">Title</label>
-        <InputText class="form-control" @bind-Value="_model.Title" />
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Author</label>
-        <InputText class="form-control" @bind-Value="_model.Author" />
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Content</label>
-        <InputTextArea class="form-control" rows="8" @bind-Value="_model.Content" />
-    </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Title</label>
+            <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Title" />
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Author</label>
+            <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Author" />
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Content</label>
+            <InputTextArea class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" rows="8" @bind-Value="_model.Content" />
+        </div>
 
-    <button type="submit" class="btn btn-primary">Create</button>
-    <a href="/blog" class="btn btn-secondary ms-2">Cancel</a>
-</EditForm>
+        <div class="flex gap-2">
+            <button type="submit" class="btn-primary">Create</button>
+            <a href="/blog" class="px-4 py-2 rounded font-medium border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</a>
+        </div>
+    </EditForm>
+</div>
 
 @code {
     private readonly PostFormModel _model = new();

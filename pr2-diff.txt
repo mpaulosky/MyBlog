@@ -1,0 +1,1698 @@
+diff --git a/src/Web/Components/Layout/MainLayout.razor b/src/Web/Components/Layout/MainLayout.razor
+index 78624f3..e963ef4 100644
+--- a/src/Web/Components/Layout/MainLayout.razor
++++ b/src/Web/Components/Layout/MainLayout.razor
+@@ -1,23 +1,22 @@
+ ﻿@inherits LayoutComponentBase
+ 
+-<div class="page">
+-    <div class="sidebar">
+-        <NavMenu />
+-    </div>
+ 
+-    <main>
+-        <div class="top-row px-4">
+-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+-        </div>
++<div class="min-h-screen flex flex-col bg-primary-400 dark:bg-primary-800 text-primary-800 dark:text-primary-300">
++	<NavMenu/>
+ 
+-        <article class="content px-4">
+-            @Body
+-        </article>
+-    </main>
++	<main id="main-content" tabindex="-1" class="mx-auto w-full max-w-7xl flex-1 px-4 pt-20 pb-8 outline-none focus:outline-none focus-visible:outline-none">
++		@Body
++	</main>
++
++	<footer class="mt-auto">
++		<div class="mx-auto w-full max-w-7xl px-4">
++			&copy; @DateTime.Now.Year MyBlog — Training Project
++		</div>
++	</footer>
+ </div>
+ 
+ <div id="blazor-error-ui" data-nosnippet>
+-    An unhandled error has occurred.
+-    <a href="." class="reload">Reload</a>
+-    <span class="dismiss">🗙</span>
++	An unhandled error has occurred.
++	<a href="." class="reload">Reload</a>
++	<span class="dismiss">🗙</span>
+ </div>
+diff --git a/src/Web/Components/Layout/NavMenu.razor b/src/Web/Components/Layout/NavMenu.razor
+index cb3e952..ded685b 100644
+--- a/src/Web/Components/Layout/NavMenu.razor
++++ b/src/Web/Components/Layout/NavMenu.razor
+@@ -1,62 +1,200 @@
+ @using Microsoft.AspNetCore.Components.Authorization
++@inject IJSRuntime Js
++@inject NavigationManager Nav
++@implements IDisposable
++@rendermode InteractiveServer
+ 
+-<div class="top-row ps-3 navbar navbar-dark">
+-    <div class="container-fluid">
+-        <a class="navbar-brand" href="">MyBlog</a>
+-    </div>
+-</div>
+-
+-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+-
+-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+-    <nav class="nav flex-column">
+-        <div class="nav-item px-3">
+-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+-            </NavLink>
+-        </div>
+-
+-        <div class="nav-item px-3">
+-            <NavLink class="nav-link" href="blog">
+-                <span class="bi bi-journal-text-nav-menu" aria-hidden="true"></span> Blog Posts
+-            </NavLink>
+-        </div>
+-
+-        <AuthorizeView Roles="Author,Admin">
+-            <Authorized>
+-                <div class="nav-item px-3">
+-                    <NavLink class="nav-link" href="blog/create">
+-                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> New Post
+-                    </NavLink>
+-                </div>
+-            </Authorized>
+-        </AuthorizeView>
+-
+-        <AuthorizeView Roles="Admin">
+-            <Authorized>
+-                <div class="nav-item px-3">
+-                    <NavLink class="nav-link" href="admin/users">
+-                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> Manage Users
+-                    </NavLink>
+-                </div>
+-            </Authorized>
+-        </AuthorizeView>
+-
+-        <AuthorizeView>
+-            <Authorized>
+-                <div class="nav-item px-3">
+-                    <a class="nav-link" href="/Account/Logout">
+-                        <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logout (@context.User.Identity?.Name)
+-                    </a>
+-                </div>
+-            </Authorized>
+-            <NotAuthorized>
+-                <div class="nav-item px-3">
+-                    <a class="nav-link" href="/Account/Login">
+-                        <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+-                    </a>
+-                </div>
+-            </NotAuthorized>
+-        </AuthorizeView>
+-    </nav>
+-</div>
++<nav class="fixed top-0 left-0 right-0 z-50
++bg-primary-600 dark:bg-primary-600
++border-b-2 border-primary-200 dark:border-primary-200"
++     aria-label="Main navigation">
++	<div class="mx-auto max-w-7xl px-4">
++		<div class="flex items-center justify-between h-16">
++
++			@* Brand *@
++			<NavLink class="nav-link text-xl font-bold" href="" Match="NavLinkMatch.All">MyBlog</NavLink>
++
++			@* Mobile hamburger (pure CSS peer toggle — no JS required) *@
++			<input type="checkbox" id="menu-toggle" class="peer sr-only" aria-hidden="true"/>
++			<label for="menu-toggle"
++			       class="md:hidden cursor-pointer p-2 rounded hover:bg-primary-500 dark:hover:bg-primary-600 text-white"
++			       aria-label="Toggle navigation">
++				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
++					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
++					      d="M4 6h16M4 12h16M4 18h16"/>
++				</svg>
++			</label>
++
++			@* Desktop nav links *@
++			<div class="hidden md:flex items-center gap-5">
++
++				<NavLink class="nav-link" href="blog">Blog Posts</NavLink>
++
++				<AuthorizeView Roles="Author,Admin">
++					<Authorized>
++						<NavLink class="nav-link" href="blog/create">New Post</NavLink>
++					</Authorized>
++				</AuthorizeView>
++
++				<AuthorizeView>
++					<Authorized>
++						<NavLink class="nav-link" href="profile">@GetProfileLabel(context.User)</NavLink>
++					</Authorized>
++				</AuthorizeView>
++
++				<AuthorizeView Roles="Admin">
++					<Authorized>
++						<NavLink class="nav-link" href="admin/users">Manage Users</NavLink>
++					</Authorized>
++				</AuthorizeView>
++
++				@* Theme colour switcher *@
++				<select @onchange="OnThemeChanged"
++				        class="text-sm rounded border border-primary-200 dark:border-primary-800 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-400"
++				        aria-label="Colour theme" title="Select colour theme">
++					<option value="red" selected="@(_currentColor == "red")">🔴 Red</option>
++					<option value="blue" selected="@(_currentColor == "blue")">🔵 Blue</option>
++					<option value="green" selected="@(_currentColor == "green")">🟢 Green</option>
++					<option value="yellow" selected="@(_currentColor == "yellow")">🟡 Yellow</option>
++				</select>
++
++				@* Dark mode toggle — sun icon in dark mode, moon in light *@
++				<button @onclick="ToggleDark"
++				        class="p-1.5 rounded hover:bg-primary-500 dark:hover:bg-primary-600 text-white transition"
++				        aria-label="Toggle dark mode" title="Toggle dark mode">
++					@if (_currentBrightness == "dark")
++					{
++						@* Sun — click to switch to light *@
++						<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
++						     stroke="currentColor" stroke-width="2">
++							<path stroke-linecap="round" stroke-linejoin="round"
++							      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
++						</svg>
++					}
++					else
++					{
++						@* Moon — click to switch to dark *@
++						<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
++						     stroke="currentColor" stroke-width="2">
++							<path stroke-linecap="round" stroke-linejoin="round"
++							      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
++						</svg>
++					}
++				</button>
++
++				@* Login / Logout *@
++				<AuthorizeView>
++					<Authorized>
++						<a class="nav-link" href="/Account/Logout">Logout</a>
++					</Authorized>
++					<NotAuthorized>
++						<a class="nav-link" href="/Account/Login">Login</a>
++					</NotAuthorized>
++				</AuthorizeView>
++			</div>
++		</div>
++
++		@* Mobile nav (shown when peer checkbox is checked) *@
++		<div class="hidden peer-checked:flex flex-col pb-4 md:hidden gap-1"
++		     id="mobile-menu">
++			<NavLink class="nav-link py-2 block" href="" Match="NavLinkMatch.All">Home</NavLink>
++
++			<NavLink class="nav-link py-2 block" href="blog">Blog Posts</NavLink>
++
++			<AuthorizeView Roles="Author,Admin">
++				<Authorized>
++					<NavLink class="nav-link py-2 block" href="blog/create">New Post</NavLink>
++				</Authorized>
++			</AuthorizeView>
++
++			<AuthorizeView>
++				<Authorized>
++					<NavLink class="nav-link py-2 block" href="profile">@GetProfileLabel(context.User)</NavLink>
++				</Authorized>
++			</AuthorizeView>
++
++			<AuthorizeView Roles="Admin">
++				<Authorized>
++					<NavLink class="nav-link py-2 block" href="admin/users">Manage Users</NavLink>
++				</Authorized>
++			</AuthorizeView>
++
++			<AuthorizeView>
++				<Authorized>
++					<a class="nav-link py-2 block" href="/Account/Logout">Logout</a>
++				</Authorized>
++				<NotAuthorized>
++					<a class="nav-link py-2 block" href="/Account/Login">Login</a>
++				</NotAuthorized>
++			</AuthorizeView>
++		</div>
++	</div>
++</nav>
++
++@code {
++	private string _currentColor = "blue";
++	private string _currentBrightness = "light";
++
++	protected override void OnInitialized()
++	{
++		Nav.LocationChanged += OnLocationChanged;
++	}
++
++	protected override async Task OnAfterRenderAsync(bool firstRender)
++	{
++		if (firstRender)
++		{
++			await SyncThemeFromJs();
++		}
++	}
++
++	private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
++	{
++		try
++		{
++			await InvokeAsync(SyncThemeFromJs);
++		}
++		catch
++		{
++		}
++	}
++
++	private async Task SyncThemeFromJs()
++	{
++		try
++		{
++			_currentColor = await Js.InvokeAsync<string>("themeManager.getColor");
++			_currentBrightness = await Js.InvokeAsync<string>("themeManager.getBrightness");
++			StateHasChanged();
++		}
++		catch
++		{
++		}
++	}
++
++	private async Task OnThemeChanged(ChangeEventArgs e)
++	{
++		_currentColor = e.Value?.ToString() ?? "blue";
++		await Js.InvokeVoidAsync("themeManager.setColor", _currentColor);
++	}
++
++	private async Task ToggleDark()
++	{
++		var newBrightness = _currentBrightness == "light" ? "dark" : "light";
++		await Js.InvokeVoidAsync("themeManager.setBrightness", newBrightness);
++		_currentBrightness = await Js.InvokeAsync<string>("themeManager.getBrightness");
++		StateHasChanged();
++	}
++
++	private static string GetProfileLabel(System.Security.Claims.ClaimsPrincipal user)
++	{
++		var name = user.Identity?.Name;
++		return string.IsNullOrWhiteSpace(name) ? "Profile" : name;
++	}
++
++	public void Dispose()
++	{
++		Nav.LocationChanged -= OnLocationChanged;
++	}
++
++}
+diff --git a/src/Web/Components/Pages/Home.razor b/src/Web/Components/Pages/Home.razor
+index 9001e0b..369e958 100644
+--- a/src/Web/Components/Pages/Home.razor
++++ b/src/Web/Components/Pages/Home.razor
+@@ -2,6 +2,6 @@
+ 
+ <PageTitle>Home</PageTitle>
+ 
+-<h1>Hello, world!</h1>
++<h1>Hello, users!</h1>
+ 
+-Welcome to your new app.
++<p>Welcome to your new app.</p>
+diff --git a/src/Web/Features/UserManagement/ManageRoles.razor b/src/Web/Features/UserManagement/ManageRoles.razor
+index 2935210..0fed4a9 100644
+--- a/src/Web/Features/UserManagement/ManageRoles.razor
++++ b/src/Web/Features/UserManagement/ManageRoles.razor
+@@ -8,63 +8,65 @@
+ 
+ <PageTitle>Manage User Roles</PageTitle>
+ 
+-<h1>Manage User Roles</h1>
++<h1 class="text-3xl font-bold mb-6">Manage User Roles</h1>
+ 
+ @if (_loading)
+ {
+-    <p>Loading users...</p>
++    <p class="text-gray-600 dark:text-gray-400">Loading users...</p>
+ }
+ else
+ {
+     @if (_error is not null)
+     {
+-        <div class="alert alert-danger alert-dismissible" role="alert">
+-            @_error
+-            <button type="button" class="btn-close" @onclick="() => _error = null"></button>
++        <div class="rounded-lg border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm mb-4 flex items-center justify-between" role="alert">
++            <span>@_error</span>
++            <button type="button" class="ml-4 cursor-pointer text-red-700 hover:text-red-900" @onclick="() => _error = null">&times;</button>
+         </div>
+     }
+ 
+     @if (_availableRoles.Any())
+     {
+-        <p class="text-muted">Available roles: @string.Join(", ", _availableRoles.Select(r => r.Name))</p>
++        <p class="text-gray-600 dark:text-gray-400 mb-4">Available roles: @string.Join(", ", _availableRoles.Select(r => r.Name))</p>
+     }
+ 
+-    <table class="table table-striped">
+-        <thead>
+-            <tr>
+-                <th>User</th>
+-                <th>Email</th>
+-                <th>Current Roles</th>
+-                <th>Actions</th>
+-            </tr>
+-        </thead>
+-        <tbody>
+-            @foreach (var user in _users)
+-            {
++    <div class="rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden">
++        <table class="w-full text-sm text-left text-gray-900 dark:text-gray-50">
++            <thead class="bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                 <tr>
+-                    <td>@user.Name</td>
+-                    <td>@user.Email</td>
+-                    <td>@string.Join(", ", user.Roles)</td>
+-                    <td>
+-                        @foreach (var role in _availableRoles.Where(r => !user.Roles.Contains(r.Name)))
+-                        {
+-                            <button class="btn btn-sm btn-outline-success me-1"
+-                                    @onclick="() => AssignRole(user.UserId, role.Id)">
+-                                + @role.Name
+-                            </button>
+-                        }
+-                        @foreach (var role in _availableRoles.Where(r => user.Roles.Contains(r.Name)))
+-                        {
+-                            <button class="btn btn-sm btn-outline-danger me-1"
+-                                    @onclick="() => RemoveRole(user.UserId, role.Id)">
+-                                - @role.Name
+-                            </button>
+-                        }
+-                    </td>
++                    <th class="px-4 py-3">User</th>
++                    <th class="px-4 py-3">Email</th>
++                    <th class="px-4 py-3">Current Roles</th>
++                    <th class="px-4 py-3">Actions</th>
+                 </tr>
+-            }
+-        </tbody>
+-    </table>
++            </thead>
++            <tbody>
++                @foreach (var user in _users)
++                {
++                    <tr class="odd:bg-white odd:dark:bg-gray-800 even:bg-gray-50 even:dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-primary-950 transition">
++                        <td class="px-4 py-3">@user.Name</td>
++                        <td class="px-4 py-3">@user.Email</td>
++                        <td class="px-4 py-3">@string.Join(", ", user.Roles)</td>
++                        <td class="px-4 py-3">
++                            @foreach (var role in _availableRoles.Where(r => !user.Roles.Contains(r.Name)))
++                            {
++                                <button class="inline-block px-3 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition mr-1 mb-1"
++                                        @onclick="() => AssignRole(user.UserId, role.Id)">
++                                    + @role.Name
++                                </button>
++                            }
++                            @foreach (var role in _availableRoles.Where(r => user.Roles.Contains(r.Name)))
++                            {
++                                <button class="inline-block px-3 py-1 text-sm rounded border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition mr-1 mb-1"
++                                        @onclick="() => RemoveRole(user.UserId, role.Id)">
++                                    - @role.Name
++                                </button>
++                            }
++                        </td>
++                    </tr>
++                }
++            </tbody>
++        </table>
++    </div>
+ }
+ 
+ @code {
+diff --git a/src/Web/Features/UserManagement/Profile.razor b/src/Web/Features/UserManagement/Profile.razor
+new file mode 100644
+index 0000000..296b53d
+--- /dev/null
++++ b/src/Web/Features/UserManagement/Profile.razor
+@@ -0,0 +1,198 @@
++@page "/profile"
++@using System.Security.Claims
++@using Microsoft.AspNetCore.Authorization
++@using MyBlog.Web.Security
++@attribute [Authorize]
++
++<PageTitle>User Profile</PageTitle>
++
++<h1 class="mb-6">User Profile</h1>
++
++@if (_user is null)
++{
++	<p>Loading profile...</p>
++}
++else
++{
++	<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
++		<section class="card p-6">
++			<div class="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
++				@if (!string.IsNullOrWhiteSpace(_pictureUrl))
++				{
++					<img src="@_pictureUrl"
++					     alt="@($"{_displayName} profile image")"
++					     class="h-24 w-24 rounded-full border-2 border-primary-300 object-cover shadow-md dark:border-primary-700" />
++				}
++				else
++				{
++					<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary-600 text-3xl font-bold text-primary-50 shadow-md dark:bg-primary-700">
++						@_initials
++					</div>
++				}
++
++				<div class="space-y-2">
++					<h2 class="!text-2xl">@_displayName</h2>
++					<p class="!text-base !font-medium text-gray-600 dark:text-gray-300">@_emailAddress</p>
++					@if (!string.IsNullOrWhiteSpace(_userId))
++					{
++						<p class="!text-sm !font-medium text-gray-500 dark:text-gray-400 break-all">User ID: @_userId</p>
++					}
++				</div>
++			</div>
++
++			<div class="mt-6 grid gap-4 sm:grid-cols-2">
++				<div class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
++					<h3 class="mb-2 !text-base">Identity</h3>
++					<dl class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
++						<div>
++							<dt class="font-semibold">Authenticated</dt>
++							<dd>@(_user.Identity?.IsAuthenticated == true ? "Yes" : "No")</dd>
++						</div>
++						<div>
++							<dt class="font-semibold">Authentication Type</dt>
++							<dd>@(_user.Identity?.AuthenticationType ?? "Unknown")</dd>
++						</div>
++					</dl>
++				</div>
++
++				<div class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
++					<h3 class="mb-2 !text-base">Roles</h3>
++					@if (_roles.Count > 0)
++					{
++						<div class="flex flex-wrap gap-2">
++							@foreach (var role in _roles)
++							{
++								<span class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-300">@role</span>
++							}
++						</div>
++					}
++					else
++					{
++						<p class="!text-sm !font-medium text-amber-700 dark:text-amber-300">No roles found in the current claims.</p>
++					}
++				</div>
++			</div>
++		</section>
++
++		<section class="card overflow-hidden">
++			<div class="border-b border-primary-200 px-6 py-4 dark:border-primary-800">
++				<h2 class="!text-xl">Claims</h2>
++				<p class="!mt-1 !text-sm !font-medium text-gray-600 dark:text-gray-300">Claims currently present on your authenticated user principal.</p>
++			</div>
++
++			@if (_claims.Count == 0)
++			{
++				<div class="px-6 py-4">
++					<p class="!text-sm !font-medium text-gray-600 dark:text-gray-300">No claims were found.</p>
++				</div>
++			}
++			else
++			{
++				<div class="overflow-x-auto">
++					<table class="min-w-full divide-y divide-primary-200 dark:divide-primary-800">
++						<thead class="bg-primary-50 dark:bg-primary-950/60">
++							<tr>
++								<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Claim Type</th>
++								<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Value</th>
++							</tr>
++						</thead>
++						<tbody class="divide-y divide-primary-100 dark:divide-primary-900/80">
++							@foreach (var claim in _claims)
++							{
++								<tr class="align-top odd:bg-white odd:dark:bg-gray-900 even:bg-primary-50/40 even:dark:bg-primary-950/20">
++									<td class="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-200 break-all">@claim.Type</td>
++									<td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-all">@claim.Value</td>
++								</tr>
++							}
++						</tbody>
++					</table>
++				</div>
++			}
++		</section>
++	</div>
++}
++
++@code {
++	[CascadingParameter]
++	private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
++
++	private ClaimsPrincipal? _user;
++	private string _displayName = "Unknown User";
++	private string _emailAddress = "No email claim found";
++	private string _userId = string.Empty;
++	private string _pictureUrl = string.Empty;
++	private string _initials = "?";
++	private IReadOnlyList<string> _roles = [];
++	private IReadOnlyList<Claim> _claims = [];
++
++	protected override async Task OnInitializedAsync()
++	{
++		if (AuthenticationStateTask is null)
++		{
++			return;
++		}
++
++		var authenticationState = await AuthenticationStateTask;
++		_user = authenticationState.User;
++
++		_displayName = GetFirstClaimValue(_user,
++			ClaimTypes.Name,
++			"name",
++			"preferred_username",
++			"nickname",
++			ClaimTypes.GivenName) ?? _user.Identity?.Name ?? "Unknown User";
++
++		_emailAddress = GetFirstClaimValue(_user,
++			ClaimTypes.Email,
++			"email") ?? "No email claim found";
++
++		_userId = GetFirstClaimValue(_user,
++			ClaimTypes.NameIdentifier,
++			"sub") ?? string.Empty;
++
++		_pictureUrl = GetFirstClaimValue(_user,
++			"picture",
++			"avatar_url",
++			"image") ?? string.Empty;
++
++		_initials = GetInitials(_displayName, _emailAddress);
++		_roles = RoleClaimsHelper.GetRoles(_user);
++		_claims = _user.Claims.OrderBy(c => c.Type).ThenBy(c => c.Value).ToList();
++	}
++
++	private static string? GetFirstClaimValue(ClaimsPrincipal user, params string[] claimTypes)
++	{
++		foreach (var claimType in claimTypes)
++		{
++			var value = user.Claims.FirstOrDefault(c => c.Type.Equals(claimType, StringComparison.OrdinalIgnoreCase))?.Value;
++
++			if (!string.IsNullOrWhiteSpace(value))
++			{
++				return value;
++			}
++		}
++
++		return null;
++	}
++
++
++	private static string GetInitials(string displayName, string emailAddress)
++	{
++		var source = !string.IsNullOrWhiteSpace(displayName) && !displayName.Equals("Unknown User", StringComparison.OrdinalIgnoreCase)
++			? displayName
++			: emailAddress;
++
++		if (string.IsNullOrWhiteSpace(source))
++		{
++			return "?";
++		}
++
++		var parts = source
++			.Split([' ', '@', '.', '-', '_'], StringSplitOptions.RemoveEmptyEntries)
++			.Take(2)
++			.Select(part => char.ToUpperInvariant(part[0]));
++
++		var initials = new string(parts.ToArray());
++		return string.IsNullOrWhiteSpace(initials) ? "?" : initials;
++	}
++}
+diff --git a/src/Web/Program.cs b/src/Web/Program.cs
+index 58dcbb9..1137e53 100644
+--- a/src/Web/Program.cs
++++ b/src/Web/Program.cs
+@@ -1,9 +1,12 @@
+ using Auth0.AspNetCore.Authentication;
+ using Microsoft.AspNetCore.Authentication;
++using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+ using Microsoft.EntityFrameworkCore;
+ using MyBlog.Domain.Interfaces;
+ using MyBlog.Web.Components;
+ using MyBlog.Web.Data;
++using MyBlog.Web.Security;
++using System.Security.Claims;
+ 
+ var builder = WebApplication.CreateBuilder(args);
+ 
+@@ -14,6 +17,7 @@
+     .AddInteractiveServerComponents();
+ 
+ // Auth0 authentication
++var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
+ builder.Services.AddAuth0WebAppAuthentication(opts =>
+ {
+     opts.Domain = builder.Configuration["Auth0:Domain"]!;
+@@ -22,6 +26,24 @@
+     opts.CallbackPath = "/signin-auth0";
+ });
+ 
++builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.AuthenticationScheme, options =>
++{
++    options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
++
++    var existingOnTokenValidated = options.Events.OnTokenValidated;
++    options.Events.OnTokenValidated = async context =>
++    {
++        await existingOnTokenValidated(context);
++
++        if (context.Principal?.Identity is not ClaimsIdentity identity)
++        {
++            return;
++        }
++
++        RoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);
++    };
++});
++
+ builder.Services.AddCascadingAuthenticationState();
+ builder.Services.AddAuthorization();
+ 
+@@ -78,7 +100,7 @@
+     await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props);
+ }).AllowAnonymous();
+ 
+-app.MapGet("/Account/Logout", async (HttpContext ctx) =>
++app.MapGet("/Account/Logout", async ctx =>
+ {
+     var props = new LogoutAuthenticationPropertiesBuilder()
+         .WithRedirectUri("/")
+@@ -92,4 +114,3 @@
+ 
+ app.MapDefaultEndpoints();
+ app.Run();
+-
+diff --git a/src/Web/Properties/AssemblyInfo.cs b/src/Web/Properties/AssemblyInfo.cs
+new file mode 100644
+index 0000000..0070a66
+--- /dev/null
++++ b/src/Web/Properties/AssemblyInfo.cs
+@@ -0,0 +1,4 @@
++using System.Runtime.CompilerServices;
++
++[assembly: InternalsVisibleTo("MyBlog.Unit.Tests")]
++[assembly: InternalsVisibleTo("Unit.Tests")]
+diff --git a/src/Web/Security/RoleClaimsHelper.cs b/src/Web/Security/RoleClaimsHelper.cs
+new file mode 100644
+index 0000000..8787c8d
+--- /dev/null
++++ b/src/Web/Security/RoleClaimsHelper.cs
+@@ -0,0 +1,94 @@
++using System.Security.Claims;
++using System.Text.Json;
++
++namespace MyBlog.Web.Security;
++
++public static class RoleClaimsHelper
++{
++    public static readonly string[] DefaultRoleClaimTypes =
++    [
++        "https://myblog/roles",
++        "roles",
++        "role"
++    ];
++
++    public static IReadOnlyList<string> GetRoleClaimTypes(IConfiguration configuration)
++    {
++        var configured = configuration.GetSection("Auth0:RoleClaimTypes").Get<string[]>();
++
++        return configured is { Length: > 0 }
++            ? configured.Where(value => !string.IsNullOrWhiteSpace(value))
++                .Distinct(StringComparer.OrdinalIgnoreCase)
++                .ToArray()
++            : DefaultRoleClaimTypes;
++    }
++
++    public static IReadOnlyList<string> ExpandRoleValues(string? claimValue)
++    {
++        if (string.IsNullOrWhiteSpace(claimValue))
++        {
++            return [];
++        }
++
++        var trimmed = claimValue.Trim();
++
++        if (trimmed.StartsWith("[", StringComparison.Ordinal))
++        {
++            try
++            {
++                using var document = JsonDocument.Parse(trimmed);
++
++                if (document.RootElement.ValueKind == JsonValueKind.Array)
++                {
++                    return document.RootElement
++                        .EnumerateArray()
++                        .Select(element => element.GetString())
++                        .Where(role => !string.IsNullOrWhiteSpace(role))
++                        .Cast<string>()
++                        .ToArray();
++                }
++            }
++            catch (JsonException)
++            {
++            }
++        }
++
++        if (trimmed.Contains(',', StringComparison.Ordinal))
++        {
++            return trimmed.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
++        }
++
++        return [trimmed];
++    }
++
++    public static void AddRoleClaims(ClaimsIdentity identity, IEnumerable<string> roleClaimTypes)
++    {
++        foreach (var roleClaimType in roleClaimTypes)
++        {
++            foreach (var claim in identity.FindAll(roleClaimType).ToList())
++            {
++                foreach (var role in ExpandRoleValues(claim.Value))
++                {
++                    if (!identity.HasClaim(ClaimTypes.Role, role))
++                    {
++                        identity.AddClaim(new Claim(ClaimTypes.Role, role));
++                    }
++                }
++            }
++        }
++    }
++
++    public static IReadOnlyList<string> GetRoles(ClaimsPrincipal user, IEnumerable<string>? roleClaimTypes = null)
++    {
++        var types = (roleClaimTypes ?? DefaultRoleClaimTypes.Append(ClaimTypes.Role))
++            .Distinct(StringComparer.OrdinalIgnoreCase)
++            .ToArray();
++
++        return user.Claims
++            .Where(claim => types.Contains(claim.Type, StringComparer.OrdinalIgnoreCase))
++            .SelectMany(claim => ExpandRoleValues(claim.Value))
++            .Distinct(StringComparer.OrdinalIgnoreCase)
++            .OrderBy(role => role)
++            .ToList();
++    }
++}
+diff --git a/tests/Unit.Tests/Components/Layout/NavMenuTests.cs b/tests/Unit.Tests/Components/Layout/NavMenuTests.cs
+new file mode 100644
+index 0000000..c65ef3c
+--- /dev/null
++++ b/tests/Unit.Tests/Components/Layout/NavMenuTests.cs
+@@ -0,0 +1,100 @@
++using System.Security.Claims;
++using Bunit;
++using FluentAssertions;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.Components.Authorization;
++using Microsoft.AspNetCore.Components;
++using Microsoft.Extensions.DependencyInjection;
++using MyBlog.Web.Components.Layout;
++using MyBlog.Unit.Tests.Testing;
++
++namespace MyBlog.Unit.Tests.Components.Layout;
++
++public class NavMenuTests : BunitContext
++{
++    public NavMenuTests()
++    {
++        Services.AddAuthorizationCore();
++        Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
++    }
++
++    [Fact]
++    public void UnauthenticatedUser_SeesLoginAndNoProtectedLinks()
++    {
++        var cut = RenderForUser(CreatePrincipal(authenticated: false));
++
++        cut.Markup.Should().Contain("Login");
++        cut.Markup.Should().NotContain("Logout");
++        cut.Markup.Should().NotContain("Manage Users");
++        cut.Markup.Should().NotContain("New Post");
++    }
++
++    [Fact]
++    public void AuthenticatedAdmin_UsesDisplayNameAsProfileLabel_AndShowsAdminLinks()
++    {
++        var cut = RenderForUser(CreatePrincipal(name: "Admin User", roles: ["Admin"]));
++
++        cut.Markup.Should().Contain("Admin User");
++        cut.Markup.Should().Contain("Manage Users");
++        cut.Markup.Should().Contain("New Post");
++        cut.Markup.Should().Contain("Logout");
++        cut.Markup.Should().NotContain("Logout (Admin User)");
++    }
++
++    [Fact]
++    public void AuthenticatedUser_WithoutName_FallsBackToProfileLabel()
++    {
++        var cut = RenderForUser(CreatePrincipal(roles: ["Author"]));
++
++        cut.Markup.Should().Contain(">Profile<");
++        cut.Markup.Should().Contain("New Post");
++        cut.Markup.Should().NotContain("Manage Users");
++    }
++
++    [Fact]
++    public void NavMenu_LoadsThemeFromJs_AndAllowsThemeInteraction()
++    {
++        JSInterop.Mode = JSRuntimeMode.Loose;
++        JSInterop.Setup<string>("themeManager.getColor").SetResult("green");
++        JSInterop.Setup<string>("themeManager.getBrightness").SetResult("dark");
++
++        var cut = RenderForUser(CreatePrincipal(name: "Theme User", roles: ["Admin"]));
++
++        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Theme User"));
++        cut.Find("select").Change("yellow");
++        cut.FindAll("button").Last().Click();
++
++        JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.getColor");
++        JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.getBrightness");
++        JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.setColor");
++        JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.setBrightness");
++    }
++
++    private IRenderedComponent<NavMenu> RenderForUser(ClaimsPrincipal principal)
++    {
++        return Render<NavMenu>(parameters => parameters
++            .AddCascadingValue(Task.FromResult(new AuthenticationState(principal))));
++    }
++
++    private static ClaimsPrincipal CreatePrincipal(bool authenticated = true, string? name = null, string[]? roles = null)
++    {
++        if (!authenticated)
++        {
++            return new ClaimsPrincipal(new ClaimsIdentity());
++        }
++
++        var claims = new List<Claim>();
++
++        if (!string.IsNullOrWhiteSpace(name))
++        {
++            claims.Add(new Claim(ClaimTypes.Name, name));
++        }
++
++        if (roles is not null)
++        {
++            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
++        }
++
++        return new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
++    }
++}
+diff --git a/tests/Unit.Tests/Components/RazorSmokeTests.cs b/tests/Unit.Tests/Components/RazorSmokeTests.cs
+new file mode 100644
+index 0000000..2905c31
+--- /dev/null
++++ b/tests/Unit.Tests/Components/RazorSmokeTests.cs
+@@ -0,0 +1,433 @@
++using Bunit;
++using Domain.Abstractions;
++using FluentAssertions;
++using MediatR;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.Components;
++using Microsoft.AspNetCore.Components.Authorization;
++using Microsoft.AspNetCore.Http;
++using Microsoft.Extensions.DependencyInjection;
++using MyBlog.Web.Components.Layout;
++using MyBlog.Web.Components.Shared;
++using MyBlog.Unit.Tests.Testing;
++using MyBlog.Web.Components.Pages;
++using MyBlog.Web.Data;
++using MyBlog.Web.Features.BlogPosts.Create;
++using MyBlog.Web.Features.BlogPosts.Delete;
++using MyBlog.Web.Features.BlogPosts.Edit;
++using MyBlog.Web.Features.BlogPosts.List;
++using MyBlog.Web.Features.UserManagement;
++using NSubstitute;
++using System.Security.Claims;
++
++namespace MyBlog.Unit.Tests.Components;
++
++public class RazorSmokeTests : BunitContext
++{
++    public RazorSmokeTests()
++    {
++        Services.AddAuthorizationCore();
++        Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
++    }
++
++    [Fact]
++    public void Home_RendersWelcomeMessage()
++    {
++        var cut = Render<Home>();
++
++        cut.Markup.Should().Contain("Hello, users!");
++        cut.Markup.Should().Contain("Welcome to your new app.");
++    }
++
++    [Fact]
++    public void Counter_Increments_WhenButtonClicked()
++    {
++        var cut = Render<Counter>();
++
++        cut.Markup.Should().Contain("Current count: 0");
++        cut.Find("button").Click();
++        cut.Markup.Should().Contain("Current count: 1");
++    }
++
++    [Fact]
++    public void Weather_LoadsForecasts()
++    {
++        var cut = Render<Weather>();
++
++        cut.WaitForAssertion(() =>
++        {
++            cut.Markup.Should().Contain("Temp. (C)");
++            cut.FindAll("tbody tr").Should().HaveCount(5);
++        }, TimeSpan.FromSeconds(2));
++    }
++
++    [Fact]
++    public void Error_UsesCascadingHttpContextTraceIdentifier()
++    {
++        var httpContext = new DefaultHttpContext
++        {
++            TraceIdentifier = "trace-123"
++        };
++
++        var cut = Render<Error>(parameters => parameters.AddCascadingValue(httpContext));
++
++        cut.Markup.Should().Contain("trace-123");
++    }
++
++    [Fact]
++    public void NotFound_RendersNotFoundMessage()
++    {
++        var cut = Render<NotFound>();
++
++        cut.Markup.Should().Contain("Not Found");
++        cut.Markup.Should().Contain("does not exist");
++    }
++
++    [Fact]
++    public void ConfirmDeleteDialog_ShowsDialog_WhenVisible()
++    {
++        var cut = Render<ConfirmDeleteDialog>(parameters => parameters
++            .Add(p => p.IsVisible, true)
++            .Add(p => p.PostTitle, "My Post"));
++
++        cut.Markup.Should().Contain("Confirm Delete");
++        cut.Markup.Should().Contain("My Post");
++    }
++
++    [Fact]
++    public void RedirectToLogin_NavigatesToLoginWithReturnUrl()
++    {
++        var navigation = Services.GetRequiredService<NavigationManager>();
++
++        Render<RedirectToLogin>();
++
++        navigation.Uri.Should().Contain("/Account/Login?returnUrl=");
++    }
++
++    [Fact]
++    public void MainLayout_RendersMainContentTargetAndFooter()
++    {
++        var cut = RenderWithUser<MainLayout>(CreatePrincipal("Layout User", ["Author"]), parameters => parameters
++            .Add(layout => layout.Body, (RenderFragment)(builder => builder.AddContent(0, "Body content"))));
++
++        cut.Markup.Should().Contain("id=\"main-content\"");
++        cut.Markup.Should().Contain("Body content");
++        cut.Markup.Should().Contain("Training Project");
++    }
++
++    [Fact]
++    public void BlogIndex_RendersPostsForAuthorizedUser_AndCanOpenDeleteDialog()
++    {
++        var sender = Substitute.For<ISender>();
++        var posts = new[]
++        {
++            new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
++        };
++
++        sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
++
++        cut.Markup.Should().Contain("First");
++        cut.Markup.Should().Contain("Edit");
++        cut.Find("button").Click();
++        cut.Markup.Should().Contain("Confirm Delete");
++    }
++
++    [Fact]
++    public void BlogIndex_ShowsEmptyState_WhenNoPostsExist()
++    {
++        var sender = Substitute.For<ISender>();
++        sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(Array.Empty<BlogPostDto>())));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
++
++        cut.Markup.Should().Contain("No posts yet.");
++    }
++
++    [Fact]
++    public void BlogIndex_ConfirmDelete_SendsDeleteCommandAndRefreshesList()
++    {
++        var sender = Substitute.For<ISender>();
++        var postId = Guid.NewGuid();
++        var posts = new[]
++        {
++            new BlogPostDto(postId, "First", "Content", "Alice", DateTime.UtcNow, null, false)
++        };
++
++        sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
++            .Returns(
++                Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)),
++                Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(Array.Empty<BlogPostDto>())));
++        sender.Send(Arg.Any<DeleteBlogPostCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok()));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
++
++        cut.Find("button").Click();
++        cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
++
++        sender.Received(1).Send(Arg.Is<DeleteBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
++        cut.WaitForAssertion(() => cut.Markup.Should().Contain("No posts yet."));
++    }
++
++    [Fact]
++    public void BlogIndex_ShowsConcurrencyWarning_WhenDeleteFailsWithConcurrency()
++    {
++        var sender = Substitute.For<ISender>();
++        var postId = Guid.NewGuid();
++        var posts = new[]
++        {
++            new BlogPostDto(postId, "First", "Content", "Alice", DateTime.UtcNow, null, false)
++        };
++
++        sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
++        sender.Send(Arg.Any<DeleteBlogPostCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Fail("Concurrency error", ResultErrorCode.Concurrency)));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
++
++        cut.Find("button").Click();
++        cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
++
++        cut.WaitForAssertion(() =>
++        {
++            cut.Markup.Should().Contain("Concurrency Conflict");
++            cut.Markup.Should().Contain("Concurrency error");
++        });
++    }
++
++    [Fact]
++    public void CreatePost_RendersForm()
++    {
++        Services.AddSingleton(Substitute.For<ISender>());
++
++        var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
++
++        cut.Markup.Should().Contain("Create Post");
++        cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(2);
++        cut.Find("textarea");
++    }
++
++    [Fact]
++    public void CreatePost_SubmitsAndNavigatesToBlog_WhenCommandSucceeds()
++    {
++        var sender = Substitute.For<ISender>();
++        sender.Send(Arg.Any<CreateBlogPostCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok(Guid.NewGuid())));
++        Services.AddSingleton(sender);
++
++        var navigation = Services.GetRequiredService<NavigationManager>();
++        var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
++
++        cut.FindAll("input")[0].Change("My title");
++        cut.FindAll("input")[1].Change("Alice");
++        cut.Find("textarea").Change("Hello world");
++        cut.Find("form").Submit();
++
++        sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
++            command.Title == "My title" &&
++            command.Author == "Alice" &&
++            command.Content == "Hello world"), Arg.Any<CancellationToken>());
++        navigation.Uri.Should().EndWith("/blog");
++    }
++
++    [Fact]
++    public void EditPost_LoadsExistingPost()
++    {
++        var sender = Substitute.For<ISender>();
++        var postId = Guid.NewGuid();
++        var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
++
++        sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
++
++        cut.Markup.Should().Contain("Edit Post");
++        cut.Markup.Should().Contain("Existing title");
++        cut.Markup.Should().Contain("Existing content");
++    }
++
++    [Fact]
++    public void EditPost_ShowsConcurrencyMessage_WhenSaveFailsWithConcurrency()
++    {
++        var sender = Substitute.For<ISender>();
++        var postId = Guid.NewGuid();
++        var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
++
++        sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
++        sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Fail("Concurrency error", ResultErrorCode.Concurrency)));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
++
++        cut.Find("form").Submit();
++
++        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Concurrency Conflict"));
++    }
++
++    [Fact]
++    public void EditPost_SubmitsAndNavigatesToBlog_WhenSaveSucceeds()
++    {
++        var sender = Substitute.For<ISender>();
++        var postId = Guid.NewGuid();
++        var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
++
++        sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
++        sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok()));
++
++        Services.AddSingleton(sender);
++
++        var navigation = Services.GetRequiredService<NavigationManager>();
++        var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
++
++        cut.Find("form").Submit();
++
++        sender.Received(1).Send(Arg.Is<EditBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
++        navigation.Uri.Should().EndWith("/blog");
++    }
++
++    [Fact]
++    public void ManageRoles_RendersUsersAndAvailableRoles()
++    {
++        var sender = Substitute.For<ISender>();
++        var users = new[]
++        {
++            new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin"])
++        };
++        var roles = new[]
++        {
++            new RoleDto("role-admin", "Admin"),
++            new RoleDto("role-author", "Author")
++        };
++
++        sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(users)));
++        sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(roles)));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
++
++        cut.Markup.Should().Contain("Manage User Roles");
++        cut.Markup.Should().Contain("Available roles: Admin, Author");
++        cut.Markup.Should().Contain("admin@example.com");
++    }
++
++    [Fact]
++    public void ManageRoles_AssignButton_SendsCommandAndRefreshesUsers()
++    {
++        var sender = Substitute.For<ISender>();
++        var users = new[]
++        {
++            new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin"])
++        };
++        var refreshedUsers = new[]
++        {
++            new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin", "Author"])
++        };
++        var roles = new[]
++        {
++            new RoleDto("role-admin", "Admin"),
++            new RoleDto("role-author", "Author")
++        };
++
++        sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
++            .Returns(
++                Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(users)),
++                Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(refreshedUsers)));
++        sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(roles)));
++        sender.Send(Arg.Any<AssignRoleCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok()));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
++
++        cut.FindAll("button").First(button => button.TextContent.Contains("+ Author")).Click();
++
++        sender.Received(1).Send(Arg.Is<AssignRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
++        cut.WaitForAssertion(() => cut.Markup.Should().Contain("Admin, Author"));
++    }
++
++    [Fact]
++    public void ManageRoles_RemoveButton_SendsCommandAndRefreshesUsers()
++    {
++        var sender = Substitute.For<ISender>();
++        var users = new[]
++        {
++            new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin", "Author"])
++        };
++        var refreshedUsers = new[]
++        {
++            new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin"])
++        };
++        var roles = new[]
++        {
++            new RoleDto("role-admin", "Admin"),
++            new RoleDto("role-author", "Author")
++        };
++
++        sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
++            .Returns(
++                Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(users)),
++                Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(refreshedUsers)));
++        sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(roles)));
++        sender.Send(Arg.Any<RemoveRoleCommand>(), Arg.Any<CancellationToken>())
++            .Returns(Task.FromResult(Result.Ok()));
++
++        Services.AddSingleton(sender);
++
++        var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
++
++        cut.FindAll("button").First(button => button.TextContent.Contains("- Author")).Click();
++
++        sender.Received(1).Send(Arg.Is<RemoveRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
++        cut.WaitForAssertion(() =>
++        {
++            cut.Markup.Should().Contain("+ Author");
++            cut.Markup.Should().Contain("<td class=\"px-4 py-3\">Admin</td>");
++        });
++    }
++
++    private IRenderedComponent<TComponent> RenderWithUser<TComponent>(
++        ClaimsPrincipal principal,
++        Action<ComponentParameterCollectionBuilder<TComponent>>? configure = null)
++        where TComponent : IComponent
++    {
++        return Render<TComponent>(parameters =>
++        {
++            parameters.AddCascadingValue(Task.FromResult(new AuthenticationState(principal)));
++            configure?.Invoke(parameters);
++        });
++    }
++
++    private static ClaimsPrincipal CreatePrincipal(string name, string[] roles)
++    {
++        var claims = new List<Claim> { new(ClaimTypes.Name, name) };
++        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
++        return new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
++    }
++}
+diff --git a/tests/Unit.Tests/Features/UserManagement/ProfileTests.cs b/tests/Unit.Tests/Features/UserManagement/ProfileTests.cs
+new file mode 100644
+index 0000000..d2e11dd
+--- /dev/null
++++ b/tests/Unit.Tests/Features/UserManagement/ProfileTests.cs
+@@ -0,0 +1,98 @@
++using System.Security.Claims;
++using Bunit;
++using FluentAssertions;
++using Microsoft.AspNetCore.Components.Authorization;
++using MyBlog.Web.Features.UserManagement;
++
++namespace MyBlog.Unit.Tests.Features.UserManagement;
++
++public class ProfileTests : BunitContext
++{
++    [Fact]
++    public void Profile_RendersIdentityDetailsRolesPictureAndClaims()
++    {
++        var principal = CreatePrincipal(
++            name: "Admin User",
++            email: "admin@example.com",
++            userId: "auth0|123",
++            pictureUrl: "https://example.com/avatar.png",
++            rolesJson: "[\"Admin\",\"Author\"]",
++            extraClaims: [new Claim("department", "Engineering")]);
++
++        var cut = RenderForUser(principal);
++
++        cut.Markup.Should().Contain("Admin User");
++        cut.Markup.Should().Contain("admin@example.com");
++        cut.Markup.Should().Contain("auth0|123");
++        cut.Markup.Should().Contain("avatar.png");
++        cut.Markup.Should().Contain("Admin");
++        cut.Markup.Should().Contain("Author");
++        cut.Markup.Should().Contain("department");
++        cut.Markup.Should().Contain("Engineering");
++    }
++
++    [Fact]
++    public void Profile_UsesFallbackValues_WhenOptionalClaimsAreMissing()
++    {
++        var principal = CreatePrincipal(
++            name: null,
++            email: null,
++            userId: null,
++            pictureUrl: null,
++            rolesJson: null,
++            extraClaims: []);
++
++        var cut = RenderForUser(principal);
++
++        cut.Markup.Should().Contain("Unknown User");
++        cut.Markup.Should().Contain("No email claim found");
++        cut.Markup.Should().Contain("No roles found in the current claims.");
++        cut.Markup.Should().Contain(">NE<");
++    }
++
++    private IRenderedComponent<Profile> RenderForUser(ClaimsPrincipal principal)
++    {
++        return Render<Profile>(parameters => parameters
++            .AddCascadingValue(Task.FromResult(new AuthenticationState(principal))));
++    }
++
++    private static ClaimsPrincipal CreatePrincipal(
++        string? name,
++        string? email,
++        string? userId,
++        string? pictureUrl,
++        string? rolesJson,
++        IEnumerable<Claim> extraClaims)
++    {
++        var claims = new List<Claim>();
++
++        if (!string.IsNullOrWhiteSpace(name))
++        {
++            claims.Add(new Claim(ClaimTypes.Name, name));
++        }
++
++        if (!string.IsNullOrWhiteSpace(email))
++        {
++            claims.Add(new Claim(ClaimTypes.Email, email));
++        }
++
++        if (!string.IsNullOrWhiteSpace(userId))
++        {
++            claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
++        }
++
++        if (!string.IsNullOrWhiteSpace(pictureUrl))
++        {
++            claims.Add(new Claim("picture", pictureUrl));
++        }
++
++        if (!string.IsNullOrWhiteSpace(rolesJson))
++        {
++            claims.Add(new Claim("https://myblog/roles", rolesJson));
++        }
++
++        claims.AddRange(extraClaims);
++
++        return new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
++    }
++}
+diff --git a/tests/Unit.Tests/ResultTests.cs b/tests/Unit.Tests/ResultTests.cs
+new file mode 100644
+index 0000000..46ba5bd
+--- /dev/null
++++ b/tests/Unit.Tests/ResultTests.cs
+@@ -0,0 +1,71 @@
++using Domain.Abstractions;
++using FluentAssertions;
++
++namespace MyBlog.Unit.Tests;
++
++public class ResultTests
++{
++    [Fact]
++    public void Ok_CreatesSuccessfulNonGenericResult()
++    {
++        var result = Result.Ok();
++
++        result.Success.Should().BeTrue();
++        result.Failure.Should().BeFalse();
++        result.Error.Should().BeNull();
++        result.ErrorCode.Should().Be(ResultErrorCode.None);
++    }
++
++    [Fact]
++    public void Fail_CreatesFailedNonGenericResultWithCodeAndDetails()
++    {
++        var result = Result.Fail("boom", ResultErrorCode.Validation, new { Field = "Title" });
++
++        result.Success.Should().BeFalse();
++        result.Failure.Should().BeTrue();
++        result.Error.Should().Be("boom");
++        result.ErrorCode.Should().Be(ResultErrorCode.Validation);
++        result.Details.Should().NotBeNull();
++    }
++
++    [Fact]
++    public void GenericOk_CarriesValue()
++    {
++        var result = Result.Ok("hello");
++
++        result.Success.Should().BeTrue();
++        result.Value.Should().Be("hello");
++    }
++
++    [Fact]
++    public void GenericFail_CreatesFailedResultWithCode()
++    {
++        var result = Result.Fail<string>("missing", ResultErrorCode.NotFound);
++
++        result.Success.Should().BeFalse();
++        result.Error.Should().Be("missing");
++        result.ErrorCode.Should().Be(ResultErrorCode.NotFound);
++        result.Value.Should().BeNull();
++    }
++
++    [Fact]
++    public void FromValue_ReturnsFailedResultWhenValueIsNull()
++    {
++        string? value = null;
++
++        var result = Result.FromValue(value);
++
++        result.Success.Should().BeFalse();
++        result.Error.Should().Be("Provided value is null.");
++    }
++
++    [Fact]
++    public void ImplicitConversions_WorkForGenericResult()
++    {
++        Result<string> result = "hello";
++        string? value = result;
++
++        value.Should().Be("hello");
++        result.Value.Should().Be("hello");
++    }
++}
+diff --git a/tests/Unit.Tests/Security/RoleClaimsHelperTests.cs b/tests/Unit.Tests/Security/RoleClaimsHelperTests.cs
+new file mode 100644
+index 0000000..bc08a54
+--- /dev/null
++++ b/tests/Unit.Tests/Security/RoleClaimsHelperTests.cs
+@@ -0,0 +1,79 @@
++using System.Security.Claims;
++using FluentAssertions;
++using Microsoft.Extensions.Configuration;
++using MyBlog.Web.Security;
++
++namespace MyBlog.Unit.Tests.Security;
++
++public class RoleClaimsHelperTests
++{
++    [Fact]
++    public void GetRoleClaimTypes_UsesConfiguredDistinctValues_WhenPresent()
++    {
++        var configuration = new ConfigurationBuilder()
++            .AddInMemoryCollection(new Dictionary<string, string?>
++            {
++                ["Auth0:RoleClaimTypes:0"] = "roles",
++                ["Auth0:RoleClaimTypes:1"] = "https://myblog/roles",
++                ["Auth0:RoleClaimTypes:2"] = "roles"
++            })
++            .Build();
++
++        var result = RoleClaimsHelper.GetRoleClaimTypes(configuration);
++
++        result.Should().BeEquivalentTo(["roles", "https://myblog/roles"]);
++    }
++
++    [Fact]
++    public void GetRoleClaimTypes_ReturnsDefaults_WhenConfigurationIsMissing()
++    {
++        var configuration = new ConfigurationBuilder().Build();
++
++        var result = RoleClaimsHelper.GetRoleClaimTypes(configuration);
++
++        result.Should().BeEquivalentTo(RoleClaimsHelper.DefaultRoleClaimTypes);
++    }
++
++    [Theory]
++    [InlineData("Admin", new[] { "Admin" })]
++    [InlineData("Admin,Author", new[] { "Admin", "Author" })]
++    [InlineData(" [\"Admin\",\"Author\"] ", new[] { "Admin", "Author" })]
++    public void ExpandRoleValues_ParsesSupportedFormats(string input, string[] expected)
++    {
++        var result = RoleClaimsHelper.ExpandRoleValues(input);
++
++        result.Should().BeEquivalentTo(expected);
++    }
++
++    [Fact]
++    public void AddRoleClaims_AddsExpandedRoleClaimsWithoutDuplicates()
++    {
++        var identity = new ClaimsIdentity(new[]
++        {
++            new Claim("roles", "Admin,Author"),
++            new Claim(ClaimTypes.Role, "Admin")
++        }, "TestAuth", ClaimTypes.Name, ClaimTypes.Role);
++
++        RoleClaimsHelper.AddRoleClaims(identity, ["roles"]);
++
++        identity.FindAll(ClaimTypes.Role)
++            .Select(claim => claim.Value)
++            .Should()
++            .BeEquivalentTo(["Admin", "Author"]);
++    }
++
++    [Fact]
++    public void GetRoles_CollectsDistinctRolesAcrossMultipleClaimTypes()
++    {
++        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
++        {
++            new Claim(ClaimTypes.Role, "Admin"),
++            new Claim("https://myblog/roles", "[\"Author\",\"Admin\"]"),
++            new Claim("roles", "Editor,Author")
++        }, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
++
++        var result = RoleClaimsHelper.GetRoles(principal);
++
++        result.Should().Equal("Admin", "Author", "Editor");
++    }
++}
+diff --git a/tests/Unit.Tests/Testing/TestAuthorizationService.cs b/tests/Unit.Tests/Testing/TestAuthorizationService.cs
+new file mode 100644
+index 0000000..ef9e725
+--- /dev/null
++++ b/tests/Unit.Tests/Testing/TestAuthorizationService.cs
+@@ -0,0 +1,40 @@
++using System.Security.Claims;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.Authorization.Infrastructure;
++
++namespace MyBlog.Unit.Tests.Testing;
++
++internal sealed class TestAuthorizationService : IAuthorizationService
++{
++    public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, IEnumerable<IAuthorizationRequirement> requirements)
++    {
++        foreach (var requirement in requirements)
++        {
++            switch (requirement)
++            {
++                case DenyAnonymousAuthorizationRequirement:
++                    if (user.Identity?.IsAuthenticated != true)
++                    {
++                        return Task.FromResult(AuthorizationResult.Failed());
++                    }
++                    break;
++
++                case RolesAuthorizationRequirement rolesRequirement:
++                    if (!rolesRequirement.AllowedRoles.Any(user.IsInRole))
++                    {
++                        return Task.FromResult(AuthorizationResult.Failed());
++                    }
++                    break;
++            }
++        }
++
++        return Task.FromResult(AuthorizationResult.Success());
++    }
++
++    public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
++    {
++        return Task.FromResult(user.Identity?.IsAuthenticated == true
++            ? AuthorizationResult.Success()
++            : AuthorizationResult.Failed());
++    }
++}
+diff --git a/tests/Unit.Tests/Unit.Tests.csproj b/tests/Unit.Tests/Unit.Tests.csproj
+index 961e494..a929434 100644
+--- a/tests/Unit.Tests/Unit.Tests.csproj
++++ b/tests/Unit.Tests/Unit.Tests.csproj
+@@ -6,10 +6,21 @@
+     <Nullable>enable</Nullable>
+     <IsPackable>false</IsPackable>
+     <RootNamespace>MyBlog.Unit.Tests</RootNamespace>
++    <CollectCoverage>true</CollectCoverage>
++    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
++    <Threshold>89</Threshold>
++    <ThresholdType>line</ThresholdType>
++    <ThresholdStat>Total</ThresholdStat>
++    <ExcludeByFile>**/tests/**/*,**/Program.cs,**/Extensions.cs,**/BlogDbContext.cs,**/MongoDbBlogPostRepository.cs,**/UserManagementHandler.cs,**/Microsoft.NET.Test.Sdk.Program.cs</ExcludeByFile>
+   </PropertyGroup>
+ 
+   <ItemGroup>
++    <PackageReference Include="bunit" Version="2.7.2" />
+     <PackageReference Include="coverlet.collector" Version="6.0.4" />
++    <PackageReference Include="coverlet.msbuild" Version="10.0.0">
++      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
++      <PrivateAssets>all</PrivateAssets>
++    </PackageReference>
+     <PackageReference Include="FluentAssertions" Version="8.9.0" />
+     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+     <PackageReference Include="NSubstitute" Version="5.3.0" />
+@@ -26,4 +37,4 @@
+     <ProjectReference Include="..\..\src\Web\Web.csproj" />
+   </ItemGroup>
+ 
+-</Project>
+\ No newline at end of file
++</Project>

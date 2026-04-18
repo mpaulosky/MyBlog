@@ -1,9 +1,12 @@
 using Auth0.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using MyBlog.Domain.Interfaces;
 using MyBlog.Web.Components;
 using MyBlog.Web.Data;
+using MyBlog.Web.Security;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,12 +17,45 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Auth0 authentication
+var auth0Domain = builder.Configuration["Auth0:Domain"];
+var auth0ClientId = builder.Configuration["Auth0:ClientId"];
+
+if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+{
+    throw new InvalidOperationException(
+        "Auth0 configuration is missing or incomplete. Set these user secrets for the Web project:\n" +
+        "  dotnet user-secrets set \"Auth0:Domain\" \"<your-tenant>.auth0.com\" --project src/Web\n" +
+        "  dotnet user-secrets set \"Auth0:ClientId\" \"<your-client-id>\" --project src/Web\n" +
+        "  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
+}
+
+var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
+
 builder.Services.AddAuth0WebAppAuthentication(opts =>
 {
-    opts.Domain = builder.Configuration["Auth0:Domain"]!;
-    opts.ClientId = builder.Configuration["Auth0:ClientId"]!;
+    opts.Domain = auth0Domain;
+    opts.ClientId = auth0ClientId;
     opts.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
     opts.CallbackPath = "/signin-auth0";
+});
+
+builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
+
+    var existingOnTokenValidated = options.Events.OnTokenValidated;
+    options.Events.OnTokenValidated = async context =>
+    {
+        if (existingOnTokenValidated is not null)
+            await existingOnTokenValidated(context);
+
+        if (context.Principal?.Identity is not ClaimsIdentity identity)
+        {
+            return;
+        }
+
+        RoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);
+    };
 });
 
 builder.Services.AddCascadingAuthenticationState();
@@ -72,13 +108,17 @@ app.MapStaticAssets();
 // Auth0 login/logout endpoints
 app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 {
+    var safeReturn = !string.IsNullOrEmpty(returnUrl)
+        && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+        ? returnUrl
+        : "/";
     var props = new LoginAuthenticationPropertiesBuilder()
-        .WithRedirectUri(returnUrl ?? "/")
+        .WithRedirectUri(safeReturn)
         .Build();
     await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props);
 }).AllowAnonymous();
 
-app.MapGet("/Account/Logout", async (HttpContext ctx) =>
+app.MapGet("/Account/Logout", async ctx =>
 {
     var props = new LogoutAuthenticationPropertiesBuilder()
         .WithRedirectUri("/")
@@ -92,4 +132,3 @@ app.MapRazorComponents<App>()
 
 app.MapDefaultEndpoints();
 app.Run();
-

@@ -1,0 +1,207 @@
+@page "/profile"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using MyBlog.Web.Security
+@attribute [Authorize]
+
+<PageTitle>User Profile</PageTitle>
+
+<h1 class="mb-6">User Profile</h1>
+
+@if (_user is null)
+{
+	<p>Loading profile...</p>
+}
+else
+{
+	<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+		<section class="card p-6">
+			<div class="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+				@if (!string.IsNullOrWhiteSpace(_pictureUrl))
+				{
+					<img src="@_pictureUrl"
+					     alt="@($"{_displayName} profile image")"
+					     class="h-24 w-24 rounded-full border-2 border-primary-300 object-cover shadow-md dark:border-primary-700" />
+				}
+				else
+				{
+					<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary-600 text-3xl font-bold text-primary-50 shadow-md dark:bg-primary-700">
+						@_initials
+					</div>
+				}
+
+				<div class="space-y-2">
+					<h2 class="!text-2xl">@_displayName</h2>
+					<p class="!text-base !font-medium text-gray-600 dark:text-gray-300">@_emailAddress</p>
+					@if (!string.IsNullOrWhiteSpace(_userId))
+					{
+						<p class="!text-sm !font-medium text-gray-500 dark:text-gray-400 break-all">User ID: @_userId</p>
+					}
+				</div>
+			</div>
+
+			<div class="mt-6 grid gap-4 sm:grid-cols-2">
+				<div class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
+					<h3 class="mb-2 !text-base">Identity</h3>
+					<dl class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+						<div>
+							<dt class="font-semibold">Authenticated</dt>
+							<dd>@(_user.Identity?.IsAuthenticated == true ? "Yes" : "No")</dd>
+						</div>
+						<div>
+							<dt class="font-semibold">Authentication Type</dt>
+							<dd>@(_user.Identity?.AuthenticationType ?? "Unknown")</dd>
+						</div>
+					</dl>
+				</div>
+
+				<div class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
+					<h3 class="mb-2 !text-base">Roles</h3>
+					@if (_roles.Count > 0)
+					{
+						<div class="flex flex-wrap gap-2">
+							@foreach (var role in _roles)
+							{
+								<span class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-300">@role</span>
+							}
+						</div>
+					}
+					else
+					{
+						<p class="!text-sm !font-medium text-amber-700 dark:text-amber-300">No roles found in the current claims.</p>
+					}
+				</div>
+			</div>
+		</section>
+
+		<section class="card overflow-hidden">
+			<div class="border-b border-primary-200 px-6 py-4 dark:border-primary-800">
+				<h2 class="!text-xl">Claims</h2>
+				<p class="!mt-1 !text-sm !font-medium text-gray-600 dark:text-gray-300">Claims currently present on your authenticated user principal.</p>
+			</div>
+
+			@if (_claims.Count == 0)
+			{
+				<div class="px-6 py-4">
+					<p class="!text-sm !font-medium text-gray-600 dark:text-gray-300">No claims were found.</p>
+				</div>
+			}
+			else
+			{
+				<div class="overflow-x-auto">
+					<table class="min-w-full divide-y divide-primary-200 dark:divide-primary-800">
+						<thead class="bg-primary-50 dark:bg-primary-950/60">
+							<tr>
+								<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Claim Type</th>
+								<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Value</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-primary-100 dark:divide-primary-900/80">
+							@foreach (var claim in _claims)
+							{
+								<tr class="align-top odd:bg-white odd:dark:bg-gray-900 even:bg-primary-50/40 even:dark:bg-primary-950/20">
+									<td class="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-200 break-all">@claim.Type</td>
+									<td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-all">@claim.Value</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			}
+		</section>
+	</div>
+}
+
+@code {
+	[CascadingParameter]
+	private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+	private ClaimsPrincipal? _user;
+	private string _displayName = "Unknown User";
+	private string _emailAddress = "No email claim found";
+	private string _userId = string.Empty;
+	private string _pictureUrl = string.Empty;
+	private string _initials = "?";
+	private IReadOnlyList<string> _roles = [];
+	private IReadOnlyList<Claim> _claims = [];
+
+	private static readonly HashSet<string> _sensitiveClaimTypes = new(StringComparer.OrdinalIgnoreCase)
+	{
+		"nonce", "c_hash", "at_hash", "aud", "azp", "auth_time", "iat", "exp", "nbf"
+	};
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (AuthenticationStateTask is null)
+		{
+			return;
+		}
+
+		var authenticationState = await AuthenticationStateTask;
+		_user = authenticationState.User;
+
+		_displayName = GetFirstClaimValue(_user,
+			ClaimTypes.Name,
+			"name",
+			"preferred_username",
+			"nickname",
+			ClaimTypes.GivenName) ?? _user.Identity?.Name ?? "Unknown User";
+
+		_emailAddress = GetFirstClaimValue(_user,
+			ClaimTypes.Email,
+			"email") ?? "No email claim found";
+
+		_userId = GetFirstClaimValue(_user,
+			ClaimTypes.NameIdentifier,
+			"sub") ?? string.Empty;
+
+		_pictureUrl = GetFirstClaimValue(_user,
+			"picture",
+			"avatar_url",
+			"image") ?? string.Empty;
+
+		_initials = GetInitials(_displayName, _emailAddress);
+		_roles = RoleClaimsHelper.GetRoles(_user);
+		_claims = _user.Claims
+			.Where(c => !_sensitiveClaimTypes.Contains(c.Type))
+			.OrderBy(c => c.Type)
+			.ThenBy(c => c.Value)
+			.ToList();
+	}
+
+	private static string? GetFirstClaimValue(ClaimsPrincipal user, params string[] claimTypes)
+	{
+		foreach (var claimType in claimTypes)
+		{
+			var value = user.Claims.FirstOrDefault(c => c.Type.Equals(claimType, StringComparison.OrdinalIgnoreCase))?.Value;
+
+			if (!string.IsNullOrWhiteSpace(value))
+			{
+				return value;
+			}
+		}
+
+		return null;
+	}
+
+
+	private static string GetInitials(string displayName, string emailAddress)
+	{
+		var source = !string.IsNullOrWhiteSpace(displayName) && !displayName.Equals("Unknown User", StringComparison.OrdinalIgnoreCase)
+			? displayName
+			: emailAddress;
+
+		if (string.IsNullOrWhiteSpace(source))
+		{
+			return "?";
+		}
+
+		var parts = source
+			.Split([' ', '@', '.', '-', '_'], StringSplitOptions.RemoveEmptyEntries)
+			.Take(2)
+			.Select(part => char.ToUpperInvariant(part[0]));
+
+		var initials = new string(parts.ToArray());
+		return string.IsNullOrWhiteSpace(initials) ? "?" : initials;
+	}
+}

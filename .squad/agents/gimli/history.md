@@ -39,3 +39,63 @@ Write comprehensive handler unit tests for MyBlog after upgrade to Vertical Slic
 5. **NetArchTest.Rules 1.3.2** — `.ShouldNot().Exist()` does not exist. Use `GetTypes().Should().BeEmpty()` with FluentAssertions instead.
 
 6. **`IBaseRequestHandler` is not a real MediatR type** — don't use it in architecture tests. `BeSealed()` is a valid architectural constraint since all handlers in this project are `sealed class`.
+
+## Session: PR #2 Test Review (2025-04)
+
+### Task
+Review PR #2 test files for compliance with Gimli's Critical Rules and team conventions.
+
+### Findings
+
+**Files reviewed:**
+- tests/Unit.Tests/Components/Layout/NavMenuTests.cs
+- tests/Unit.Tests/Components/RazorSmokeTests.cs
+- tests/Unit.Tests/Features/UserManagement/ProfileTests.cs
+- tests/Unit.Tests/ResultTests.cs
+- tests/Unit.Tests/Security/RoleClaimsHelperTests.cs
+- tests/Unit.Tests/Testing/TestAuthorizationService.cs
+- tests/Unit.Tests/Unit.Tests.csproj
+
+**Critical Rules Violations:**
+1. **MISSING FILE HEADERS** — ALL 6 test files lack the required block-format copyright header. Production code in `src/Domain/Abstractions/Result.cs` shows the expected format:
+   ```csharp
+   // =======================================================
+   // Copyright (c) 2025. All rights reserved.
+   // File Name :     Result.cs
+   // Company :       mpaulosky
+   // Author :        Matthew Paulosky
+   // Solution Name : MyBlog
+   // Project Name :  Domain
+   // =======================================================
+   ```
+
+2. **MISSING AAA COMMENTS** — None of the new test files use `// Arrange`, `// Act`, `// Assert` comments. Existing handler tests in `tests/Unit.Tests/Handlers/` consistently use AAA comments per charter requirement.
+
+**Passes:**
+- ✅ FluentAssertions `.Should()` used throughout
+- ✅ NSubstitute used for mocking in `TestAuthorizationService`
+- ✅ File-scoped namespaces used
+- ✅ Test namespace pattern correct (`MyBlog.Unit.Tests.{Folder}`)
+- ✅ bUnit tests properly configured with `BunitContext` base class
+- ✅ No integration test collection attributes needed (these are unit tests, not integration)
+- ✅ No `{Entity}Dto.Empty` comparisons
+
+**Coverage Strengths:**
+- NavMenu: Excellent coverage of auth states (unauthenticated, admin, author, theme interaction)
+- Profile: Good coverage of claim presence/absence scenarios
+- RoleClaimsHelper: Comprehensive theory tests for role expansion formats
+- RazorSmokeTests: Good basic component rendering tests
+- ResultTests: Solid coverage of Result<T> patterns
+- TestAuthorizationService: Clean test helper for bUnit auth scenarios
+
+**Verdict:** REQUEST CHANGES — Missing file headers and AAA comments violate Critical Rules #6 and #3.
+
+### Learnings
+
+1. **File header enforcement** — Production code has block-format copyright headers; test code MUST match per charter rule #6. Header is mandatory, not optional.
+
+2. **AAA pattern with comments** — Charter rule #3 explicitly requires `// Arrange`, `// Act`, `// Assert` comments. Existing handler tests demonstrate this pattern consistently.
+
+3. **bUnit test structure** — `BunitContext` base class + test helpers (like `TestAuthorizationService`) + `RenderForUser` patterns create clean, reusable component test setup.
+
+4. **Test namespace convention** — `MyBlog.Unit.Tests.{Folder}` matches the charter requirement for unit test namespace pattern.

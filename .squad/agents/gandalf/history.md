@@ -1,1 +1,27 @@
 
+
+## Learnings
+
+### PR #2 Security Audit — 2025-07 (squad/coverage-test-hardening-main)
+
+**Reviewed files:** RoleClaimsHelper.cs, ManageRoles.razor, Profile.razor, Program.cs, AssemblyInfo.cs, TestAuthorizationService.cs, RoleClaimsHelperTests.cs, NavMenu.razor, MainLayout.razor, Home.razor
+
+**Verdict:** REJECT (HIGH finding)
+
+**Key Findings:**
+
+1. **[HIGH] Open Redirect in `/Account/Login`** — `returnUrl` query parameter is passed directly to `WithRedirectUri(returnUrl ?? "/")` in `Program.cs:111` with no local-path validation. An attacker could craft `/Account/Login?returnUrl=https://evil.com` to redirect a user to a phishing site after login. Fix: validate `returnUrl` is a relative/local path before use (e.g., `LocalRedirect` or `Uri.IsWellFormedUriString` check).
+
+2. **[MEDIUM] Potential NullReferenceException in `OnTokenValidated` handler** — `Program.cs:46` captures `options.Events.OnTokenValidated` before the PostConfigure, but Auth0 SDK may set this to `null`. The line `await existingOnTokenValidated(context)` will throw `NullReferenceException` if null, breaking all logins. Fix: guard with `if (existingOnTokenValidated != null)`.
+
+3. **[INFO] Profile page exposes all JWT claims** — The `/profile` page renders all claims including internal ones (`sub`, `auth_time`, `nonce`, etc.) to authenticated users. Not a vulnerability given `[Authorize]` gating, but worth noting for defence-in-depth.
+
+4. **[CLEAN] TestAuthorizationService** — Correctly confined to test project only (`internal sealed`, Tests project only). AssemblyInfo.cs `InternalsVisibleTo` does not leak the service to production.
+
+5. **[CLEAN] Role claim mapping** — RoleClaimsHelper correctly deduplicates and normalizes custom Auth0 claim types to `ClaimTypes.Role`. Logic is sound with no privilege escalation risk.
+
+6. **[CLEAN] No hardcoded secrets** — appsettings files have empty placeholders; secrets are via user-secrets.
+
+7. **[CLEAN] Auth middleware order** — UseAuthentication → UseAuthorization → UseAntiforgery is correct.
+
+8. **[CLEAN] ManageRoles and Profile authorization** — Both pages correctly gated with `[Authorize(Roles = "Admin")]` and `[Authorize]` respectively.
