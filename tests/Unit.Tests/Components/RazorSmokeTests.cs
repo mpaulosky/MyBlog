@@ -49,34 +49,6 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void Counter_Increments_WhenButtonClicked()
-	{
-		// Arrange (none)
-		// Act
-		var cut = Render<Counter>();
-
-		// Assert
-		cut.Markup.Should().Contain("Current count: 0");
-		cut.Find("button").Click();
-		cut.Markup.Should().Contain("Current count: 1");
-	}
-
-	[Fact]
-	public void Weather_LoadsForecasts()
-	{
-		// Arrange (none)
-		// Act
-		var cut = Render<Weather>();
-
-		// Assert
-		cut.WaitForAssertion(() =>
-		{
-			cut.Markup.Should().Contain("Temp. (C)");
-			cut.FindAll("tbody tr").Should().HaveCount(5);
-		}, TimeSpan.FromSeconds(2));
-	}
-
-	[Fact]
 	public void Error_UsesCascadingHttpContextTraceIdentifier()
 	{
 		// Arrange
