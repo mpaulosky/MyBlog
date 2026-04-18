@@ -2,22 +2,100 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
-    <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
-    <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
-    <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/" />
+  <script>
+      (function () {
+        var STORAGE_KEY = "tailwind-color-theme";
+        var VALID_THEMES = [
+          "theme-blue-light", "theme-blue-dark",
+          "theme-red-light", "theme-red-dark",
+          "theme-green-light", "theme-green-dark",
+          "theme-yellow-light", "theme-yellow-dark"
+        ];
+
+        function applyThemeFromStorage() {
+          var theme = localStorage.getItem(STORAGE_KEY) || "theme-blue-light";
+          if (VALID_THEMES.indexOf(theme) === -1) theme = "theme-blue-light";
+          var html = document.documentElement;
+          VALID_THEMES.forEach(function (t) { html.classList.remove(t); });
+          html.classList.add(theme);
+          if (theme.indexOf("-dark") !== -1) {
+            html.classList.add("dark");
+            html.classList.remove("light");
+          } else {
+            html.classList.remove("dark");
+            html.classList.add("light");
+          }
+        }
+
+        // Migrate old storage keys (colorTheme + darkMode) → new unified key
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          var oldColor = (localStorage.getItem("colorTheme") || "theme-blue").replace("theme-", "");
+          if (["red", "blue", "green", "yellow"].indexOf(oldColor) === -1) oldColor = "blue";
+          var brightness = localStorage.getItem("darkMode") === "true" ? "dark" : "light";
+          localStorage.setItem(STORAGE_KEY, "theme-" + oldColor + "-" + brightness);
+        }
+
+        // Apply BEFORE stylesheets load — true anti-FOUC
+        applyThemeFromStorage();
+
+        // Re-apply after Blazor enhanced navigation (immediate + delayed to handle
+        // any post-navigation DOM reconciliation that may strip the theme class)
+        function onNavigation() {
+          if (window.themeManager) {
+            window.themeManager.applyTheme();
+          } else {
+            applyThemeFromStorage();
+          }
+          setTimeout(function () {
+            if (window.themeManager) {
+              window.themeManager.applyTheme();
+            } else {
+              applyThemeFromStorage();
+            }
+          }, 100);
+        }
+
+        document.addEventListener("enhancedload", onNavigation);
+        document.addEventListener("blazor:navigated", onNavigation);
+
+        // MutationObserver: if Blazor's DOM reconciliation strips the theme class
+        // from <html>, re-apply immediately from localStorage.
+        if (window._themeObserver) {
+          window._themeObserver.disconnect();
+        }
+        var _reapplying = false;
+        window._themeObserver = new MutationObserver(function () {
+          if (_reapplying) return;
+          var html = document.documentElement;
+          var hasTheme = VALID_THEMES.some(function (t) { return html.classList.contains(t); });
+          if (!hasTheme) {
+            _reapplying = true;
+            applyThemeFromStorage();
+            _reapplying = false;
+          }
+        });
+        window._themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"]
+        });
+      })();
+  </script>
+  <ResourcePreloader />
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <link rel="stylesheet" href="@Assets["MyBlog.Web.styles.css"]" />
+  <ImportMap />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <HeadOutlet />
 </head>
 
 <body>
-    <Routes />
-    <ReconnectModal />
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
+  <Routes />
+  <ReconnectModal />
+  <script src="js/theme.js"></script>
+  <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>

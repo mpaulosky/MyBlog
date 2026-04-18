@@ -41,6 +41,13 @@ section updated), Legolas regenerates `docs/index.html` from the root `README.md
 
 **No Jekyll, no _config.yml.** Plain `.html` only.
 
+## Skills
+
+Before working on any theme, dark/light mode, FOUC, localStorage, or color palette task, read:
+`.squad/skills/blazor-tailwind-theme-persistence/SKILL.md`
+
+Key patterns it covers: unified `tailwind-color-theme` storage key, anti-FOUC IIFE placement in `<head>`, Blazor navigation hooks (`enhancedload` + `blazor:navigated`), MutationObserver guard, and `themeManager` JS object coordination.
+
 ## Model
 Preferred: claude-sonnet-4.5 (writes code)
 

@@ -34,6 +34,15 @@ How to decide who handles what.
 3. Members can reassign by removing their label and adding another member's label.
 4. The `squad` label is the "inbox" — untriaged issues waiting for Lead review.
 
+## Skills
+
+When routing work in these domains, inject the listed skill into the agent's spawn prompt:
+`Relevant skill: .squad/skills/{name}/SKILL.md — read before starting.`
+
+| Domain | Skill | When to Inject |
+|--------|-------|----------------|
+| Blazor Tailwind theming, dark/light mode, FOUC, localStorage, color themes | `blazor-tailwind-theme-persistence` | Any Legolas task touching App.razor, NavMenu, MainLayout, theme toggle, or `tailwind-color-theme` storage key |
+
 ## Rules
 
 1. **Eager by default** — spawn all agents who could usefully start work, including anticipatory downstream work.

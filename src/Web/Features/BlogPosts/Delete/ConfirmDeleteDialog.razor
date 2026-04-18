@@ -1,25 +1,20 @@
 @using Microsoft.AspNetCore.Components
 
-<div class="modal @(_isVisible ? "show d-block" : "d-none")" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
+@if (_isVisible)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" @onclick="OnCancel">
+        <div class="rounded-lg shadow-xl p-6 max-w-md w-full mx-4 bg-surface border border-edge" @onclick:stopPropagation="true" role="dialog" aria-labelledby="dialog-title">
+            <h5 id="dialog-title" class="text-lg font-semibold text-content mb-4">Confirm Delete</h5>
+            <div class="mb-4">
+                <p class="text-content mb-2">Are you sure you want to delete <strong>@PostTitle</strong>?</p>
+                <p class="text-red-600 text-sm">This action cannot be undone.</p>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong>@PostTitle</strong>?</p>
-                <p class="text-danger">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" @onclick="OnConfirm">Delete</button>
-                <button class="btn btn-secondary" @onclick="OnCancel">Cancel</button>
+            <div class="flex gap-2 justify-end">
+                <button class="px-4 py-2 rounded font-medium bg-red-600 text-white hover:bg-red-700 transition" @onclick="OnConfirm">Delete</button>
+                <button class="px-4 py-2 rounded font-medium border border-edge text-content hover:bg-surface transition" @onclick="OnCancel">Cancel</button>
             </div>
         </div>
     </div>
-</div>
-@if (_isVisible)
-{
-    <div class="modal-backdrop fade show"></div>
 }
 
 @code {

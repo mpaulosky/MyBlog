@@ -37,3 +37,22 @@ Added `DbUpdateConcurrencyException` handling to Edit and Delete MediatR handler
 - `Result.Fail(message, ResultErrorCode)` allows structured error handling
 - UI can check `result.ErrorCode` to display context-specific messages
 - Keeps business logic concerns (concurrency) separate from presentation (warning vs. error styling)
+
+## 2026-04-18: Auth0 Configuration Error Handling
+
+### Task: Fix Auth0 startup crash (empty ClientId)
+
+### Root Cause
+Case A: `appsettings.json` has empty strings for `Auth0:Domain` and `Auth0:ClientId`. No user secrets were set for the Web project. The Auth0 SDK's OpenIdConnect options validation throws a cryptic `ArgumentException: The value cannot be an empty string (Parameter 'ClientId')` deep in middleware.
+
+### Changes Made
+1. **Program.cs**: Added explicit pre-registration guard — reads `Auth0:Domain` and `Auth0:ClientId` from config before calling `AddAuth0WebAppAuthentication`. If either is empty, throws `InvalidOperationException` with clear user-secrets instructions.
+2. **appsettings.Development.json**: Added `Auth0` section with empty placeholder values for Domain, ClientId, and ClientSecret — documents what secrets are required.
+
+### Build Validation
+- ✅ `dotnet build src/Web/Web.csproj` succeeded with 0 errors, 0 warnings
+
+### Learnings
+- Auth0 SDK validates options during `builder.Build()` — validate config *before* registering services to get actionable error messages
+- AppHost does NOT inject Auth0 env vars — developers must set user secrets manually on `src/Web`
+- `appsettings.Development.json` should document required secret keys (with empty values) so developers know what to configure
