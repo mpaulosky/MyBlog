@@ -41,6 +41,24 @@ Consolidate common `@using` directives into the appropriate `_Imports.razor` fil
 - **Build time:** No change
 
 ---
+### 1. Remove Blazor Template Demo Pages (Weather & Counter)
+
+**Status:** ✅ Implemented  
+**PR:** https://github.com/mpaulosky/MyBlog/pull/6  
+**Date:** 2026-04-18
+
+The MyBlog project was initialized from the Blazor Server template, which includes demo pages (Counter and Weather) for learning Blazor. These pages are not relevant to the blog application and have been removed to keep the codebase clean.
+
+**Changes:**
+- Deleted `src/Web/Components/Pages/Counter.razor`
+- Deleted `src/Web/Components/Pages/Weather.razor`
+- Removed 2 template test methods from `tests/Unit.Tests/Components/RazorSmokeTests.cs`
+
+**Impact:**
+- 113 lines removed from codebase
+- All 74 tests passing (Architecture 6, Unit 59, Integration 9)
+- Code coverage: 91.64%
+- Cleaner project structure focused on blog functionality
 
 ## Governance
 
