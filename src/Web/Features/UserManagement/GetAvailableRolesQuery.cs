@@ -1,6 +1,3 @@
-using MediatR;
-using Domain.Abstractions;
-
 namespace MyBlog.Web.Features.UserManagement;
 
 public sealed record GetAvailableRolesQuery : IRequest<Result<IReadOnlyList<RoleDto>>>;
