@@ -23,12 +23,17 @@ This installs a **pre-push gate** that validates your code before it reaches Git
 
 ### What the Pre-Push Gate Does
 
-The pre-push hook automatically runs before every `git push`:
+The pre-push hook automatically runs before every `git push` and enforces **5 gates**:
 
-1. **Build** — `dotnet build MyBlog.slnx --no-incremental -c Release`
-2. **Test** — `dotnet test MyBlog.slnx --no-build -c Release`
+| Gate | Name | Action |
+|------|------|--------|
+| **0** | Branch protection | Blocks direct pushes to `main` or `dev` |
+| **1** | Untracked source files | Warns about untracked `.razor`/`.cs` files |
+| **2** | Release build | `dotnet build MyBlog.slnx --configuration Release` |
+| **3** | Unit/Arch tests | `tests/Architecture.Tests`, `tests/Unit.Tests` |
+| **4** | Integration tests | `tests/Integration.Tests` (Docker required) |
 
-If either step fails, the push is aborted. This prevents broken code from reaching GitHub and ensures CI stays green.
+Gates 2–4 allow up to 3 attempts — the hook pauses between failures so you can fix and retry without re-running from scratch.
 
 ### Bypassing the Gate (Emergency Only)
 

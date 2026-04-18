@@ -1,71 +1,39 @@
 #!/bin/bash
-
-# Script to install git hooks for MyBlog project
-# Run this after cloning the repository to set up local development hooks
+# Installs the pre-push gate hook from .github/hooks/pre-push into the local Git hooks directory.
+# Safe to re-run: skips if already up-to-date, backs up any differing hook before overwriting.
 
 set -e
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HOOKS_DIR="$REPO_ROOT/.git/hooks"
-PRE_PUSH_HOOK="$HOOKS_DIR/pre-push"
+SOURCE="$REPO_ROOT/.github/hooks/pre-push"
+HOOKS_DIR="$(git -C "$REPO_ROOT" rev-parse --git-path hooks)"
+DEST="$HOOKS_DIR/pre-push"
 
-echo "Installing pre-push hook..."
+if [[ ! -f "$SOURCE" ]]; then
+  echo "❌  Source hook not found: $SOURCE"
+  exit 1
+fi
 
-# Create the pre-push hook
-cat > "$PRE_PUSH_HOOK" << 'HOOK_CONTENT'
-#!/bin/bash
-
-# Pre-push hook: Runs build and tests before allowing push
-# Ensures broken code doesn't reach GitHub
-
-# Skip if running in CI (CI already validates)
-if [ "$CI" = "true" ]; then
+if [[ -f "$DEST" ]] && cmp -s "$SOURCE" "$DEST"; then
+  echo "✅  Pre-push hook is already up-to-date. Nothing to do."
   exit 0
 fi
 
-echo "🔍 Pre-push gate: Running build and tests..."
-echo ""
-
-# Run build
-echo "▶️  Building solution (dotnet build MyBlog.slnx --no-incremental -c Release)..."
-if ! dotnet build MyBlog.slnx --no-incremental -c Release; then
-  echo ""
-  echo "❌ Build FAILED. Push aborted."
-  echo "💡 Fix build errors, commit, and try again."
-  echo "⚠️  To skip this check (emergency only): git push --no-verify"
-  exit 1
+if [[ -f "$DEST" ]]; then
+  BACKUP="$DEST.bak.$(date +%Y%m%d%H%M%S)"
+  echo "⚠️   Existing hook differs — backing up to: $BACKUP"
+  cp "$DEST" "$BACKUP"
 fi
 
+cp "$SOURCE" "$DEST"
+chmod +x "$DEST"
+echo "✅  Pre-push hook installed at $DEST"
 echo ""
-echo "✅ Build passed"
+echo "The hook enforces 5 gates on every 'git push':"
+echo "  0. Blocks direct pushes to main/dev"
+echo "  1. Warns about untracked .razor/.cs source files"
+echo "  2. Release build  (dotnet build MyBlog.slnx --configuration Release)"
+echo "  3. Unit/arch tests (tests/Architecture.Tests, tests/Unit.Tests)"
+echo "  4. Integration tests (tests/Integration.Tests — Docker required)"
 echo ""
-
-# Run tests
-echo "▶️  Running tests (dotnet test MyBlog.slnx --no-build -c Release)..."
-if ! dotnet test MyBlog.slnx --no-build -c Release; then
-  echo ""
-  echo "❌ Tests FAILED. Push aborted."
-  echo "💡 Fix failing tests, commit, and try again."
-  echo "⚠️  To skip this check (emergency only): git push --no-verify"
-  exit 1
-fi
-
-echo ""
-echo "✅ All tests passed"
-echo ""
-echo "🚀 Push allowed - build and tests successful!"
-echo ""
-HOOK_CONTENT
-
-# Make it executable
-chmod +x "$PRE_PUSH_HOOK"
-
-echo "✅ Pre-push hook installed at .git/hooks/pre-push"
-echo ""
-echo "The hook will:"
-echo "  1. Build the solution (dotnet build MyBlog.slnx)"
-echo "  2. Run all tests (dotnet test MyBlog.slnx)"
-echo "  3. Abort push if either fails"
-echo ""
-echo "To bypass in emergencies: git push --no-verify"
-echo ""
+echo "To skip in an emergency: git push --no-verify"
