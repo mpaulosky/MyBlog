@@ -1,5 +1,41 @@
-
 ## Learnings
+
+### 2026-04-18 — PR #9 Review Fixes: Workflow Hardening
+
+**Issues addressed:**
+
+1. **SDK version conflict (`dotnet-quality: 'preview'` vs `global.json allowPrerelease: false`)**
+   - `global.json` pins SDK `10.0.100` with `allowPrerelease: false`
+   - Workflows were using `dotnet-version: '10.0.x'` + `dotnet-quality: 'preview'` which contradicts the pin
+   - Fix: replace with `global-json-file: global.json` in all 3 setup-dotnet steps (ci.yml + 3 in squad-test.yml)
+   - Lesson: always use `global-json-file` when `global.json` exists — avoids version drift and preview SDK pollution
+
+2. **`assemblySemVer` drops prerelease labels**
+   - `assemblySemVer` is Major.Minor.Patch only (e.g., `1.0.0`) — strips prerelease suffixes
+   - `nuGetVersion` includes prerelease labels (e.g., `1.0.0-alpha.1`) per NuGet conventions
+   - Fix: use `nuGetVersion` for `/p:Version` and add `informationalVersion` for full metadata
+   - Lesson: `assemblySemVer` ≠ package version; always use `nuGetVersion` for /p:Version in CI builds
+
+3. **Duplicate CI triggers between workflows**
+   - Both `ci.yml` and `squad-test.yml` had push triggers to main/dev, causing doubled CI runs on push
+   - Fix: removed `push` trigger from `squad-test.yml` — it's a PR-only parallel test workflow
+   - Lesson: parallel test workflows should be PR-scoped; push coverage belongs in ci.yml
+
+4. **`continue-on-error` too broad on coverage steps**
+   - Coverage generation failing silently (continue-on-error) hides real problems
+   - Only the PR *comment posting* step should be optional (can't always post to PRs)
+   - Fix: removed `continue-on-error` from download-artifact and ReportGenerator steps; kept only on sticky-pr-comment
+   - Lesson: `continue-on-error: true` should be surgical — only on truly optional steps like notifications
+
+5. **Misleading comment in squad-issue-assign.yml**
+   - Comment said "Get the default branch name (main, master, etc.)" but code hardcoded `baseBranch = 'dev'`
+   - Fix: replaced with "Base branch for squad PRs"
+   - Lesson: comments that contradict the code are worse than no comments — they mislead future readers
+
+**Commits pushed to squad/cicd-phase3-4:**
+- `173f3e14` — ci.yml: global.json SDK + nuGetVersion + InformationalVersion
+- `2d2efdcd` — squad-test.yml: global.json SDK + remove push trigger + tighten continue-on-error
+- `1d054a4b` — squad-issue-assign.yml: fix misleading base branch comment
 
 ### 2025-01-29 — PR #4 Review: Razor @using Consolidation
 
@@ -62,4 +98,3 @@
 - Monitor first workflow run on PR #5 to verify all steps execute successfully
 - May need to adjust coverage thresholds or exclusions based on actual coverage data
 - Consider adding caching for Docker images if Testcontainers startup becomes slow
-
