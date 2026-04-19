@@ -363,3 +363,15 @@ Reviewed squad skills/playbooks from DevOps perspective. Identified 5 high-prior
 **Key Gap Closed:** Broken code reaching CI — pre-push hooks catch 90% locally before CI.
 
 **Outcome:** Decision merged to decisions.md (section 7). High-priority roadmap ready for queue.
+
+## 2026-04-19: Roadmap Stress-Test (Sprint 0)
+
+Operationally validated adoption roadmap against live repo. Key findings:
+- Pre-push hook exists with 5 gates; hook installer exists; contributor docs complete
+- 4 of 5 Milestone 1 items already partly implemented
+- Narrowed M1 scope: 5 items / ~2h (vs. original 4–5h)
+- Merged-branch guard deferred to M2; routing injection simpler as quarantine list
+- Revised M1 items: tighten squad branch regex (30m) + post-checkout bootstrap (30m) + merged-branch docs (15m) + workflow verify (15m) + quarantine list (15m)
+- Implementation prerequisite: decide hotfix/* branch exemption
+
+Next: Pre-push audit (Gate 1–5 smoke test) before M1 implementation

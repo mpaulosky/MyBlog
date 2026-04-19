@@ -301,6 +301,56 @@ The pre-push skill should point contributors to `docs/CONTRIBUTING.md` as the au
 
 ---
 
+### 8. Roadmap Rubber-Duck Review — Sprint 0 Complete
+
+**Date:** 2026-04-19  
+**Lead:** Aragorn (Lead / Architect)  
+**Contributors:** Boromir (DevOps), Coordinator  
+**Status:** ✅ Approved — Milestone 1 Work May Begin
+
+#### Decision
+
+The 4-milestone Skills & Playbooks adoption roadmap has been validated against live MyBlog repo state through architectural and operational review. The roadmap is **fundamentally sound** with 5 targeted refinements and 3 execution constraints.
+
+#### Validation Summary
+
+**Architecture Review (Aragorn):**
+- ✅ Milestone 0–3 sequence correct; high-leverage wins owned
+- ✅ Owner assignments match available capacity and domain expertise
+- ✅ Repo fit confirmed for all 9 skills and 2 playbooks
+- ⚠️ 5 refinements identified: Sprint splits, pre-flight checklist, effort estimates, release decision logic, deleted-assets manifest
+- ⚠️ 3 execution constraints established: Review sign-off gate, pre-push audit, routing PR isolation
+
+**Operational Review (Boromir):**
+- ✅ 4 of 5 Milestone 1 items already partly implemented
+- ✅ Pre-push hook exists with 5 gates; hook installer exists
+- ✅ Contributor docs complete
+- 🟡 M1 scope narrowed: 5 items / ~2h (vs. original 4–5h estimate)
+- 🟡 Merged-branch guard deferred to M2
+- 🟡 Routing injection simpler as quarantine list for M2
+
+#### Key Changes Applied
+
+1. **Split M1 into 1.1 + 1.2:** Boromir (pre-push, 4h) → Aragorn + Pippin (governance, 2h)
+2. **Add Sprint 0 Exit Checklist:** Pre-flight gates, skill dispositions, owner capacity, no inbox files
+3. **Add Effort Estimates:** All 11 backlog items with P0–P3 sizing
+4. **Release Decision Deferred:** M3 acceptance includes explicit logic: "adopt if needed, delete if N/A"
+5. **Deleted-Assets Manifest:** M3 acceptance includes `.squad/decisions.md` entry for removed skills
+
+#### Execution Constraints
+
+1. **Constraint 1:** Roadmap review decision logged here (this entry). ✅ Satisfied
+2. **Constraint 2:** Boromir audits pre-push hook Gate 1–5 before M1 tightening begins (10 min smoke test)
+3. **Constraint 3:** M1b routing PR must not modify `.squad/agents/*/charter.md` or `.squad/decisions/inbox/` files
+
+#### Next Phase
+
+- Boromir: Pre-push audit + M1.1 (Sprint 1.1) implementation
+- Aragorn: Milestone 1b + 2–3 roadmap injection into backlog
+- Team: Proceed to Milestone 1 with constraints active
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

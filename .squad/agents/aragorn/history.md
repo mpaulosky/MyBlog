@@ -84,3 +84,14 @@ Reviewed 19 imported skills and 3 playbooks from architecture perspective. Findi
 - Route MongoDB work to Gimli/Sam with filter-pattern injection
 
 **Outcome:** Decision merged to decisions.md (section 6). Ready for Phase 1 implementation (immediate).
+
+## 2026-04-19: Roadmap Rubber-Duck Review (Sprint 0)
+
+Led architectural validation of 4-milestone Skills & Playbooks adoption roadmap. Approved with 5 targeted changes and 3 execution constraints. Key findings:
+- Milestone sequence correct; ownership appropriate
+- Identified need for Sprint 1 split (1.1 pre-push tightening + 1.2 governance)
+- Added pre-flight checklist, effort estimates, release decision logic, deleted-assets manifest
+- Execution constraints: review sign-off gate, pre-push audit, routing PR isolation
+- Next: Monitor M1 implementation with constraints active
+
+Decision logged: `.squad/decisions.md` entry #8
