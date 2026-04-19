@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pre-push gate: mirrors CI checks to catch failures before they reach GitHub
-# Runs: untracked-file check → Release build → unit tests (loop until pass or abort)
+# Runs: branch protection → untracked-file check → Release build → unit/architecture tests → integration tests
 # NOTE: git provides refspecs on stdin; interactive prompts must use /dev/tty.
 set -uo pipefail
 
@@ -43,12 +43,12 @@ while [[ $BUILD_ATTEMPT -lt $MAX_ATTEMPTS ]]; do
   BUILD_ATTEMPT=$((BUILD_ATTEMPT + 1))
   echo -e "\n${CYAN}🔨 Release build (attempt $BUILD_ATTEMPT/$MAX_ATTEMPTS)...${RESET}"
 
-  dotnet build IssueTrackerApp.slnx --configuration Release
+  dotnet build MyBlog.slnx --configuration Release
   BUILD_EXIT=$?
 
   if [[ $BUILD_EXIT -ne 0 ]]; then
-    echo -e "  ↻ Auto-retrying build once (clearing incremental state)..."
-    dotnet build IssueTrackerApp.slnx --configuration Release
+    echo -e "  ↻ Auto-retrying build once..."
+    dotnet build MyBlog.slnx --configuration Release
     BUILD_EXIT=$?
   fi
 
@@ -70,14 +70,10 @@ if [[ "$BUILD_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 3: Unit + bUnit + Architecture tests ──────────────────────────────
+# ── Gate 3: Unit + Architecture tests ──────────────────────────────────────
 TEST_PROJECTS=(
   "tests/Architecture.Tests/Architecture.Tests.csproj"
-  "tests/Domain.Tests/Domain.Tests.csproj"
-  "tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj"
-  "tests/Persistence.MongoDb.Tests/Persistence.MongoDb.Tests.csproj"
-  "tests/Web.Tests/Web.Tests.csproj"
-  "tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.csproj"
+  "tests/Unit.Tests/Unit.Tests.csproj"
 )
 TEST_ATTEMPT=0
 TESTS_OK=false
@@ -108,20 +104,16 @@ if [[ "$TESTS_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 4: Docker integration tests + Playwright E2E ─────────────────────
-# Requires Docker daemon. Uses Testcontainers (mongo:7.0, Azurite) and Aspire DCP.
-# AppHost.Tests runs here — Aspire boots internally via DistributedApplicationTestingBuilder.
+# ── Gate 4: Docker-backed integration tests ────────────────────────────────
+# Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
-  "tests/Persistence.MongoDb.Tests.Integration/Persistence.MongoDb.Tests.Integration.csproj"
-  "tests/Web.Tests.Integration/Web.Tests.Integration.csproj"
-  "tests/Persistence.AzureStorage.Tests.Integration/Persistence.AzureStorage.Tests.Integration.csproj"
-  "tests/AppHost.Tests/AppHost.Tests.csproj"
+  "tests/Integration.Tests/Integration.Tests.csproj"
 )
 
 echo -e "\n${CYAN}🐋 Checking Docker availability for integration tests...${RESET}"
 if ! docker info &>/dev/null; then
   echo -e "${RED}❌ Docker daemon is not running.${RESET}"
-  echo -e "${YELLOW}   Integration tests require Docker (Testcontainers: mongo:7.0, Azurite).${RESET}"
+  echo -e "${YELLOW}   Integration tests require Docker for the MongoDB Testcontainers dependency.${RESET}"
   echo -e "${RED}   Start Docker and re-push. Skipping integration tests is not allowed.${RESET}"
   exit 1
 else

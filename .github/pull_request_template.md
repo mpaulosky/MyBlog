@@ -35,8 +35,8 @@ Closes #<!-- issue number -->
 <!-- Complete before requesting review — incomplete PRs will be returned -->
 
 ### Code Quality
-- [ ] I ran `dotnet build IssueTrackerApp.slnx --configuration Release` — 0 errors, 0 warnings
-- [ ] I ran `dotnet test IssueTrackerApp.slnx --configuration Release --no-build` — all pass
+- [ ] I ran `dotnet build MyBlog.slnx --configuration Release` — 0 errors, 0 warnings
+- [ ] I ran `dotnet test MyBlog.slnx --configuration Release --no-build` — all pass
 - [ ] No TODO/FIXME left unless tracked in a follow-up issue (link it)
 - [ ] No secrets, API keys, or credentials committed
 

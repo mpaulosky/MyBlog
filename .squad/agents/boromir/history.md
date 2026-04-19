@@ -1,5 +1,39 @@
 ## Learnings
 
+### 2026-04-18 — Pre-Push Gate Implementation
+
+**Work completed:**
+- Added `.github/hooks/pre-push` as the committed source of truth for the local hook.
+- Fixed copied-project drift in the hook: `IssueTrackerApp.slnx` → `MyBlog.slnx`, Gate 3 reduced to the real `Architecture.Tests` and `Unit.Tests` projects, and Gate 4 reduced to the real `Integration.Tests` project.
+- Rewrote `scripts/install-hooks.sh` to copy the committed hook into the local hooks directory, skip when already identical, and back up any differing local hook before overwriting.
+- Updated `CONTRIBUTING.md`, `.copilot/skills/pre-push-test-gate/SKILL.md`, and `.github/pull_request_template.md` so the documented commands and project lists match the shipped hook.
+- Kept the emergency escape hatch documented as `git push --no-verify`.
+
+**Branch and PR:**
+- Created `squad/prepush-gate` from `origin/dev`.
+- Pushed follow-up corrections to PR #12 (`squad/prepush-gate` → `dev`) after reconciling the copied hook with the actual MyBlog repo layout.
+
+**Key implementation details:**
+- `.github/hooks/pre-push` is the source of truth; `.git/hooks/pre-push` is installed locally and is never committed.
+- Gate 2 builds `MyBlog.slnx` in Release mode and auto-retries once inside each attempt to ride through transient CLR aborts.
+- Gate 3 runs `tests/Architecture.Tests/Architecture.Tests.csproj` and `tests/Unit.Tests/Unit.Tests.csproj`.
+- Gate 4 runs `tests/Integration.Tests/Integration.Tests.csproj` and requires Docker for Testcontainers-backed dependencies.
+- The installer resolves the hooks directory with `git rev-parse --git-path hooks`, so it works in worktrees and nonstandard Git dir layouts.
+
+**Testing:**
+- Reinstalled the hook locally with `./scripts/install-hooks.sh`; the installer backed up the previous differing hook before replacing it.
+- Pushed the branch successfully through all 5 gates:
+  - Build: passed after one automatic retry following transient `Internal CLR error (0x80131506)`
+  - Architecture.Tests: ✅ 6/6
+  - Unit.Tests: ✅ 59/59
+  - Integration.Tests: ✅ 9/9
+  - Push: allowed after all gates passed
+
+**Lessons learned:**
+- Keep the committed hook and installer aligned by copying from a single source of truth instead of embedding hook bodies in the install script.
+- Repo-specific automation copied from another project must be reconciled immediately; stale solution names and test project paths can silently invalidate the gate.
+- Worktree-safe hook installation should use `git rev-parse --git-path hooks`, not a hardcoded `.git/hooks` path.
+
 ### 2026-04-18 — PR #9 Review Fixes: Workflow Hardening
 
 **Issues addressed:**
