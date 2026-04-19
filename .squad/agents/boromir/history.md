@@ -1,5 +1,31 @@
 ## Learnings
 
+### 2026-04-19 — PR #16 Creation & Check Validation
+
+**Work completed:**
+- Inspected `squad/1001-sprint-1-1` branch: 7 commits ahead of dev, no uncommitted changes, already synced with origin
+- Created PR #16 from `squad/1001-sprint-1-1` → `dev` with comprehensive Sprint 1.1 summary
+- Monitored 4 required checks to >90% completion:
+  - ✅ Architecture Tests: passed (38s)
+  - ✅ Unit Tests: passed (41s)
+  - ✅ Integration Tests: passed (57s)
+  - ✅ Coverage Summary: completed
+  - 🔄 Agent (Copilot code review): in_progress (expected)
+  - 🔄 build-and-test (secondary): in_progress
+
+**PR Status:**
+- PR #16 is OPEN, MERGEABLE, no review decision yet (awaiting human review or Copilot completion)
+- No blockers detected; the two in-progress checks (Agent and build-and-test) are non-blocking for review decision
+
+**Branch checkout:**
+- Successfully checked out `dev` and pulled `origin/dev` (already up to date)
+- Pre-push hook auto-re-installed during checkout (as expected)
+
+**Key insights:**
+- The "Agent" check is Copilot's async review tool running in the background — it doesn't block merge readiness
+- All required test suites passed; PR is ready for human review
+- Hook auto-reinstall on branch change is working as designed
+
 ### 2026-04-18 — Pre-Push Gate Implementation
 
 **Work completed:**
