@@ -261,9 +261,10 @@
 - Direct push bypass (`--no-verify` for pre-push hook) doesn't override remote rulesets
 
 **Action taken:**
-- Closed PR #13 and documented the ruleset blocker
+- Documented on PR #13 that merge was blocked by the ruleset until owner
+  intervention resolved or bypassed the enforcement requirement
 - Recommended owner modify ruleset enforcement or bypass configuration
-- Decision written to `.squad/decisions/inbox/boromir-merge-blocker.md`
+- Decision rationale captured in this history entry pending any separate inbox decision file
 
 ### 2026-04-19 — Post-Merge Sync: Local Repo Cleanup
 
@@ -276,7 +277,7 @@
    - Remote: `origin/squad/prepush-gate` deleted by GitHub (PR merged + branch auto-deleted)
 
 2. **Preserved** modified `.squad/agents/boromir/history.md` safely:
-   - Method: `git stash push .squad/agents/boromir/history.md -m "boromir-history-merge-blocker-findings"`
+   - Method: `git stash push -m "boromir-history-merge-blocker-findings" -- .squad/agents/boromir/history.md`
    - Stored in stash@{0} with descriptive label
    - Reason: File had local changes documenting ruleset blocker findings
 
