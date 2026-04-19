@@ -6,13 +6,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.MongoDB.Driver" Version="13.2.2" />
-    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.2.2" />
-    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="8.1.0" />
-    <PackageReference Include="MediatR" Version="14.1.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" />
-    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Aspire.MongoDB.Driver" />
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
+    <PackageReference Include="Auth0.AspNetCore.Authentication" />
+    <PackageReference Include="Auth0.ManagementApi" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="MongoDB.EntityFrameworkCore" />
   </ItemGroup>
 
   <PropertyGroup>
