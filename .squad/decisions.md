@@ -351,6 +351,80 @@ The 4-milestone Skills & Playbooks adoption roadmap has been validated against l
 
 ---
 
+### 9. Sprint 1.1 — Hook Hardening (Completed)
+
+**Date:** 2026-04-18  
+**Author:** Boromir (DevOps / Infra)  
+**Status:** ✅ Implemented & Ready for Review  
+**Branch:** `squad/1001-sprint-1-1`  
+**Commit:** `3e672e6`  
+**Related Issue:** Prep for Sprint 1.1 (Milestone 1: Guardrail Adoption)
+
+#### Decision Summary
+
+Sprint 1.1 implements the two planned low-risk guardrail changes to harden the pre-push hook system and enforce squad conventions:
+
+1. **Strict Squad Branch Naming Enforcement** — Gate 0 now validates `squad/{issue}-{slug}` regex
+2. **Automatic Hook Bootstrap on Clone** — Post-checkout hook auto-installs pre-push guard on `git clone` and `git checkout`
+
+#### Changes Delivered
+
+1. **Branch Validation Tightening** (`.github/hooks/pre-push`)
+   - Before: Only blocked direct pushes to `main`/`dev`
+   - After: Requires `squad/{issue}-{slug}` pattern via regex `^squad/[0-9]+-[a-z0-9-]+$`
+   - Rationale: Non-squad branches can break routing and reviewer assignment; enforcement is local and pre-push
+   - Verification: `squad/1001-sprint-1-1` ✅, `feature/test` ❌ correctly rejected
+
+2. **Auto-Install Hooks on Clone** (`.github/hooks/post-checkout` + `scripts/install-hooks.sh`)
+   - Before: Hooks installed only when developers manually ran `./scripts/install-hooks.sh`; new clones silently skipped the pre-push gate
+   - After: 
+     - New `.github/hooks/post-checkout` hook auto-triggers after every `git clone` and `git checkout`
+     - `install-hooks.sh` upgraded to install both pre-push and post-checkout hooks with safe backups
+   - Rationale: Human-dependent installation creates reliable bypass; post-checkout automation ensures all developers and CI/CD runners inherit protection
+   - Verification: Post-checkout hook executable, auto-bootstrap confirmed, safe backups of existing hooks preserved
+
+#### Pre & Post-Implementation Testing
+
+**Baseline (before changes):** All 5 gates pass cleanly
+- Gate 0: Blocks main/dev pushes ✅
+- Gate 1: Warns untracked .razor/.cs files ✅
+- Gate 2: Release build (0 warnings, 0 errors) ✅
+- Gate 3: Unit+Architecture tests (65 passing) ✅
+- Gate 4: Integration tests with Docker (9 passing) ✅
+
+**Post-implementation (with new squad-only enforcement):**
+- Gate 0: Branch validation ✅ (squad pattern enforced)
+- Gate 1–4: All passing ✅
+- Non-squad branches correctly rejected ✅
+- No blockers identified
+
+#### Known Gotchas & Migration Path
+
+- **Existing branches:** Any branches not matching `squad/{issue}-{slug}` will fail at push with clear guidance (intentional; part of adoption)
+- **CI/CD automation:** Branch naming applies to all pushes; automation should use properly named branches or `--no-verify` escape hatch (documented)
+- **Worktree safety:** Uses `git rev-parse --show-toplevel` and `--git-path hooks` (safe for worktrees and non-standard Git layouts)
+
+#### Acceptance Checklist
+
+- ✅ Smoke test baseline established (five-gate flow validated)
+- ✅ Gate 0 tightened to `squad/{issue}-{slug}` regex
+- ✅ Post-checkout hook created and auto-bootstraps pre-push
+- ✅ install-hooks.sh handles both pre-push and post-checkout
+- ✅ All 5 gates pass on working branch
+- ✅ Non-squad branches correctly rejected
+- ✅ No merged-branch automation added (deferred to Sprint 1.2+)
+- ✅ Minimal docs change (only Gate 0 description updated)
+- ✅ Decision documented for team visibility
+
+#### Impact
+
+- **Enforcement:** Squad naming now mandatory locally (not just convention)
+- **Reliability:** Hook installation automatic on clone (eliminates bypass path)
+- **Discoverability:** Clear error messages guide contributors to fix branch names
+- **Adoption:** Prepares foundation for Sprint 1.2 (workflow alignment & docs)
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

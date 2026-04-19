@@ -1,5 +1,36 @@
 ## Learnings
 
+### 2026-04-18 — Sprint 1.1: Hook Hardening (Completed)
+
+**Work completed:**
+- Implemented strict squad/{issue}-{slug} branch naming validation in Gate 0 of `.github/hooks/pre-push`
+- Created `.github/hooks/post-checkout` hook to auto-bootstrap pre-push guard on clone and checkout
+- Refactored `scripts/install-hooks.sh` to install both pre-push and post-checkout hooks with safe backups and diff detection
+- Validated all 5 gates pass: branch validation, untracked files check, Release build (0 warnings), unit+architecture tests (65 passing), integration tests with Docker (9 passing)
+- Branch naming enforced: `squad/1001-sprint-1-1` ✅, `feature/test` ❌ correctly rejected
+
+**Key implementation details:**
+- Gate 0 regex: `^squad/[0-9]+-[a-z0-9-]+$` enforces squad workflow locally before push
+- Post-checkout hook auto-triggers after `git clone` and `git checkout`, preventing silent bypass
+- install-hooks.sh uses `git rev-parse --git-path hooks` for worktree-safe installation
+- Clear error messages guide contributors to fix branch names or use `--no-verify` escape hatch
+
+**Testing & verification:**
+- Smoke test baseline: all 5 gates pass (pre-implementation)
+- Post-implementation: all 5 gates pass with new strict branch naming
+- Non-squad branches correctly rejected at push time
+- Worktree and CI/CD scenarios verified safe
+
+**Known gotchas documented:**
+- Existing branches failing at push will need renaming (intentional — part of adoption)
+- CI/CD automation must use `squad/*` naming or `--no-verify` flag (documented)
+- Migration should be announced to team with clear guidance
+
+**Branch & Commit:**
+- Branch: `squad/1001-sprint-1-1`
+- Commit: `3e672e6` — feat(devops): Sprint 1.1 — Hook Hardening
+- Status: ✅ Complete, ready for PR review
+
 ### 2026-04-18 — Pre-Push Gate Implementation
 
 **Work completed:**
