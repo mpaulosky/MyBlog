@@ -181,6 +181,13 @@
 - May need to adjust coverage thresholds or exclusions based on actual coverage data
 - Consider adding caching for Docker images if Testcontainers startup becomes slow
 
+### 2026-04-18 — PR #12 Follow-up & Pre-Push Gate (Final Summary)
+
+- Addressed pre-push gate follow-up review comments: fixed dead playbook reference
+- Updated SKILL.md and PR template to point to `docs/CONTRIBUTING.md` as authoritative guide
+- PR #12 merged successfully with all green checks passing
+- Decision on gate references documented in `.squad/decisions/decisions.md`
+- Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-boromir.md`
 ### 2025-01-29 — IssueTrackerApp Workflow Analysis for MyBlog CI/CD Strategy
 
 **Reviewed workflows:**
