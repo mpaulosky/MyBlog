@@ -984,3 +984,242 @@ Squad members can proceed to review and merge once all required checks pass, eve
 - `.github/workflows/ci.yml` (defines required vs. optional checks)
 - `.github/workflows/squad-test.yml` (parallel test matrix)
 - `.squad/playbooks/pr-merge-process.md` (merge gate playbook)
+
+---
+
+## Decision 16: Recurring "Merging is Blocked" Root Cause & Mitigation
+
+**Date:** 2026-04-19  
+**Decision Owner:** Boromir (DevOps)  
+**Impact:** Repository maintainability, PR merge velocity  
+**Status:** ✅ Investigation Complete — **Recommend Option 1**
+
+### Problem Statement
+
+Team repeatedly encounters GitHub's "Merging is blocked" error during PR merges, despite all required CI checks passing and reviewers approving. This blocks merge progress and requires escalation to repo owner.
+
+**Observed in:**
+- PR #13 (first block)
+- PR #14 (same block, documented)
+- PR #15, #16, #17 (blocked but resolved via manual thread closure)
+
+### Root Cause
+
+**Ruleset Enforcement Discovery:**
+
+Repository is protected by GitHub Ruleset `protectbranch` (ID: 15246849) with the following configuration:
+
+```json
+{
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main", "refs/heads/dev"]
+    }
+  },
+  "rules": [
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_review_thread_resolution": true
+      }
+    }
+  ],
+  "bypass_actors": []
+}
+```
+
+**Why This Blocks Every PR:**
+
+1. Copilot-pull-request-reviewer[bot] creates ~8–10 review threads per PR (standard code review)
+2. Rule `required_review_thread_resolution: true` requires ALL threads to be marked "Resolved"
+3. Replying in a thread does NOT count as resolved — only clicking GitHub UI "Resolve" button marks it resolved
+4. Only a human reviewer can explicitly resolve (bot cannot resolve its own threads)
+5. Merge fails until all threads are manually resolved
+6. `bypass_actors: []` is empty, so even repo owner cannot use `--admin` to force merge
+
+### Decision: Add Admin Bypass Actor
+
+#### Recommendation
+
+**Implement Option 1: Add RepositoryOwner to bypass_actors**
+
+Modify ruleset `protectbranch` pull_request rule bypass actors:
+```
+bypass_actors: [
+  {
+    "type": "Actor",
+    "actor_type": "RepositoryOwner"
+  }
+]
+```
+
+#### Rationale
+
+| Aspect | Justification |
+|--------|---------------|
+| **Effectiveness** | ✅ Allows repo owner to override merge block if needed; keeps rule enforced for all team members |
+| **Risk** | ✅ Low — only repo owner gains override; team workflows unchanged |
+| **Permanence** | ✅ Persistent configuration change; one-time setup |
+| **Effort** | ✅ Minimal — single API call or UI toggle |
+| **Alternative Risks** | ❌ Disabling thread resolution entirely weakens review rigor; audit mode defeats protection |
+
+#### Implementation Steps
+
+1. Navigate to: GitHub Repo → Settings → Rules → `protectbranch`
+2. Click "Edit" on the pull_request rule
+3. Under "Bypass actors," add: Repository Owner
+4. Publish and save
+
+#### Verification
+
+```bash
+gh api repos/mpaulosky/MyBlog/rulesets/15246849 --jq '.bypass_actors'
+# Expected output: [{"type":"Actor","actor_type":"RepositoryOwner",...}]
+```
+
+### Alternatives Considered
+
+#### Option 2: Disable Thread Resolution Requirement
+- **Setting:** `required_review_thread_resolution: false`
+- **Impact:** Threads still posted but no longer block merge
+- **Risk:** ⚠️ Medium — threads might be routinely ignored by team
+- **Recommended:** ❌ No — weakens code review discipline
+
+#### Option 3: Set Ruleset to Audit Mode
+- **Setting:** `enforcement: "audit"`
+- **Impact:** Rules no longer block; only logged for monitoring
+- **Risk:** ⚠️ High — defeats entire protection mechanism
+- **Recommended:** ❌ No — not a permanent fix, defeats purpose
+
+#### Option 4: Manual Thread Resolution (Current Workaround)
+- **Process:** Team manually clicks "Resolve" for each Copilot thread before merge
+- **Impact:** Merge unblocked but repetitive and error-prone
+- **Risk:** ⚠️ Medium — forgotten threads re-block merge; high friction
+- **Recommended:** ❌ No — status quo, not scalable
+
+### Decision Outcome
+
+**✅ IMPLEMENT OPTION 1 immediately**
+
+- **Action:** Add RepositoryOwner to bypass_actors for `protectbranch` ruleset
+- **Owner:** Repository owner (mpaulosky)
+- **Timeline:** <5 minutes setup
+- **Verification:** Run `gh api` command above to confirm bypass_actors populated
+- **Impact:** Future PRs will merge cleanly once all required checks pass and reviewers approve, even if Copilot threads exist (owner can force merge if needed; team still resolves threads per norm)
+
+### Learnings for Future DevOps Setup
+
+1. **Always configure bypass_actors** when setting up branch protection rulesets
+2. **Rulesets are stricter than branch protection rules** — they take precedence and ignore CLI flags like `--admin` unless bypass actors are configured
+3. **Thread resolution is semantic** — GitHub API distinguishes "replied" from "resolved"; only explicit resolution counts
+4. **Copilot bot reviews generate high volume** — 8–10 threads per PR is standard; high friction if manual resolution required
+
+---
+
+## Decision 17: PR #19 CI Blockage Root Cause & Remediation
+
+**Date:** 2026-04-19T15:10:00Z  
+**Owner:** Boromir (DevOps)  
+**Status:** ✅ COMPLETE — PR merged to dev  
+**Affects:** PR #19 (MERGED), `build-and-test` required status check (unblocked)
+
+### Problem Statement
+
+PR #19 ("chore: remove orphan root diff artifact from branch") was blocked at merge with:
+```
+Repository rule violations — Required status check 'build-and-test' is expected
+```
+
+The PR itself is safe and approved by both Aragorn (lead) and Boromir (DevOps). The blockage is due to CI environment, not code.
+
+### Root Cause Analysis
+
+1. **Repository Ruleset Configuration:**
+   - Ruleset: `protectbranch` (ID 15246849, active, enforces on `refs/heads/main` and `refs/heads/dev`)
+   - Required rule: `required_status_checks` with context `build-and-test`
+   - Policy: strict (cannot merge if check missing or in non-terminal state)
+
+2. **CI Workflow Status:**
+   - Run ID: 24631882902 (latest on `copilot/clean-orphan-changes`)
+   - Status: `completed`
+   - Conclusion: **`action_required`** (not `success`, `failure`, or `skipped`)
+   - Root cause: Firewall block on compass.mongodb.com (MongoDB connectivity)
+   - Evidence: PR body contains Copilot firewall warning confirming DNS block
+
+3. **Why This Happened:**
+   - CI workflow ran during Copilot agent session with firewall rules enabled
+   - Integration tests or test setup attempted MongoDB connection
+   - Firewall rules (enabled during Copilot agent runs) blocked access to compass.mongodb.com
+   - Result: workflow halted in `action_required` state (requiring manual intervention)
+
+### Mechanical Remedy Applied & Result
+
+**Action:** Triggered workflow rerun  
+**Command:** `gh run rerun 24631882902`  
+**Result:** ✅ SUCCEEDED
+- New run started: 2026-04-19T15:05:10Z
+- New run completed: 2026-04-19T15:06:36Z  
+- Conclusion: `success`
+- All required status checks now passing
+
+**Verification:**
+```
+$ gh pr view 19 --json mergeStateStatus,mergeable
+{
+  "mergeStateStatus": "CLEAN",
+  "mergeable": "MERGEABLE"
+}
+```
+
+### Next Steps & Final Status
+
+#### ✅ COMPLETE — PR #19 MERGED
+
+**Merge Execution:**
+```bash
+$ gh pr merge 19 --squash --delete-branch
+✓ Squashed and merged pull request mpaulosky/MyBlog#19 (chore: remove orphan root diff artifact from branch)
+✓ Deleted remote branch copilot/clean-orphan-changes
+```
+
+**Merge Details:**
+- Merged at: 2026-04-19T15:07:38Z by mpaulosky
+- Target branch: `dev`
+- Commit SHA: 04ba254
+- Files changed: 1 (pr2-diff.txt deleted, 1698 lines removed)
+- Remote branch: deleted
+
+**Final PR Status:**
+- `state: MERGED` ✅
+- Branch cleanup: complete
+- Remote tracking: removed
+
+### Outcome Summary
+
+**PR #19 is fully closed and merged to dev.** The artifact cleanup has been integrated into the development branch per playbook standards. No further action required.
+
+### Context for Future Reference
+
+**Why `action_required` Occurs:**
+- GitHub Actions enters `action_required` state when:
+  1. A workflow step requires approval/manual intervention
+  2. Firewall/environment blocks execution mid-workflow
+  3. Required context setup fails (rare)
+- This status blocks merge even though the workflow code itself is sound
+
+**Rerun Strategy:**
+- Rerunning is appropriate when `action_required` is due to environment, not code
+- Evidence: PR body contained firewall warning; tests pass on code inspection; no recent code changes
+
+**Merge Verification:**
+- Before merge: `mergeStateStatus: CLEAN`, `mergeable: MERGEABLE`
+- All required checks: passing
+- Review decision: none required for artifact cleanup PRs (non-code change)
+
+### Decision (Final)
+
+**Boromir Decision:** PR #19 investigation complete. Workflow rerun succeeded, all checks passed, PR merged to dev. Artifact cleanup integrated.
+
+**Status:** ✅ COMPLETE
+

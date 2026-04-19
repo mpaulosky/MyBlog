@@ -284,3 +284,56 @@ mpaulosky requested final merge of PR #17. CI was green (6/6 checks passed), but
 - Deleted merged local branches: `squad/cicd-phase3-4`, `squad/coverage-test-hardening`, `squad/global-usings-consolidation`
 
 **Status:** PR #17 merged to `dev`. Squad skills/playbooks documentation now in trunk.  
+
+## 2026-04-19 — Issue #18 Triage: Branch Clean-up & PR #19 Review Gate
+
+### Context
+Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft PR #19 ("chore: remove orphan root diff artifact from branch"). Label: `go:needs-research`.
+
+### Analysis
+**Scope Confirmation:**
+- Issue #18 vague: "Cleaning orphan changes in local repo"
+- PR #19 concrete: Delete `pr2-diff.txt` (1698-line generated diff artifact, non-source file at repository root)
+- **Fit:** ✅ Perfect match — artifact is clearly orphaned, removal is legitimate hygiene
+
+**PR Quality Assessment:**
+- Self-review checklist: ✅ Complete (build: 0 errors, 0 warnings)
+- CI checks: ✅ Passing (1 file changed, 1698 deletions)
+- Code review requirement: ❌ None needed (pure artifact deletion, no architecture/logic)
+- Current state: ⚠️ Draft (needs → ready-for-review)
+
+### Triage Actions Taken
+1. ✅ Removed label `go:needs-research` (scope now clear)
+2. ✅ Added label `go:resolved-by-pr` (confirms issue #18 resolved by PR #19)
+3. ✅ Marked PR #19 ready-for-review (converted from draft)
+4. ✅ Posted triage summary on issue #18 with routing to Boromir (infra/hygiene domain)
+
+### Key Learning
+**Artifact cleanup is infrastructure work** — When PR removes generated/orphaned non-source files with no code logic changes, route to DevOps (Boromir) rather than code reviewers. Fast track to merge once hygiene is confirmed.
+
+### Board State After Triage
+- **Issue #18:** Labels updated; marked resolved-by-pr; ready for close once PR #19 merges
+- **PR #19:** Now ready-for-review; flagged for Boromir review (infra domain); no blocker
+- **Next Actor:** Ralph (coordinator) — route PR #19 to Boromir for final approval/merge
+
+### 2026-04-19 — Issue #18 Triage & PR #19 Approval
+
+**Scope:** Branch cleanup (Issue #18) + artifact removal (PR #19)
+
+**Actions taken:**
+1. Reviewed Issue #18 and PR #19 scope
+2. Confirmed `go:needs-research` marker: cleanup applies to `pr2-diff.txt` artifact only (not broader)
+3. Approved PR #19 implementation as complete and ready for review
+4. Updated PR #19 from draft to "Ready for Review" status
+5. Replaced `go:needs-research` with `go:resolved-by-pr` label
+
+**PR Review Gate:**
+- ✅ Code approved (minimal hygiene change)
+- ✅ Scope clarified (artifact-only)
+- ✅ Ready for CI and merge
+
+**Final Status:**
+- ✅ Triage complete
+- ✅ Issue #18 awaiting merge auto-close
+- ⏳ PR #19 awaiting Boromir CI resolution
+

@@ -37,3 +37,37 @@ Initial setup complete.
 - Decisions consolidated into `.squad/decisions/decisions.md` by Scribe
 - Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-ralph.md`
 - Ready for Phase 2 (agent spawn/timeout automation)
+
+### 2026-04-19 — Board Scan: Issue #18 + Draft PR #19
+
+**Scan Results:**
+- **Issue #18** ("Branch clean-up"): Labeled with `squad` + `squad:aragorn` + `go:needs-research`. Assigned to both mpaulosky and Copilot. 2 comments, 1 reaction (👀). Created 2026-04-19T14:50:53Z.
+- **PR #19** ("chore: remove orphan root diff artifact"): DRAFT state. 1 file change (deletes `pr2-diff.txt`). Deletions: 1698 (likely artifact), Changes: 1. Mergeable state: "blocked" (checks not passing or other blocker). Requested reviewers: mpaulosky. 2 commits on `copilot/clean-orphan-changes` branch from dev.
+- No other squad issues or assigned items found.
+- No check runs reported; unclear if CI ran or if artifact blocker is blocking the gate.
+
+**Categorization:**
+1. **Assigned but unstarted:** Issue #18 is labeled `squad:aragorn` (assigned to Aragorn/Lead).
+2. **Draft PR with blockers:** PR #19 is draft status with mergeable_state="blocked" — firewall warning visible but no CI checks completed.
+3. **Clear downstream:** Once #18 is investigated, #19 is ready for review and merge (hygiene-only).
+
+**Highest Priority:** Issue #18 requires Lead triage decision: Is `go:needs-research` blocking Aragorn's start, or can work proceed? The issue likely needs research clarification before Aragorn can execute.
+
+**Router Recommendation:** Aragorn (Lead) should review issue #18 and decide: (a) conduct the research to clarify scope, or (b) hand to Bilbo (Research) to spike the cleanup needs. Once #18 is unblocked, #19 is trivial to merge.
+
+### 2026-04-19 — Board Scan Complete & Cleared
+
+**Summary:**
+- Board scan identified Issue #18 + PR #19 as final open items
+- PR #19 was blocked due to CI firewall issue (compass.mongodb.com)
+- Routed triage to Aragorn (Lead) for scope clarification
+- Documented findings in orchestration logs and decision inbox
+
+**Final Outcome:**
+- ✅ Aragorn clarified scope and approved PR #19
+- ✅ Boromir diagnosed CI firewall block, reran workflow, merged PR
+- ✅ Issue #18 auto-closed by PR merge
+- ✅ Ralph board now CLEAR
+
+**Status:** Board idle, ready for next work cycle.
+
