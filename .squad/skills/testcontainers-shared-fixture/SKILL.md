@@ -160,8 +160,9 @@ public sealed class MongoDbFixture : IAsyncLifetime
 
 3. Apply the collection attribute and follow the same fixture pattern.
 
-4. Both collections share the **same** `MongoDbFixture` container instance. xUnit
-   handles collection-level isolation and parallelization automatically.
+4. Each xUnit collection gets its **own** `MongoDbFixture` instance. xUnit
+   handles collection-level isolation automatically, so different collections
+   can run in parallel with separate fixtures and containers.
 
 5. Verify `xunit.runner.json` still has `parallelizeTestCollections: true`.
 
