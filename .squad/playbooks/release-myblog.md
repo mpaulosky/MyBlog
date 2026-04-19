@@ -21,7 +21,7 @@ Use this playbook when MyBlog is ready to move validated work from `dev` to
 | **Release Branch** | `main` | Release-only branch |
 | **Hotfix Branches** | `hotfix/*` | Branch from `main`, then backport to `dev` |
 | **Versioning** | `GitVersion.yml` | SemVer labels from branch + git history |
-| **Active Workflows** | `ci.yml`, `hotfix-backport-reminder.yml` | No automated release/promote workflow today |
+| **Active Workflows** | `ci.yml`, `release-gate.yml`, `hotfix-backport-reminder.yml` | `release-gate.yml` blocks merge to `main` if any active milestone has open issues |
 | **Published Artifacts** | None automated | No NuGet, Docker, docs, or deploy workflow yet |
 | **GitHub Release** | Optional manual step | Useful for notes and tags; does not deploy anything |
 
@@ -36,6 +36,20 @@ Use this playbook when MyBlog is ready to move validated work from `dev` to
   `dev` already contains the source changes. Only hotfixes merged to `main`
   need a backport to `dev`
 
+## Release readiness gate (automated)
+
+`release-gate.yml` runs on every PR targeting `main`. It blocks merge if any
+milestone has **both open and closed issues** (i.e., a sprint that started but
+is not fully done).
+
+**Gate logic:**
+- Milestone with only open issues → future sprint, not yet started → **allowed**
+- Milestone with only closed issues → complete sprint → **allowed**
+- Milestone with open AND closed issues → partially done sprint → **blocked**
+
+To unblock: close the remaining open issues, or reassign them to a future
+milestone. The check re-runs automatically when the PR is updated.
+
 ## Standard release path (`dev` → `main`)
 
 ### 1. Verify `dev` is release-ready
@@ -44,6 +58,8 @@ Before opening a release PR, confirm:
 
 - All intended `squad/*` work is already merged into `dev`
 - The latest `dev` commit is green in GitHub Actions (`ci.yml`)
+- **Project #4 board shows zero open issues for the milestone(s) being released**
+  (the `release-gate.yml` workflow enforces this automatically on the PR)
 - Any release notes summary is ready for the PR body or GitHub Release notes
 - No emergency hotfix backports are still missing from `dev`
 

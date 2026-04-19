@@ -1,0 +1,81 @@
+name: Release Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  milestone-closure-check:
+    name: Verify all active milestones are complete
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Check for partially complete milestones
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Checking milestone completion status..."
+
+          # Fetch all open milestones; flag any that are partially complete
+          # (have both closed AND open issues — meaning work started but not finished)
+          PARTIAL=$(gh api repos/${{ github.repository }}/milestones \
+            --jq '[.[] | select(.open_issues > 0 and .closed_issues > 0)] | 
+                  map("  ❌ \(.title): \(.open_issues) open issue(s) remaining") | .[]')
+
+          if [ -n "$PARTIAL" ]; then
+            echo "GATE_PASSED=false" >> "$GITHUB_OUTPUT"
+            echo "PARTIAL_MILESTONES<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$PARTIAL" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "GATE_PASSED=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on PR if blocked
+        if: steps.gate.outputs.GATE_PASSED == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const partial = `${{ steps.gate.outputs.PARTIAL_MILESTONES }}`;
+            const body = [
+              '## ❌ Release Gate Blocked',
+              '',
+              'This PR cannot be merged to `main` because one or more sprint milestones',
+              'have open issues. All milestone issues must be **closed (Done)** before releasing.',
+              '',
+              '### Milestones with open issues',
+              partial,
+              '',
+              '**Next steps:**',
+              '- Close or move the remaining issues listed above.',
+              '- If an issue is deferred to a future sprint, reassign it to the next milestone.',
+              '- Once all active milestones are complete, this check will pass automatically.',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Fail if gate did not pass
+        if: steps.gate.outputs.GATE_PASSED == 'false'
+        run: |
+          echo ""
+          echo "❌ Release gate FAILED. Partially complete milestones detected:"
+          echo "${{ steps.gate.outputs.PARTIAL_MILESTONES }}"
+          echo ""
+          echo "Close or reassign all open issues before merging to main."
+          exit 1
+
+      - name: Gate passed
+        if: steps.gate.outputs.GATE_PASSED == 'true'
+        run: |
+          echo "✅ Release gate PASSED — all active milestones are complete."
