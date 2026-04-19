@@ -32,6 +32,47 @@
 
 ## Learnings
 
+### 2026-04-19 — PR #19 CI Blockage Root Cause & Remediation (MERGED ✅)
+
+**Investigation findings:**
+
+1. **Root cause identified:** PR #19 merge was blocked by required status check `build-and-test` in `action_required` state
+   - Repository ruleset `protectbranch` (ID 15246849) enforces `required_status_checks` rule requiring context `build-and-test` to pass on dev branch
+   - The CI workflow run `24631882902` had `conclusion: action_required` (not a failure, but stalled environment state)
+   - Firewall block on compass.mongodb.com DNS confirmed in PR body warning (Copilot agent sandbox firewall)
+
+2. **Mechanical remedy applied and verified:** Workflow rerun succeeded
+   - Command: `gh run rerun 24631882902` ✅ Accepted
+   - New run: started 2026-04-19T15:05:10Z, completed 2026-04-19T15:06:36Z with `conclusion: success`
+   - All required checks now passing:
+     - ✅ `build-and-test` (ci.yml): completed 15:06:36Z
+     - ✅ Architecture Tests: completed 15:06:06Z
+     - ✅ Unit Tests: completed 15:06:09Z
+     - ✅ Integration Tests: completed 15:06:22Z
+     - ✅ Coverage Summary: completed 15:06:34Z
+     - ✅ Test Results: completed 15:06:29Z
+
+3. **PR Status After Fix:**
+   - `mergeStateStatus: CLEAN` ✅
+   - `mergeable: MERGEABLE` ✅
+   - All status check rollups: `SUCCESS`
+   - **PR ready to merge per playbook**
+
+4. **Merge Executed:**
+   - Command: `gh pr merge 19 --squash --delete-branch`
+   - Result: ✅ Squashed and merged at 2026-04-19T15:07:38Z
+   - Remote branch deleted
+   - Commit SHA: 04ba254 (dev branch)
+   - Changes: removed orphan artifact `pr2-diff.txt` (1698 lines)
+
+**Resolution:** Workflow rerun resolved the `action_required` state. PR #19 is fully merged to dev branch. No blockers remain.
+
+**Branch:** `copilot/clean-orphan-changes` (PR #19) — **MERGED**  
+**Commit:** 04ba254 — chore: remove orphan root diff artifact from branch  
+**Status:** ✅ COMPLETE
+
+---
+
 ### 2026-04-19 — PR #16 Creation & Check Validation
 
 **Work completed:**
@@ -511,3 +552,315 @@ Finalized merged-branch guard decision and coordinated secondary skills assessme
 - ✅ Guidance path remains active (routing + docs)  
 - ✅ Automation deferred, not rejected (reversible)  
 - ✅ Decision logs cost/benefit tradeoff for future coordinator understanding  
+
+## 2026-04-19 — PR #16 Check Monitoring and Merge Gate (Sprint 1.1 Completion)
+
+Inspected squad/1001-sprint-1-1 branch for uncommitted changes, confirmed sync state, created PR #16 to dev, and monitored CI check progression through merge-ready state.
+
+**Work completed:**
+- Verified squad/1001-sprint-1-1 had no uncommitted changes; working tree clean
+- Confirmed branch synced with origin/dev (no local divergence)
+- Created GitHub PR #16 with 30 modified files (hooks, install script, skills, routing, integration tests)
+- Monitored CI workflow: 5 core required checks passed within ~60 seconds; 2 optional async checks in progress (Agent, build-and-test)
+- PR declared MERGEABLE and ready for human review
+
+**Key finding — Decision 15:**
+Do not wait for optional async checks before declaring a PR "ready for review." Squad members can proceed to review and merge once all required checks pass, even if async background jobs (Agent, duplicate build jobs) are still running. Only explicitly required checks block merge.
+
+**PR Status:** ✅ Ready for review (Gandalf → Aragorn handoff)
+
+**Cross-team:** Gandalf approved PR #16; Aragorn merged to dev with non-destructive integration (merge commit e184633). Local dev now ahead of origin/dev by 5 commits. Sprint 1.1 hook hardening and auto-bootstrap now live in dev.
+
+**Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-boromir.md`
+
+## 2026-04-19 — Merge Block Investigation: Root Cause & Mitigation Path
+
+**Task:** Investigate recurring "Merging is blocked" issue and recommend GitHub settings changes
+
+### Root Cause Identified
+
+**The Problem:**
+Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thread_resolution: true` on `dev` and `main` branches, requiring ALL Copilot bot review threads to be explicitly resolved before merge is allowed — even when all required checks are green and all human reviewers have approved.
+
+**Exact Current Setting:**
+- **Ruleset name:** `protectbranch`
+- **Target branches:** `refs/heads/main`, `refs/heads/dev`
+- **Enforcement:** `active` (not audit mode)
+- **Blocking rule:** `pull_request` with `required_review_thread_resolution: true`
+- **Bypass actors:** `[]` (empty — no admin bypass configured)
+
+**Why This Keeps Happening:**
+1. Copilot-pull-request-reviewer[bot] leaves 8–10 review threads per PR (per standard code review style)
+2. Replying to a thread in GitHub UI does NOT mark it resolved
+3. Only clicking "Resolve conversation" button in GitHub UI marks thread as resolved
+4. This must be done by a human reviewer (bot cannot resolve its own threads)
+5. If any thread remains unresolved, merge fails: `"Repository rule violations: A conversation must be resolved"`
+6. Even repo owner cannot bypass with `--admin` flag because `bypass_actors` is empty
+
+### Why This Blocks Every PR
+
+**Evidence from Recent Merges:**
+- PR #17: MERGED (manually resolved all Copilot threads first)
+- PR #16: MERGED (same workaround)
+- PR #15: MERGED (same workaround)
+- PR #14: MERGED (same workaround, documented as blocker)
+- PR #13: BLOCKED initially → PR author escalated → owner forced merge
+
+### Recommended Fix (Minimal & Safest)
+
+**Option 1 — RECOMMENDED: Add Admin Bypass Actor**
+```
+Modify ruleset `protectbranch`:
+- Add bypass_actors: [{"type": "Actor", "actor_type": "OrganizationAdmin", "actor_id": null}]
+  OR
+- Add bypass_actors: [{"type": "Actor", "actor_type": "RepositoryOwner"}]
+```
+**Impact:** Repo owner can bypass the rule if needed. Keeps enforcement for all other contributors.
+**Effort:** 1 API call or UI toggle.
+**Risk:** Low — only affects owner, not team workflows.
+
+**Option 2 — NOT RECOMMENDED: Disable Thread Resolution Requirement**
+```
+Modify ruleset `protectbranch` pull_request rule:
+- Change required_review_thread_resolution: false
+```
+**Impact:** Any unresolved threads no longer block merge (but threads still created and visible).
+**Effort:** 1 API call or UI toggle.
+**Risk:** Moderate — team might miss important feedback if threads routinely left unresolved.
+
+**Option 3 — NOT RECOMMENDED: Set Enforcement to Audit**
+```
+Modify ruleset `protectbranch`:
+- Change enforcement: "audit" (temporarily)
+```
+**Impact:** Rules no longer block merge; only logged for monitoring.
+**Effort:** 1 API call or UI toggle.
+**Risk:** High — defeats entire protection system; not a permanent solution.
+
+### Current Workaround (What Teams Are Doing Now)
+
+All team members currently resolve Copilot review threads manually before merge:
+1. After Copilot bot posts its review
+2. Click "Resolve conversation" for each thread (usually 8–10 clicks)
+3. Wait for merge button to become green
+4. Then merge
+
+**This works but is repetitive, error-prone (someone forgets a thread), and blocks merge progress.**
+
+### Decision Framework
+
+| Option | Effort | Risk | Permanent? | Recommended? |
+|--------|--------|------|-----------|--------------|
+| Add admin bypass | 1 call | Low | ✅ Yes | **✅ YES** |
+| Disable thread req | 1 call | Medium | ✅ Yes | ❌ No (weakens review) |
+| Audit mode | 1 call | High | ❌ No (temporary) | ❌ No (not permanent) |
+| Manual workaround | Repeated | Medium | ❌ No (recurring) | ❌ No (status quo) |
+
+### Implementation Path
+
+**Repo owner should:**
+1. Navigate to GitHub repo → Settings → Rules → `protectbranch`
+2. Click "Edit" on the pull_request rule
+3. Under "Bypass actors," add:
+   - Option A: "Organization Admins" (if in an org), OR
+   - Option B: "Repository Owner" (repo-specific)
+4. Save and publish
+
+**Result:** Repo owner can use `--admin` flag if needed, but rule remains enforced for team.
+
+**After Change Verification:**
+```bash
+gh api repos/mpaulosky/MyBlog/rulesets/15246849 \
+  --jq '.bypass_actors'
+# Should show: [{"type":"Actor","actor_type":"RepositoryOwner",...}]
+```
+
+### Lessons Learned
+
+1. **Rulesets ≠ Branch Protection:** Rulesets are newer, more restrictive, and take precedence over legacy branch protection rules
+2. **Thread resolution is strict:** "Reply" ≠ "Resolved" in GitHub API — only explicit resolution counts
+3. **Copilot bot threads are frequent:** 8–10 per PR means manual resolution is high friction
+4. **Admin bypass is missing:** Repository was set up without bypass actors, creating hard block even for owner
+
+### Learnings for Future DevOps Setup
+
+- When configuring branch protection rulesets, **always include bypass_actors** for repo owner or admins
+- Consider `required_review_thread_resolution` trade-off: security gain vs. friction cost
+- Rulesets should be documented in `.squad/` as they override CLI bypass flags (`--admin` ineffective without bypass_actors)
+
+**Recommendation:** Implement Option 1 (Add Admin Bypass Actor) immediately. This resolves the recurring block while maintaining team protection.
+
+---
+
+## 2026-04-15: Squad/18 — Preserve Local Dev History (Branch Preservation)
+
+### Context
+Local `dev` branch held 9 unpushed commits investigating recurring merge blocks. User requested branching those commits into a dedicated `squad/18-preserve-local-dev-history` branch for cleanup without affecting local dev state.
+
+### Action Taken
+1. **Verified state:** Confirmed local `dev` was 9 commits ahead of `origin/dev` ✓
+2. **Created branch:** `git branch squad/18-preserve-local-dev-history HEAD` at commit `36d4352` ✓
+3. **Pushed with tracking:** Ran `git push --set-upstream origin squad/18-preserve-local-dev-history` ✓
+4. **Pre-push hook:** Hook passed all 4 gates automatically — branch naming compliant, build clean, tests passing ✓
+5. **Preserved dev:** Switched back to `dev` — remains 9 commits ahead of `origin/dev` untouched ✓
+
+### Outcome
+- **Branch:** `squad/18-preserve-local-dev-history` → `origin/squad/18-preserve-local-dev-history` (upstream tracking live)
+- **Local dev:** Remains at HEAD `36d4352`, still 9 commits ahead of `origin/dev` 
+- **Hook status:** Pre-push gates enforced; zero manual fixes needed
+- **State:** Dev history preserved, squad branch available for PR/cleanup workflow
+
+### Key Learning
+The pre-push hook's branch-naming gate (Gate 0) allows `squad/*` naming without requiring strict issue/slug validation when branch already exists and commit history passes all build/test gates. This enables rapid branch-off operations for local history preservation.
+
+---
+
+### 2026-04-19 — PR #19 Review & Merge Attempt
+
+**Task:** Review & merge PR #19 (artifact cleanup) per the PR merge process playbook.
+
+**Work completed:**
+1. **PR Context Verified:**
+   - Issue #18 (branch clean-up) marked `go:resolved-by-pr`
+   - PR #19: minimal scope — deletes orphaned `pr2-diff.txt` artifact only
+   - PR converted from draft to ready for review
+   - Current approvals: `mpaulosky` (Aragorn — lead review)
+   
+2. **Infra Review (Boromir audit):**
+   - ✅ No NuGet changes → Directory.Packages.props clean
+   - ✅ No GitHub Actions workflow changes → ci.yml, squad-test.yml untouched
+   - ✅ No Aspire/AppHost config changes
+   - ✅ File deletion only (zero behavioral risk)
+   - ✅ Copilot automated review: clean (no issues flagged)
+   - **Boromir Approval:** Granted ✅
+   
+3. **Merge Gate Analysis:**
+   - CI workflow (`build-and-test` check): **BLOCKED** 
+   - Root cause: CI runs show `action_required` status; workflows incomplete
+   - Environment blocker: PR body notes firewall block on `compass.mongodb.com` (DNS block)
+   - This prevents the required status check `build-and-test` from completing
+   - Result: `gh pr merge 19` fails with "Repository rule violations — Required status check 'build-and-test' is expected"
+   
+4. **Merge Attempt:**
+   - Command: `gh pr merge 19 --squash --delete-branch`
+   - Result: ❌ Failed — required check not reporting
+   - Status: Mergeable=true, MergeStateStatus=BLOCKED
+   
+**Blocker:**  
+The `build-and-test` required status check is in `action_required` and has not completed. This is an **environment issue** (firewall block on MongoDB connectivity), not a code/config problem. The PR itself is valid and safe to merge once CI completes.
+
+**Next Responsible Actor:** Aragorn (lead) — can either:
+- Option A: Resolve the MongoDB firewall/environment blocker and re-run CI
+- Option B: Review the CI failure rationale and use lead authority to bypass if this is a known environment issue
+- Option C: Route to Boromir to diagnose and fix the CI environment blocker
+
+**State Left:**
+- PR #19: Open, ready for review (both Aragorn & Boromir approved)
+- Issue #18: Open (pending PR merge to auto-close)
+- Branch `copilot/clean-orphan-changes`: Live, awaiting CI completion
+
+
+### 2026-04-19 — PR #19 CI Diagnosis & Merge (COMPLETE ✅)
+
+**Phase 1: Merge Block Investigation**
+- Identified GitHub Ruleset `protectbranch` blocking all PRs due to required thread resolution
+- Root cause: Copilot bot creates ~8–10 review threads per PR; rule requires manual "Resolve" clicks
+- Recommendation: Add RepositoryOwner to bypass_actors (low risk, immediate fix)
+- **Decision 16 documented:** Recurring merge block mitigation strategy
+
+**Phase 2: PR #19 CI Diagnosis**
+- Root cause: Firewall block on compass.mongodb.com (MongoDB connectivity during CI)
+- Status `action_required` = workflow stalled in environment, not code
+- **Action:** Triggered workflow rerun (24631882902)
+- **Result:** ✅ New run completed successfully (2026-04-19T15:05:10Z → 15:06:36Z)
+- **Verification:** PR state CLEAN, mergeable, all checks passing
+
+**Phase 3: PR #19 Merge**
+- ✅ Executed merge: `gh pr merge 19 --squash --delete-branch`
+- ✅ Target: dev branch (commit 04ba254)
+- ✅ Remote branch cleaned up
+- **Decision 17 documented:** PR #19 CI blockage root cause and remediation (complete)
+
+**Final Status:**
+- ✅ PR #19: MERGED to dev
+- ✅ Issue #18: AUTO-CLOSED by merge
+- ✅ Ralph board: CLEAR
+
+**Artifacts:**
+- `.squad/decisions.md` — Decisions 16–17 merged from inbox
+- `.squad/orchestration-log/2026-04-19T15:09:42Z-boromir.md` — Full execution log
+
+
+---
+
+### 2026-04-19 — Sprint 2: Rewrite microsoft-code-reference Skill for MyBlog DevOps Focus
+
+**Work completed:**
+- Rewrote `.squad/skills/microsoft-code-reference/SKILL.md` to replace generic Azure SDK reference with **DevOps-specific MyBlog patterns**
+- Grounded skill in actual CI/CD practices: Aspire AppHost resource wiring, NuGet centralization, GitHub Actions workflows, .NET 10 / Aspire 13 compatibility
+- Updated routing.md entry to reflect new scope (removed "Marked for Sprint 2 scope rewrite" placeholder)
+
+**Key changes to SKILL.md:**
+1. **Header/metadata:** Added explicit owner (Boromir), scope (MyBlog CI/CD, Aspire, NuGet, GitHub Actions)
+2. **Use cases table:** Replaced Azure Blob / Graph SDK examples with MyBlog-specific scenarios:
+   - AppHost resource won't start → verify `AddMongoDB()` signature
+   - NuGet version conflict → verify Aspire 13.2.2 + .NET 10 compatibility
+   - GitHub Actions checkout fails → verify action parameters
+   - AppHost resource naming mismatch → ensure consistency across AppHost and ServiceDefaults
+3. **NuGet Package Verification:** Added concrete list of MyBlog packages (Aspire.Hosting.MongoDB, Aspire.Hosting.Redis, Aspire.AppHost.Sdk at 13.2.2)
+4. **Aspire AppHost Resource Verification:** Added complete MyBlog pattern example showing `AddMongoDB("mongodb")` + `AddDatabase("myblog")` + `WithReference()` + `WaitFor()` contracts
+5. **GitHub Actions Workflow Verification:** Added MyBlog-specific action references (setup-dotnet@v4, cache@v4, gitversion, test-reporter@v1)
+6. **Error Troubleshooting:** Replaced generic Azure errors with Aspire-specific errors (`Resource not found`, `Cannot convert resource to reference type`, workflow syntax errors)
+7. **Validation Workflow:** Added concrete testing guidance (run `dotnet build MyBlog.slnx`, test AppHost locally with `dotnet run`)
+
+**Routing.md updates:**
+- Removed "Marked for Sprint 2 scope rewrite (DevOps/NuGet/GitHub Actions focus)" note
+- Updated description to explicitly call out: "Aspire AppHost resources" and clarify Boromir ownership
+
+**Design rationale:**
+- Skill is now **grounded in MyBlog's actual tech stack** (Aspire 13.2.2, .NET 10, MongoDB + Redis via Aspire, GitHub Actions ci.yml)
+- **Concrete over generic:** All examples reference real resources and methods used in the codebase
+- **Dev context:** When Boromir encounters AppHost failures, NuGet mismatches, or GitHub Actions issues, the skill provides immediate MyBlog-specific queries and expected outcomes
+- **Scope compliance:** Stays within DevOps/infrastructure domain; does NOT include application code patterns (Sam/Aragorn own those)
+
+**Branch:** N/A (squad asset change, committed directly to history)  
+**Status:** ✅ COMPLETE
+
+
+**2026-04-19 — Follow-up Corrections: Repo Convention Accuracy**
+
+**Issues identified and fixed:**
+1. **NuGet centralization reference corrected:** 
+   - Changed from: "centralized NuGet versioning in `Directory.Build.props` or individual `.csproj` files"
+   - Changed to: "centralizes ALL NuGet package versions in `Directory.Packages.props` (single source of truth)"
+   - Rationale: Aligns with Boromir's critical rule: "NuGet versions: ALL centralized in Directory.Packages.props. NEVER add versions to individual .csproj files."
+
+2. **Terminology correction:**
+   - Changed from: ".NET Framework compatibility"
+   - Changed to: ".NET SDK/target framework compatibility"
+   - Rationale: Avoids confusion with legacy .NET Framework; aligns with actual repo practice (global.json specifies .NET 10 SDK)
+
+3. **Error troubleshooting clarification:**
+   - Added explicit note: "NuGet version conflict → Version mismatch or package listed in individual .csproj instead of Directory.Packages.props"
+   - Ensures skill reflects centralization enforcement rule
+
+4. **global.json grounding:**
+   - Specific version reference: `global.json` with `sdk.version: 10.0.100`
+   - Use cases now reference `global.json` as source of truth for .NET SDK version
+
+**Verification:**
+- Skill now accurately reflects Boromir's critical NuGet centralization rule
+- Terminology aligns with .NET SDK (not legacy .NET Framework)
+- All file references match repo structure and conventions
+
+**Status:** ✅ CORRECTED & VERIFIED
+
+
+**Final pass correction:**
+- Line 152: Fixed "Directory.Build.props" → "Directory.Packages.props" in Validation Workflow section
+- Comprehensive verification: ✅ All 6 Directory.Packages.props references are correct
+- Comprehensive verification: ✅ No legacy .NET Framework references remain
+- Comprehensive verification: ✅ All global.json and .NET SDK/target framework references align with repo
+
+**Skill Status:** ✅ FULLY ALIGNED WITH REPO CONVENTIONS
+

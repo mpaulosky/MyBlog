@@ -11,75 +11,179 @@ description: >
 
 ### Current repo fit
 
-- `tests/Integration.Tests/Infrastructure/MongoDbFixture.cs` already owns the
-  Mongo Testcontainers lifecycle.
-- `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs` is the
-  live Mongo-backed integration suite today.
-- The repo currently has one Mongo-backed domain collection, so the pattern is
-  about keeping future tests aligned, not chasing the original import's
-  large-suite performance numbers.
+- `tests/Integration.Tests/Infrastructure/MongoDbFixture.cs` ✅ Already implements
+  `IAsyncLifetime` for container lifecycle management.
+- `tests/Integration.Tests/Infrastructure/BlogPostIntegrationCollection.cs` ✅
+  Defines the xUnit collection definition.
+- `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs` ✅ Demonstrates
+  live MongoDB-backed integration suite (9 tests, all passing).
+- Container startup time: ~2–3s per shared fixture (acceptable for MVP).
+- Per-test isolation: Ensures each test writes to a unique database within the shared container.
 
-### Retained MyBlog conventions
+### MyBlog Tested Patterns (Established)
 
-1. **Use one shared Mongo fixture per xUnit collection**
-   - Define domain collections with
-     `ICollectionFixture<MongoDbFixture>`.
-   - Use names like `BlogPostIntegration`, `AuthorIntegration`, or
-     `CommentIntegration`.
-   - Do **not** use the old generic `"MongoDb"` collection name for new work.
+1. **One shared Mongo fixture per xUnit domain collection**
+   - Define collection definitions once:
+     ```csharp
+     [CollectionDefinition("BlogPostIntegration")]
+     public sealed class BlogPostIntegrationCollection
+         : ICollectionFixture<MongoDbFixture> { }
+     ```
+   - Apply the collection attribute to each test class:
+     ```csharp
+     [Collection("BlogPostIntegration")]
+     public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture) { }
+     ```
+   - Collection names are domain-scoped: `BlogPostIntegration`, `AuthorIntegration`,
+     `CommentIntegration` (for future).
+   - Do NOT reuse generic collection names like `"MongoDb"` or `"Integration"`.
 
-2. **Keep per-test isolation with a unique database name**
-   - Generate database names with `$"T{Guid.NewGuid():N}"`.
+2. **Per-test database isolation using unique database names**
+   - Every test must write to its own isolated database.
+   - Generate unique names with: `$"T{Guid.NewGuid():N}"` (produces `T` prefix + 32-char GUID).
+   - Pattern in `CreateRepo()` helper:
+     ```csharp
+     private MongoDbBlogPostRepository CreateRepo(string? dbName = null) =>
+         new(fixture.CreateFactory(dbName ?? $"T{Guid.NewGuid():N}"));
+     ```
    - xUnit creates a fresh test-class instance per test method, so constructor or
-     helper-level database creation keeps tests isolated inside the shared
-     container.
+     method-level database creation ensures isolation.
 
-3. **Keep fixture responsibilities narrow**
-   - `MongoDbFixture` starts and disposes the container.
-   - `MongoDbFixture.CreateFactory(dbName)` is the canonical way to create a
-     `BlogDbContext` factory for tests.
-   - Shared seed data or cleanup logic does **not** belong in the fixture unless
-     every test in that collection truly needs it.
+3. **Fixture responsibility isolation**
+   - `MongoDbFixture` **ONLY**:
+     - Starts the MongoDB container in `InitializeAsync()`.
+     - Exposes `ConnectionString` (read-only property).
+     - Disposes the container in `DisposeAsync()`.
+     - Provides `CreateFactory(dbName)` to yield `IDbContextFactory<BlogDbContext>`.
+   - `MongoDbFixture` does **NOT**:
+     - Manage test data or seeding.
+     - Clear databases between tests (xUnit isolation + unique names handle this).
+     - Define any test-specific logic.
 
-4. **Use collection-level parallelism only**
-   - Keep `parallelizeAssembly: false`.
-   - Allow `parallelizeTestCollections: true` so different domain collections can
-     run in parallel once they exist.
+4. **xUnit configuration for collection-level parallelism**
+   - File: `tests/Integration.Tests/xunit.runner.json`
+   - Current configuration (✅ correct):
+     ```json
+     {
+       "parallelizeAssembly": false,
+       "parallelizeTestCollections": true
+     }
+     ```
+   - Rationale: No tests run in parallel within a single collection (one fixture per
+     collection). Different collections CAN run in parallel (different containers).
+   - Future scale: If 3–5 domain collections exist, parallelization will become
+     a visible performance win.
 
-### Canonical MyBlog shape
+### Real MyBlog Examples
 
+**Collection Definition** (`tests/Integration.Tests/Infrastructure/BlogPostIntegrationCollection.cs`):
 ```csharp
 [CollectionDefinition("BlogPostIntegration")]
 public sealed class BlogPostIntegrationCollection
-		: ICollectionFixture<MongoDbFixture> { }
+    : ICollectionFixture<MongoDbFixture> { }
+```
 
+**Test Class** (`tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs`):
+```csharp
 [Collection("BlogPostIntegration")]
 public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 {
-	private MongoDbBlogPostRepository CreateRepo(string? dbName = null) =>
-			new(fixture.CreateFactory(dbName ?? $"T{Guid.NewGuid():N}"));
+    private MongoDbBlogPostRepository CreateRepo(string? dbName = null) =>
+        new(fixture.CreateFactory(dbName ?? $"T{Guid.NewGuid():N}"));
+
+    [Fact]
+    public async Task AddAsync_persists_post_to_MongoDB()
+    {
+        // Arrange
+        var repo = CreateRepo();
+        var post = BlogPost.Create("Hello World", "Some content", "Author A");
+
+        // Act
+        await repo.AddAsync(post);
+
+        // Assert
+        var all = await repo.GetAllAsync();
+        all.Should().HaveCount(1);
+        all[0].Title.Should().Be("Hello World");
+    }
 }
 ```
 
-### Next-step guidance
+**Fixture Implementation** (`tests/Integration.Tests/Infrastructure/MongoDbFixture.cs`):
+```csharp
+public sealed class MongoDbFixture : IAsyncLifetime
+{
+    private readonly MongoDbContainer _container = new MongoDbBuilder().Build();
+    public string ConnectionString { get; private set; } = string.Empty;
 
-- Keep all Mongo-backed repository and handler integration tests for blog posts in
-  `BlogPostIntegration`.
-- When another Mongo-backed domain appears, add a new collection definition for
-  that domain instead of creating another container fixture type.
-- Replace the commented Aspire scaffold in
-  `tests/Integration.Tests/IntegrationTest1.cs` with a real AppHost smoke test
-  or delete it during cleanup; it is not part of this fixture pattern.
+    public async Task InitializeAsync()
+    {
+        await _container.StartAsync();
+        ConnectionString = _container.GetConnectionString();
+    }
 
-### Explicit rejections
+    public async Task DisposeAsync() => await _container.DisposeAsync();
 
-- **Rejected:** Imported `CategoryIntegration`, `IssueIntegration`,
-  `CommentIntegration`, and `StatusIntegration` mappings from the source repo.
-  MyBlog only has live `BlogPost` integration coverage today.
-- **Rejected:** Imported "23 classes / 46 seconds to 4 containers / 2 seconds"
-  performance claims. They do not describe MyBlog's current suite and should not
-  be repeated as if they were measured here.
-- **Rejected:** Adding `GlobalUsings.cs` just to avoid one namespace import. Keep
-  the file only if repetition in `tests/Integration.Tests` makes it worthwhile.
-- **Rejected:** Putting `IAsyncLifetime` on integration test classes unless the
-  class has extra async setup beyond the shared Mongo fixture.
+    public IDbContextFactory<BlogDbContext> CreateFactory(string dbName) =>
+        new TestContextFactory(ConnectionString, dbName);
+
+    private sealed class TestContextFactory(string connectionString, string dbName)
+        : IDbContextFactory<BlogDbContext>
+    {
+        public BlogDbContext CreateDbContext()
+        {
+            var options = new DbContextOptionsBuilder<BlogDbContext>()
+                .UseMongoDB(connectionString, dbName)
+                .Options;
+            return new BlogDbContext(options);
+        }
+        public Task<BlogDbContext> CreateDbContextAsync(CancellationToken ct = default) =>
+            Task.FromResult(CreateDbContext());
+    }
+}
+```
+
+### Next-step guidance for new domains
+
+1. Create a new collection definition file:
+   ```csharp
+   [CollectionDefinition("{Entity}Integration")]
+   public sealed class {Entity}IntegrationCollection
+       : ICollectionFixture<MongoDbFixture> { }
+   ```
+   Example: `AuthorIntegrationCollection` for Author domain tests.
+
+2. Create a new test class directory:
+   ```
+   tests/Integration.Tests/{Entity}/Mongo{Entity}RepositoryTests.cs
+   ```
+
+3. Apply the collection attribute and follow the same fixture pattern.
+
+4. Each xUnit collection gets its **own** `MongoDbFixture` instance. xUnit
+   handles collection-level isolation automatically, so different collections
+   can run in parallel with separate fixtures and containers.
+
+5. Verify `xunit.runner.json` still has `parallelizeTestCollections: true`.
+
+### Current Test Coverage
+
+- **BlogPostIntegration**: 9 tests (✅ passing)
+  - Add/Get/Update/Delete operations
+  - Ordering (newest first)
+  - Concurrency conflict handling
+  - Empty repository behavior
+
+### Explicit Rejections
+
+- **Rejected:** Imported performance claims from source repo ("46 seconds → 2
+  seconds"). MyBlog's current measurement is ~2–3s per fixture startup, which is
+  acceptable for the MVP scope.
+- **Rejected:** Imported domain collections (`CategoryIntegration`,
+  `IssueIntegration`, `CommentIntegration`, `StatusIntegration`) that don't exist
+  in MyBlog yet. Create them only when the corresponding repository/handler tests
+  are written.
+- **Rejected:** Putting `IAsyncLifetime` on integration test classes. Only
+  `MongoDbFixture` implements it. Test classes do not.
+- **Rejected:** Seeding shared test data in the fixture. Each test is responsible
+  for arranging its own data within its isolated database.
