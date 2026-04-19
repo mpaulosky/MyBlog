@@ -179,3 +179,27 @@ Finalized all remaining roadmap decisions for Milestone 3 to enable sprint 3 cle
 - ✅ All imports explicitly marked adapt/delete/retain  
 - ✅ Decisions logged with structured rationale  
 - ✅ Cross-team coordination documented  
+
+## 2026-04-19 — PR #16 Merge and Branch Integration (Sprint 1.1 Complete)
+
+Merged PR #16 (squad/1001-sprint-1-1 → dev) and performed non-destructive integration of origin/dev to ensure local dev remains clean while aware of upstream state.
+
+**Work completed:**
+- Merged PR #16 using squash merge (commit aeaf3e25a3b90628f5045f55e1a39c07a71f295a)
+- Merged origin/dev into local dev non-destructively (merge commit e184633)
+- Local dev now ahead of origin/dev by 5 commits (includes merge commit)
+- Working tree clean; no uncommitted changes
+
+**Key Decision — Non-Destructive Integration:**
+Local dev is aware of origin/dev state via merge commit, allowing safe future pulls/pushes without destructive branch reset. Trades 1-commit history gap (merge commit e184633) for guaranteed clean working tree and safe branch state.
+
+**Outcome:** Sprint 1.1 (hook hardening, auto-bootstrap post-checkout, strict squad branch naming) now live in dev.
+
+**Cross-team:**
+- Boromir: PR #16 created, checks monitored, ready for review
+- Gandalf: Security approved PR #16, no blocking issues
+- Scribe: Orchestrated team logs, merged inbox decision to decisions.md, updated agent histories
+
+**Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-aragorn.md`
+
+**Session Log:** `.squad/log/2026-04-19T13:26:36Z-pr16-merge-to-dev.md`

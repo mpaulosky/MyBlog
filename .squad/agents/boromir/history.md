@@ -486,3 +486,23 @@ Finalized merged-branch guard decision and coordinated secondary skills assessme
 - ✅ Guidance path remains active (routing + docs)  
 - ✅ Automation deferred, not rejected (reversible)  
 - ✅ Decision logs cost/benefit tradeoff for future coordinator understanding  
+
+## 2026-04-19 — PR #16 Check Monitoring and Merge Gate (Sprint 1.1 Completion)
+
+Inspected squad/1001-sprint-1-1 branch for uncommitted changes, confirmed sync state, created PR #16 to dev, and monitored CI check progression through merge-ready state.
+
+**Work completed:**
+- Verified squad/1001-sprint-1-1 had no uncommitted changes; working tree clean
+- Confirmed branch synced with origin/dev (no local divergence)
+- Created GitHub PR #16 with 30 modified files (hooks, install script, skills, routing, integration tests)
+- Monitored CI workflow: 5 core required checks passed within ~60 seconds; 2 optional async checks in progress (Agent, build-and-test)
+- PR declared MERGEABLE and ready for human review
+
+**Key finding — Decision 15:**
+Do not wait for optional async checks before declaring a PR "ready for review." Squad members can proceed to review and merge once all required checks pass, even if async background jobs (Agent, duplicate build jobs) are still running. Only explicitly required checks block merge.
+
+**PR Status:** ✅ Ready for review (Gandalf → Aragorn handoff)
+
+**Cross-team:** Gandalf approved PR #16; Aragorn merged to dev with non-destructive integration (merge commit e184633). Local dev now ahead of origin/dev by 5 commits. Sprint 1.1 hook hardening and auto-bootstrap now live in dev.
+
+**Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-boromir.md`

@@ -938,3 +938,49 @@ Sprint 3 now has the needed follow-through context:
 #### Related Asset Manifest
 
 See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-issuetracker.
+
+---
+
+## Decision 15: PR Check Monitoring and Async Tool Handling
+
+**Date:** 2026-04-19  
+**Author:** Boromir (DevOps)  
+**Scope:** CI/CD, PR merge process  
+**Status:** Observation & Best Practice
+
+### Summary
+
+When monitoring PR checks during the merge gate process, the "Agent" check (GitHub Copilot code review) and other async background jobs run independently and do not block PR mergability or review readiness. Only explicitly required checks block merge.
+
+### Context
+
+During PR #16 creation and check monitoring:
+- 4 core test suites (Architecture, Unit, Integration, Coverage) completed successfully within ~60 seconds
+- 2 additional checks remain in-progress: Agent (Copilot review) and build-and-test (secondary CI job)
+- PR status: OPEN, MERGEABLE, ready for human review
+
+### Decision
+
+**Do not wait for optional async checks before declaring a PR "ready for review".**
+
+Required checks:
+- Test Results ✅
+- Architecture Tests ✅
+- Unit Tests ✅
+- Integration Tests ✅
+- Coverage Summary ✅
+- Prepare ✅
+
+Optional/informational (do not block):
+- Agent (async Copilot review)
+- build-and-test (duplicate secondary job; tests already covered by main suite)
+
+### Implication
+
+Squad members can proceed to review and merge once all required checks pass, even if async background jobs are still running.
+
+### Related Files
+
+- `.github/workflows/ci.yml` (defines required vs. optional checks)
+- `.github/workflows/squad-test.yml` (parallel test matrix)
+- `.squad/playbooks/pr-merge-process.md` (merge gate playbook)
