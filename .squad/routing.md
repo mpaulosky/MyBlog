@@ -7,6 +7,7 @@ How to decide who handles what.
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
 | Architecture decisions, ADRs, PR gates, triage | Aragorn | Solution design, dependency rules, PR review, breaking changes |
+| Sprint planning, GH milestone/issue creation, project board | Aragorn + Ralph | Plan decomposition, milestone creation, issue triage, project assignments |
 | Domain model, backend services, data layer | Sam | BlogPost entity, repositories, EF Core, caching, Aspire wiring |
 | Blazor UI, components, features, layout | Legolas | Feature slices, pages, components, Auth UI, NavMenu |
 | Unit, Architecture & Integration tests | Gimli | xUnit, FluentAssertions, NSubstitute, NetArchTest, coverage |
@@ -49,6 +50,7 @@ spawn prompt:
 | MongoDB filter patterns, list queries, caching | `.squad/skills/mongodb-filter-pattern/SKILL.md` | Any Sam or Gimli task touching query contracts, cache-key changes, list filtering, repository standardization, or handler-level caching. Owner: Sam (Backend). Supporting: Gimli (Tester). |
 | Mongo-backed integration tests | `.squad/skills/testcontainers-shared-fixture/SKILL.md` | Any Gimli or Sam task touching `tests/Integration.Tests/`, `MongoDbFixture`, collection definitions, or new repository/handler integration coverage against MongoDB. Owner: Gimli (Tester). |
 | Running-browser UI verification | `.squad/skills/webapp-testing/SKILL.md` | Any Gimli or Legolas task that already has bUnit coverage but still needs runtime verification of JS interop, Auth0 redirects, or AppHost smoke behavior. Do **not** inject this for ordinary unit/bUnit work or to create a new browser-test project. Owner: Gimli (Tester). |
+| Sprint planning, worktrees, sprint branch lifecycle | `.squad/playbooks/sprint-planning.md` + `.squad/skills/sprint-planning/SKILL.md` | Any Ralph or Aragorn task triggered by plan creation, milestone creation, sprint issue creation, project board updates, or worktree setup/teardown. Inject both assets into the spawn prompt. |
 | Push-capable squad work | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. This is the default for normal `squad/{issue}-{slug}` delivery after Sprint 1.1. |
 | Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push Gates 2–4 run. Aragorn owns this route and can delegate the repair. |
 | PR review, approval, merge, and post-merge cleanup | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, CHANGES_REQUESTED lockout, squash merge, and cleanup. |
@@ -72,6 +74,10 @@ After Sprint 1.1, these process assets are part of normal squad flow:
    before committing so work does not strand on a merged branch.
 5. **Do not reintroduce deleted imports.** Only route assets with an explicit
    MyBlog owner, fit, and usage rule.
+6. **When any `plan.md` is created or materially updated**, Ralph and Aragorn run
+   the Sprint Planning ceremony: decompose into sprints, create milestones + issues,
+   add to the MyBlog project board, and Boromir sets up worktrees. See
+   `.squad/playbooks/sprint-planning.md`.
 
 ## Rules
 
