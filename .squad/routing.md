@@ -53,8 +53,8 @@ spawn prompt:
 | Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push Gates 2–4 run. Aragorn owns this route and can delegate the repair. |
 | PR review, approval, merge, and post-merge cleanup | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, CHANGES_REQUESTED lockout, squash merge, and cleanup. |
 | Resumed work on an existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md` | Any agent about to `git commit` on a branch with prior PR activity or an uncertain session state. Check for an already-merged PR before committing. |
-| Imported non-fit skills | `.squad/skills/building-protection/SKILL.md` | Do **not** inject for MyBlog work. This skill is Minecraft-specific and stays quarantined until Milestone 3 disposition work decides whether to adapt or delete it. |
 | NuGet/Azure/Microsoft API reference during CI/CD | `.squad/skills/microsoft-code-reference/SKILL.md` | Any Boromir task verifying NuGet package signatures, Azure SDK methods, GitHub Actions patterns, or .NET Framework API compatibility. Owner: Boromir (DevOps). Marked for Sprint 2 scope rewrite (DevOps/NuGet/GitHub Actions focus). |
+| Release coordination, tagging, and hotfix backports | `.squad/skills/release-process/SKILL.md` + `.squad/playbooks/release-myblog.md` | Any Aragorn or Boromir task preparing a `dev` → `main` release PR, tagging `main`, writing manual release notes, or backporting a hotfix from `main` to `dev`. Owner: Aragorn (release gate) + Boromir (execution). |
 
 ## Workflow Guardrails
 
@@ -70,8 +70,8 @@ After Sprint 1.1, these process assets are part of normal squad flow:
    playbook as the governing checklist.
 4. **When a session resumes on an older squad branch**, apply the merged-PR guard
    before committing so work does not strand on a merged branch.
-5. **Do not normalize quarantined imports.** If an asset does not fit MyBlog yet,
-   keep it out of normal routing until a later disposition decision is made.
+5. **Do not reintroduce deleted imports.** Only route assets with an explicit
+   MyBlog owner, fit, and usage rule.
 
 ## Rules
 

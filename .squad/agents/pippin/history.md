@@ -57,3 +57,51 @@ Added lightweight guidance section to CONTRIBUTING.md warning about committed on
 **Timeline:** Completed as part of coordinated M1.2 effort with Aragorn.
 
 **Outcome:** ✅ CONTRIBUTING.md now matches Sprint 1.1 enforced reality.
+
+## 2026-04-19: Milestone 3 Roadmap Completion (Final)
+
+**Milestone:** 3 (Adapt-or-Delete Cleanup & Roadmap Completion)  
+**Outcome:** ✅ Complete
+
+Published comprehensive deleted-assets manifest and coordinated final roadmap consolidation for Milestone 3.
+
+### Key Achievements
+
+1. **Deleted-Assets Manifest Published**
+   - Created `.squad/decisions/DELETED-ASSETS.md` as canonical record
+   - Documented 4 deleted skills: post-build-validation, static-config-pattern, building-protection, release-process-base
+   - Documented 1 deleted playbook: release-issuetracker
+   - Documented 1 retained-&-clarified asset: microsoft-code-reference
+   - Provided clear rationale & decision cross-references for each entry
+   - Published reference table for future contributor triage
+
+2. **Asset Disposition Summary Prepared**
+   - Formatted decision table for integration into decisions.md
+   - Verified alignment with Aragorn (release guidance fit) and Boromir (secondary skills assessment)
+   - Created actionable manifest structure for future deletions
+
+### Cross-Team Coordination
+
+- **Coordinated with Aragorn:** Release guidance & delete decisions (Decision #13, #14) — provided asset context & removal sequence
+- **Coordinated with Boromir:** Merged-branch guard evidence review — contributed frequency baseline
+- **Routed with Scribe:** Decision inbox merged; manifest published; agent history cross-linked
+
+### Modified Assets
+
+- Manifest published: `.squad/decisions/DELETED-ASSETS.md` (authoritative reference)
+- Decision merged: Decision #14 (Delete non-fit assets) → `.squad/decisions.md` (with manifest cross-ref)
+- Orchestration logged: `2026-04-19T04-04-30-pippin-sprint-3-manifest.md`
+
+### Roadmap Impact
+
+- Milestone 3 "Adapt-or-Delete" pass now complete with published manifest
+- Contributors have single authoritative source for "why was X removed?"
+- Manifest provides template for future deletions (consistent structure)
+- Supports lean catalog commitment: remove non-fit instead of archive
+- Follows Milestone 2 skill mining finalization
+
+**Constraints Satisfied:**
+- ✅ Manifest format matches squad decision conventions  
+- ✅ Asset disposition table provides at-a-glance triage  
+- ✅ No contradictory reasoning across decisions  
+- ✅ Future-proof structure for additional deletions  

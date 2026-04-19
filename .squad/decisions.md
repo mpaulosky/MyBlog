@@ -750,3 +750,187 @@ All meaningful skill retention decisions now include:
 3. Called-out future work (backlog items, not current implementation)
 4. Clear non-fit items (what imported content does NOT apply)
 5. Follow-up guidance for Stack changes or new requirements
+
+---
+
+## Milestone 3 Decisions (Roadmap Completion & Adapt-or-Delete Cleanup)
+
+### 12. Merged-Branch Guard — Keep Guidance-Only, Defer Automation
+
+**Date:** 2026-04-19  
+**Owner:** Boromir (DevOps)  
+**Status:** ✅ Final Decision  
+**Milestone:** 3 (Adapt-or-Delete Cleanup)  
+**Related Issue:** Sprint 2 backlog item #11
+
+#### Context
+
+The plan (`.squad/identity/now.md`, Milestone 2 Sprint 2, item 11) asked: "Revisit whether merged-branch automation is still justified after Sprint 1 awareness, and only implement it if the repo-fit review still supports it."
+
+The imported skill `.squad/skills/merged-pr-guard/SKILL.md` includes a pattern for detecting and blocking commits on already-merged `squad/*` branches.
+
+#### Evidence Review
+
+**What Has Happened (Sprint 1–2)**
+
+1. **No reported merged-branch incidents** in MyBlog's recent history (Sprints 0–2, PRs #6–#15)
+   - 10 PRs successfully merged with proper cleanup
+   - No orphaned commits or stranded history observed
+   - Post-merge cleanup already documented in `.squad/playbooks/pr-merge-process.md` (Step 8)
+
+2. **Existing safeguards already in place**
+   - `.squad/playbooks/pr-merge-process.md` includes explicit Post-Merge Orphan Branch Cleanup ceremony (Ralph's responsibility)
+   - `docs/CONTRIBUTING.md` includes merged-branch awareness section and recovery steps (added Sprint 1.2)
+   - `.squad/skills/merged-pr-guard/SKILL.md` is already routed into `.squad/routing.md` as guidance for "Resumed work on existing squad/* branch"
+
+3. **Small team size reduces pressure**
+   - MyBlog is a single-author/small-team project (Aragorn as lead, 6 domain agents)
+   - Contributor workflow is highly visible and self-correcting
+   - Manual review gates (PR process, Aragorn's leadership) catch branch issues before commit
+
+4. **Automation would add friction without demonstrated ROI**
+   - Pre-commit guard requires `git pre-commit` hook (separate from pre-push)
+   - Extra validation logic before every commit (slow local workflow)
+   - No real incidents to justify the cost
+   - Contributing guidance already covers the anti-pattern
+
+#### Decision
+
+**Keep merged-branch guidance in routing and docs; defer/do-not-implement the automation.**
+
+##### Rationale
+
+1. **The guidance is sufficient for MyBlog's current scale**
+   - Documented recovery path in `CONTRIBUTING.md` (contributors know what to do if they encounter a merged branch)
+   - Routed into squad workflow via `.squad/routing.md` (agents are reminded when resuming work)
+   - Post-merge cleanup is already part of the formal PR merge ceremony
+
+2. **No operational incidents justify the added complexity**
+   - 15 consecutive PRs with clean merges and cleanup
+   - No orphaned history or stranded commits observed in any session
+   - Manual awareness is working
+
+3. **Lighter is correct for this repo's risk profile**
+   - Single-author focus; contributors are invested squad members, not anonymous public contributors
+   - Sprint 1.2 merged-branch awareness guidance is sufficient to catch issues at code-review time
+   - If merged-branch issues become frequent, automate then with real data
+
+4. **The skill stays available if needed later**
+   - `.squad/skills/merged-pr-guard/SKILL.md` remains in the repo
+   - If future sessions report stranded commits, the skill can be referenced
+   - Milestone 3 (Adapt-or-Delete Cleanup) can revisit this when/if frequency warrants it
+
+#### Action
+
+**No code changes required.** The decision is to preserve the existing guidance-only approach:
+
+- ✅ `.squad/skills/merged-pr-guard/SKILL.md` — remains as reference material, not automated
+- ✅ `.squad/playbooks/pr-merge-process.md` Step 8 — remains as formal cleanup ceremony
+- ✅ `docs/CONTRIBUTING.md` "After Your PR Is Merged" section — remains as contributor guidance
+- ✅ `.squad/routing.md` — continues to route the skill for awareness when resuming work
+
+**Do not implement:**
+- ❌ Pre-commit hook guard
+- ❌ Workflow automation to detect merged branches
+- ❌ Additional enforcement logic
+
+#### Transition
+
+This decision resolves Milestone 2 Sprint 2 backlog item #11. No follow-up work needed unless:
+
+1. **Future sessions report merged-branch incidents** (stranded commits, orphaned history) — then escalate to automation
+2. **Team grows significantly** and manual awareness breaks down — then revisit with evidence
+3. **Milestone 3 adapt-or-delete pass** finds the skill unused — then archive or delete intentionally
+
+For now: **Closed as "defer automation, keep guidance."**
+
+#### Related Assets
+
+- **Skill:** `.squad/skills/merged-pr-guard/SKILL.md`
+- **Playbook:** `.squad/playbooks/pr-merge-process.md` (Step 8: Post-Merge Cleanup)
+- **Contributing Guide:** `docs/CONTRIBUTING.md` ("After Your PR Is Merged" section)
+- **Routing:** `.squad/routing.md` (merged-pr-guard routed for resumed work)
+
+---
+
+### 13. Release Guidance Fit for MyBlog
+
+**Date:** 2026-04-19  
+**Author:** Aragorn (Lead Developer)  
+**Status:** ✅ Final Decision
+
+#### Context
+
+The imported release assets still referenced IssueTrackerApp, upstream release workflows, and generic automation patterns that do not exist in MyBlog. The live repo only has `dev`/`main` branch governance, `GitVersion.yml`, `ci.yml`, and a hotfix backport reminder workflow.
+
+#### Decision
+
+1. Active release guidance for squad work is now MyBlog-specific:
+   `.squad/skills/release-process/SKILL.md` routes release work to
+   `.squad/playbooks/release-myblog.md`.
+2. The old IssueTrackerApp playbook is replaced by
+   `.squad/playbooks/release-myblog.md`.
+3. `.squad/skills/release-process-base/SKILL.md` is quarantined and must not be
+   injected into normal MyBlog work.
+4. Normal `dev` → `main` releases do **not** require syncing `main` back into
+   `dev` after merge. Only hotfixes merged to `main` require a backport to `dev`.
+
+#### Consequences
+
+- Release guidance now matches the repo's actual branch model and workflows
+- The team has a clear owner path: Aragorn approves release scope; Boromir runs
+  the operational steps
+- Generic release automation language is explicitly out of scope until MyBlog
+  actually adds those workflows
+- Sprint 3 can safely delete the quarantined generic base skill unless a new
+  template-use case is approved
+
+---
+
+### 14. Delete Remaining Non-Fit Imported Squad Assets
+
+**Date:** 2026-04-19  
+**Author:** Aragorn (Lead Developer)  
+**Status:** ✅ Final Decision
+
+#### Context
+
+Milestone 2 already settled two direct deletions: `post-build-validation` and `static-config-pattern`. Other imports were kept only as quarantine context while the team finished repo-fit work: `building-protection` and `release-process-base`.
+
+Sprint 3 now has the needed follow-through context:
+
+1. MyBlog-specific release guidance exists in
+   `.squad/skills/release-process/SKILL.md` and
+   `.squad/playbooks/release-myblog.md`.
+2. No decision ever approved a live MyBlog use case for the Minecraft-only
+   `building-protection` skill.
+3. The old `release-issuetracker` playbook has already been replaced and should
+   remain deleted.
+
+#### Decision
+
+1. Execute the already-approved deletions for
+   `.squad/skills/post-build-validation/` and
+   `.squad/skills/static-config-pattern/`.
+2. Delete `.squad/skills/building-protection/` because its quarantine was
+   temporary and no explicit keep decision exists.
+3. Delete `.squad/skills/release-process-base/` because the MyBlog-specific
+   release workflow replaced the generic template and no template-retention
+   decision was approved.
+4. Keep `.squad/playbooks/release-myblog.md`,
+   `.squad/skills/release-process/SKILL.md`, and
+   `.squad/skills/microsoft-code-reference/SKILL.md` unchanged.
+5. Treat `.squad/decisions/DELETED-ASSETS.md` as the published manifest for the
+   final disposition state.
+
+#### Consequences
+
+- Normal squad routing now only references assets with an active MyBlog fit.
+- The remaining imported catalog is smaller and less likely to mislead future
+  contributors with quarantined-but-dead guidance.
+- Any future reintroduction of these deleted assets now requires a new explicit
+  architecture decision instead of silent reuse.
+
+#### Related Asset Manifest
+
+See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-issuetracker.

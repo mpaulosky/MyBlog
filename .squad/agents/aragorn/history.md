@@ -124,3 +124,48 @@ Updated `.squad/routing.md` to make guardrails explicit at every handoff:
 - ✅ M1.2 routing PR does not modify agent charters or inbox
 
 **Outcome:** ✅ Routing table now fully describes post-S1.1 workflow with explicit guardrails at every step.
+
+## 2026-04-19: Milestone 3 Roadmap Completion (Final)
+
+**Milestone:** 3 (Adapt-or-Delete Cleanup & Roadmap Completion)  
+**Outcome:** ✅ Complete
+
+Finalized all remaining roadmap decisions for Milestone 3 to enable sprint 3 cleanup execution.
+
+### Key Achievements
+
+1. **Release Guidance Finalized (Decision #13)**
+   - Confirmed MyBlog-specific release routing (skills/release-process → playbooks/release-myblog)
+   - Approved deletion of generic release-process-base template (replaced by repo-specific guidance)
+   - Clarified branch model: `dev` → `main` (no back-sync); hotfixes backport to `dev` only
+   - Release ownership: Aragorn scope approval → Boromir operational execution
+
+2. **Asset Disposition Approved (Decision #14)**
+   - Approved deletion of post-build-validation, static-config-pattern, building-protection, release-process-base
+   - Confirmed microsoft-code-reference retention (rewrite queued, Boromir backlog)
+   - Delegated manifest publication to Pippin (DELETED-ASSETS.md)
+
+### Cross-Team Coordination
+
+- **Coordinated with Boromir:** Merged-branch guard decision (Decision #12) — keep guidance-only, defer automation pending incident frequency
+- **Coordinated with Pippin:** Published DELETED-ASSETS.md manifest as authoritative reference for future contributors
+- **Routed with Scribe:** All three decisions consolidated to decisions.md; inbox merged; agent history cross-linked
+
+### Modified Assets
+
+- Decision merged: Decision #13 (Release guidance fit) → `.squad/decisions.md`
+- Decision merged: Decision #14 (Delete non-fit assets) → `.squad/decisions.md`
+- Orchestration logged: `2026-04-19T04-04-30-aragorn-sprint-3-roadmap.md`
+
+### Roadmap Impact
+
+- Milestone 3 "Adapt-or-Delete" pass now complete
+- Release work scope & ownership crystal clear
+- Sprint 3 cleanup can proceed with full decision context
+- No misleading generic guidance remains in routing layer
+
+**Constraints Satisfied:**
+- ✅ Release guidance anchored to real `dev`/`main`/`hotfix` workflow  
+- ✅ All imports explicitly marked adapt/delete/retain  
+- ✅ Decisions logged with structured rationale  
+- ✅ Cross-team coordination documented  

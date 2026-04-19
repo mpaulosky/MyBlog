@@ -438,3 +438,51 @@ Operationally validated adoption roadmap against live repo. Key findings:
 - Implementation prerequisite: decide hotfix/* branch exemption
 
 Next: Pre-push audit (Gate 1–5 smoke test) before M1 implementation
+
+## 2026-04-19: Milestone 3 Roadmap Completion (Final)
+
+**Milestone:** 3 (Adapt-or-Delete Cleanup & Roadmap Completion)  
+**Outcome:** ✅ Complete
+
+Finalized merged-branch guard decision and coordinated secondary skills assessment publication for Milestone 3 roadmap completion.
+
+### Key Achievements
+
+1. **Merged-Branch Guard Finalized (Decision #12)**
+   - Reviewed evidence: 15 PRs merged cleanly, zero orphaned incidents (Sprints 0–2)
+   - Confirmed existing safeguards sufficient: playbook (Step 8), docs (CONTRIBUTING.md), routing awareness
+   - Decision: Keep guidance-only, defer/do-not-implement pre-commit hook automation
+   - Rationale: Small team, manual awareness working, no incidents justify added complexity
+   - Skill retained (.squad/skills/merged-pr-guard/SKILL.md) for future reference if frequency data warrants
+
+2. **Secondary Skills Assessment Published**
+   - Coordinated with Aragorn on release guidance fit review
+   - Confirmed deletion of post-build-validation & static-config-pattern (Sprint 3)
+   - Queued microsoft-code-reference rewrite (Sprint 2 backlog, item #10, DevOps scope)
+
+### Cross-Team Coordination
+
+- **Coordinated with Aragorn:** Release guidance finalization (Decision #13) — delete release-process-base, keep MyBlog-specific routing
+- **Coordinated with Aragorn:** Delete decision approval (Decision #14) — building-protection, static-config-pattern, post-build-validation, release-process-base
+- **Coordinated with Pippin:** DELETED-ASSETS.md manifest publication
+- **Routed with Scribe:** All decisions consolidated to decisions.md
+
+### Modified Assets
+
+- Decision merged: Decision #12 (Merged-branch guard) → `.squad/decisions.md`
+- Decision merged: Decision #13 (Release guidance fit) → `.squad/decisions.md`
+- Decision merged: Decision #14 (Delete non-fit assets) → `.squad/decisions.md`
+- Orchestration logged: `2026-04-19T04-04-30-boromir-sprint-3-merged-branch.md`
+
+### Roadmap Impact
+
+- Closes Milestone 2 Sprint 2 backlog item #11 with evidence-based "defer automation" resolution
+- Milestone 3 disposition pass confirms lightweight approach justified for small-team profile
+- Skill guidance retained for future escalation if data changes
+- Sprint 3 cleanup ready for execution
+
+**Constraints Satisfied:**
+- ✅ Decision evidence-based (15 PR merges, zero incidents)  
+- ✅ Guidance path remains active (routing + docs)  
+- ✅ Automation deferred, not rejected (reversible)  
+- ✅ Decision logs cost/benefit tradeoff for future coordinator understanding  
