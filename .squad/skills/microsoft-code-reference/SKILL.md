@@ -18,7 +18,7 @@ Verify Microsoft APIs, NuGet packages, Aspire resource naming, and GitHub Action
 | Scenario | Root Problem | Query | Expected Outcome |
 |----------|--------------|-------|------------------|
 | AppHost resource won't start | Wrong method name or parameter | `"Aspire.Hosting MongoDB AddMongoDB"` | Confirm `AddMongoDB(name)` signature |
-| NuGet version conflict | Version mismatch or package listed in individual .csproj instead of Directory.Packages.props | `"NuGet Aspire.Hosting.MongoDB version"` | Verify latest stable version and confirm version is centralized in Directory.Packages.props |
+| NuGet version conflict | Version mismatch or package targeting wrong framework | `"NuGet Aspire.Hosting.MongoDB version"` | Verify latest stable version and confirm package targets .NET 10 per global.json |
 | GitHub Actions checkout fails | Outdated action or incorrect parameters | `"GitHub Actions checkout v4 fetch-depth"` | Confirm v4 supports `fetch-depth: 0` |
 | .NET SDK/target framework incompatibility | .NET SDK mismatch (global.json) or package incompatibility | `".NET 10 Aspire 13 compatibility"` | Verify Aspire 13.x works with .NET 10 per global.json |
 | AppHost resource naming mismatch | Inconsistent resource naming between AppHost and ServiceDefaults | `"Aspire resource naming conventions"` | Ensure resource names match across `AddMongoDB("mongodb")` and service wiring |
@@ -33,7 +33,7 @@ Verify Microsoft APIs, NuGet packages, Aspire resource naming, and GitHub Action
 
 ## NuGet Package Verification
 
-MyBlog centralizes ALL NuGet package versions in `Directory.Packages.props` (single source of truth). When adding/updating a package:
+MyBlog specifies NuGet package versions in individual `.csproj` files with `<PackageReference>` and targets .NET 10 (specified in `global.json`). When adding/updating a package:
 
 ```
 # Verify package name and latest version
@@ -105,11 +105,11 @@ MyBlog CI runs on GitHub Actions with dotnet restore, build, and test stages. Wh
 
 **MyBlog CI workflow uses:**
 - `actions/setup-dotnet@v4` with `global-json-file: global.json`
-- `actions/cache@v4` with key: `${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}`
+- `actions/cache@v4` with key: `${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}`
 - `gittools/actions/gitversion` for semantic versioning
 - `dorny/test-reporter@v1` for test result publishing
 
-When modifying the workflow, verify action parameters and cache hit rates against `.csproj` and `Directory.Packages.props` changes.
+When modifying the workflow, verify action parameters and cache hit rates against `.csproj` changes.
 
 ## .NET SDK / Target Framework Compatibility
 
@@ -149,5 +149,5 @@ Before deploying CI/CD or Aspire changes:
 4. **Test locally** — Run `dotnet build`, `dotnet test`, or AppHost startup before committing
 
 For AppHost changes: verify resource names are consistent and test with `dotnet run` in AppHost project.  
-For NuGet changes: verify version centralization in `Directory.Packages.props` and run CI locally with `dotnet build MyBlog.slnx`.  
+For NuGet changes: verify package versions in `.csproj` files and run CI locally with `dotnet build MyBlog.slnx`.  
 For GitHub Actions changes: test workflow syntax and cache keys with a dry-run commit to a test branch.

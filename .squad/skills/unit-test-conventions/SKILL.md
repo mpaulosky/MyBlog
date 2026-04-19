@@ -372,10 +372,10 @@ public class ProfileTests : BunitContext
 ```
 
 **How it works:**
-- Inherit from `BunitContext` (bUnit's `TestContext` base)
+- Inherit from `BunitContext` (bUnit's `TestContext` base; made available via `global using Bunit;`)
 - Call `RenderForUser(principal)` to render the component with authenticated context
 - Use `cut.Markup.Should()` to assert the rendered HTML output
-- Each test defines its own `RenderForUser()` method or inherits it from a base class
+- Each test class defines its own `RenderForUser()` and `CreatePrincipal()` helper methods
 
 ### Critical Gotchas
 
@@ -422,8 +422,7 @@ tests/Unit.Tests/
 ├── Security/
 │   └── RoleClaimsHelperTests.cs
 └── Testing/
-    ├── BunitContext.cs                    # bUnit base class
-    └── TestAuthorizationService.cs        # bUnit helpers
+    └── TestAuthorizationService.cs        # Auth mocking helper for bUnit tests
 ```
 
 ### Running Tests Locally

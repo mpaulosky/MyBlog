@@ -19,7 +19,7 @@ MyBlog implements the following security measures:
 
 - **Auth0 integration** - Enterprise-grade authentication and identity management
 - **Role-based access control (RBAC)** - Author and Admin roles enforced on all protected routes
-- **Authorization policy enforcement** - AdminPolicy guards all user management endpoints
+- **Admin authorization enforcement** - User management and other admin-only UI functionality are guarded via the `Admin` role
 - **Principle of least privilege** - Management API scopes limited to required operations only
 
 ### Data Protection
@@ -32,12 +32,12 @@ MyBlog implements the following security measures:
 
 - **Auth0 Management API secrets protection** - M2M credentials stored only in user secrets or environment variables; never committed to source control
 - **No raw secret logging** - Secrets never logged or echoed, even in debug paths
-- **Error handling** - Auth0 errors wrapped in Result objects without exposing raw error internals to end users
+- **Error handling** - Auth0 errors wrapped in Result objects for consistent handling; user-facing sanitization of error details depends on the calling layer
 
 ### MongoDB Security
 
 - **Connection security** - MongoDB connection managed through Aspire service container; credentials stored in environment configuration
-- **Parameterized queries** - MongoDB driver uses parameterized operations (no raw query strings)
+- **Typed query API** - EF Core MongoDB access uses LINQ and strongly typed operations rather than string-concatenated query language
 - **User authorization** - All blog post operations guard against unauthorized access via authorization policies
 
 ## Auth0 Secrets Management Policy

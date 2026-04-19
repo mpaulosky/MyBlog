@@ -105,8 +105,8 @@ description: >
    - Assert CSS class and localStorage value persist
 
 2. **Auth redirects and session state** — Verify end-to-end auth flows:
-   - Login → redirect to `/Account/Profile` or home
-   - Logout → redirect to `/Account/Logout`
+   - Login → redirect to `/profile` or home
+   - Logout → redirect to login
    - Expired session → redirect to login
    - Run against locally running AppHost for full OAuth flow
 
