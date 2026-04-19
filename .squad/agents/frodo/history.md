@@ -28,3 +28,33 @@ As part of DevOps skills/playbooks review, Frodo assigned to update CONTRIBUTING
 **Collaboration:** Frodo + Pippin (CONTRIBUTING.md co-owners).
 
 **Timeline:** Week 1 (1h estimated).
+
+## 2026-04-19 — Auth0 Secrets Policy & Documentation Consolidation (Sprint 2)
+
+**Backlog item:** Tighten and clarify the repo's Auth0 secrets policy across documentation.
+
+**Initial work completed:**
+1. Updated SECURITY.md with Auth0 secrets policy section
+2. Updated SKILL.md documentation references
+3. Created decision inbox file
+
+**First correction pass:**
+- Fixed Data Protection, API Security, MongoDB Security sections
+- Removed SQL/EF Core references; added verified Aspire/MongoDB/Blazor claims
+- Cleaned up Known Limitations
+
+**Final cleanup pass (second correction):**
+- **API Security** — Removed "Input validation - All CQRS commands validate user input" (unverifiable blanket claim; validation exists in domain models but not uniformly)
+- **Data Validation** — Replaced "Use parameterized queries (Entity Framework Core does this automatically)" with MongoDB-grounded alternative: "Validate all user input at the domain model level (e.g., `ArgumentException.ThrowIfNullOrWhiteSpace`)"
+- **Secrets Management** — Removed unverifiable "Never commit `appsettings.Production.json` with secrets" and ".gitignore" reference; kept only grounded guidance about User Secrets / Environment Variables
+
+**Factual correction (third pass):**
+- **API Security → Error handling** — Changed "Auth0 errors wrapped and logged" to "Auth0 errors wrapped in Result objects" (verified UserManagementHandler.cs does NOT log; only wraps with Result.Fail)
+
+**Final state:**
+✅ SECURITY.md is now fully repo-grounded with only verifiable, MyBlog-specific claims
+✅ Auth0 secrets policy work intact and emphasized (§ "Auth0 Secrets Management Policy")
+✅ No EF Core / SQL / generic security marketing language remaining
+✅ Sprint 2 backlog item complete and accurate
+
+**Status:** ✅ Final - Sprint 2 backlog closed; ready for Scribe merge.

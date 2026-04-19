@@ -132,6 +132,6 @@ Auth0 Management API rate limits:
 ## Related Documentation
 
 - **docs/AUTH0_SETUP.md** — Complete Auth0 configuration for new developers
+- **docs/SECURITY.md** — Organization-wide security policy (Auth0 secrets policy now enforced)
 - **src/Web/Features/UserManagement/UserManagementHandler.cs** — CQRS handler implementation
-- **SECURITY.md** — Organization-wide security policy (TBD — add Auth0 section)
 - **CONTRIBUTING.md** — Contributor workflow (reference this skill)

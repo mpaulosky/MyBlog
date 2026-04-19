@@ -790,3 +790,77 @@ The `build-and-test` required status check is in `action_required` and has not c
 - `.squad/decisions.md` — Decisions 16–17 merged from inbox
 - `.squad/orchestration-log/2026-04-19T15:09:42Z-boromir.md` — Full execution log
 
+
+---
+
+### 2026-04-19 — Sprint 2: Rewrite microsoft-code-reference Skill for MyBlog DevOps Focus
+
+**Work completed:**
+- Rewrote `.squad/skills/microsoft-code-reference/SKILL.md` to replace generic Azure SDK reference with **DevOps-specific MyBlog patterns**
+- Grounded skill in actual CI/CD practices: Aspire AppHost resource wiring, NuGet centralization, GitHub Actions workflows, .NET 10 / Aspire 13 compatibility
+- Updated routing.md entry to reflect new scope (removed "Marked for Sprint 2 scope rewrite" placeholder)
+
+**Key changes to SKILL.md:**
+1. **Header/metadata:** Added explicit owner (Boromir), scope (MyBlog CI/CD, Aspire, NuGet, GitHub Actions)
+2. **Use cases table:** Replaced Azure Blob / Graph SDK examples with MyBlog-specific scenarios:
+   - AppHost resource won't start → verify `AddMongoDB()` signature
+   - NuGet version conflict → verify Aspire 13.2.2 + .NET 10 compatibility
+   - GitHub Actions checkout fails → verify action parameters
+   - AppHost resource naming mismatch → ensure consistency across AppHost and ServiceDefaults
+3. **NuGet Package Verification:** Added concrete list of MyBlog packages (Aspire.Hosting.MongoDB, Aspire.Hosting.Redis, Aspire.AppHost.Sdk at 13.2.2)
+4. **Aspire AppHost Resource Verification:** Added complete MyBlog pattern example showing `AddMongoDB("mongodb")` + `AddDatabase("myblog")` + `WithReference()` + `WaitFor()` contracts
+5. **GitHub Actions Workflow Verification:** Added MyBlog-specific action references (setup-dotnet@v4, cache@v4, gitversion, test-reporter@v1)
+6. **Error Troubleshooting:** Replaced generic Azure errors with Aspire-specific errors (`Resource not found`, `Cannot convert resource to reference type`, workflow syntax errors)
+7. **Validation Workflow:** Added concrete testing guidance (run `dotnet build MyBlog.slnx`, test AppHost locally with `dotnet run`)
+
+**Routing.md updates:**
+- Removed "Marked for Sprint 2 scope rewrite (DevOps/NuGet/GitHub Actions focus)" note
+- Updated description to explicitly call out: "Aspire AppHost resources" and clarify Boromir ownership
+
+**Design rationale:**
+- Skill is now **grounded in MyBlog's actual tech stack** (Aspire 13.2.2, .NET 10, MongoDB + Redis via Aspire, GitHub Actions ci.yml)
+- **Concrete over generic:** All examples reference real resources and methods used in the codebase
+- **Dev context:** When Boromir encounters AppHost failures, NuGet mismatches, or GitHub Actions issues, the skill provides immediate MyBlog-specific queries and expected outcomes
+- **Scope compliance:** Stays within DevOps/infrastructure domain; does NOT include application code patterns (Sam/Aragorn own those)
+
+**Branch:** N/A (squad asset change, committed directly to history)  
+**Status:** ✅ COMPLETE
+
+
+**2026-04-19 — Follow-up Corrections: Repo Convention Accuracy**
+
+**Issues identified and fixed:**
+1. **NuGet centralization reference corrected:** 
+   - Changed from: "centralized NuGet versioning in `Directory.Build.props` or individual `.csproj` files"
+   - Changed to: "centralizes ALL NuGet package versions in `Directory.Packages.props` (single source of truth)"
+   - Rationale: Aligns with Boromir's critical rule: "NuGet versions: ALL centralized in Directory.Packages.props. NEVER add versions to individual .csproj files."
+
+2. **Terminology correction:**
+   - Changed from: ".NET Framework compatibility"
+   - Changed to: ".NET SDK/target framework compatibility"
+   - Rationale: Avoids confusion with legacy .NET Framework; aligns with actual repo practice (global.json specifies .NET 10 SDK)
+
+3. **Error troubleshooting clarification:**
+   - Added explicit note: "NuGet version conflict → Version mismatch or package listed in individual .csproj instead of Directory.Packages.props"
+   - Ensures skill reflects centralization enforcement rule
+
+4. **global.json grounding:**
+   - Specific version reference: `global.json` with `sdk.version: 10.0.100`
+   - Use cases now reference `global.json` as source of truth for .NET SDK version
+
+**Verification:**
+- Skill now accurately reflects Boromir's critical NuGet centralization rule
+- Terminology aligns with .NET SDK (not legacy .NET Framework)
+- All file references match repo structure and conventions
+
+**Status:** ✅ CORRECTED & VERIFIED
+
+
+**Final pass correction:**
+- Line 152: Fixed "Directory.Build.props" → "Directory.Packages.props" in Validation Workflow section
+- Comprehensive verification: ✅ All 6 Directory.Packages.props references are correct
+- Comprehensive verification: ✅ No legacy .NET Framework references remain
+- Comprehensive verification: ✅ All global.json and .NET SDK/target framework references align with repo
+
+**Skill Status:** ✅ FULLY ALIGNED WITH REPO CONVENTIONS
+
