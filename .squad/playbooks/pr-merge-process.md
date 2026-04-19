@@ -2,7 +2,7 @@
 
 **Owner:** Aragorn (Lead) + Ralph (Work Monitor)
 **Ref:** `.squad/ceremonies.md` (PR Review Gate, Standard Task Workflow)
-**Last Updated:** 2026-04-13
+**Last Updated:** 2026-04-19
 
 ---
 
@@ -42,8 +42,8 @@ gh pr create \
 Do NOT request review until CI is green:
 
 ```bash
-# Poll CI status
-gh pr checks <PR-number>
+# Watch CI status (refresh every 5 seconds)
+gh pr checks <PR-number> --watch --interval 5
 # All checks must show ✅ before proceeding
 ```
 
@@ -55,7 +55,7 @@ Ralph MUST verify ALL of the following before spawning reviewers. Any failing ga
 
 | Gate                | Command                                             | Expected                   |
 | ------------------- | --------------------------------------------------- | -------------------------- |
-| CI green            | `gh pr checks <N>`                                  | All passing                |
+| CI green            | `gh pr checks <N> --watch --interval 5`             | All passing                |
 | No conflicts        | `gh pr view <N> --json mergeable -q .mergeable`     | `MERGEABLE`                |
 | PR template filled  | `gh pr view <N> --json body`                        | Contains filled checkboxes |
 | Branch is `squad/*` | `gh pr view <N> --json headRefName -q .headRefName` | Starts with `squad/`       |

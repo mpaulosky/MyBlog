@@ -29,6 +29,13 @@ squad/{issue-number}-{kebab-case-slug}
 ```
 Example: `squad/42-fix-login-validation`
 
+Before asking the user for an issue number or branch slug for push-capable
+work, first inspect the current GitHub repository for relevant **open** issues.
+Reuse a matching open issue when one exists. If no open issue matches, create a
+new issue from the requested change summary and use its number for the squad
+branch. Ask the user only when multiple open issues are plausible matches or
+the issue description needs clarification.
+
 ## PR Guidelines
 
 When opening a PR:
