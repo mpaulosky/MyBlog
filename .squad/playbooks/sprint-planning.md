@@ -69,7 +69,13 @@ Note the milestone number returned — you will need it for Step 5 and Step 7.
 
 ## Step 3 — Aragorn: Create GitHub Issues
 
-One issue per todo/unit of work within each sprint:
+One issue per todo/unit of work within each sprint.
+
+**Every issue MUST have:**
+- A title prefixed with `[Sprint N]`
+- A milestone set to `Sprint N: {Theme}`
+
+No issue may be created, referenced in a branch, or linked in a PR without both.
 
 ```bash
 gh issue create \
@@ -91,7 +97,7 @@ Todo ID: {todo-id}"
 ```
 
 **Issue title convention:** `[Sprint N] {Verb} {Noun}`
-(e.g., `[Sprint 1] Add BlogPost entity and repository`)
+(e.g., `[Sprint 2] Add ValidationBehavior pipeline`)
 
 After creating each issue, **Aragorn immediately triages** it:
 - Replace `squad` label with `squad:{member}` (e.g., `squad:sam`)
@@ -111,7 +117,7 @@ gh project list --owner mpaulosky
 gh project item-add 4 --owner mpaulosky --url {issue-url}
 ```
 
-New items land in **Backlog** automatically. Move to **In Sprint** when the sprint begins:
+New items land in **Backlog** automatically. Move each item to **In Sprint** when the sprint begins — this is a **manual action** performed at sprint kickoff:
 
 ```bash
 # Update item status to "In Sprint"
@@ -122,6 +128,9 @@ gh project item-edit \
   --project-id {PROJECT_ID} \
   --single-select-option-id {IN_SPRINT_OPTION_ID}
 ```
+
+> **Note:** "In Review" and "Done" transitions are **automated** by
+> `.github/workflows/project-board-automation.yml` — see Step 6.
 
 ---
 
@@ -185,8 +194,12 @@ gh pr create \
 The standard **PR merge process** (`pr-merge-process.md`) applies normally,
 but the base branch is `sprint/{N}-{slug}` instead of `dev`.
 
-Move the project board item to **In Review** when the PR is open.
-Move to **Done** after it merges into the sprint branch.
+**Project board transitions are automated** by `.github/workflows/project-board-automation.yml`:
+- PR opened → issue moves to **In Review** automatically
+- PR merged → issue moves to **Done** automatically
+
+The PR body must include `Closes #{issue-number}` (or `Fixes`/`Resolves`) for the
+automation to find and update the linked issue. No manual board moves are needed.
 
 ---
 
@@ -282,25 +295,35 @@ When **all** sprint milestones are closed:
 
 ---
 
-## Hard Gate — No Code Before Issue
+## Hard Gate — No Code Before Issue / No Issue Without Sprint
 
 > **This rule is absolute and has no exceptions.**
 
-Before any agent writes, modifies, or commits code, a GitHub issue **must** exist for the work. This gate applies to every work request regardless of how it arrives — `[[PLAN]]`, direct user instruction, or agent initiative.
+Before any agent writes, modifies, or commits code, a GitHub issue **must** exist for the work **and that issue must be fully sprint-stamped**. This gate applies to every work request regardless of how it arrives — `[[PLAN]]`, direct user instruction, or agent initiative.
+
+A **sprint-stamped issue** satisfies all three conditions:
+1. Title begins with `[Sprint N]` — e.g. `[Sprint 2] Add ValidationBehavior pipeline`
+2. Milestone is set to `Sprint N: {Theme}` — e.g. `Sprint 2: Domain Restructure (CQRS/MediatR)`
+3. Item is added to the MyBlog project board (Project #4)
 
 **Enforcement sequence (runs before Step 1):**
 
 ```
 1. Does a GitHub issue exist for this work?
-   YES → confirm it is assigned to the correct milestone + Project #4, then proceed to Step 1
    NO  → CREATE the issue now before touching any file
-         → Assign to milestone, add to Project #4
+         → Title MUST start with [Sprint N]
+         → Milestone MUST be set to "Sprint N: {Theme}"
+         → Add to Project #4, move to "In Sprint"
          → Create squad/{issue}-{slug} branch
          → THEN and only then begin writing code
+
+   YES → Is it sprint-stamped (title prefix + milestone + project)?
+         NO  → Fix it now: rename title, set milestone, add to board
+         YES → Proceed to Step 1
 ```
 
-If you skip this gate and write code without an issue, you have violated the squad's process.
-The work must be stashed, the issue created retroactively, a proper branch checked out, and
+If you skip this gate and write code without a sprint-stamped issue, you have violated the squad's process.
+The work must be stashed, the issue corrected retroactively, a proper branch checked out, and
 the stash re-applied before committing. This costs time — follow the gate.
 
 ---
@@ -308,6 +331,8 @@ the stash re-applied before committing. This costs time — follow the gate.
 ## Anti-Patterns
 
 - ❌ **Writing any code before a GitHub issue exists** — always create the issue first
+- ❌ **Creating an issue without a `[Sprint N]` title prefix** — every issue title must begin with `[Sprint N]`
+- ❌ **Creating an issue without a milestone** — every issue must be assigned to `Sprint N: {Theme}` before any branch or PR references it
 - ❌ **Implementing a `[[PLAN]]` request without first running the sprint planning ceremony** — plan → issue → branch → code
 - ❌ **Opening `squad/{issue}` PRs directly to `dev`** during an active sprint
 - ❌ **Skipping worktree** — always work in `../MyBlog-sprint-{N}/` for isolation
