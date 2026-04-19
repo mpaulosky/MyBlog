@@ -311,3 +311,32 @@
 
 **Key lesson:**
 When a feature branch is merged via PR and GitHub auto-deletes the remote, local branch still exists but becomes "detached" from remote. Force-delete is safe once you verify the work is in the target branch (`dev` contains the squashed commit from PR #13).
+
+### 2026-04-19 — PR #14: Documenting Ruleset Findings
+
+**Task:** Commit and PR the preserved `.squad/agents/boromir/history.md` changes
+
+**Execution:**
+1. Restored stashed history.md from previous session (containing PR #13 ruleset blocker documentation)
+2. Created branch `squad/13-boromir-merge-notes` from current `dev`
+3. Committed changes with message: "docs: Log PR #13 merge blockers and post-merge sync findings"
+   - Included comprehensive findings on ruleset enforcement, review thread resolution behavior, and post-merge sync procedures
+   - Co-authored with Copilot per team policy
+4. Pushed branch to `origin/squad/13-boromir-merge-notes`
+
+**PR #14 Created:**
+- Title: "docs: Log PR #13 merge blockers and post-merge sync findings"
+- Linked to related issue: #13
+- Pre-push gate: Passed all 5 gates (build, arch tests, unit tests, integration tests, push)
+
+**CI Results:**
+- ✅ All 6 checks passed: Architecture Tests, Integration Tests, Unit Tests, Coverage Summary, build-and-test, Test Results
+- No failures or warnings
+
+**Current Status:**
+- **Blocked by ruleset** `protectbranch`: Requires pull request review approval before merge
+- Documentation accurate and complete; ready for owner approval and merge
+- Cannot self-approve as PR author; awaiting external reviewer or owner override
+
+**Key insight:**
+The same ruleset that blocked PR #13 also blocks PR #14 — this is consistent behavior. Documentation is valuable for team reference; owner action required to unblock.
