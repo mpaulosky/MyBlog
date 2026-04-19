@@ -1,7 +1,10 @@
-# Static Configuration Pattern
-
-**Confidence:** low
-**Source:** earned
+---
+name: static-config-pattern
+description: Convert compile-time constants into runtime-configurable static properties while preserving defaults, startup configuration, and test isolation.
+domain: dotnet
+confidence: low
+source: earned
+---
 
 ## When to Use
 

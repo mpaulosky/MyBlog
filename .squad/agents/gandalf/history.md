@@ -106,3 +106,27 @@ Posted security approval comment to PR #16.
 **Cross-team:** Aragorn merged PR #16 to dev with non-destructive integration. Local dev now ahead of origin/dev by 5 commits. Sprint 1.1 complete.
 
 **Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-gandalf.md`
+### PR #17 Security Review — 2026-04-19
+
+**PR #17** — `squad/1002-boromir-history-update` → `dev` (29 files: skills docs, playbooks, agent histories)
+
+**Verdict:** APPROVE ✅
+
+**Scope:** All changes confined to `.squad/` directory — documentation only, no feature code.
+
+**Security Checks:**
+- **[CLEAN] No hardcoded secrets** — Secret references in skill docs are environment variable names only (GITHUB_TOKEN, NUGET_API_KEY), not values
+- **[CLEAN] Auth guidance correct** — Auth0 skills correctly emphasize user-secrets for local dev, GitHub Actions secrets for CI
+- **[CLEAN] No sensitive file changes** — src/, appsettings, Program.cs unaffected
+
+**Merge Conflict Resolution:**
+Resolved 7 add/add conflicts in `.squad/skills/` by accepting `origin/dev` versions (Sprint 2 mining adaptations with MyBlog-specific paths and ownership rules):
+- auth0-management-api/SKILL.md
+- auth0-management-security/SKILL.md
+- mongodb-dba-patterns/SKILL.md
+- mongodb-filter-pattern/SKILL.md
+- release-process/SKILL.md
+- testcontainers-shared-fixture/SKILL.md
+- webapp-testing/SKILL.md
+
+**Learning:** Add/add conflicts in skill files result from parallel imports. The `origin/dev` versions are authoritative when adapted for MyBlog conventions (file paths, ownership rules, real examples).

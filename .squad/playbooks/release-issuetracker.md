@@ -1,9 +1,11 @@
 # Release Process — IssueTrackerApp Project Playbook
 
+> ⚠️ **LEGACY REFERENCE:** This playbook documents the release process for the **IssueTrackerApp** repository (external project). It references workflows (`.github/workflows/squad-release.yml`, `squad-promote.yml`) that do **not exist** in the **MyBlog** repository. Use this as a **template/example** for establishing a release workflow in MyBlog when needed. Do not follow these exact commands or workflows in the MyBlog repo.
+
 **Last Updated:** 2026-04-13  
-**Ref:** `GitVersion.yml`, `.github/workflows/squad-release.yml`, `.github/workflows/squad-promote.yml`  
-**Project:** IssueTrackerApp  
-**Owner:** Boromir (DevOps) + Aragorn (Release Approval)
+**Original Project:** IssueTrackerApp  
+**Owner (original):** Boromir (DevOps) + Aragorn (Release Approval)  
+**Status in MyBlog:** Reference/Template Only
 
 ---
 
