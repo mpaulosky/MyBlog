@@ -62,22 +62,30 @@ spawn prompt:
 
 After Sprint 1.1, these process assets are part of normal squad flow:
 
-1. **Before any push-ready handoff**, route through the pre-push gate skill and
+1. **Before writing any code**, a GitHub issue MUST exist for the work. This is an
+   absolute gate with no exceptions. If no issue exists, create it first — assign
+   to the correct milestone, add to Project #4 — then create the `squad/{issue}-{slug}`
+   branch, and only then write code. See the Hard Gate section in
+   `.squad/playbooks/sprint-planning.md`.
+2. **Before any push-ready handoff**, route through the pre-push gate skill and
    pre-push playbook so agents respect the live MyBlog hook: `squad/{issue}-{slug}`
    branch naming, Release build, `Architecture.Tests`, `Unit.Tests`, and
    `Integration.Tests`.
-2. **When build or test health is red**, route through build repair first. Do not
+3. **When build or test health is red**, route through build repair first. Do not
    treat a broken branch as normal feature work.
-3. **When PR work starts**, Aragorn and any spawned reviewers use the PR merge
+4. **When PR work starts**, Aragorn and any spawned reviewers use the PR merge
    playbook as the governing checklist.
-4. **When a session resumes on an older squad branch**, apply the merged-PR guard
+5. **When a session resumes on an older squad branch**, apply the merged-PR guard
    before committing so work does not strand on a merged branch.
-5. **Do not reintroduce deleted imports.** Only route assets with an explicit
+6. **Do not reintroduce deleted imports.** Only route assets with an explicit
    MyBlog owner, fit, and usage rule.
-6. **When any `plan.md` is created or materially updated**, Ralph and Aragorn run
+7. **When any `plan.md` is created or materially updated**, Ralph and Aragorn run
    the Sprint Planning ceremony: decompose into sprints, create milestones + issues,
    add to the MyBlog project board, and Boromir sets up worktrees. See
    `.squad/playbooks/sprint-planning.md`.
+8. **When a user makes any coding request** (direct instruction, `[[PLAN]]`, or
+   follow-on work), the very first agent action is to check whether a GitHub issue
+   exists. If not, create it before any file is opened or modified.
 
 ## Rules
 

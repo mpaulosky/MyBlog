@@ -53,12 +53,15 @@ gh pr checks <PR-number> --watch --interval 5
 
 Ralph MUST verify ALL of the following before spawning reviewers. Any failing gate blocks review:
 
-| Gate                | Command                                             | Expected                   |
-| ------------------- | --------------------------------------------------- | -------------------------- |
-| CI green            | `gh pr checks <N> --watch --interval 5`             | All passing                |
-| No conflicts        | `gh pr view <N> --json mergeable -q .mergeable`     | `MERGEABLE`                |
-| PR template filled  | `gh pr view <N> --json body`                        | Contains filled checkboxes |
-| Branch is `squad/*` | `gh pr view <N> --json headRefName -q .headRefName` | Starts with `squad/`       |
+| Gate                      | Command                                                          | Expected                        |
+| ------------------------- | ---------------------------------------------------------------- | ------------------------------- |
+| GitHub issue exists       | `gh pr view <N> --json body -q .body \| grep -E "Closes #[0-9]+"` | Contains `Closes #N`            |
+| CI green                  | `gh pr checks <N> --watch --interval 5`                          | All passing                     |
+| No conflicts              | `gh pr view <N> --json mergeable -q .mergeable`                  | `MERGEABLE`                     |
+| PR template filled        | `gh pr view <N> --json body`                                     | Contains filled checkboxes      |
+| Branch is `squad/*`       | `gh pr view <N> --json headRefName -q .headRefName`              | Starts with `squad/`            |
+
+> **If `Closes #N` is missing**, the PR was opened without a GitHub issue. Ralph must STOP, create the issue, link it in the PR body, assign it to the correct milestone and Project #4, then re-run this gate.
 
 ## Step 4 — Spawn Reviewers
 
@@ -180,6 +183,7 @@ echo "✅ Orphan branch cleanup complete."
 
 ## Anti-Patterns
 
+- ❌ **Opening a PR without a `Closes #N` link** — Every PR must reference a GitHub issue
 - ❌ **Requesting review while CI is failing** — Wait for green first
 - ❌ **PR author fixing their own rejected code** — Lockout enforced per rejection protocol
 - ❌ **Merge commit instead of squash** — Use `--squash` for clean history

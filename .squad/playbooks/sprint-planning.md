@@ -282,8 +282,33 @@ When **all** sprint milestones are closed:
 
 ---
 
+## Hard Gate — No Code Before Issue
+
+> **This rule is absolute and has no exceptions.**
+
+Before any agent writes, modifies, or commits code, a GitHub issue **must** exist for the work. This gate applies to every work request regardless of how it arrives — `[[PLAN]]`, direct user instruction, or agent initiative.
+
+**Enforcement sequence (runs before Step 1):**
+
+```
+1. Does a GitHub issue exist for this work?
+   YES → confirm it is assigned to the correct milestone + Project #4, then proceed to Step 1
+   NO  → CREATE the issue now before touching any file
+         → Assign to milestone, add to Project #4
+         → Create squad/{issue}-{slug} branch
+         → THEN and only then begin writing code
+```
+
+If you skip this gate and write code without an issue, you have violated the squad's process.
+The work must be stashed, the issue created retroactively, a proper branch checked out, and
+the stash re-applied before committing. This costs time — follow the gate.
+
+---
+
 ## Anti-Patterns
 
+- ❌ **Writing any code before a GitHub issue exists** — always create the issue first
+- ❌ **Implementing a `[[PLAN]]` request without first running the sprint planning ceremony** — plan → issue → branch → code
 - ❌ **Opening `squad/{issue}` PRs directly to `dev`** during an active sprint
 - ❌ **Skipping worktree** — always work in `../MyBlog-sprint-{N}/` for isolation
 - ❌ **Closing milestone before all issues resolve** — Ralph confirms 0 open issues
