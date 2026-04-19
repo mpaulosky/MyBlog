@@ -531,3 +531,120 @@ Do not wait for optional async checks before declaring a PR "ready for review." 
 **Cross-team:** Gandalf approved PR #16; Aragorn merged to dev with non-destructive integration (merge commit e184633). Local dev now ahead of origin/dev by 5 commits. Sprint 1.1 hook hardening and auto-bootstrap now live in dev.
 
 **Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-boromir.md`
+
+## 2026-04-19 — Merge Block Investigation: Root Cause & Mitigation Path
+
+**Task:** Investigate recurring "Merging is blocked" issue and recommend GitHub settings changes
+
+### Root Cause Identified
+
+**The Problem:**
+Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thread_resolution: true` on `dev` and `main` branches, requiring ALL Copilot bot review threads to be explicitly resolved before merge is allowed — even when all required checks are green and all human reviewers have approved.
+
+**Exact Current Setting:**
+- **Ruleset name:** `protectbranch`
+- **Target branches:** `refs/heads/main`, `refs/heads/dev`
+- **Enforcement:** `active` (not audit mode)
+- **Blocking rule:** `pull_request` with `required_review_thread_resolution: true`
+- **Bypass actors:** `[]` (empty — no admin bypass configured)
+
+**Why This Keeps Happening:**
+1. Copilot-pull-request-reviewer[bot] leaves 8–10 review threads per PR (per standard code review style)
+2. Replying to a thread in GitHub UI does NOT mark it resolved
+3. Only clicking "Resolve conversation" button in GitHub UI marks thread as resolved
+4. This must be done by a human reviewer (bot cannot resolve its own threads)
+5. If any thread remains unresolved, merge fails: `"Repository rule violations: A conversation must be resolved"`
+6. Even repo owner cannot bypass with `--admin` flag because `bypass_actors` is empty
+
+### Why This Blocks Every PR
+
+**Evidence from Recent Merges:**
+- PR #17: MERGED (manually resolved all Copilot threads first)
+- PR #16: MERGED (same workaround)
+- PR #15: MERGED (same workaround)
+- PR #14: MERGED (same workaround, documented as blocker)
+- PR #13: BLOCKED initially → PR author escalated → owner forced merge
+
+### Recommended Fix (Minimal & Safest)
+
+**Option 1 — RECOMMENDED: Add Admin Bypass Actor**
+```
+Modify ruleset `protectbranch`:
+- Add bypass_actors: [{"type": "Actor", "actor_type": "OrganizationAdmin", "actor_id": null}]
+  OR
+- Add bypass_actors: [{"type": "Actor", "actor_type": "RepositoryOwner"}]
+```
+**Impact:** Repo owner can bypass the rule if needed. Keeps enforcement for all other contributors.
+**Effort:** 1 API call or UI toggle.
+**Risk:** Low — only affects owner, not team workflows.
+
+**Option 2 — NOT RECOMMENDED: Disable Thread Resolution Requirement**
+```
+Modify ruleset `protectbranch` pull_request rule:
+- Change required_review_thread_resolution: false
+```
+**Impact:** Any unresolved threads no longer block merge (but threads still created and visible).
+**Effort:** 1 API call or UI toggle.
+**Risk:** Moderate — team might miss important feedback if threads routinely left unresolved.
+
+**Option 3 — NOT RECOMMENDED: Set Enforcement to Audit**
+```
+Modify ruleset `protectbranch`:
+- Change enforcement: "audit" (temporarily)
+```
+**Impact:** Rules no longer block merge; only logged for monitoring.
+**Effort:** 1 API call or UI toggle.
+**Risk:** High — defeats entire protection system; not a permanent solution.
+
+### Current Workaround (What Teams Are Doing Now)
+
+All team members currently resolve Copilot review threads manually before merge:
+1. After Copilot bot posts its review
+2. Click "Resolve conversation" for each thread (usually 8–10 clicks)
+3. Wait for merge button to become green
+4. Then merge
+
+**This works but is repetitive, error-prone (someone forgets a thread), and blocks merge progress.**
+
+### Decision Framework
+
+| Option | Effort | Risk | Permanent? | Recommended? |
+|--------|--------|------|-----------|--------------|
+| Add admin bypass | 1 call | Low | ✅ Yes | **✅ YES** |
+| Disable thread req | 1 call | Medium | ✅ Yes | ❌ No (weakens review) |
+| Audit mode | 1 call | High | ❌ No (temporary) | ❌ No (not permanent) |
+| Manual workaround | Repeated | Medium | ❌ No (recurring) | ❌ No (status quo) |
+
+### Implementation Path
+
+**Repo owner should:**
+1. Navigate to GitHub repo → Settings → Rules → `protectbranch`
+2. Click "Edit" on the pull_request rule
+3. Under "Bypass actors," add:
+   - Option A: "Organization Admins" (if in an org), OR
+   - Option B: "Repository Owner" (repo-specific)
+4. Save and publish
+
+**Result:** Repo owner can use `--admin` flag if needed, but rule remains enforced for team.
+
+**After Change Verification:**
+```bash
+gh api repos/mpaulosky/MyBlog/rulesets/15246849 \
+  --jq '.bypass_actors'
+# Should show: [{"type":"Actor","actor_type":"RepositoryOwner",...}]
+```
+
+### Lessons Learned
+
+1. **Rulesets ≠ Branch Protection:** Rulesets are newer, more restrictive, and take precedence over legacy branch protection rules
+2. **Thread resolution is strict:** "Reply" ≠ "Resolved" in GitHub API — only explicit resolution counts
+3. **Copilot bot threads are frequent:** 8–10 per PR means manual resolution is high friction
+4. **Admin bypass is missing:** Repository was set up without bypass actors, creating hard block even for owner
+
+### Learnings for Future DevOps Setup
+
+- When configuring branch protection rulesets, **always include bypass_actors** for repo owner or admins
+- Consider `required_review_thread_resolution` trade-off: security gain vs. friction cost
+- Rulesets should be documented in `.squad/` as they override CLI bypass flags (`--admin` ineffective without bypass_actors)
+
+**Recommendation:** Implement Option 1 (Add Admin Bypass Actor) immediately. This resolves the recurring block while maintaining team protection.
