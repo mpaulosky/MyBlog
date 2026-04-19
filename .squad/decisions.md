@@ -2,46 +2,7 @@
 
 ## Active Decisions
 
-### 1. Consolidate Common @using Directives into _Imports.razor Files
-
-**Date:** 2025-01-29  
-**Author:** Legolas (Frontend Developer)  
-**Status:** ✅ Implemented & Merged  
-**PR:** #4
-
-#### Decision
-
-Consolidate common `@using` directives into the appropriate `_Imports.razor` files while keeping file-specific usings in individual components.
-
-#### Implementation Details
-
-**Features/_Imports.razor** — Added:
-- `@using Microsoft.AspNetCore.Authorization`
-- `@using MediatR`
-
-**Removed from 9 files:** 14 redundant @using directives
-
-**Criteria for centralization:**
-- Appears in 2+ files under same `_Imports.razor` scope
-- Represents common framework dependency
-- Not tied to specific feature implementation
-
-#### Verification
-
-✅ Build passed (Release config, 0 errors, 0 warnings)  
-✅ 76/76 tests passing  
-✅ Code review approved  
-✅ Main updated to commit 60426b1
-
-#### Impact
-
-- **Code maintainability:** Improved (less duplication)
-- **Readability:** Slightly reduced (must reference _Imports for context)
-- **Developer experience:** Improved (new pages inherit common usings)
-- **Build time:** No change
-
----
-### 2. Remove Blazor Template Demo Pages (Weather & Counter)
+### 1. Remove Blazor Template Demo Pages (Weather & Counter)
 
 **Status:** ✅ Implemented  
 **PR:** https://github.com/mpaulosky/MyBlog/pull/6  
@@ -60,7 +21,7 @@ The MyBlog project was initialized from the Blazor Server template, which includ
 - Code coverage: 91.64%
 - Cleaner project structure focused on blog functionality
 
-### 3. Standardized Copyright Headers for C# Files
+### 2. Standardized Copyright Headers for C# Files
 
 **Status:** ✅ Implemented  
 **PR:** https://github.com/mpaulosky/MyBlog/pull/7  
@@ -103,7 +64,7 @@ Adopted standardized 7-line copyright header format for all C# (`.cs`) files in 
 - 9 additional lines per file (header + blank line separator)
 - Requires maintenance for new files (can be automated)
 
-### 4. CI Workflow Conventions — global.json SDK and Version Stamping
+### 3. CI Workflow Conventions — global.json SDK and Version Stamping
 
 **Date:** 2026-04-18  
 **Author:** Boromir (DevOps & CI/CD Engineer)  
@@ -147,7 +108,7 @@ A comment like `// Get the default branch name (main, master, etc.)` next to `co
 
 **Impact:** Affects all future workflow files in `.github/workflows/`. Any workflow touching .NET setup must use `global-json-file`. Any workflow using GitVersion must use `nuGetVersion`.
 
-### 5. Support Auth0 Role Claim Namespace Variations
+### 4. Support Auth0 Role Claim Namespace Variations
 
 **Date:** 2026-04-19  
 **Authors:** Frodo (Security), Legolas (Frontend)  
@@ -179,6 +140,7 @@ Infer role claim types from the authenticated user's claims when a claim type en
 ---
 
 ### 6. Squad Skills & Playbooks Adoption Review
+### 5. Squad Skills & Playbooks Adoption Review
 
 **Lead:** Aragorn (Lead / Architect)  
 **Scope:** Evaluate 19 imported skills and 3 playbooks for MyBlog project adoption  
@@ -220,6 +182,7 @@ The imported skill library is **high-quality and broadly relevant**. Of 19 skill
 ---
 
 ### 7. DevOps Skills & Playbooks Review for MyBlog
+### 6. DevOps Skills & Playbooks Review for MyBlog
 
 **Author:** Boromir (DevOps)  
 **Date:** 2026-04-19  
@@ -283,6 +246,7 @@ MyBlog has **strong process documentation** through playbooks and skills. Howeve
 ---
 
 ### 7.1. PR #12 Follow-ups — Pre-Push Gate References
+### 6.1. PR #12 Follow-ups — Pre-Push Gate References
 
 **Date:** 2026-04-19  
 **Author:** Boromir (DevOps Engineer)  
@@ -302,6 +266,7 @@ The pre-push skill should point contributors to `docs/CONTRIBUTING.md` as the au
 ---
 
 ### 8. Roadmap Rubber-Duck Review — Sprint 0 Complete
+### 7. Roadmap Rubber-Duck Review — Sprint 0 Complete
 
 **Date:** 2026-04-19  
 **Lead:** Aragorn (Lead / Architect)  
@@ -351,8 +316,625 @@ The 4-milestone Skills & Playbooks adoption roadmap has been validated against l
 
 ---
 
+### 8. Sprint 1.1 — Hook Hardening (Completed)
+
+**Date:** 2026-04-18  
+**Author:** Boromir (DevOps / Infra)  
+**Status:** ✅ Implemented & Ready for Review  
+**Branch:** `squad/1001-sprint-1-1`  
+**Commit:** `3e672e6`  
+**Related Issue:** Prep for Sprint 1.1 (Milestone 1: Guardrail Adoption)
+
+#### Decision Summary
+
+Sprint 1.1 implements the two planned low-risk guardrail changes to harden the pre-push hook system and enforce squad conventions:
+
+1. **Strict Squad Branch Naming Enforcement** — Gate 0 now validates `squad/{issue}-{slug}` regex
+2. **Automatic Hook Bootstrap on Clone** — Post-checkout hook auto-installs pre-push guard on `git clone` and `git checkout`
+
+#### Changes Delivered
+
+1. **Branch Validation Tightening** (`.github/hooks/pre-push`)
+   - Before: Only blocked direct pushes to `main`/`dev`
+   - After: Requires `squad/{issue}-{slug}` pattern via regex `^squad/[0-9]+-[a-z0-9-]+$`
+   - Rationale: Non-squad branches can break routing and reviewer assignment; enforcement is local and pre-push
+   - Verification: `squad/1001-sprint-1-1` ✅, `feature/test` ❌ correctly rejected
+
+2. **Auto-Install Hooks on Clone** (`.github/hooks/post-checkout` + `scripts/install-hooks.sh`)
+   - Before: Hooks installed only when developers manually ran `./scripts/install-hooks.sh`; new clones silently skipped the pre-push gate
+   - After: 
+     - New `.github/hooks/post-checkout` hook auto-triggers after every `git clone` and `git checkout`
+     - `install-hooks.sh` upgraded to install both pre-push and post-checkout hooks with safe backups
+   - Rationale: Human-dependent installation creates reliable bypass; post-checkout automation ensures all developers and CI/CD runners inherit protection
+   - Verification: Post-checkout hook executable, auto-bootstrap confirmed, safe backups of existing hooks preserved
+
+#### Pre & Post-Implementation Testing
+
+**Baseline (before changes):** All 5 gates pass cleanly
+- Gate 0: Blocks main/dev pushes ✅
+- Gate 1: Warns untracked .razor/.cs files ✅
+- Gate 2: Release build (0 warnings, 0 errors) ✅
+- Gate 3: Unit+Architecture tests (65 passing) ✅
+- Gate 4: Integration tests with Docker (9 passing) ✅
+
+**Post-implementation (with new squad-only enforcement):**
+- Gate 0: Branch validation ✅ (squad pattern enforced)
+- Gate 1–4: All passing ✅
+- Non-squad branches correctly rejected ✅
+- No blockers identified
+
+#### Known Gotchas & Migration Path
+
+- **Existing branches:** Any branches not matching `squad/{issue}-{slug}` will fail at push with clear guidance (intentional; part of adoption)
+- **CI/CD automation:** Branch naming applies to all pushes; automation should use properly named branches or `--no-verify` escape hatch (documented)
+- **Worktree safety:** Uses `git rev-parse --show-toplevel` and `--git-path hooks` (safe for worktrees and non-standard Git layouts)
+
+#### Acceptance Checklist
+
+- ✅ Smoke test baseline established (five-gate flow validated)
+- ✅ Gate 0 tightened to `squad/{issue}-{slug}` regex
+- ✅ Post-checkout hook created and auto-bootstraps pre-push
+- ✅ install-hooks.sh handles both pre-push and post-checkout
+- ✅ All 5 gates pass on working branch
+- ✅ Non-squad branches correctly rejected
+- ✅ No merged-branch automation added (deferred to Sprint 1.2+)
+- ✅ Minimal docs change (only Gate 0 description updated)
+- ✅ Decision documented for team visibility
+
+#### Impact
+
+- **Enforcement:** Squad naming now mandatory locally (not just convention)
+- **Reliability:** Hook installation automatic on clone (eliminates bypass path)
+- **Discoverability:** Clear error messages guide contributors to fix branch names
+- **Adoption:** Prepares foundation for Sprint 1.2 (workflow alignment & docs)
+
+---
+
+### 9. Document Guardrails Update (Sprint 1.2)
+
+**Date:** 2026-04-19  
+**Owner:** Pippin (Docs)  
+**Status:** ✅ Implemented  
+**Related:** Sprint 1.2 / Milestone 1b
+
+Updated `docs/CONTRIBUTING.md` to accurately reflect the enforced workflow after Sprint 1.1 hook hardening.
+
+#### Changes Made
+
+1. **Branch Naming Enforcement (Gate 0)**
+   - Clarified that the pre-push hook now strictly enforces `squad/{issue}-{slug}` branch naming.
+   - Added examples: `squad/42-fix-login-validation`, `squad/103-add-blog-search-feature`.
+   - Removed outdated language about merely blocking `main`/`dev` pushes.
+
+2. **Gate Documentation Accuracy**
+   - Gate 0: Now describes strict `squad/*` naming + `main`/`dev` block (not just the latter).
+   - Gate 1–4: Confirmed and clarified exact test projects, Docker requirement, and retry behavior.
+   - Added emphasis on 3 retry attempts for Gates 2–4.
+
+3. **Hook Installation**
+   - Updated to reflect that hooks are now installed **automatically** on clone via `post-checkout`.
+   - Noted that manual reinstall via `./scripts/install-hooks.sh` is available if needed.
+   - Removed outdated language suggesting manual installation was required.
+
+4. **PR Workflow Alignment**
+   - Added explicit reference to playbooks: `.squad/playbooks/pre-push-process.md` and `.squad/playbooks/pr-merge-process.md`.
+   - Clarified PR creation, CI wait gate, and squash-merge flow.
+   - Added note about automatic branch cleanup and manual cleanup commands.
+
+5. **Troubleshooting Section**
+   - Added concrete troubleshooting subsections for build, test, and Docker failures.
+   - Cross-referenced naming conventions and DateTime assertion patterns from pre-push playbook.
+
+#### Rationale
+
+Contributors follow `docs/CONTRIBUTING.md` for onboarding and workflow. If the doc does not match the enforced workflow, new team members will be confused, leading to failed local pushes, wasted CI cycles, and support burden.
+
+By aligning the doc with the actual enforced workflow (post-Sprint 1.1 hardening):
+- **Reduce onboarding friction:** New contributors see the actual rules, not aspirational docs.
+- **Improve success rate:** Contributors understand branch naming and hook behavior upfront.
+- **Enable self-service troubleshooting:** Troubleshooting section mirrors playbook guidance.
+- **Provide clear escalation paths:** Links to playbooks allow deeper investigation without asking maintainers.
+
+#### Impact
+
+- ✅ CONTRIBUTING.md now matches Sprint 1.1 enforced workflow
+- ✅ All internal links verified (relative paths from /docs/)
+- ✅ No governance files modified
+
+---
+
+### 10. Merged-Branch Awareness Guidance (Sprint 1.2)
+
+**Decided:** Pippin (Docs)  
+**Date:** 2026-04-19  
+**Status:** ✅ Implemented  
+**Sprint:** 1.2 / Milestone 1b
+
+Added a lightweight, contributor-facing section to `docs/CONTRIBUTING.md` that warns about committing on already-merged branches and provides a safe recovery path.
+
+#### Decision
+
+Add guidance to `docs/CONTRIBUTING.md` warning contributors not to commit on merged branches and documenting safe recovery path, without claiming automation enforcement.
+
+#### Rationale
+
+- **Risk:** Contributors sometimes continue work on `squad/*` branches after their PR has been merged. This creates orphaned commits that diverge from main and clutter the branch history.
+- **Gap:** Current docs did not explicitly warn against this or provide a safe path.
+- **Approach:** Document the risk and recovery path now (Sprint 1.2) as a lightweight quarantine. Defer heavier automation (e.g., a pre-commit guard) until Sprint 2 repo-fit review determines whether the frequency justifies the complexity.
+
+#### What Changed
+
+Added **"After Your PR Is Merged"** subsection under "Pull Requests" in `docs/CONTRIBUTING.md` that:
+
+1. **Warns** contributors not to commit on merged branches
+2. **Guides recovery:** `git checkout dev`, `git pull origin dev`, then create a fresh `squad/{issue}-{slug}` branch
+3. **Explains why:** "New commits on a merged branch create orphaned history; starting fresh on a new issue branch keeps the repository clean"
+4. **Does NOT claim automation:** guidance is voluntary, not enforced by hook or CI
+
+#### Related Artifacts
+
+- **CONTRIBUTING.md** — Updated with merged-branch awareness section
+- **Merged-PR Guard Skill** — `.squad/skills/merged-pr-guard/SKILL.md` (higher-level automation deferred)
+
+#### Future
+
+After Sprint 2 repo-fit review, the team may decide to:
+- Implement a pre-commit guard if the frequency warrants automation
+- Keep the guidance-only approach if contributors naturally avoid the anti-pattern
+- Escalate to a stricter hook if orphaned branches remain a problem
+
+This decision does not block either path; it just documents the interim lightweight quarantine.
+
+#### Impact
+
+- ✅ Contributors now have explicit guidance and recovery path
+- ✅ Voluntary (not enforced); allows team to measure frequency before automating
+- ✅ Defers higher-friction automation until justified by data
+
+---
+
+### 11. Route Process Skills Into Normal Squad Workflow
+
+**Author:** Aragorn (Lead / Architect)  
+**Date:** 2026-04-19  
+**Status:** ✅ Implemented  
+**Sprint:** 1.2 / Milestone 1b
+
+MyBlog's adopted process guardrails now belong in normal squad routing, not just in standalone skills and playbooks. Coordinators should inject the pre-push, build-repair, merged-branch, and PR-merge assets whenever work reaches those states.
+
+`building-protection` remains explicitly quarantined. It is still a Minecraft skill and should not be treated as part of MyBlog's working process.
+
+#### Decision
+
+Embed guardrails skills (pre-push, build-repair, merged-branch, PR-merge) into `.squad/routing.md` as formal routing rules so that future squad work automatically receives these assets at the right handoff points.
+
+#### Rationale
+
+Sprint 1.1 already hardened the live workflow by enforcing `squad/{issue}-{slug}` branches and auto-installing hooks. Routing now needs to surface the same guardrails so future squad work follows the real MyBlog delivery path by default instead of relying on ad hoc memory.
+
+Keeping `building-protection` in the routing table as a do-not-inject asset is intentional. It prevents accidental reuse of a non-fit imported skill while the later adapt-or-delete pass is still pending.
+
+#### Changes Made
+
+**Updated `.squad/routing.md` — Skills section:**
+
+| Domain | Asset | When to Inject |
+|--------|-------|----------------|
+| Push-capable squad work | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. Default for normal `squad/{issue}-{slug}` delivery. |
+| Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push gates run. Aragorn owns this route. |
+| PR review, approval, merge | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, merge, and cleanup. |
+| Resumed work on existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md` | Any agent about to `git commit` on a branch with prior PR activity or uncertain session state. Check for already-merged PR before committing. |
+
+**Updated `.squad/routing.md` — Workflow Guardrails section:**
+
+Added 5 numbered workflow rules that clarify when/how guardrails apply post-Sprint 1.1:
+
+1. Before any push-ready handoff, route through the pre-push gate skill and playbook
+2. When build/test health is red, route through build repair first (not normal feature work)
+3. When PR work starts, use PR merge playbook as governing checklist
+4. When resuming a squad branch, apply the merged-PR guard before committing
+5. Do not normalize quarantined imports (e.g., building-protection stays out until M3 disposition)
+
+#### Impact
+
+- ✅ Push-capable work now points to the same pre-push guardrails every time
+- ✅ Build/test repair work is explicitly escalated instead of hidden inside normal implementation
+- ✅ PR review and merge flow stay tied to Aragorn's gatekeeping process
+- ✅ Quarantined imported skills remain visible without becoming part of normal MyBlog execution
+- ✅ Future coordinators have explicit routing rules for guardrails adoption
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+---
+
+## Milestone 2: Skill Mining & Repo Adaptation (2026-04-19)
+
+### A. Auth0 Skills Mining (Frodo)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Skill retention & adaptation  
+**Modified:** `.squad/skills/auth0-management-api/SKILL.md`, `.squad/skills/auth0-management-security/SKILL.md`
+
+#### Summary
+
+The Auth0 Management API and Security skills have been mined from imported reusable patterns into MyBlog-specific guidance. Both skills are **retained and adapted** because:
+
+1. Auth0 is production infrastructure in this repo (active M2M app, role-based access control)
+2. Real operational patterns exist (UserManagementHandler, RoleClaimsHelper, Management API integration)
+3. Security-critical content (secrets, authorization, error handling) benefits the team
+
+#### Key Adaptations
+
+- Narrowed scope to MyBlog usage only; removed generic "best practices" sections
+- Bound to real code paths: UserManagementHandler, RoleClaimsHelper, Program.cs
+- Auth0 Management API v7.46.0 mapped to actual M2M app scopes
+- Called out future work: caching layer, audit logging (backlog items)
+- Authorization: AdminPolicy guards all /admin/users routes
+
+#### Ownership & Routing
+
+| Asset | Owner | Primary Audience | Trigger |
+|---|---|---|---|
+| `auth0-management-api` | Frodo (Tech Writer) | All squad; particularly Legolas (Frontend) | Role operations, API integration review |
+| `auth0-management-security` | Frodo (Tech Writer) | All squad | Security audit, secrets review, auth configuration change |
+| `docs/AUTH0_SETUP.md` | Frodo (Tech Writer) | Onboarding, new developers | Initial repo setup |
+
+#### Next Steps
+
+- Frodo: Add Auth0 secrets policy to SECURITY.md (Sprint 2)
+- Gimli/Sam: Extract reusable test patterns for testing-patterns skill (Sprint 2 test review)
+- All squad: Review adapted skills for feedback
+
+---
+
+### B. MongoDB Skills Mining (Sam)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Skill retention & adaptation  
+**Modified:** `.squad/skills/mongodb-dba-patterns/SKILL.md`, `.squad/skills/mongodb-filter-pattern/SKILL.md`
+
+#### Summary
+
+The imported `mongodb-dba-patterns` and `mongodb-filter-pattern` skills have been rewritten to describe MyBlog's actual Mongo stack instead of generic MongoDB guidance.
+
+#### MyBlog MongoDB Baseline
+
+- **Runtime wiring:** `src/AppHost/AppHost.cs` creates `mongodb` and database `myblog`; `src/Web/Program.cs` consumes via Aspire
+- **Persistence contract:** `src/Web/Data/BlogDbContext.cs` maps `BlogPost` to `blogposts` with `Version` as concurrency token
+- **Repository path:** `IBlogPostRepository` + `MongoDbBlogPostRepository` abstracts backend, returns domain entities
+- **Read path:** `GetBlogPostsHandler` owns DTO mapping and caching
+- **Verification path:** `MongoDbFixture` and `MongoDbBlogPostRepositoryTests` are canonical proof paths
+
+#### Retained Adaptations
+
+- **`mongodb-dba-patterns`** — Bound to real owners and code paths:
+  - Sam: repository, mapping, query/index implications
+  - Gimli: Mongo integration verification
+  - Boromir: environment rollout, shared backups/upgrades
+  - Frodo: secrets, TLS, least privilege for non-local deployments
+
+- **`mongodb-filter-pattern`** — Rebased on actual read pipeline:
+  - GetBlogPostsQuery → GetBlogPostsHandler → IBlogPostRepository → MongoDbBlogPostRepository
+  - Replaced driver filter examples with EF Core LINQ guidance
+  - Cache-key expansion is first-class rule (list reads are handler-cached)
+  - Repositories return domain entities; handlers own `Result<T>` wrapping
+
+#### Non-Fit Items Explicitly Called Out
+
+- Manual replica-set bootstrap commands (not part of local dev)
+- Atlas-only cluster administration (future-only if shared deployment adopted)
+- `Builders<T>.Filter` / `BsonRegularExpression` examples (not MyBlog's default path)
+- Minimal API and HTTP-client query-string patterns (current stack uses Blazor + MediatR)
+
+#### Follow-up Guidance
+
+1. Keep future Mongo guidance anchored to actual files in `src/Web`, `src/AppHost`, `tests/Integration.Tests`
+2. If MyBlog adopts shared Mongo infrastructure, extend DBA skill with environment-specific instructions
+3. If MyBlog adopts REST list endpoints or FluentValidation, revisit filter skill instead of silently reviving deleted sections
+4. During Milestone 3 cleanup, review whether future-only DBA sections still earn their place
+
+---
+
+### C. Testing Patterns Adaptation (Gimli)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Skill retention, adaptation, & repo conventions  
+**Modified:** `.squad/skills/testcontainers-shared-fixture/SKILL.md`, `.squad/skills/webapp-testing/SKILL.md`, tests/Integration.Tests suite files
+
+#### Summary
+
+Imported `testcontainers-shared-fixture` and `webapp-testing` skills have been adapted to MyBlog's real test layout:
+- `Architecture.Tests` (architecture rule enforcement)
+- `Unit.Tests` (unit tests + bUnit components)
+- `Integration.Tests` (Mongo-backed integration tests via Testcontainers)
+
+#### Current MyBlog Testing Baseline
+
+- Automated suite: `dotnet test MyBlog.slnx --configuration Release`
+- Architecture tests: `tests/Architecture.Tests`
+- Unit + bUnit tests: `tests/Unit.Tests`
+- Mongo integration tests: `tests/Integration.Tests`
+- Live Mongo fixture: `tests/Integration.Tests/Infrastructure/MongoDbFixture.cs`
+- Browser-free UI coverage: `NavMenuTests`, `ProfileTests`, `RazorSmokeTests`
+
+#### Retained Adaptations
+
+- **`testcontainers-shared-fixture`** — Adapted to MyBlog integration suite:
+  - Domain collections: `BlogPostIntegration`, `AuthorIntegration`, etc.
+  - Per-test database names: `$"T{Guid.NewGuid():N}"`
+  - Collection-level parallelism: only approved xUnit mode for Mongo-backed work
+  - Concrete convention: `MongoDbBlogPostRepositoryTests` uses `BlogPostIntegration` collection
+
+- **`webapp-testing`** — Retained and narrowed:
+  - Browser testing positioned as manual/runtime verification aid (not committed test framework)
+  - Contributors start with bUnit; use browser tooling only for runtime-only checks
+  - AppHost is preferred launch path for infrastructure-aware smoke verification
+  - JS theme interop, Auth0 redirect wiring, AppHost smoke behavior noted as runtime-only checks
+
+#### Explicit Non-Fit Items
+
+- Source-repo collection mappings don't fit MyBlog's current test inventory
+- Source-repo performance numbers not reused (not measured against MyBlog)
+- Fixture-only `GlobalUsings.cs` recommendation premature for current suite size
+- Automatic Playwright/Node setup **not** a MyBlog convention
+- Committed browser-spec projects, CI browser lanes, generic form/responsive sweeps **not** part of current repo
+- `tests/Integration.Tests/IntegrationTest1.cs` remains generic scaffold (pending team decision on AppHost smoke tests)
+
+#### Conventions Baked Into Repo
+
+- `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs` — uses domain-specific collection
+- `tests/Integration.Tests/Infrastructure/BlogPostIntegrationCollection.cs` — created as collection definition
+- `tests/Integration.Tests/xunit.runner.json` — establishes collection-level parallel rules
+- `tests/Integration.Tests/Integration.Tests.csproj` — verified configuration
+
+#### Follow-up
+
+1. Replace or delete `IntegrationTest1.cs` once team decides on AppHost smoke tests
+2. If browser-only regressions become common, open separate backlog for dedicated E2E project
+
+---
+
+### D. Secondary Skills Assessment (Boromir)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Secondary skill fit assessment  
+**Assets:** post-build-validation, static-config-pattern, microsoft-code-reference
+
+#### Summary
+
+Three secondary imported skills assessed against MyBlog's repository structure, build/test workflows, configuration practices, and .NET Aspire architecture.
+
+#### Assessment Results
+
+| Skill | Fit | Decision | Reason |
+|-------|-----|----------|--------|
+| **post-build-validation** | ❌ Poor | **DELETE** | Pattern designed for external game-world state validation (RCON block verification after structure placement). MyBlog has no remote operations, RCON commands, or external API validation. No scenario for graceful degradation on validation failure. Test failures **should** block build. |
+| **static-config-pattern** | 🟡 Marginal | **DELETE** | Backwards-compatible const→static property refactor. MyBlog already uses ASP.NET Core `IConfiguration` + Options pattern. Const fields (`health path`, `cache key`) are infrastructure internals, not legacy config debt. No current business case. |
+| **microsoft-code-reference** | ✅ Good | **RETAIN & CLARIFY** | Reference skill (tools + query patterns), not code pattern. Applicable during CI/CD troubleshooting, NuGet verification, Azure SDK method lookup, GitHub Actions pattern discovery. Needs rewrite to clarify scope for DevOps/NuGet/GitHub Actions scenarios. |
+
+#### MyBlog Context
+
+- **Build process:** `ci.yml` runs build, then three sequential test suites (Architecture, Unit, Integration)
+  - No external remote operations or out-of-band state verification
+  - All validation is in-process (xUnit assertions + TestContainers)
+  - Test failures **must** block the build
+
+- **Configuration approach:** MyBlog uses ASP.NET Core standard `IConfiguration` + Options pattern
+  - Health endpoint path is a const in ServiceDefaults (infrastructure internal)
+  - Cache key is a const in GetBlogPostsHandler (infrastructure internal)
+  - No consts intended to be runtime-configurable
+
+#### Disposition Timeline
+
+| Item | Action | Owner | Effort | Sprint |
+|------|--------|-------|--------|--------|
+| post-build-validation | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
+| static-config-pattern | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
+| microsoft-code-reference | Rewrite for DevOps/NuGet/GitHub Actions, retain | Boromir | 30 min | Sprint 2 (backlog) |
+
+#### Implementation Notes
+
+1. **Immediate (Sprint 2 backlog):** Update backlog item #10 to note microsoft-code-reference scope clarification
+2. **Sprint 2:** Queue rewrite of microsoft-code-reference for DevOps use (NuGet verification, Azure SDK, GitHub Actions)
+3. **Sprint 3:** Remove `post-build-validation/` and `static-config-pattern/` directories; add entries to deletion manifest
+
+---
+
+## Governance Update (Milestone 2)
+
+All meaningful skill retention decisions now include:
+1. Explicit ownership & routing rules
+2. Anchoring to real MyBlog code paths (no generic guidance)
+3. Called-out future work (backlog items, not current implementation)
+4. Clear non-fit items (what imported content does NOT apply)
+5. Follow-up guidance for Stack changes or new requirements
+
+---
+
+## Milestone 3 Decisions (Roadmap Completion & Adapt-or-Delete Cleanup)
+
+### 12. Merged-Branch Guard — Keep Guidance-Only, Defer Automation
+
+**Date:** 2026-04-19  
+**Owner:** Boromir (DevOps)  
+**Status:** ✅ Final Decision  
+**Milestone:** 3 (Adapt-or-Delete Cleanup)  
+**Related Issue:** Sprint 2 backlog item #11
+
+#### Context
+
+The plan (`.squad/identity/now.md`, Milestone 2 Sprint 2, item 11) asked: "Revisit whether merged-branch automation is still justified after Sprint 1 awareness, and only implement it if the repo-fit review still supports it."
+
+The imported skill `.squad/skills/merged-pr-guard/SKILL.md` includes a pattern for detecting and blocking commits on already-merged `squad/*` branches.
+
+#### Evidence Review
+
+**What Has Happened (Sprint 1–2)**
+
+1. **No reported merged-branch incidents** in MyBlog's recent history (Sprints 0–2, PRs #6–#15)
+   - 10 PRs successfully merged with proper cleanup
+   - No orphaned commits or stranded history observed
+   - Post-merge cleanup already documented in `.squad/playbooks/pr-merge-process.md` (Step 8)
+
+2. **Existing safeguards already in place**
+   - `.squad/playbooks/pr-merge-process.md` includes explicit Post-Merge Orphan Branch Cleanup ceremony (Ralph's responsibility)
+   - `docs/CONTRIBUTING.md` includes merged-branch awareness section and recovery steps (added Sprint 1.2)
+   - `.squad/skills/merged-pr-guard/SKILL.md` is already routed into `.squad/routing.md` as guidance for "Resumed work on existing squad/* branch"
+
+3. **Small team size reduces pressure**
+   - MyBlog is a single-author/small-team project (Aragorn as lead, 6 domain agents)
+   - Contributor workflow is highly visible and self-correcting
+   - Manual review gates (PR process, Aragorn's leadership) catch branch issues before commit
+
+4. **Automation would add friction without demonstrated ROI**
+   - Pre-commit guard requires `git pre-commit` hook (separate from pre-push)
+   - Extra validation logic before every commit (slow local workflow)
+   - No real incidents to justify the cost
+   - Contributing guidance already covers the anti-pattern
+
+#### Decision
+
+**Keep merged-branch guidance in routing and docs; defer/do-not-implement the automation.**
+
+##### Rationale
+
+1. **The guidance is sufficient for MyBlog's current scale**
+   - Documented recovery path in `CONTRIBUTING.md` (contributors know what to do if they encounter a merged branch)
+   - Routed into squad workflow via `.squad/routing.md` (agents are reminded when resuming work)
+   - Post-merge cleanup is already part of the formal PR merge ceremony
+
+2. **No operational incidents justify the added complexity**
+   - 15 consecutive PRs with clean merges and cleanup
+   - No orphaned history or stranded commits observed in any session
+   - Manual awareness is working
+
+3. **Lighter is correct for this repo's risk profile**
+   - Single-author focus; contributors are invested squad members, not anonymous public contributors
+   - Sprint 1.2 merged-branch awareness guidance is sufficient to catch issues at code-review time
+   - If merged-branch issues become frequent, automate then with real data
+
+4. **The skill stays available if needed later**
+   - `.squad/skills/merged-pr-guard/SKILL.md` remains in the repo
+   - If future sessions report stranded commits, the skill can be referenced
+   - Milestone 3 (Adapt-or-Delete Cleanup) can revisit this when/if frequency warrants it
+
+#### Action
+
+**No code changes required.** The decision is to preserve the existing guidance-only approach:
+
+- ✅ `.squad/skills/merged-pr-guard/SKILL.md` — remains as reference material, not automated
+- ✅ `.squad/playbooks/pr-merge-process.md` Step 8 — remains as formal cleanup ceremony
+- ✅ `docs/CONTRIBUTING.md` "After Your PR Is Merged" section — remains as contributor guidance
+- ✅ `.squad/routing.md` — continues to route the skill for awareness when resuming work
+
+**Do not implement:**
+- ❌ Pre-commit hook guard
+- ❌ Workflow automation to detect merged branches
+- ❌ Additional enforcement logic
+
+#### Transition
+
+This decision resolves Milestone 2 Sprint 2 backlog item #11. No follow-up work needed unless:
+
+1. **Future sessions report merged-branch incidents** (stranded commits, orphaned history) — then escalate to automation
+2. **Team grows significantly** and manual awareness breaks down — then revisit with evidence
+3. **Milestone 3 adapt-or-delete pass** finds the skill unused — then archive or delete intentionally
+
+For now: **Closed as "defer automation, keep guidance."**
+
+#### Related Assets
+
+- **Skill:** `.squad/skills/merged-pr-guard/SKILL.md`
+- **Playbook:** `.squad/playbooks/pr-merge-process.md` (Step 8: Post-Merge Cleanup)
+- **Contributing Guide:** `docs/CONTRIBUTING.md` ("After Your PR Is Merged" section)
+- **Routing:** `.squad/routing.md` (merged-pr-guard routed for resumed work)
+
+---
+
+### 13. Release Guidance Fit for MyBlog
+
+**Date:** 2026-04-19  
+**Author:** Aragorn (Lead Developer)  
+**Status:** ✅ Final Decision
+
+#### Context
+
+The imported release assets still referenced IssueTrackerApp, upstream release workflows, and generic automation patterns that do not exist in MyBlog. The live repo only has `dev`/`main` branch governance, `GitVersion.yml`, `ci.yml`, and a hotfix backport reminder workflow.
+
+#### Decision
+
+1. Active release guidance for squad work is now MyBlog-specific:
+   `.squad/skills/release-process/SKILL.md` routes release work to
+   `.squad/playbooks/release-myblog.md`.
+2. The old IssueTrackerApp playbook is replaced by
+   `.squad/playbooks/release-myblog.md`.
+3. `.squad/skills/release-process-base/SKILL.md` is quarantined and must not be
+   injected into normal MyBlog work.
+4. Normal `dev` → `main` releases do **not** require syncing `main` back into
+   `dev` after merge. Only hotfixes merged to `main` require a backport to `dev`.
+
+#### Consequences
+
+- Release guidance now matches the repo's actual branch model and workflows
+- The team has a clear owner path: Aragorn approves release scope; Boromir runs
+  the operational steps
+- Generic release automation language is explicitly out of scope until MyBlog
+  actually adds those workflows
+- Sprint 3 can safely delete the quarantined generic base skill unless a new
+  template-use case is approved
+
+---
+
+### 14. Delete Remaining Non-Fit Imported Squad Assets
+
+**Date:** 2026-04-19  
+**Author:** Aragorn (Lead Developer)  
+**Status:** ✅ Final Decision
+
+#### Context
+
+Milestone 2 already settled two direct deletions: `post-build-validation` and `static-config-pattern`. Other imports were kept only as quarantine context while the team finished repo-fit work: `building-protection` and `release-process-base`.
+
+Sprint 3 now has the needed follow-through context:
+
+1. MyBlog-specific release guidance exists in
+   `.squad/skills/release-process/SKILL.md` and
+   `.squad/playbooks/release-myblog.md`.
+2. No decision ever approved a live MyBlog use case for the Minecraft-only
+   `building-protection` skill.
+3. The old `release-issuetracker` playbook has already been replaced and should
+   remain deleted.
+
+#### Decision
+
+1. Execute the already-approved deletions for
+   `.squad/skills/post-build-validation/` and
+   `.squad/skills/static-config-pattern/`.
+2. Delete `.squad/skills/building-protection/` because its quarantine was
+   temporary and no explicit keep decision exists.
+3. Delete `.squad/skills/release-process-base/` because the MyBlog-specific
+   release workflow replaced the generic template and no template-retention
+   decision was approved.
+4. Keep `.squad/playbooks/release-myblog.md`,
+   `.squad/skills/release-process/SKILL.md`, and
+   `.squad/skills/microsoft-code-reference/SKILL.md` unchanged.
+5. Treat `.squad/decisions/DELETED-ASSETS.md` as the published manifest for the
+   final disposition state.
+
+#### Consequences
+
+- Normal squad routing now only references assets with an active MyBlog fit.
+- The remaining imported catalog is smaller and less likely to mislead future
+  contributors with quarantined-but-dead guidance.
+- Any future reintroduction of these deleted assets now requires a new explicit
+  architecture decision instead of silent reuse.
+
+#### Related Asset Manifest
+
+See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-issuetracker.

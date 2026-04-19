@@ -1,4 +1,67 @@
+## Core Context
+
+### MyBlog DevOps & Infrastructure Patterns
+
+**CI/CD & Workflow:**
+- Pre-push hook enforces `squad/{issue}-{slug}` branch naming locally; 5 sequential validation gates (build, tests, Docker integration)
+- GitHub Actions: `ci.yml` on push (main validation), `squad-test.yml` on PR (parallel test runs)
+- GitVersion integration for semantic versioning with nuGetVersion stamping (preserves prerelease labels)
+- `global-json-file: global.json` in all dotnet setups (avoids preview SDK conflicts)
+
+**Hook System:**
+- `.github/hooks/pre-push` is committed source of truth; local copy at `.git/hooks/pre-push` via `install-hooks.sh`
+- `.github/hooks/post-checkout` auto-bootstraps pre-push guard on clone (eliminates manual setup bypass)
+- `git rev-parse --git-path hooks` ensures worktree-safe installation
+
+**Testing Infrastructure:**
+- Test projects: `Architecture.Tests` (6), `Unit.Tests` (59), `Integration.Tests` (9) via xUnit
+- Integration tests use Testcontainers with Docker requirement (Gate 4)
+- Squad pre-push gate auto-retries transient build errors (internal CLR abort)
+
+**Key DevOps Decisions:**
+- Decision 4: CI Workflow Conventions (global.json, nuGetVersion, continue-on-error surgical use)
+- Decision 7.1: Pre-push gate references CONTRIBUTING.md (canonical guide, not duplicated)
+- Sprint 1.1: Hook hardening + auto-bootstrap (mandatory squad naming, elimination of bypass paths)
+
+**Known Gotchas:**
+- Existing non-squad branches fail at push (intentional; part of adoption)
+- Docker must be running for Gate 4 (integration tests)
+- CI/CD automation using non-squad branches needs `--no-verify` escape hatch (documented)
+
+---
+
 ## Learnings
+
+### 2026-04-18 — Sprint 1.1: Hook Hardening (Completed)
+
+**Work completed:**
+- Implemented strict squad/{issue}-{slug} branch naming validation in Gate 0 of `.github/hooks/pre-push`
+- Created `.github/hooks/post-checkout` hook to auto-bootstrap pre-push guard on clone and checkout
+- Refactored `scripts/install-hooks.sh` to install both pre-push and post-checkout hooks with safe backups and diff detection
+- Validated all 5 gates pass: branch validation, untracked files check, Release build (0 warnings), unit+architecture tests (65 passing), integration tests with Docker (9 passing)
+- Branch naming enforced: `squad/1001-sprint-1-1` ✅, `feature/test` ❌ correctly rejected
+
+**Key implementation details:**
+- Gate 0 regex: `^squad/[0-9]+-[a-z0-9-]+$` enforces squad workflow locally before push
+- Post-checkout hook auto-triggers after `git clone` and `git checkout`, preventing silent bypass
+- install-hooks.sh uses `git rev-parse --git-path hooks` for worktree-safe installation
+- Clear error messages guide contributors to fix branch names or use `--no-verify` escape hatch
+
+**Testing & verification:**
+- Smoke test baseline: all 5 gates pass (pre-implementation)
+- Post-implementation: all 5 gates pass with new strict branch naming
+- Non-squad branches correctly rejected at push time
+- Worktree and CI/CD scenarios verified safe
+
+**Known gotchas documented:**
+- Existing branches failing at push will need renaming (intentional — part of adoption)
+- CI/CD automation must use `squad/*` naming or `--no-verify` flag (documented)
+- Migration should be announced to team with clear guidance
+
+**Branch & Commit:**
+- Branch: `squad/1001-sprint-1-1`
+- Commit: `3e672e6` — feat(devops): Sprint 1.1 — Hook Hardening
+- Status: ✅ Complete, ready for PR review
 
 ### 2026-04-18 — Pre-Push Gate Implementation
 
@@ -375,3 +438,51 @@ Operationally validated adoption roadmap against live repo. Key findings:
 - Implementation prerequisite: decide hotfix/* branch exemption
 
 Next: Pre-push audit (Gate 1–5 smoke test) before M1 implementation
+
+## 2026-04-19: Milestone 3 Roadmap Completion (Final)
+
+**Milestone:** 3 (Adapt-or-Delete Cleanup & Roadmap Completion)  
+**Outcome:** ✅ Complete
+
+Finalized merged-branch guard decision and coordinated secondary skills assessment publication for Milestone 3 roadmap completion.
+
+### Key Achievements
+
+1. **Merged-Branch Guard Finalized (Decision #12)**
+   - Reviewed evidence: 15 PRs merged cleanly, zero orphaned incidents (Sprints 0–2)
+   - Confirmed existing safeguards sufficient: playbook (Step 8), docs (CONTRIBUTING.md), routing awareness
+   - Decision: Keep guidance-only, defer/do-not-implement pre-commit hook automation
+   - Rationale: Small team, manual awareness working, no incidents justify added complexity
+   - Skill retained (.squad/skills/merged-pr-guard/SKILL.md) for future reference if frequency data warrants
+
+2. **Secondary Skills Assessment Published**
+   - Coordinated with Aragorn on release guidance fit review
+   - Confirmed deletion of post-build-validation & static-config-pattern (Sprint 3)
+   - Queued microsoft-code-reference rewrite (Sprint 2 backlog, item #10, DevOps scope)
+
+### Cross-Team Coordination
+
+- **Coordinated with Aragorn:** Release guidance finalization (Decision #13) — delete release-process-base, keep MyBlog-specific routing
+- **Coordinated with Aragorn:** Delete decision approval (Decision #14) — building-protection, static-config-pattern, post-build-validation, release-process-base
+- **Coordinated with Pippin:** DELETED-ASSETS.md manifest publication
+- **Routed with Scribe:** All decisions consolidated to decisions.md
+
+### Modified Assets
+
+- Decision merged: Decision #12 (Merged-branch guard) → `.squad/decisions.md`
+- Decision merged: Decision #13 (Release guidance fit) → `.squad/decisions.md`
+- Decision merged: Decision #14 (Delete non-fit assets) → `.squad/decisions.md`
+- Orchestration logged: `2026-04-19T04-04-30-boromir-sprint-3-merged-branch.md`
+
+### Roadmap Impact
+
+- Closes Milestone 2 Sprint 2 backlog item #11 with evidence-based "defer automation" resolution
+- Milestone 3 disposition pass confirms lightweight approach justified for small-team profile
+- Skill guidance retained for future escalation if data changes
+- Sprint 3 cleanup ready for execution
+
+**Constraints Satisfied:**
+- ✅ Decision evidence-based (15 PR merges, zero incidents)  
+- ✅ Guidance path remains active (routing + docs)  
+- ✅ Automation deferred, not rejected (reversible)  
+- ✅ Decision logs cost/benefit tradeoff for future coordinator understanding  
