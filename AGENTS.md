@@ -10,6 +10,8 @@
   (`Auth0.AspNetCore.Authentication` + `Auth0.ManagementApi`).
 - **Styling:** TailwindCSS v4 build pipeline is wired through `npm run tw:build`
   during local `dotnet build`.
+- **Current persistence state:** in-memory repository implementation is used for
+  training workflows in the current sprint baseline.
 - **Data:** MongoDB is planned as a primary persistence milestone in **Sprint 3**.
 - **Caching:** Redis caching is planned for **Sprint 5**.
 
