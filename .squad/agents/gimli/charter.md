@@ -43,4 +43,4 @@ You are Gimli, the Tester on the {ProjectName} project. You own unit tests, inte
 8. File-scoped namespaces, tab indentation
 
 ## Model
-Preferred: claude-sonnet-4.5 (writes test code)
+Preferred: auto (test authoring resolves to claude-sonnet-4.6)

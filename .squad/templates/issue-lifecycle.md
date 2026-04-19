@@ -115,9 +115,40 @@ gh issue view {number} --json number,title,body,labels,assignees
 az boards work-item show --id {id} --output json
 ```
 
+### 1.5 Direct Request Issue Resolution
+
+**Trigger:** User asks to start push-capable work, branch current changes, or
+open a PR, but does **not** provide an issue number.
+
+**Actions:**
+1. Check the current GitHub repository for **open** issues related to the
+   requested change.
+2. If one open issue clearly matches, reuse that issue number.
+3. If multiple open issues are plausible matches, ask the user which one to
+   use.
+4. If no open issue matches, create a new issue using the requested change
+   summary, then use that new issue number for the branch.
+5. Continue with branch creation using `squad/{issue-number}-{slug}`.
+
+**Issue lookup commands (GitHub):**
+```bash
+# Prefer MCP/server integrations when available. CLI fallback:
+gh issue list --state open --limit 50 --json number,title,body,labels
+gh issue search "repo:{owner}/{repo} state:open {keywords}"
+```
+
+**Issue creation command (GitHub):**
+```bash
+gh issue create --title "{derived title}" \
+  --body "{request summary}\n\n## Requested changes\n- {change 1}\n- {change 2}"
+```
+
 ### 2. Branch Creation (Start Work)
 
 **Trigger:** Agent accepts issue assignment and begins work.
+
+**Prerequisite:** The issue number is already resolved from triage **or** from
+the direct-request issue resolution flow above.
 
 **Actions:**
 1. Ensure working on latest base branch (usually `main` or `dev`)
