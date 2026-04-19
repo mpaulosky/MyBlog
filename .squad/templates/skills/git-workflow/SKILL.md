@@ -26,32 +26,46 @@ Examples:
 
 ## Workflow for Issue Work
 
-1. **Branch from dev:**
+1. **Resolve the issue number first:**
+   - Check for a matching **open** issue in the current GitHub repo before
+     creating a branch.
+   - Reuse that issue if it already describes the requested work.
+   - If no open issue matches, create a new issue from the requested change
+     summary and use the returned issue number.
+   - Ask the user only when multiple open issues are plausible matches.
+   ```bash
+   gh issue list --state open --limit 50 --json number,title,body,labels
+   gh issue search "repo:{owner}/{repo} state:open {keywords}"
+   # If no match:
+   gh issue create --title "{derived title}" --body "{request summary}"
+   ```
+
+2. **Branch from dev:**
    ```bash
    git checkout dev
    git pull origin dev
    git checkout -b squad/{issue-number}-{slug}
    ```
 
-2. **Mark issue in-progress:**
+3. **Mark issue in-progress:**
    ```bash
    gh issue edit {number} --add-label "status:in-progress"
    ```
 
-3. **Create draft PR targeting dev:**
+4. **Create draft PR targeting dev:**
    ```bash
    gh pr create --base dev --title "{description}" --body "Closes #{issue-number}" --draft
    ```
 
-4. **Do the work.** Make changes, write tests, commit with issue reference.
+5. **Do the work.** Make changes, write tests, commit with issue reference.
 
-5. **Push and mark ready:**
+6. **Push and mark ready:**
    ```bash
    git push -u origin squad/{issue-number}-{slug}
    gh pr ready
    ```
 
-6. **After merge to dev:**
+7. **After merge to dev:**
    ```bash
    git checkout dev
    git pull origin dev

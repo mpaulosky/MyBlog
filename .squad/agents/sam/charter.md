@@ -30,4 +30,4 @@ You are Sam, the Backend Developer on the {ProjectName} project. You own MongoDB
 - Some repositories use `{Entity}Dto` directly while others use domain Models
 
 ## Model
-Preferred: claude-sonnet-4.5 (writes code)
+Preferred: auto (backend implementation resolves to claude-sonnet-4.6)

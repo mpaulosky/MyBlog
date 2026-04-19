@@ -11,11 +11,11 @@ How to decide who handles what.
 | Blazor UI, components, features, layout | Legolas | Feature slices, pages, components, Auth UI, NavMenu |
 | Unit, Architecture & Integration tests | Gimli | xUnit, FluentAssertions, NSubstitute, NetArchTest, coverage |
 | CI/CD, build pipeline, Aspire config, infra | Boromir | GitHub Actions workflows, AppHost resources, Docker |
-| Code review gate, quality assurance | Gandalf | PR approval/rejection, coding standards, pattern enforcement |
-| Auth0, security, secrets management | Frodo | Auth0 roles, Management API, token claims, secrets |
+| Security review, Auth0, secrets management | Gandalf | Auth0 roles, token claims, secrets, vulnerability review |
+| Tech writing, XML docs, API docs | Frodo | XML docs, inline comments, API docs, focused README updates |
 | Docs, README, ADRs, changelogs, summaries | Pippin | README.md, ARCHITECTURE.md, CONTRIBUTING.md, release notes |
-| Research, spikes, POCs, library evaluation | Bilbo | Technology comparisons, proof-of-concept prototypes |
-| Code review | Gandalf | Review PRs, check quality, suggest improvements |
+| Developer blog, release posts, GitHub Pages content | Bilbo | `docs/blog/`, release summaries, GitHub Pages updates |
+| Code review | Aragorn | Review PRs, check quality, suggest improvements |
 | Testing | Gimli | Write tests, find edge cases, verify fixes |
 | Scope & priorities | Aragorn | What to build next, trade-offs, decisions |
 | Session logging | Scribe | Automatic — never needs routing |
@@ -43,9 +43,9 @@ spawn prompt:
 | Domain | Asset | When to Inject |
 |--------|-------|----------------|
 | Blazor Tailwind theming, dark/light mode, FOUC, localStorage, color themes | `.squad/skills/blazor-tailwind-theme-persistence/SKILL.md` | Any Legolas task touching App.razor, NavMenu, MainLayout, theme toggle, or `tailwind-color-theme` storage key |
-| Auth0 Management API, M2M, role operations | `.squad/skills/auth0-management-api/SKILL.md` | Any Frodo or Legolas task touching UserManagementHandler, role operations, Management API integration, or Auth0 configuration changes. Owner: Frodo (Tech Writer). |
-| Auth0 security, secrets, authorization | `.squad/skills/auth0-management-security/SKILL.md` | Any security audit, secrets review, or auth configuration change. All squad members reference this for authorization boundary and secrets management rules. Owner: Frodo (Tech Writer). |
-| MongoDB DBA patterns, runtime wiring, indexing | `.squad/skills/mongodb-dba-patterns/SKILL.md` | Any Sam, Gimli, Boromir, or Frodo task touching Mongo wiring, mapping, indexing, backups, upgrades, or shared environment hardening. Owner: Sam (Backend). Audience: Gimli (verification), Boromir (environment), Frodo (secrets/TLS). |
+| Auth0 Management API, M2M, role operations | `.squad/skills/auth0-management-api/SKILL.md` | Any Gandalf or Legolas task touching UserManagementHandler, role operations, Management API integration, or Auth0 configuration changes. Owner: Gandalf (Security). |
+| Auth0 security, secrets, authorization | `.squad/skills/auth0-management-security/SKILL.md` | Any security audit, secrets review, or auth configuration change. All squad members reference this for authorization boundary and secrets management rules. Owner: Gandalf (Security). |
+| MongoDB DBA patterns, runtime wiring, indexing | `.squad/skills/mongodb-dba-patterns/SKILL.md` | Any Sam, Gimli, Boromir, or Gandalf task touching Mongo wiring, mapping, indexing, backups, upgrades, or shared environment hardening. Owner: Sam (Backend). Audience: Gimli (verification), Boromir (environment), Gandalf (secrets/TLS). |
 | MongoDB filter patterns, list queries, caching | `.squad/skills/mongodb-filter-pattern/SKILL.md` | Any Sam or Gimli task touching query contracts, cache-key changes, list filtering, repository standardization, or handler-level caching. Owner: Sam (Backend). Supporting: Gimli (Tester). |
 | Mongo-backed integration tests | `.squad/skills/testcontainers-shared-fixture/SKILL.md` | Any Gimli or Sam task touching `tests/Integration.Tests/`, `MongoDbFixture`, collection definitions, or new repository/handler integration coverage against MongoDB. Owner: Gimli (Tester). |
 | Running-browser UI verification | `.squad/skills/webapp-testing/SKILL.md` | Any Gimli or Legolas task that already has bUnit coverage but still needs runtime verification of JS interop, Auth0 redirects, or AppHost smoke behavior. Do **not** inject this for ordinary unit/bUnit work or to create a new browser-test project. Owner: Gimli (Tester). |
