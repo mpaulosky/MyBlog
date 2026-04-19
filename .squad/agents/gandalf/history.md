@@ -45,3 +45,11 @@
 - **[LOW] Shebang portability** — `install-hooks.sh:1` uses `#!/bin/bash`; pre-push hook uses `#!/usr/bin/env bash`. Minor inconsistency, not a security issue.
 - **[LOW] Stale Azurite reference** — `pre-push:116` mentions Azurite but only MongoDB Testcontainers are used. Misleading, not dangerous.
 - **[LOW] Dead playbook link** — `SKILL.md:17,75` references `.squad/playbooks/pre-push-process.md` which does not exist.
+
+### 2026-04-18 — PR #11 & #12 Security Review (Final Summary)
+
+- Completed security reviews for PR #11 (cleanup-uncommitted-changes) and PR #12 (prepush-gate)
+- PR #11 verdict: NEEDS_HUMAN_DECISION (pending Legolas CSS confirmation); approved from security
+- PR #12 verdict: APPROVE_READY (shell security clean, minor non-blocking issues)
+- All findings recorded in session history; decisions consolidated by Scribe
+- Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-gandalf.md`

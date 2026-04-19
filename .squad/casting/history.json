@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "migrations": [
+    {
+      "timestamp": "2026-04-18T00:00:00Z",
+      "event": "casting_migration_v1",
+      "agent": "Ralph",
+      "description": "Initial casting migration for squadified repo without casting directory",
+      "details": {
+        "source": ".squad/team.md",
+        "destination": ".squad/casting/",
+        "files_created": [
+          "policy.json",
+          "registry.json",
+          "history.json"
+        ],
+        "agents_migrated": 12,
+        "team_size": 11,
+        "all_agents_marked_legacy_named": true,
+        "all_agents_marked_active": true,
+        "decisions_recorded": true
+      }
+    }
+  ]
+}

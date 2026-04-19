@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "created": "2026-04-18T00:00:00Z",
+  "agents": [
+    {
+      "name": "Squad",
+      "role": "Coordinator",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": null,
+      "notes": "Routes work, enforces handoffs and reviewer gates."
+    },
+    {
+      "name": "Aragorn",
+      "role": "Lead / Architect",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/aragorn/charter.md",
+      "notes": "Solution design, ADRs, PR gates"
+    },
+    {
+      "name": "Sam",
+      "role": "Backend / .NET",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/sam/charter.md",
+      "notes": "Domain model, AppHost, APIs"
+    },
+    {
+      "name": "Legolas",
+      "role": "Frontend / Blazor",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/legolas/charter.md",
+      "notes": "Blazor Server UI, components"
+    },
+    {
+      "name": "Gimli",
+      "role": "Tester",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/gimli/charter.md",
+      "notes": "Unit, Architecture & Integration tests"
+    },
+    {
+      "name": "Boromir",
+      "role": "DevOps / Infra",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/boromir/charter.md",
+      "notes": "CI/CD, Aspire config, Docker"
+    },
+    {
+      "name": "Gandalf",
+      "role": "Reviewer",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/gandalf/charter.md",
+      "notes": "Code review gate, quality"
+    },
+    {
+      "name": "Frodo",
+      "role": "Security",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/frodo/charter.md",
+      "notes": "Auth, secrets, vulnerabilities"
+    },
+    {
+      "name": "Pippin",
+      "role": "Docs",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/pippin/charter.md",
+      "notes": "Summaries, ADRs, changelogs"
+    },
+    {
+      "name": "Bilbo",
+      "role": "Research",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/bilbo/charter.md",
+      "notes": "Spikes, POCs, investigations"
+    },
+    {
+      "name": "Ralph",
+      "role": "Meta",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": ".squad/agents/ralph/charter.md",
+      "notes": "Squad maintenance"
+    },
+    {
+      "name": "Scribe",
+      "role": "Scribe",
+      "legacy_named": true,
+      "status": "active",
+      "charter_path": null,
+      "notes": "Logs and records"
+    }
+  ]
+}

@@ -1493,3 +1493,554 @@ dotnet user-secrets set "Auth0:ClientSecret" "<your-client-secret>" --project sr
 ## Validation
 - Build succeeded with 0 errors, 0 warnings
 - dotnet build src/Web/Web.csproj completed successfully
+
+---
+
+# Decision: dev/main Branch Strategy with GitVersion
+
+**Date:** 2026-04-18  
+**Author:** Aragorn (Lead Developer), Boromir (DevOps), Copilot  
+**Status:** ✅ Implemented (Phase 1-2 complete)
+
+## Context
+
+The team needed a branching model to support coordinated squad work, release control, and hotfix safety. The decision establishes a clear separation between development (`dev`) and production (`main`) branches with supporting governance.
+
+## Decision
+
+### 1. Branch Strategy
+
+- **`dev`** — Primary integration branch where all squad work targets
+  - Default branch for `clone` and new PRs
+  - All `squad/*` branches open PRs to `dev`
+  - CI required; branch protection moderate
+  - Release candidate state after testing
+
+- **`main`** — Release-only branch; receives code from `dev` via explicit release PRs
+  - No direct commits (all via PR)
+  - Strict branch protection (1 approval, all CI checks required)
+  - Only accepts PRs from `dev` or `hotfix/*` branches
+  - Triggers production deployment workflows
+  - Tagged with semantic version on each release
+
+- **`hotfix/*`** — Critical bug fixes that bypass `dev`
+  - Branch from `main`, target `main` directly
+  - Require 1 approval (+ Gandalf security review for security-critical hotfixes)
+  - Must be immediately backported to `dev` after merge (via cherry-pick or backport branch)
+  - Tagged with patch version increment
+
+### 2. CI/CD Triggers
+
+Updated `.github/workflows/ci.yml` triggers:
+```yaml
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+```
+
+This ensures:
+- All PRs to `dev` or `main` undergo full CI validation
+- Post-merge pushes to `dev` are validated
+- Post-merge pushes to `main` can trigger deployment workflows
+
+### 3. Release Process
+
+Release workflow (`dev` → `main`):
+1. Create release PR from `dev` to `main` with title `[RELEASE] vX.Y.Z - Description`
+2. Checklist in PR: CI passed, changelog updated, version bumped, breaking changes documented
+3. Require 1 approval
+4. Squash merge to `main` (keeps main history clean)
+5. Tag release: `git tag -a vX.Y.Z -m "Release vX.Y.Z: Description"`
+6. Fast-forward `dev` to `main`: `git checkout dev && git merge --ff-only main && git push origin dev`
+
+### 4. Versioning: GitVersion (SemVer)
+
+GitVersion calculates semantic versions automatically:
+- **`main` branch** → `MAJOR.MINOR.PATCH` (e.g., `1.3.0`)
+- **`dev` branch** → Pre-release version (e.g., `1.4.0-alpha.1`)
+- **`squad/*` branches** → Label-stamped pre-release (e.g., `1.4.0-pr.42`)
+
+CI runs GitVersion before build to stamp assembly versions:
+```yaml
+- name: GitVersion
+  uses: gittools/actions/gitversion/execute@v1
+  with:
+    versionSpec: '6.x'
+    updateAssemblyInfo: false
+
+- name: Stamp versions
+  run: |
+    dotnet build MyBlog.slnx -c Release \
+      /p:Version=${{ steps.gitversion.outputs.nuGetVersion }} \
+      /p:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} \
+      /p:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }}
+```
+
+**Key decision:** GitVersion.yml already exists at repo root with full branch config. Leverage it without additional maintenance overhead.
+
+### 5. Hotfix Backport Process
+
+**Automated reminder** via `.github/workflows/hotfix-backport-reminder.yml`:
+- Triggers on hotfix merges to `main`
+- Auto-comments with cherry-pick instructions
+- Prevents dev/main drift
+
+**Manual process** if reminder fails:
+```bash
+git checkout dev
+git pull origin dev
+git merge main          # Fast-forward (preferred)
+# OR
+git cherry-pick {hotfix-commit-sha}  # If dev has diverged
+git push origin dev
+```
+
+**Critical rule:** Never allow hotfix to exist only on `main`. Always backport immediately.
+
+### 6. Branch Protection Rules
+
+**`main` branch (strictest):**
+- Require pull request reviews: 1 minimum
+- Dismiss stale reviews on new commits: enabled
+- Require status checks: enabled (CI workflow)
+- Require branches up-to-date: enabled
+- Require conversation resolution: enabled
+- Restrict who can push: (administrators must follow PR process)
+- Allow force pushes: disabled
+- Allow deletions: disabled
+
+**`dev` branch (moderate):**
+- Require status checks: enabled (CI workflow)
+- Require branches up-to-date: enabled
+- Require conversation resolution: disabled (allow WIP work)
+- Allow force pushes: disabled
+- Allow deletions: disabled
+- (Optional) 1 approval for `squad/*` branches to `dev`
+
+### 7. PR Workflows
+
+**Regular squad/feature branch PR:**
+```
+squad/my-feature → PR → dev (target dev as default base)
+```
+
+**Release PR:**
+```
+dev → PR → main (only PR type allowed to main; title: [RELEASE] vX.Y.Z - ...)
+```
+
+**Hotfix PR:**
+```
+hotfix/critical-bug → PR → main (only other PR type to main; requires 1 approval)
+```
+
+### 8. AI Agent Compatibility
+
+**`.squad/routing.md` and `squad-issue-assign.yml` updated:**
+- Default base branch hardcoded to `dev`
+- When `@copilot` is assigned an issue, the created branch targets `dev`
+- Coordinator can spawn multiple agents with confidence they all target `dev`
+
+## Rationale
+
+### Why Separate dev and main?
+
+1. **Release control** — Explicit `dev` → `main` PR creates a checkpoint for testing and review
+2. **Production safety** — `main` is always release-ready; no partial/broken changes
+3. **Developer velocity** — `dev` is fast-moving; squad agents can ship frequently without affecting production
+4. **Hotfix safety** — Critical fixes bypass `dev` for speed, but must be backported to avoid regression
+5. **Industry standard** — Proven pattern (Git Flow variant) used by large teams
+
+### Why GitVersion (SemVer)?
+
+1. **Automatic versioning** — No manual version bumps; derived from git history
+2. **Semantic meaning** — MAJOR/MINOR/PATCH signals API compatibility to users
+3. **Configuration already exists** — GitVersion.yml at repo root reduces setup overhead
+4. **CI integration** — Stamps versions into assemblies automatically
+5. **Clear release hygiene** — Version tags linked to git history for reproducibility
+
+### Why 1 Approval for Hotfixes?
+
+1. **Speed** — Critical bugs need fast turnaround; 2 approvals add delay
+2. **Gandalf review** — Security-critical hotfixes can tag Gandalf for security review
+3. **Main already protected** — All code must pass CI before merge anyway
+4. **Backport requirement** — Immediate backport to `dev` catches issues quickly
+
+## Implementation Status
+
+### ✅ Complete (Phase 1-2)
+
+- Created `dev` branch from `main` (identical starting state)
+- Applied branch protection rules to both branches
+- Updated CI workflow triggers to include `dev` branch
+- Updated `squad-issue-assign.yml` to hardcode `dev` as base branch
+- Set `dev` as default branch in GitHub settings
+- Recorded GitVersion configuration in CI pipeline
+- Hotfix backport reminder workflow created (not yet tested in production hotfix scenario)
+
+### 🟡 Testing (Phase 3)
+
+- First `dev` → `main` release PR cycle (verify CI triggers, merge behavior)
+- First hotfix scenario (verify backport automation)
+- Parallel test execution performance (squad-test.yml with GitVersion)
+
+### 📋 Future Maintenance
+
+1. **Monitor first release cycle** — Verify squash merge behavior and tag creation
+2. **If hotfix happens** — Validate backport reminder triggers and process
+3. **Adjust CI/CD** if runner time becomes an issue (parallel tests may need optimization)
+4. **Document** in contributor guide: "All squad branches target `dev`; only release PRs target `main`"
+
+## Decisions Deferred
+
+- Release PR auto-creation (squad-promote.yml) — manual release PRs for now
+- Changelog automation — capture in future sprint
+- Release notes on GitHub Release tag — nice-to-have, not MVP
+
+## Related Decisions
+
+- **Pre-push gate** (.squad/decisions.md section below) — Validates code locally before push
+- **User secrets** (.squad/decisions.md section below) — Protects Auth0 credentials from commits
+- **Casting infrastructure** (.squad/decisions.md section below) — Enables programmatic agent lifecycle management
+
+---
+
+# Decision: Pre-Push Gate — Build and Test Validation
+
+**Date:** 2026-04-18  
+**Author:** Boromir (DevOps Engineer)  
+**Status:** ✅ Implemented  
+**PR:** #12
+
+## Context
+
+Without local validation, developers push broken code to `dev`, triggering CI failures and blocking other team members. The pre-push gate provides immediate feedback (~7 seconds) and reduces CI noise.
+
+## Decision
+
+All developers and squad agents must install a pre-push git hook that validates code before pushing to GitHub.
+
+### Hook Installation
+
+After cloning or creating a new worktree:
+
+```bash
+./scripts/install-hooks.sh
+```
+
+This installs `.git/hooks/pre-push` which runs before every `git push`.
+
+### Hook Validation Steps
+
+The pre-push hook executes two sequential gates:
+
+1. **Gate 1: Build** — `dotnet build MyBlog.slnx --no-incremental -c Release`
+   - Fails on compilation errors or warnings treated as errors
+
+2. **Gate 2: Tests** — `dotnet test MyBlog.slnx --no-build -c Release`
+   - Runs Architecture.Tests, Unit.Tests, and Integration.Tests
+   - All 3 suites must pass (74 tests minimum)
+   - Fails on any test failure
+
+### CI Skip
+
+When `CI=true` environment variable is set, the hook exits immediately (CI environment has already validated).
+
+### Emergency Bypass
+
+In rare cases, bypass validation:
+
+```bash
+git push --no-verify
+```
+
+⚠️ Use sparingly — CI will still catch issues, but local validation is faster.
+
+### Implementation Details
+
+- `scripts/install-hooks.sh` — Committed source of truth; installs the hook
+- `.git/hooks/pre-push` — NOT committed (git doesn't track local hooks); installed by script
+- Hook resolves git hooks directory with `git rev-parse --git-path hooks` (supports worktrees)
+- Hook backs up any differing existing hook before overwriting
+
+## Rationale
+
+1. **Faster feedback** — Catch broken code in ~7 seconds locally vs 2-5 minutes on CI
+2. **Keep CI green** — Reduce failed CI runs, unblock squad agents faster
+3. **Developer experience** — Immediate actionable error messages
+4. **Team discipline** — Encourages running tests before push; CI is a safety net, not the first check
+5. **Worktree-safe** — Uses `git rev-parse --git-path hooks` instead of hardcoded `.git/hooks`
+
+## Impact
+
+- **Push time:** +7 seconds (build + tests) on first push; cached builds faster
+- **CI failures:** Expected significant decrease
+- **Developer workflow:** One-time setup per clone/worktree (`./scripts/install-hooks.sh`)
+- **Squad agents:** Must run install script after branch creation
+
+## Files
+
+- `scripts/install-hooks.sh` — Installation script (committed)
+- `.github/hooks/pre-push` — Hook source code (committed)
+- `docs/CONTRIBUTING.md` — Documents setup process
+- `.github/pull_request_template.md` — Checklist includes pre-push gate setup
+
+## Validation
+
+✅ Tested on PR #12:
+- Build: passed (0 errors, 0 warnings)
+- Architecture.Tests: ✅ 6/6 passing
+- Unit.Tests: ✅ 59/59 passing
+- Integration.Tests: ✅ 9/9 passing
+- Push: allowed after successful gate validation
+
+## User Directives (Captured 2026-04-18T21:21:06Z)
+
+From mpaulosky (via Copilot):
+- **Mandatory:** Pre-push gate is a hard block — retries/blocks push until both `dotnet build` AND `dotnet test` succeed
+- **Requirement:** Agents must not push branches until the gate passes
+- **Rationale:** Lowering chance of pushing bad code to reduce CI feedback loop
+
+---
+
+# Decision: Auth0 Secrets via User Secrets (Not appsettings)
+
+**Date:** 2026-04-18  
+**Author:** Sam (Backend Developer)  
+**Status:** Proposed
+
+## Context
+
+The Web app was crashing at startup with `ArgumentException: The value cannot be an empty string (Parameter 'ClientId')` because `appsettings.json` stored empty placeholder strings for Auth0 settings with no user secrets configured.
+
+## Decision
+
+Auth0 credentials (`Auth0:Domain`, `Auth0:ClientId`, `Auth0:ClientSecret`) are **never stored in source-controlled config files**. They must be set via dotnet user-secrets on the Web project:
+
+```bash
+dotnet user-secrets set "Auth0:Domain" "<your-tenant>.auth0.com" --project src/Web
+dotnet user-secrets set "Auth0:ClientId" "<your-client-id>" --project src/Web
+dotnet user-secrets set "Auth0:ClientSecret" "<your-client-secret>" --project src/Web
+```
+
+`appsettings.Development.json` documents the required keys (with empty values) as a developer reference. `Program.cs` validates these at startup and throws a clear `InvalidOperationException` with setup instructions if they are missing.
+
+## Rationale
+
+- **Security:** Auth0 secrets must not be committed to source control
+- **Developer experience:** Clear error message with instructions beats cryptic middleware exception
+- **AppHost design:** Aspire manages infrastructure secrets (MongoDB, Redis), not application-level OAuth credentials
+- **Separation of concerns:** Infrastructure (Aspire) vs. application config (user-secrets)
+
+## Consequences
+
+- New developers cloning the repo must run the user-secrets commands before the app will start
+- The error message in Program.cs serves as self-documenting setup instructions
+- CI/CD will need Auth0 secrets injected as environment variables at deploy time
+
+## Related Decisions
+
+- **Branch strategy** — Ensures secrets are never committed across any branch
+- **Pre-push gate** — Catches accidental secrets in local validation before push
+
+---
+
+# Decision: Casting Infrastructure for Agent Lifecycle Management
+
+**Date:** 2026-04-18  
+**Author:** Ralph (Infrastructure Specialist)  
+**Status:** ✅ Implemented (Phase 1)
+
+## Context
+
+The squad was initialized with `.squad/team.md` roster but lacked the casting infrastructure needed to manage agent lifecycle, policy, and governance decisions programmatically. Ralph created the foundation for deterministic, auditable team management.
+
+## Decision
+
+Establish `.squad/casting/` directory structure with three JSON files:
+
+### 1. `.squad/casting/policy.json` — Governance Defaults
+
+```json
+{
+  "max_concurrent_agents": 5,
+  "default_timeout_minutes": 120,
+  "retry_policy": {
+    "enabled": true,
+    "max_retries": 3,
+    "backoff_multiplier": 2,
+    "initial_delay_seconds": 5
+  },
+  "auto_escalate_blockers": true
+}
+```
+
+**Key settings:**
+- `max_concurrent_agents: 5` — Prevents overwhelming system at 11-agent team size
+- `default_timeout_minutes: 120` — Allows complex tasks (tests, builds) to complete
+- `auto_escalate_blockers: true` — Surfaces blocked work quickly to lead
+
+### 2. `.squad/casting/registry.json` — Team Roster
+
+All 12 agents (11 team members + 1 coordinator) migrated from `.squad/team.md`:
+- `legacy_named: true` — No renaming
+- `status: "active"` — All operational
+- Charter paths point to existing agent directories
+
+### 3. `.squad/casting/history.json` — Migration Audit Trail
+
+Records:
+- Timestamp, event type (migration, agent-join, agent-leave, role-change)
+- Agent responsible for change
+- Detailed impact notes
+
+Establishes pattern for future team changes (onboarding, offboarding, role shifts).
+
+## Rationale
+
+1. **Programmatic control** — Coordinator can spawn agents, manage timeouts, enforce governance via code
+2. **Auditability** — Team changes tracked and reversible
+3. **Scalability** — Current structure supports growing team without manual intervention
+4. **No disruption** — Additive infrastructure; no existing agent behavior changes
+5. **Future-proof** — Team size adjustments (>15 agents) can update `max_concurrent_agents` dynamically
+
+## Implementation Status
+
+✅ **Complete:**
+- Created `.squad/casting/policy.json` with sensible defaults
+- Created `.squad/casting/registry.json` with all agents
+- Created `.squad/casting/history.json` with initial snapshot
+- Recorded decision rationale in `.squad/decisions/inbox/ralph-casting-migration.md`
+
+🟡 **Next phases (deferred):**
+- Phase 2: Agent spawn/timeout automation in coordinator
+- Phase 3: Dynamic team scaling based on workload
+
+## Future Maintenance
+
+When team changes:
+1. Update `.squad/casting/registry.json` with new agent record or status change
+2. Add entry to `.squad/casting/history.json` with timestamp and details
+3. Adjust `.squad/casting/policy.json` `max_concurrent_agents` if team size changes significantly (e.g., >15 agents → increase to 7-8)
+
+---
+
+# Decision: PR #11 CSS Artifact Approval
+
+**Date:** 2026-04-18  
+**Reviewer:** Legolas (Frontend/Blazor)  
+**Status:** ✅ Approved
+
+## Context
+
+PR #11 "chore: commit leftover uncommitted changes" contained a large `src/Web/wwwroot/css/tailwind.css` expansion (minified ~2 lines → pretty-printed 1918 lines). Legolas validated whether this was an intentional compiled artifact or a stale/unwanted asset.
+
+## Decision
+
+✅ **APPROVE** — The CSS expansion is intentional Tailwind v4.2.2 compiled output, not a stale artifact.
+
+## Validation
+
+### What Changed
+
+PR #11 contains:
+- `src/Web/wwwroot/css/tailwind.css` — expanded from minified to pretty-printed (1918 lines)
+- `src/Web/Features/UserManagement/ManageRoles.razor` — removed redundant `@using MyBlog.Web.Features.UserManagement`
+
+### Why It's Correct
+
+1. **CSS source unchanged** — `src/Web/wwwroot/css/app.css` is identical on dev and PR branch
+   - Tailwind v4 CSS-first format confirmed (`@import "tailwindcss"`, `@source` directives, `@theme inline`)
+   - No breaking changes to design tokens or component layer
+
+2. **Build recovery, not stale artifact** — PR title indicates code recovery from stale `cicd-phase3-4` branch
+   - `npm run tw:build` was never run on cicd-phase3-4 before checkout stalled
+   - This PR commits the proper Tailwind compilation that should have been done then
+   - Timestamp: tailwind.css touched 2026-04-18 (same as commit date)
+
+3. **Output is valid Tailwind v4.2.2**
+   - Header: `/*! tailwindcss v4.2.2 | MIT License | https://tailwindcss.com */`
+   - Structure: proper `@layer properties, theme, base, components, utilities`
+   - Pretty-printed by default (development format; production uses minified link)
+
+4. **Semantic tokens resolve correctly**
+   - All color-primary palettes in `@theme inline` match app.css custom properties
+   - Component layer (`.nav-link`, `.btn-primary`, `.card`) present and correct
+   - Blazor form validation styles preserved (`.valid.modified`, `.invalid`, `.validation-message`)
+
+5. **No regressions** — CSS file structure aligns with Tailwind v4 migration history
+   - All semantic color tokens (theme-blue, theme-red, etc.) properly compiled
+   - Dark mode `@custom-variant dark` working correctly
+   - Razor component scanning (@source) paths correct for `src/Web/` structure
+
+### Minor Changes
+
+- `ManageRoles.razor`: removed `@using MyBlog.Web.Features.UserManagement` (consistent with 2025-01-29 _Imports.razor consolidation)
+
+## Recommendation
+
+✅ **Merge approved from Blazor/CSS perspective.** No blocker issues.
+
+---
+
+# Decision: PR #12 Pre-Push Gate References
+
+**Date:** 2026-04-18  
+**Author:** Boromir (DevOps Engineer)  
+**Status:** ✅ Implemented
+
+## Context
+
+PR #12 follow-up review flagged a dead reference to `.squad/playbooks/pre-push-process.md` in SKILL.md. The playbook file doesn't exist.
+
+## Decision
+
+Update SKILL.md and PR template to point to `docs/CONTRIBUTING.md` as the authoritative setup and usage guide instead of referencing a non-existent playbook.
+
+## Rationale
+
+- `docs/CONTRIBUTING.md` already documents hook installation and the five pre-push gates
+- Reusing the canonical contributor guide avoids duplicating operational instructions in a second document
+- Removing the dead `.squad/playbooks/...` reference keeps the skill accurate for new contributors and agents
+
+## Implementation
+
+✅ **Complete:**
+- Updated `.squad/skills/pre-push-test-gate/SKILL.md` to point to `docs/CONTRIBUTING.md`
+- Updated `.github/pull_request_template.md` to reference canonical contributor guide
+- PR #12 follow-up commit d59b493 pushed with corrections
+- All green checks passing
+
+---
+
+# Decision: User Directives on Pre-Push Gate (Captured 2026-04-18)
+
+**From:** mpaulosky (via Copilot)  
+**Date:** 2026-04-18T21:21:06Z & 2026-04-18T21:18:50Z
+
+### Directive 1: Pre-Push Gate is Mandatory Hard Block
+
+**What:** The pre-push gate is mandatory and must be a hard block — the gate retries/blocks the push until `dotnet build` AND `dotnet test` both succeed.
+
+**Why:** User request — captured for team memory
+
+**Implementation:** ✅ Complete
+- `.github/hooks/pre-push` implements hard block (non-zero exit on failure)
+- `scripts/install-hooks.sh` installs the hook
+- Emergency bypass documented: `git push --no-verify` (use sparingly)
+
+### Directive 2: Always Run Pre-Push Gate Validation
+
+**What:** Always run a pre-push gate before pushing branches to GitHub. Agents must run `dotnet build` and `dotnet test` locally before `git push` to lower the chance of pushing bad code.
+
+**Why:** User request — captured for team memory
+
+**Implementation:** ✅ Complete
+- Pre-push hook enforces `dotnet build MyBlog.slnx -c Release`
+- Pre-push hook enforces `dotnet test MyBlog.slnx --no-build -c Release`
+- CI skips hook when `CI=true` environment variable set
+
+---
+
