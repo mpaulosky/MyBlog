@@ -1,5 +1,47 @@
 # Legolas — Agent History
 
+## Core Context
+
+### Blazor Component Architecture & Frontend Patterns (MyBlog)
+
+**UI Component Structure:**
+- **VSA (Vertical Slice Architecture):** Pages under `src/Web/Features/{feature}/{action}` (e.g., BlogPosts/Create, UserManagement)
+- **Layout:** `MainLayout.razor` + `NavMenu.razor` (role-gated with `<AuthorizeView Roles="...">`)
+- **Components:** `ConfirmDeleteDialog.razor`, reusable form components
+- **Styling:** Bootstrap 5 (temporary); queued for Tailwind migration (Skill in .squad/skills/)
+- **Auth Awareness:** Role-based navigation links, Admin-only sections
+
+**Blazor Validation & Form Patterns:**
+- EditForm with DataAnnotations validation
+- Validation CSS classes: `.valid.modified`, `.invalid`, `.validation-message` (preserved through any migration)
+- DateTime assertions in tests use `FluentAssertions` with tolerance windows
+
+**Tailwind Migration (Deferred — M3):**
+- Current: Bootstrap 5 via NuGet + wwwroot/lib/bootstrap/
+- Blocker: Skill gaps identified (v3 vs v4 conflict, content path mismatch, AuthorizeView not preserved)
+- Planned: Legolas to lead migration with corrected skill; prioritize Hamburger nav state management and role-gated visibility
+
+**Authentication & Role Claims:**
+- Auth0 integration (Frodo owns security)
+- Role claims support namespace variations (e.g., `https://myblog/roles`, `https://articlesite.com/roles`)
+- RoleClaimsHelper infers role claim types by namespace tail (ends with `role` or `roles`)
+
+**Key UI Decisions:**
+- Decision 1: Consolidated @using directives in _Imports.razor (reduces duplication across 9 files)
+- Decision 2: Removed Counter/Weather template pages (cleaned 113 lines, improved focus)
+- Decision 5: Support Auth0 role claim namespace variations (profile card + NavMenu now robust to auth branding drift)
+
+**Testing Coverage:**
+- Component smoke tests: Counter, Weather removed; remaining pages tested via RazorSmokeTests.cs
+- Integration tests: ConfirmDeleteDialog, Create/Edit pages; 9 tests passing
+
+**Known Gotchas:**
+- Blazor asset fingerprinting requires `@Assets["lib/..."]` syntax (not plain href)
+- NavLink `.active` class applied automatically; Tailwind has no default styling (must be added)
+- Bootstrap Icons embedded as inline SVG in NavMenu.razor.css (migrate carefully to Tailwind)
+
+---
+
 ## 2025-07-19 — Tailwind Migration Skill Review
 
 ### What I Learned

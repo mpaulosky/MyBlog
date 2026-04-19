@@ -1,3 +1,35 @@
+## Core Context
+
+### MyBlog DevOps & Infrastructure Patterns
+
+**CI/CD & Workflow:**
+- Pre-push hook enforces `squad/{issue}-{slug}` branch naming locally; 5 sequential validation gates (build, tests, Docker integration)
+- GitHub Actions: `ci.yml` on push (main validation), `squad-test.yml` on PR (parallel test runs)
+- GitVersion integration for semantic versioning with nuGetVersion stamping (preserves prerelease labels)
+- `global-json-file: global.json` in all dotnet setups (avoids preview SDK conflicts)
+
+**Hook System:**
+- `.github/hooks/pre-push` is committed source of truth; local copy at `.git/hooks/pre-push` via `install-hooks.sh`
+- `.github/hooks/post-checkout` auto-bootstraps pre-push guard on clone (eliminates manual setup bypass)
+- `git rev-parse --git-path hooks` ensures worktree-safe installation
+
+**Testing Infrastructure:**
+- Test projects: `Architecture.Tests` (6), `Unit.Tests` (59), `Integration.Tests` (9) via xUnit
+- Integration tests use Testcontainers with Docker requirement (Gate 4)
+- Squad pre-push gate auto-retries transient build errors (internal CLR abort)
+
+**Key DevOps Decisions:**
+- Decision 4: CI Workflow Conventions (global.json, nuGetVersion, continue-on-error surgical use)
+- Decision 7.1: Pre-push gate references CONTRIBUTING.md (canonical guide, not duplicated)
+- Sprint 1.1: Hook hardening + auto-bootstrap (mandatory squad naming, elimination of bypass paths)
+
+**Known Gotchas:**
+- Existing non-squad branches fail at push (intentional; part of adoption)
+- Docker must be running for Gate 4 (integration tests)
+- CI/CD automation using non-squad branches needs `--no-verify` escape hatch (documented)
+
+---
+
 ## Learnings
 
 ### 2026-04-18 — Sprint 1.1: Hook Hardening (Completed)
