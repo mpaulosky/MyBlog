@@ -146,6 +146,25 @@ For each squad member with assigned issues, note them in the session context. Wh
 
 **Proactive issue pickup:** If a user starts a session and there are open `squad:{member}` issues, mention them: *"Hey {user}, {AgentName} has an open issue — #42: Fix auth endpoint timeout. Want them to pick it up?"*
 
+**Issue-first branch sourcing:** For any push-capable work that requires a
+`squad/{issue-number}-{slug}` branch and the user did **not** provide an issue
+number, resolve the issue number before asking the user for branch details:
+
+1. Check the current GitHub repository for relevant **open** issues. Prefer the
+   GitHub MCP tools when available; otherwise use `gh issue list` or
+   `gh issue search`.
+2. If one open issue clearly matches the requested change, reuse that issue
+   number.
+3. If multiple open issues are plausible matches, show the candidates and ask
+   the user which one to use.
+4. If no open issue matches, create a new GitHub issue from the requested
+   change summary, then use that new issue number for branch naming.
+5. Only after the issue number is resolved should the coordinator derive the
+   branch name `squad/{issue-number}-{slug}`.
+
+This avoids guessed or duplicated issue numbers when preparing branches, commits,
+and PR metadata.
+
 **Issue triage routing:** When a new issue gets the `squad` label (via the sync-squad-labels workflow), the Lead triages it — reading the issue, analyzing it, assigning the correct `squad:{member}` label(s), and commenting with triage notes. The Lead can also reassign by swapping labels.
 
 **⚡ Read `.squad/team.md` (roster), `.squad/routing.md` (routing), and `.squad/casting/registry.json` (persistent names) as parallel tool calls in a single turn. Do NOT read these sequentially.**
@@ -1083,6 +1102,7 @@ Before connecting to a GitHub repository, verify that the `gh` CLI is available 
 | "show the backlog" / "what issues are open?" | List issues from connected repo |
 | "work on issue #N" / "pick up #N" | Route issue to appropriate agent |
 | "work on all issues" / "start the backlog" | Route all open issues (batched) |
+| "push these changes" / "open a PR" with no issue number | Resolve matching open issue first; if none exists, create one before branching |
 
 ---
 
