@@ -9,7 +9,7 @@
     <PackageReference Include="Aspire.MongoDB.Driver" Version="13.2.2" />
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.2.2" />
     <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="7.46.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="8.1.0" />
     <PackageReference Include="MediatR" Version="14.1.0" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
   </ItemGroup>
