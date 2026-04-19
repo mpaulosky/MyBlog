@@ -16,3 +16,15 @@
 - Frontend (Legolas) validated UI correctly displays admin role in Profile and NavMenu
 
 **Status:** ✅ Completed — Decision merged to decisions.md
+
+## 2026-04-19 — CONTRIBUTING.md Pre-Push & PR Sections (Skills Review)
+
+As part of DevOps skills/playbooks review, Frodo assigned to update CONTRIBUTING.md with pre-push validation gates and PR review process.
+
+**Action:** Add two new sections to CONTRIBUTING.md (1h):
+1. Pre-Push Validation Gates — link to playbook, list 5 gates, quick checklist
+2. PR Review Process — link to pr-merge-process playbook, explain rejection protocol
+
+**Collaboration:** Frodo + Pippin (CONTRIBUTING.md co-owners).
+
+**Timeline:** Week 1 (1h estimated).
