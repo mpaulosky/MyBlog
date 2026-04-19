@@ -108,7 +108,7 @@ Add each new issue to the **MyBlog** GitHub Project:
 gh project list --owner mpaulosky
 
 # Add issue to project (use the URL returned by `gh issue create`)
-gh project item-add {PROJECT_NUMBER} --owner mpaulosky --url {issue-url}
+gh project item-add 4 --owner mpaulosky --url {issue-url}
 ```
 
 New items land in **Backlog** automatically. Move to **In Sprint** when the sprint begins:

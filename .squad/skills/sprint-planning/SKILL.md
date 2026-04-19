@@ -85,7 +85,7 @@ Triage immediately: remove `squad` label, add `squad:{member}` label.
 gh project list --owner mpaulosky
 
 # Add an issue to the project
-gh project item-add {PROJECT_NUMBER} --owner mpaulosky --url {issue-url}
+gh project item-add 4 --owner mpaulosky --url {issue-url}
 ```
 
 New items land in **Backlog**. Move to **In Sprint** when sprint starts.
