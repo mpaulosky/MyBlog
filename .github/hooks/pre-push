@@ -11,7 +11,7 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; RE
 
 echo -e "${CYAN}━━━ Pre-Push Gate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-# ── Gate 0: Enforce squad branch naming (squad/{issue}-{slug}) ─────────────
+# ── Gate 0: Enforce allowed branch naming ────────────────────────────────────
 CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || echo "")"
 if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "dev" ]]; then
   echo -e "${RED}❌  Direct pushes to '${CURRENT_BRANCH}' are not allowed.${RESET}"
@@ -19,10 +19,10 @@ if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "dev" ]]; then
   exit 1
 fi
 
-if ! [[ "$CURRENT_BRANCH" =~ ^squad/[0-9]+-[a-z0-9-]+$ ]]; then
-  echo -e "${RED}❌  Branch name '${CURRENT_BRANCH}' does not match squad naming convention.${RESET}"
-  echo -e "    Expected format: ${YELLOW}squad/{issue}-{slug}${RESET}"
-  echo -e "    Examples: ${YELLOW}squad/42-fix-login${RESET}, ${YELLOW}squad/123-add-api-docs${RESET}"
+if ! [[ "$CURRENT_BRANCH" =~ ^(squad/[0-9]+-[a-z0-9-]+|sprint/[0-9]+-[a-z0-9-]+)$ ]]; then
+  echo -e "${RED}❌  Branch name '${CURRENT_BRANCH}' does not match allowed naming conventions.${RESET}"
+  echo -e "    Expected format: ${YELLOW}squad/{issue}-{slug}${RESET} or ${YELLOW}sprint/{N}-{slug}${RESET}"
+  echo -e "    Examples: ${YELLOW}squad/42-fix-login${RESET}, ${YELLOW}sprint/1-foundation${RESET}"
   exit 1
 fi
 
