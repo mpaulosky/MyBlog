@@ -30,9 +30,10 @@ public class RoleClaimsHelperTests
 		var configuration = new ConfigurationBuilder()
 				.AddInMemoryCollection(new Dictionary<string, string?>
 				{
-					["Auth0:RoleClaimTypes:0"] = "roles",
+					["Auth0:RoleClaimTypes:0"] = "https://articlesite.com/roles",
 					["Auth0:RoleClaimTypes:1"] = "https://myblog/roles",
-					["Auth0:RoleClaimTypes:2"] = "roles"
+					["Auth0:RoleClaimTypes:2"] = "roles",
+					["Auth0:RoleClaimTypes:3"] = "roles"
 				})
 				.Build();
 
@@ -40,7 +41,7 @@ public class RoleClaimsHelperTests
 		var result = RoleClaimsHelper.GetRoleClaimTypes(configuration);
 
 		// Assert
-		result.Should().BeEquivalentTo(["roles", "https://myblog/roles"]);
+		result.Should().BeEquivalentTo(["https://articlesite.com/roles", "https://myblog/roles", "roles"]);
 	}
 
 	[Fact]
@@ -68,18 +69,33 @@ public class RoleClaimsHelperTests
 		result.Should().BeEquivalentTo(expected);
 	}
 
+	[Theory]
+	[InlineData("roles", true)]
+	[InlineData("role", true)]
+	[InlineData("https://articlesite.com/roles", true)]
+	[InlineData("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", true)]
+	[InlineData("https://articlesite.com/app_metadata", false)]
+	public void IsRoleClaimType_DetectsExpectedClaimTypes(string claimType, bool expected)
+	{
+		// Act
+		var result = RoleClaimsHelper.IsRoleClaimType(claimType);
+
+		// Assert
+		result.Should().Be(expected);
+	}
+
 	[Fact]
 	public void AddRoleClaims_AddsExpandedRoleClaimsWithoutDuplicates()
 	{
 		// Arrange
 		var identity = new ClaimsIdentity(new[]
 		{
-						new Claim("roles", "Admin,Author"),
+						new Claim("https://articlesite.com/roles", "Admin,Author"),
 						new Claim(ClaimTypes.Role, "Admin")
 				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role);
 
 		// Act
-		RoleClaimsHelper.AddRoleClaims(identity, ["roles"]);
+		RoleClaimsHelper.AddRoleClaims(identity, ["https://articlesite.com/roles"]);
 
 		// Assert
 		identity.FindAll(ClaimTypes.Role)
@@ -89,12 +105,32 @@ public class RoleClaimsHelperTests
 	}
 
 	[Fact]
+	public void AddRoleClaims_InfersNamespacedRoleClaims_WhenConfiguredTypesDoNotMatch()
+	{
+		// Arrange
+		var identity = new ClaimsIdentity(new[]
+		{
+						new Claim("https://articlesite.com/roles", "[\"Admin\",\"User\"]")
+				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role);
+
+		// Act
+		RoleClaimsHelper.AddRoleClaims(identity, ["https://myblog/roles"]);
+
+		// Assert
+		identity.FindAll(ClaimTypes.Role)
+				.Select(claim => claim.Value)
+				.Should()
+				.BeEquivalentTo(["Admin", "User"]);
+	}
+
+	[Fact]
 	public void GetRoles_CollectsDistinctRolesAcrossMultipleClaimTypes()
 	{
 		// Arrange
 		var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
 		{
 						new Claim(ClaimTypes.Role, "Admin"),
+						new Claim("https://articlesite.com/roles", "Admin"),
 						new Claim("https://myblog/roles", "[\"Author\",\"Admin\"]"),
 						new Claim("roles", "Editor,Author")
 				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
@@ -104,5 +140,22 @@ public class RoleClaimsHelperTests
 
 		// Assert
 		result.Should().Equal("Admin", "Author", "Editor");
+	}
+
+	[Fact]
+	public void GetRoles_IncludesNamespacedRoleClaims_WhenRoleClaimTypeWasNotConfigured()
+	{
+		// Arrange
+		var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+		{
+						new Claim("https://articlesite.com/roles", "Admin"),
+						new Claim("https://articlesite.com/roles", "User")
+				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
+
+		// Act
+		var result = RoleClaimsHelper.GetRoles(principal, ["https://myblog/roles"]);
+
+		// Assert
+		result.Should().Equal("Admin", "User");
 	}
 }

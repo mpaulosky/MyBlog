@@ -109,7 +109,7 @@ public class ProfileTests : BunitContext
 
 		if (!string.IsNullOrWhiteSpace(rolesJson))
 		{
-			claims.Add(new Claim("https://myblog/roles", rolesJson));
+			claims.Add(new Claim("https://articlesite.com/roles", rolesJson));
 		}
 
 		claims.AddRange(extraClaims);

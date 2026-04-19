@@ -32,6 +32,38 @@ public static class RoleClaimsHelper
             : DefaultRoleClaimTypes;
     }
 
+    public static bool IsRoleClaimType(string? claimType)
+    {
+        if (string.IsNullOrWhiteSpace(claimType))
+        {
+            return false;
+        }
+
+        if (claimType.Equals(ClaimTypes.Role, StringComparison.OrdinalIgnoreCase)
+            || claimType.Equals("roles", StringComparison.OrdinalIgnoreCase)
+            || claimType.Equals("role", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var lastSlash = claimType.LastIndexOf('/');
+        var lastColon = claimType.LastIndexOf(':');
+        var separatorIndex = Math.Max(lastSlash, lastColon);
+        var tail = separatorIndex >= 0 ? claimType[(separatorIndex + 1)..] : claimType;
+
+        return tail.Equals("roles", StringComparison.OrdinalIgnoreCase)
+            || tail.Equals("role", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyList<string> GetEffectiveRoleClaimTypes(IEnumerable<Claim> claims, IEnumerable<string>? roleClaimTypes)
+    {
+        return (roleClaimTypes ?? DefaultRoleClaimTypes)
+            .Append(ClaimTypes.Role)
+            .Concat(claims.Select(claim => claim.Type).Where(IsRoleClaimType))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     public static IReadOnlyList<string> ExpandRoleValues(string? claimValue)
     {
         if (string.IsNullOrWhiteSpace(claimValue))
@@ -73,7 +105,7 @@ public static class RoleClaimsHelper
 
     public static void AddRoleClaims(ClaimsIdentity identity, IEnumerable<string> roleClaimTypes)
     {
-        foreach (var roleClaimType in roleClaimTypes)
+        foreach (var roleClaimType in GetEffectiveRoleClaimTypes(identity.Claims, roleClaimTypes))
         {
             foreach (var claim in identity.FindAll(roleClaimType).ToList())
             {
@@ -90,10 +122,7 @@ public static class RoleClaimsHelper
 
     public static IReadOnlyList<string> GetRoles(ClaimsPrincipal user, IEnumerable<string>? roleClaimTypes = null)
     {
-        var types = (roleClaimTypes ?? DefaultRoleClaimTypes)
-            .Append(ClaimTypes.Role)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        var types = GetEffectiveRoleClaimTypes(user.Claims, roleClaimTypes);
 
         return user.Claims
             .Where(claim => types.Contains(claim.Type, StringComparer.OrdinalIgnoreCase))
