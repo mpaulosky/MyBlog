@@ -52,19 +52,19 @@
     },
     {
       "name": "Gandalf",
-      "role": "Reviewer",
+      "role": "Security / Auth",
       "legacy_named": true,
       "status": "active",
       "charter_path": ".squad/agents/gandalf/charter.md",
-      "notes": "Code review gate, quality"
+      "notes": "Auth, secrets, vulnerability review"
     },
     {
       "name": "Frodo",
-      "role": "Security",
+      "role": "Tech Writer",
       "legacy_named": true,
       "status": "active",
       "charter_path": ".squad/agents/frodo/charter.md",
-      "notes": "Auth, secrets, vulnerabilities"
+      "notes": "XML docs, README, CONTRIBUTING"
     },
     {
       "name": "Pippin",
@@ -76,11 +76,11 @@
     },
     {
       "name": "Bilbo",
-      "role": "Research",
+      "role": "Tech Blogger",
       "legacy_named": true,
       "status": "active",
       "charter_path": ".squad/agents/bilbo/charter.md",
-      "notes": "Spikes, POCs, investigations"
+      "notes": "Blog posts, release posts, GitHub Pages content"
     },
     {
       "name": "Ralph",

@@ -49,7 +49,7 @@ Before working on any theme, dark/light mode, FOUC, localStorage, or color palet
 Key patterns it covers: unified `tailwind-color-theme` storage key, anti-FOUC IIFE placement in `<head>`, Blazor navigation hooks (`enhancedload` + `blazor:navigated`), MutationObserver guard, and `themeManager` JS object coordination.
 
 ## Model
-Preferred: claude-sonnet-4.5 (writes code)
+Preferred: auto (frontend implementation resolves to claude-sonnet-4.6)
 
 ## Naming Conventions
 - Component files: `{Name}Component.razor`
