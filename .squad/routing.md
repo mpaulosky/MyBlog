@@ -62,11 +62,12 @@ spawn prompt:
 
 After Sprint 1.1, these process assets are part of normal squad flow:
 
-1. **Before writing any code**, a GitHub issue MUST exist for the work. This is an
-   absolute gate with no exceptions. If no issue exists, create it first — assign
-   to the correct milestone, add to Project #4 — then create the `squad/{issue}-{slug}`
-   branch, and only then write code. See the Hard Gate section in
-   `.squad/playbooks/sprint-planning.md`.
+1. **Before writing any code**, a GitHub issue MUST exist for the work AND it must be
+   **sprint-stamped** — title starts with `[Sprint N]`, milestone is set to
+   `Sprint N: {Theme}`, and it is added to Project #4. This is an absolute gate with
+   no exceptions. If no issue exists, create it now; if an issue exists but lacks the
+   sprint prefix or milestone, correct it before touching any file. See the Hard Gate
+   section in `.squad/playbooks/sprint-planning.md`.
 2. **Before any push-ready handoff**, route through the pre-push gate skill and
    pre-push playbook so agents respect the live MyBlog hook: `squad/{issue}-{slug}`
    branch naming, Release build, `Architecture.Tests`, `Unit.Tests`, and
@@ -85,7 +86,8 @@ After Sprint 1.1, these process assets are part of normal squad flow:
    `.squad/playbooks/sprint-planning.md`.
 8. **When a user makes any coding request** (direct instruction, `[[PLAN]]`, or
    follow-on work), the very first agent action is to check whether a GitHub issue
-   exists. If not, create it before any file is opened or modified.
+   exists AND is sprint-stamped (title `[Sprint N] …` + milestone). If not, create
+   or correct the issue before any file is opened or modified.
 
 ## Rules
 
