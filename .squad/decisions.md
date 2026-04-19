@@ -147,6 +147,37 @@ A comment like `// Get the default branch name (main, master, etc.)` next to `co
 
 **Impact:** Affects all future workflow files in `.github/workflows/`. Any workflow touching .NET setup must use `global-json-file`. Any workflow using GitVersion must use `nuGetVersion`.
 
+### 5. Support Auth0 Role Claim Namespace Variations
+
+**Date:** 2026-04-19  
+**Authors:** Frodo (Security), Legolas (Frontend)  
+**Status:** ✅ Implemented  
+
+#### Decision
+
+Infer role claim types from the authenticated user's claims when a claim type ends with `role` or `roles`, instead of relying only on the configured namespace list.
+
+#### Rationale
+
+- Auth0 exposes roles under `https://articlesite.com/roles` in production but the app expected `https://myblog/roles`
+- Profile rendering and Blazor authorization both depend on role claim recognition
+- Supporting both namespaces (and any future variations ending in `role`/`roles`) avoids breaking existing local configuration while branding is being aligned
+
+#### Implementation
+
+- `RoleClaimsHelper` treats namespaced claim types whose tail is `role` or `roles` as role claims
+- `appsettings.json` explicitly lists known Auth0 namespaces for reference
+- Components (Profile.razor, NavMenu) automatically benefit from role claim normalization
+
+#### Impact
+
+- ✅ Profile card now displays admin role correctly
+- ✅ NavMenu admin links appear when user has admin role
+- ✅ App is robust to role claim namespace drift
+- ✅ `AuthorizeView Roles="..."` directives work across namespace variations
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

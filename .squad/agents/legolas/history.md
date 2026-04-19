@@ -355,3 +355,18 @@ No concerns. This is intentional recovery of uncommitted CSS from a stalled bran
 - Secondary fix: removed redundant @using from ManageRoles.razor
 - Decision documented in `.squad/decisions/decisions.md`
 - Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-legolas.md`
+
+## 2026-04-19 — Admin Role UI Fix (Cross-Agent with Frodo)
+
+**Work:** Diagnosed UI symptom (missing admin role in Profile/NavMenu) and traced root cause to role claim namespace mismatch.
+
+**Issue:** Profile.razor and NavMenu admin links were hidden because role resolution failed when Auth0 sent `https://articlesite.com/roles` instead of expected `https://myblog/roles`.
+
+**Collaboration:** Aligned fix path with Frodo's security implementation of role claim normalization.
+
+**Validation:**
+- ✅ Profile.razor now correctly displays admin role after Frodo's role claim updates
+- ✅ NavMenu admin links appear for users with admin role
+- ✅ UI components automatically benefit from role claim normalization
+
+**Status:** ✅ Completed — Fix verified and decision merged to decisions.md
