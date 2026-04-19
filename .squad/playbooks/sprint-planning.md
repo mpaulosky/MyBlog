@@ -99,6 +99,16 @@ Todo ID: {todo-id}"
 **Issue title convention:** `[Sprint N] {Verb} {Noun}`
 (e.g., `[Sprint 2] Add ValidationBehavior pipeline`)
 
+**Mandatory format — every issue must satisfy both:**
+
+| Field | Requirement |
+|-------|-------------|
+| Title | Must start with `[Sprint N]` prefix |
+| Milestone | Must be set to `Sprint N: {Theme}` before any branch is created |
+
+> **Hard rule:** An issue without a milestone or without the `[Sprint N]` prefix in its
+> title is incomplete. No branch or code may reference it until both fields are set.
+
 After creating each issue, **Aragorn immediately triages** it:
 - Replace `squad` label with `squad:{member}` (e.g., `squad:sam`)
 - This triggers normal issue routing for that member
