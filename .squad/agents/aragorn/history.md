@@ -85,6 +85,16 @@ Reviewed 19 imported skills and 3 playbooks from architecture perspective. Findi
 
 **Outcome:** Decision merged to decisions.md (section 6). Ready for Phase 1 implementation (immediate).
 
+## 2026-04-19: Roadmap Rubber-Duck Review (Sprint 0)
+
+Led architectural validation of 4-milestone Skills & Playbooks adoption roadmap. Approved with 5 targeted changes and 3 execution constraints. Key findings:
+- Milestone sequence correct; ownership appropriate
+- Identified need for Sprint 1 split (1.1 pre-push tightening + 1.2 governance)
+- Added pre-flight checklist, effort estimates, release decision logic, deleted-assets manifest
+- Execution constraints: review sign-off gate, pre-push audit, routing PR isolation
+- Next: Monitor M1 implementation with constraints active
+
+Decision logged: `.squad/decisions.md` entry #8
 
 ## 2026-04-19: Sprint 1.2 Completion — Route Process Skills Into Workflow
 
@@ -168,4 +178,43 @@ Finalized all remaining roadmap decisions for Milestone 3 to enable sprint 3 cle
 - ✅ Release guidance anchored to real `dev`/`main`/`hotfix` workflow  
 - ✅ All imports explicitly marked adapt/delete/retain  
 - ✅ Decisions logged with structured rationale  
-- ✅ Cross-team coordination documented  
+- ✅ Cross-team coordination documented
+
+## 2026-04-19 — PR #17 Copilot Suggestions Resolution
+
+Resolved remaining non-outdated Copilot review suggestions on PR #17 (squad/1002-boromir-history-update) after Gandalf's merge conflict resolution.
+
+### Work Completed
+
+**Suggestions addressed (2 non-outdated):**
+1. ✅ `.squad/skills/static-config-pattern/SKILL.md` — Added missing YAML front matter per `.squad/templates/skill.md` template
+2. ✅ `.squad/playbooks/release-issuetracker.md` — Marked as legacy/external reference with clear warning banner
+
+**Outdated suggestions (skipped, 24 total):**
+- Many review threads became stale after Gandalf's conflict-resolution commit (89bcf1c)
+- Outdated comments no longer apply to current file state
+- High-value drift would have been caught in fresh review after CI passes
+
+### Key Learnings
+
+**PR review workflow:**
+- Always check `is_outdated` field in review threads after conflict resolution or rebase
+- Focus on still-applicable suggestions; don't churn stale comments
+- Mark legacy/external playbooks clearly — "⚠️ **LEGACY REFERENCE**" banner prevents repo-fit confusion
+
+**Skill front matter enforcement:**
+- `.squad/templates/skill.md` defines mandatory YAML fields: `name`, `description`, `domain`, `confidence`, `source`
+- Front matter enables skill indexing, routing, and consistent reference by name
+- Always validate new skills against template before merge
+
+**Pre-push gate excellence:**
+- All gates passed: Release build (0 errors/warnings), Unit/Arch tests (72 passed), Integration tests (9 passed, Testcontainers verified)
+- Total gate time: ~15s (fast feedback loop validates surgical doc changes)
+
+### Modified Assets
+
+- Fixed: `.squad/skills/static-config-pattern/SKILL.md` (added YAML front matter)
+- Fixed: `.squad/playbooks/release-issuetracker.md` (added legacy warning banner)
+- Commit: `1bd6243` — "docs: resolve Copilot review suggestions on PR #17"
+
+**Status:** PR #17 ready for CI + re-review after this commit passes checks  

@@ -139,6 +139,7 @@ Infer role claim types from the authenticated user's claims when a claim type en
 
 ---
 
+### 6. Squad Skills & Playbooks Adoption Review
 ### 5. Squad Skills & Playbooks Adoption Review
 
 **Lead:** Aragorn (Lead / Architect)  
@@ -180,6 +181,7 @@ The imported skill library is **high-quality and broadly relevant**. Of 19 skill
 
 ---
 
+### 7. DevOps Skills & Playbooks Review for MyBlog
 ### 6. DevOps Skills & Playbooks Review for MyBlog
 
 **Author:** Boromir (DevOps)  
@@ -243,6 +245,7 @@ MyBlog has **strong process documentation** through playbooks and skills. Howeve
 
 ---
 
+### 7.1. PR #12 Follow-ups — Pre-Push Gate References
 ### 6.1. PR #12 Follow-ups — Pre-Push Gate References
 
 **Date:** 2026-04-19  
@@ -262,6 +265,7 @@ The pre-push skill should point contributors to `docs/CONTRIBUTING.md` as the au
 
 ---
 
+### 8. Roadmap Rubber-Duck Review — Sprint 0 Complete
 ### 7. Roadmap Rubber-Duck Review — Sprint 0 Complete
 
 **Date:** 2026-04-19  
