@@ -546,3 +546,207 @@ Added 5 numbered workflow rules that clarify when/how guardrails apply post-Spri
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+---
+
+## Milestone 2: Skill Mining & Repo Adaptation (2026-04-19)
+
+### A. Auth0 Skills Mining (Frodo)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Skill retention & adaptation  
+**Modified:** `.squad/skills/auth0-management-api/SKILL.md`, `.squad/skills/auth0-management-security/SKILL.md`
+
+#### Summary
+
+The Auth0 Management API and Security skills have been mined from imported reusable patterns into MyBlog-specific guidance. Both skills are **retained and adapted** because:
+
+1. Auth0 is production infrastructure in this repo (active M2M app, role-based access control)
+2. Real operational patterns exist (UserManagementHandler, RoleClaimsHelper, Management API integration)
+3. Security-critical content (secrets, authorization, error handling) benefits the team
+
+#### Key Adaptations
+
+- Narrowed scope to MyBlog usage only; removed generic "best practices" sections
+- Bound to real code paths: UserManagementHandler, RoleClaimsHelper, Program.cs
+- Auth0 Management API v7.46.0 mapped to actual M2M app scopes
+- Called out future work: caching layer, audit logging (backlog items)
+- Authorization: AdminPolicy guards all /admin/users routes
+
+#### Ownership & Routing
+
+| Asset | Owner | Primary Audience | Trigger |
+|---|---|---|---|
+| `auth0-management-api` | Frodo (Tech Writer) | All squad; particularly Legolas (Frontend) | Role operations, API integration review |
+| `auth0-management-security` | Frodo (Tech Writer) | All squad | Security audit, secrets review, auth configuration change |
+| `docs/AUTH0_SETUP.md` | Frodo (Tech Writer) | Onboarding, new developers | Initial repo setup |
+
+#### Next Steps
+
+- Frodo: Add Auth0 secrets policy to SECURITY.md (Sprint 2)
+- Gimli/Sam: Extract reusable test patterns for testing-patterns skill (Sprint 2 test review)
+- All squad: Review adapted skills for feedback
+
+---
+
+### B. MongoDB Skills Mining (Sam)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Skill retention & adaptation  
+**Modified:** `.squad/skills/mongodb-dba-patterns/SKILL.md`, `.squad/skills/mongodb-filter-pattern/SKILL.md`
+
+#### Summary
+
+The imported `mongodb-dba-patterns` and `mongodb-filter-pattern` skills have been rewritten to describe MyBlog's actual Mongo stack instead of generic MongoDB guidance.
+
+#### MyBlog MongoDB Baseline
+
+- **Runtime wiring:** `src/AppHost/AppHost.cs` creates `mongodb` and database `myblog`; `src/Web/Program.cs` consumes via Aspire
+- **Persistence contract:** `src/Web/Data/BlogDbContext.cs` maps `BlogPost` to `blogposts` with `Version` as concurrency token
+- **Repository path:** `IBlogPostRepository` + `MongoDbBlogPostRepository` abstracts backend, returns domain entities
+- **Read path:** `GetBlogPostsHandler` owns DTO mapping and caching
+- **Verification path:** `MongoDbFixture` and `MongoDbBlogPostRepositoryTests` are canonical proof paths
+
+#### Retained Adaptations
+
+- **`mongodb-dba-patterns`** — Bound to real owners and code paths:
+  - Sam: repository, mapping, query/index implications
+  - Gimli: Mongo integration verification
+  - Boromir: environment rollout, shared backups/upgrades
+  - Frodo: secrets, TLS, least privilege for non-local deployments
+
+- **`mongodb-filter-pattern`** — Rebased on actual read pipeline:
+  - GetBlogPostsQuery → GetBlogPostsHandler → IBlogPostRepository → MongoDbBlogPostRepository
+  - Replaced driver filter examples with EF Core LINQ guidance
+  - Cache-key expansion is first-class rule (list reads are handler-cached)
+  - Repositories return domain entities; handlers own `Result<T>` wrapping
+
+#### Non-Fit Items Explicitly Called Out
+
+- Manual replica-set bootstrap commands (not part of local dev)
+- Atlas-only cluster administration (future-only if shared deployment adopted)
+- `Builders<T>.Filter` / `BsonRegularExpression` examples (not MyBlog's default path)
+- Minimal API and HTTP-client query-string patterns (current stack uses Blazor + MediatR)
+
+#### Follow-up Guidance
+
+1. Keep future Mongo guidance anchored to actual files in `src/Web`, `src/AppHost`, `tests/Integration.Tests`
+2. If MyBlog adopts shared Mongo infrastructure, extend DBA skill with environment-specific instructions
+3. If MyBlog adopts REST list endpoints or FluentValidation, revisit filter skill instead of silently reviving deleted sections
+4. During Milestone 3 cleanup, review whether future-only DBA sections still earn their place
+
+---
+
+### C. Testing Patterns Adaptation (Gimli)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Skill retention, adaptation, & repo conventions  
+**Modified:** `.squad/skills/testcontainers-shared-fixture/SKILL.md`, `.squad/skills/webapp-testing/SKILL.md`, tests/Integration.Tests suite files
+
+#### Summary
+
+Imported `testcontainers-shared-fixture` and `webapp-testing` skills have been adapted to MyBlog's real test layout:
+- `Architecture.Tests` (architecture rule enforcement)
+- `Unit.Tests` (unit tests + bUnit components)
+- `Integration.Tests` (Mongo-backed integration tests via Testcontainers)
+
+#### Current MyBlog Testing Baseline
+
+- Automated suite: `dotnet test MyBlog.slnx --configuration Release`
+- Architecture tests: `tests/Architecture.Tests`
+- Unit + bUnit tests: `tests/Unit.Tests`
+- Mongo integration tests: `tests/Integration.Tests`
+- Live Mongo fixture: `tests/Integration.Tests/Infrastructure/MongoDbFixture.cs`
+- Browser-free UI coverage: `NavMenuTests`, `ProfileTests`, `RazorSmokeTests`
+
+#### Retained Adaptations
+
+- **`testcontainers-shared-fixture`** — Adapted to MyBlog integration suite:
+  - Domain collections: `BlogPostIntegration`, `AuthorIntegration`, etc.
+  - Per-test database names: `$"T{Guid.NewGuid():N}"`
+  - Collection-level parallelism: only approved xUnit mode for Mongo-backed work
+  - Concrete convention: `MongoDbBlogPostRepositoryTests` uses `BlogPostIntegration` collection
+
+- **`webapp-testing`** — Retained and narrowed:
+  - Browser testing positioned as manual/runtime verification aid (not committed test framework)
+  - Contributors start with bUnit; use browser tooling only for runtime-only checks
+  - AppHost is preferred launch path for infrastructure-aware smoke verification
+  - JS theme interop, Auth0 redirect wiring, AppHost smoke behavior noted as runtime-only checks
+
+#### Explicit Non-Fit Items
+
+- Source-repo collection mappings don't fit MyBlog's current test inventory
+- Source-repo performance numbers not reused (not measured against MyBlog)
+- Fixture-only `GlobalUsings.cs` recommendation premature for current suite size
+- Automatic Playwright/Node setup **not** a MyBlog convention
+- Committed browser-spec projects, CI browser lanes, generic form/responsive sweeps **not** part of current repo
+- `tests/Integration.Tests/IntegrationTest1.cs` remains generic scaffold (pending team decision on AppHost smoke tests)
+
+#### Conventions Baked Into Repo
+
+- `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs` — uses domain-specific collection
+- `tests/Integration.Tests/Infrastructure/BlogPostIntegrationCollection.cs` — created as collection definition
+- `tests/Integration.Tests/xunit.runner.json` — establishes collection-level parallel rules
+- `tests/Integration.Tests/Integration.Tests.csproj` — verified configuration
+
+#### Follow-up
+
+1. Replace or delete `IntegrationTest1.cs` once team decides on AppHost smoke tests
+2. If browser-only regressions become common, open separate backlog for dedicated E2E project
+
+---
+
+### D. Secondary Skills Assessment (Boromir)
+
+**Status:** ✅ Merged to decisions  
+**Decision Type:** Secondary skill fit assessment  
+**Assets:** post-build-validation, static-config-pattern, microsoft-code-reference
+
+#### Summary
+
+Three secondary imported skills assessed against MyBlog's repository structure, build/test workflows, configuration practices, and .NET Aspire architecture.
+
+#### Assessment Results
+
+| Skill | Fit | Decision | Reason |
+|-------|-----|----------|--------|
+| **post-build-validation** | ❌ Poor | **DELETE** | Pattern designed for external game-world state validation (RCON block verification after structure placement). MyBlog has no remote operations, RCON commands, or external API validation. No scenario for graceful degradation on validation failure. Test failures **should** block build. |
+| **static-config-pattern** | 🟡 Marginal | **DELETE** | Backwards-compatible const→static property refactor. MyBlog already uses ASP.NET Core `IConfiguration` + Options pattern. Const fields (`health path`, `cache key`) are infrastructure internals, not legacy config debt. No current business case. |
+| **microsoft-code-reference** | ✅ Good | **RETAIN & CLARIFY** | Reference skill (tools + query patterns), not code pattern. Applicable during CI/CD troubleshooting, NuGet verification, Azure SDK method lookup, GitHub Actions pattern discovery. Needs rewrite to clarify scope for DevOps/NuGet/GitHub Actions scenarios. |
+
+#### MyBlog Context
+
+- **Build process:** `ci.yml` runs build, then three sequential test suites (Architecture, Unit, Integration)
+  - No external remote operations or out-of-band state verification
+  - All validation is in-process (xUnit assertions + TestContainers)
+  - Test failures **must** block the build
+
+- **Configuration approach:** MyBlog uses ASP.NET Core standard `IConfiguration` + Options pattern
+  - Health endpoint path is a const in ServiceDefaults (infrastructure internal)
+  - Cache key is a const in GetBlogPostsHandler (infrastructure internal)
+  - No consts intended to be runtime-configurable
+
+#### Disposition Timeline
+
+| Item | Action | Owner | Effort | Sprint |
+|------|--------|-------|--------|--------|
+| post-build-validation | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
+| static-config-pattern | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
+| microsoft-code-reference | Rewrite for DevOps/NuGet/GitHub Actions, retain | Boromir | 30 min | Sprint 2 (backlog) |
+
+#### Implementation Notes
+
+1. **Immediate (Sprint 2 backlog):** Update backlog item #10 to note microsoft-code-reference scope clarification
+2. **Sprint 2:** Queue rewrite of microsoft-code-reference for DevOps use (NuGet verification, Azure SDK, GitHub Actions)
+3. **Sprint 3:** Remove `post-build-validation/` and `static-config-pattern/` directories; add entries to deletion manifest
+
+---
+
+## Governance Update (Milestone 2)
+
+All meaningful skill retention decisions now include:
+1. Explicit ownership & routing rules
+2. Anchoring to real MyBlog code paths (no generic guidance)
+3. Called-out future work (backlog items, not current implementation)
+4. Clear non-fit items (what imported content does NOT apply)
+5. Follow-up guidance for Stack changes or new requirements

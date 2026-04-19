@@ -1,116 +1,68 @@
 ---
 name: webapp-testing
-description: Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.
+description: >
+  MyBlog guidance for running-browser verification of the Blazor UI after bUnit
+  coverage exists, especially for JS interop, Auth0 redirects, and AppHost smoke
+  checks.
 ---
 
-# Web Application Testing
+## MyBlog Web Application Testing
 
-This skill enables comprehensive testing and debugging of local web applications using Playwright automation.
+### Current repo fit
 
-## When to Use This Skill
+- Automated UI coverage currently lives in `tests/Unit.Tests` with bUnit:
+  `NavMenuTests`, `ProfileTests`, and `RazorSmokeTests`.
+- There is **no** Playwright or other browser-test project in the repo today.
+- Browser-level checks are still useful for runtime-only behavior such as:
+  - `src/Web/wwwroot/js/theme.js` interactions
+  - `/Account/Login` and `/Account/Logout` redirect wiring in `src/Web/Program.cs`
+  - AppHost smoke flows where MongoDB and Redis wiring matter
 
-Use this skill when you need to:
-- Test frontend functionality in a real browser
-- Verify UI behavior and interactions
-- Debug web application issues
-- Capture screenshots for documentation or debugging
-- Inspect browser console logs
-- Validate form submissions and user flows
-- Check responsive design across viewports
+### Retained MyBlog guidance
 
-## Prerequisites
+1. **bUnit first, browser second**
+   - Add or update automated coverage in `tests/Unit.Tests` before reaching for a
+     real browser.
+   - Use browser automation only when JS interop, navigation, console errors, or
+     full runtime behavior cannot be trusted from bUnit alone.
 
-- Node.js installed on the system
-- A locally running web application (or accessible URL)
-- Playwright will be installed automatically if not present
+2. **Run the app the same way contributors do**
+   - Prefer launching the app through `src/AppHost` so Aspire wires MongoDB,
+     Redis, and the Web project exactly as contributors see them locally.
+   - If the check is Web-only and infrastructure is irrelevant, `src/Web` is an
+     acceptable shortcut.
 
-## Core Capabilities
+3. **Treat browser artifacts as debugging aids**
+   - Screenshots, console logs, and network captures are for investigation.
+   - Do not commit those artifacts to the repo unless a task explicitly asks for
+     them.
 
-### 1. Browser Automation
-- Navigate to URLs
-- Click buttons and links
-- Fill form fields
-- Select dropdowns
-- Handle dialogs and alerts
+4. **Escalate repeated runtime gaps into real backlog work**
+   - If a browser-only regression keeps happening, open a follow-up for a future
+     dedicated E2E/AppHost test project instead of sneaking ad-hoc browser specs
+     into the current suite.
 
-### 2. Verification
-- Assert element presence
-- Verify text content
-- Check element visibility
-- Validate URLs
-- Test responsive behavior
+### Good MyBlog use cases
 
-### 3. Debugging
-- Capture screenshots
-- View console logs
-- Inspect network requests
-- Debug failed tests
+- Verify theme color and brightness persistence after touching `NavMenu.razor` or
+  `theme.js`.
+- Smoke-check authenticated versus anonymous navigation after auth or claim
+  changes.
+- Confirm login/logout redirect behavior against a locally running app.
+- Reproduce runtime issues before replacing or removing the generic
+  `IntegrationTest1.cs` scaffold.
 
-## Usage Examples
+### Explicit rejections
 
-### Example 1: Basic Navigation Test
-```javascript
-// Navigate to a page and verify title
-await page.goto('http://localhost:3000');
-const title = await page.title();
-console.log('Page title:', title);
-```
-
-### Example 2: Form Interaction
-```javascript
-// Fill out and submit a form
-await page.fill('#username', 'testuser');
-await page.fill('#password', 'password123');
-await page.click('button[type="submit"]');
-await page.waitForURL('**/dashboard');
-```
-
-### Example 3: Screenshot Capture
-```javascript
-// Capture a screenshot for debugging
-await page.screenshot({ path: 'debug.png', fullPage: true });
-```
-
-## Guidelines
-
-1. **Always verify the app is running** - Check that the local server is accessible before running tests
-2. **Use explicit waits** - Wait for elements or navigation to complete before interacting
-3. **Capture screenshots on failure** - Take screenshots to help debug issues
-4. **Clean up resources** - Always close the browser when done
-5. **Handle timeouts gracefully** - Set reasonable timeouts for slow operations
-6. **Test incrementally** - Start with simple interactions before complex flows
-7. **Use selectors wisely** - Prefer data-testid or role-based selectors over CSS classes
-
-## Common Patterns
-
-### Pattern: Wait for Element
-```javascript
-await page.waitForSelector('#element-id', { state: 'visible' });
-```
-
-### Pattern: Check if Element Exists
-```javascript
-const exists = await page.locator('#element-id').count() > 0;
-```
-
-### Pattern: Get Console Logs
-```javascript
-page.on('console', msg => console.log('Browser log:', msg.text()));
-```
-
-### Pattern: Handle Errors
-```javascript
-try {
-  await page.click('#button');
-} catch (error) {
-  await page.screenshot({ path: 'error.png' });
-  throw error;
-}
-```
-
-## Limitations
-
-- Requires Node.js environment
-- Cannot test native mobile apps (use React Native Testing Library instead)
-- May have issues with complex authentication flows
-- Some modern frameworks may require specific configuration
+- **Rejected:** Automatic Playwright or Node.js installation as a default repo
+  convention. MyBlog does not have a browser-test project to receive that tooling.
+- **Rejected:** Treating browser automation as a replacement for bUnit in
+  `tests/Unit.Tests`.
+- **Rejected:** Adding committed Playwright specs, `package.json`, or CI browser
+  jobs as part of this adaptation. That is future work only if the team approves a
+  dedicated browser-test lane.
+- **Rejected:** Carrying over generic form-flow or responsive-design checklists as
+  default guidance. MyBlog should add those only when a concrete feature needs
+  them.
+- **Rejected:** Treating the commented Aspire sample in
+  `tests/Integration.Tests/IntegrationTest1.cs` as canonical coverage.

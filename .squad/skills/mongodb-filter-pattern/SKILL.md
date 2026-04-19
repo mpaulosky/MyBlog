@@ -1,233 +1,225 @@
-# MongoDB Filter Pattern Skill
+---
+name: mongodb-filter-pattern
+confidence: medium
+description: >
+  MyBlog-specific pattern for extending read-side Mongo queries through
+  GetBlogPostsQuery, GetBlogPostsHandler, IBlogPostRepository, and
+  MongoDbBlogPostRepository using MongoDB.EntityFrameworkCore conventions.
+---
 
-## Overview
-Pattern for adding conditional filters to MongoDB repository queries using the `Builders<T>.Filter` API.
+## MongoDB Filter Pattern (MyBlog)
 
-## When to Use
-- Adding search/filter capabilities to existing paginated queries
-- Implementing case-insensitive text searches
-- Combining multiple optional filter conditions
-- Extending repository methods with new filter parameters
+### Why this exists
 
-## Pattern
+The imported filter skill assumed raw Mongo driver filters, paginated API
+endpoints, and repository methods that return `Result<T>`. MyBlog's current read
+path is different: `GetBlogPostsQuery` calls `GetBlogPostsHandler`, which reads
+through `IBlogPostRepository` / `MongoDbBlogPostRepository`, then caches DTOs in
+memory and Redis.
 
-### 1. Repository Interface
-Add optional parameters to the interface method:
+This skill defines the filter pattern that actually fits MyBlog.
+
+### Current list-query path
+
+| Layer | Canonical file | Owner | Current behavior |
+|---|---|---|---|
+| Query contract | `src/Web/Features/BlogPosts/List/GetBlogPostsQuery.cs` | Sam | Query has no filter properties yet. |
+| Handler | `src/Web/Features/BlogPosts/List/GetBlogPostsHandler.cs` | Sam | Uses a fixed cache key `blog:all`; maps domain entities to DTOs. |
+| Repository contract | `src/Domain/Interfaces/IBlogPostRepository.cs` | Sam | `GetAllAsync(CancellationToken)` returns domain entities directly. |
+| Repository implementation | `src/Web/Data/MongoDbBlogPostRepository.cs` | Sam | Uses EF Core LINQ over `BlogDbContext`, ordered by `CreatedAt` descending. |
+| Unit tests | `tests/Unit.Tests/Handlers/GetBlogPostsHandlerTests.cs` | Gimli | Verifies cache hit/miss behavior and repository calls. |
+| Integration tests | `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs` | Gimli | Verifies ordering, persistence, delete, and concurrency behavior against real Mongo. |
+
+### Use this skill when
+
+- adding search, author, publish-state, or date filters to blog post lists
+- extending future Mongo-backed read queries in the same repo style
+- updating cache-key composition for list queries
+- reviewing whether a new filter needs an index or integration coverage
+
+### MyBlog conventions
+
+1. **Query contract first.**
+   - Add nullable filter properties to the MediatR query record first.
+   - Keep property names aligned across query, handler, repository signature, and
+     tests.
+
+2. **Repositories return domain entities, not `Result<T>`.**
+   - Keep `Result` wrapping in handlers.
+   - Do not change repository return types just to match the old imported skill.
+
+3. **Use EF Core LINQ, not `Builders<T>.Filter`, for normal MyBlog queries.**
+   - `MongoDbBlogPostRepository` is built on `BlogDbContext`.
+   - Start with `AsNoTracking()`, then add conditional `Where(...)` clauses.
+
+4. **Cache keys must include filter state.**
+   - The current fixed key `blog:all` only fits the unfiltered list.
+   - When filters are added, build a normalized cache key from every parameter
+     that changes the result set.
+
+5. **Handler + repository + tests move together.**
+   - Sam updates query/handler/repository files.
+   - Gimli updates unit/integration tests.
+   - If UI query inputs are added, hand off to Legolas after the backend
+     contract is stable.
+
+### Recommended implementation shape
+
+#### 1. Extend the MediatR query
 
 ```csharp
-Task<Result<(IReadOnlyList<TDto> Items, long Total)>> GetAllAsync(
-    int page, 
-    int pageSize, 
+public sealed record GetBlogPostsQuery(
+    string? SearchTerm = null,
+    string? Author = null,
+    bool? IsPublished = null) : IRequest<Result<IReadOnlyList<BlogPostDto>>>;
+```
+
+Rules:
+
+- Keep filter properties nullable for optional behavior.
+- Normalize trimming in the handler before building cache keys or repository
+  arguments.
+
+#### 2. Extend the repository contract
+
+```csharp
+Task<IReadOnlyList<BlogPost>> GetAllAsync(
     string? searchTerm = null,
-    string? authorName = null,
-    CancellationToken cancellationToken = default);
+    string? author = null,
+    bool? isPublished = null,
+    CancellationToken ct = default);
 ```
 
-**Key principles:**
-- Interface defines the contract (update interface first)
-- Optional parameters use `= null` defaults
-- Document parameters with XML comments
+Rules:
 
-### 2. Repository Implementation
-Build filters conditionally using `Builders<T>.Filter`:
+- Add optional parameters to the interface before touching the implementation.
+- Keep the contract in `src/Domain/Interfaces` and the implementation in
+  `src/Web/Data`.
+
+#### 3. Apply conditional LINQ in the repository
 
 ```csharp
-var filterBuilder = Builders<TEntity>.Filter;
-var filters = new List<FilterDefinition<TEntity>>
-{
-    filterBuilder.Eq(x => x.Archived, false)  // Base filter(s)
-};
+await using var ctx = await contextFactory.CreateDbContextAsync(ct);
+var query = ctx.BlogPosts.AsNoTracking();
 
-// Add optional filters conditionally
 if (!string.IsNullOrWhiteSpace(searchTerm))
 {
-    var searchFilter = filterBuilder.Or(
-        filterBuilder.Regex(x => x.Title, new BsonRegularExpression(searchTerm, "i")),
-        filterBuilder.Regex(x => x.Description, new BsonRegularExpression(searchTerm, "i"))
-    );
-    filters.Add(searchFilter);
+    var term = searchTerm.Trim();
+    query = query.Where(p =>
+        p.Title.Contains(term) ||
+        p.Content.Contains(term) ||
+        p.Author.Contains(term));
 }
 
-if (!string.IsNullOrWhiteSpace(authorName))
+if (!string.IsNullOrWhiteSpace(author))
 {
-    filters.Add(filterBuilder.Regex(x => x.Author.Name, new BsonRegularExpression(authorName, "i")));
+    var normalizedAuthor = author.Trim();
+    query = query.Where(p => p.Author == normalizedAuthor);
 }
 
-// Combine all filters
-var filter = filterBuilder.And(filters);
-
-// Apply to query
-var total = await _collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-var entities = await _collection
-    .Find(filter)
-    .Skip((page - 1) * pageSize)
-    .Limit(pageSize)
-    .ToListAsync(cancellationToken);
-```
-
-**Key principles:**
-- Start with a list of base filters (always required)
-- Add optional filters conditionally using `if` statements
-- Use `BsonRegularExpression(pattern, "i")` for case-insensitive regex
-- Use `Filter.Or()` to search multiple fields
-- Use `Filter.And()` to combine all filters
-- Apply the combined filter to both count and find operations
-
-### 3. Query Validator
-Add validation rules for new optional parameters:
-
-```csharp
-RuleFor(x => x.SearchTerm)
-    .MaximumLength(200)
-    .When(x => !string.IsNullOrWhiteSpace(x.SearchTerm))
-    .WithMessage("Search term must not exceed 200 characters.");
-
-RuleFor(x => x.AuthorName)
-    .MaximumLength(200)
-    .When(x => !string.IsNullOrWhiteSpace(x.AuthorName))
-    .WithMessage("Author name must not exceed 200 characters.");
-```
-
-**Key principles:**
-- Use `.When()` for conditional validation (only when value is provided)
-- Set reasonable max lengths (200 chars is typical for search terms)
-
-### 4. Minimal API Endpoint
-Add query parameters to the endpoint:
-
-```csharp
-group.MapGet("", async (
-    int? page, 
-    int? pageSize, 
-    string? searchTerm, 
-    string? authorName, 
-    THandler handler) =>
+if (isPublished is not null)
 {
-    var query = new TQuery 
-    { 
-        Page = page ?? 1, 
-        PageSize = pageSize ?? 20,
-        SearchTerm = searchTerm,
-        AuthorName = authorName
-    };
-    var result = await handler.Handle(query);
-    return Results.Ok(result);
-})
-```
-
-**Key principles:**
-- Nullable parameters allow them to be optional in the query string
-- Pass parameters to query object
-- Handler receives the populated query
-
-### 5. HTTP Client
-Build query string with conditional parameters:
-
-```csharp
-var url = $"/api/v1/resource?page={page}&pageSize={pageSize}";
-if (!string.IsNullOrWhiteSpace(searchTerm))
-{
-    url += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
-}
-if (!string.IsNullOrWhiteSpace(authorName))
-{
-    url += $"&authorName={Uri.EscapeDataString(authorName)}";
+    query = query.Where(p => p.IsPublished == isPublished.Value);
 }
 
-var result = await _httpClient.GetFromJsonAsync<TResponse>(url, cancellationToken);
+return await query
+    .OrderByDescending(p => p.CreatedAt)
+    .ToListAsync(ct);
 ```
 
-**Key principles:**
-- Build base URL with required parameters
-- Conditionally append optional parameters
-- Always use `Uri.EscapeDataString()` to encode parameter values
-- Only include parameters that have values
+Rules:
 
-### 6. Test Mocks
-Update test mocks to match new interface signature:
+- Preserve `AsNoTracking()` for list reads.
+- Keep the sort explicit and stable.
+- If case-insensitive text behavior is required, verify provider translation with
+  an integration test before merging.
+- Do not drop to raw regex/driver code unless EF translation proves inadequate.
+
+#### 4. Expand the cache key in the handler
 
 ```csharp
-_repository.GetAllAsync(1, 20, null, null, Arg.Any<CancellationToken>())
-    .Returns(((IReadOnlyList<TDto>)items, total));
+private static string BuildCacheKey(GetBlogPostsQuery request)
+{
+    var search = request.SearchTerm?.Trim() ?? string.Empty;
+    var author = request.Author?.Trim() ?? string.Empty;
+    var published = request.IsPublished?.ToString() ?? "all";
+    return $"blog:list:{search}:{author}:{published}";
+}
 ```
 
-**Key principles:**
-- Pass `null` for new optional parameters in existing tests
-- This keeps existing tests focused on their original scenarios
-- Add new tests specifically for filter scenarios (Gimli's responsibility)
+Rules:
 
-## MongoDB Regex Options
-Common regex flags for `BsonRegularExpression`:
-- `"i"` - Case-insensitive matching
-- `"m"` - Multi-line mode
-- `"s"` - Dot matches newlines
-- `"x"` - Extended format (ignore whitespace)
+- Use the same normalized values for cache key generation and repository calls.
+- Review cache invalidation in create/edit/delete handlers when introducing new
+  list variants.
 
-Combine flags: `"im"` for case-insensitive multi-line
+### Testing rules
 
-## Common Filter Patterns
+#### Unit tests (Gimli)
 
-### Exact match
-```csharp
-filterBuilder.Eq(x => x.Status, "Active")
-```
+Update `GetBlogPostsHandlerTests` to cover:
 
-### Text search (case-insensitive)
-```csharp
-filterBuilder.Regex(x => x.Title, new BsonRegularExpression(searchTerm, "i"))
-```
+- filtered cache key generation
+- cache miss path with repository arguments
+- cache hit path per filtered key
 
-### Multi-field search (OR)
-```csharp
-filterBuilder.Or(
-    filterBuilder.Regex(x => x.Title, new BsonRegularExpression(term, "i")),
-    filterBuilder.Regex(x => x.Description, new BsonRegularExpression(term, "i"))
-)
-```
+#### Integration tests (Gimli)
 
-### Nested field search
-```csharp
-filterBuilder.Regex(x => x.Author.Name, new BsonRegularExpression(name, "i"))
-```
+Add/extend `MongoDbBlogPostRepositoryTests` to prove:
 
-### Date range
-```csharp
-filterBuilder.And(
-    filterBuilder.Gte(x => x.CreatedAt, startDate),
-    filterBuilder.Lte(x => x.CreatedAt, endDate)
-)
-```
+- filter translation against real Mongo
+- ordering still works with filters applied
+- edge cases such as empty filters and combined filters
 
-### Array contains
-```csharp
-filterBuilder.AnyEq(x => x.Tags, tagValue)
-```
+### Validation guidance
 
-## Gotchas
-1. **Always update interface first** - The interface is the contract; implementations conform to it
-2. **Update ALL implementations** - Repository implementations and test mocks must match the interface
-3. **Use null for optional params in tests** - Existing tests should pass `null` for new parameters
-4. **Escape query strings** - Always use `Uri.EscapeDataString()` when building URLs
-5. **Case-insensitive by default** - Use `"i"` flag for user-facing searches
-6. **Combine with And** - When you have multiple filters, use `Filter.And(filters)` not `&` operator
+Current MyBlog state:
 
-## Files Modified (typical)
-1. `src/Shared/Validators/[Query].cs` - Add filter properties
-2. `src/Shared/Validators/[Query]Validator.cs` - Add validation rules
-3. `src/Api/Data/I[Resource]Repository.cs` - Update interface signature
-4. `src/Api/Data/[Resource]Repository.cs` - Implement filter logic
-5. `src/Api/Handlers/[Resource]/List[Resource]Handler.cs` - Pass filters to repository
-6. `src/Api/Handlers/[Resource]/[Resource]Endpoints.cs` - Add query parameters
-7. `src/Web/Services/[Resource]ApiClient.cs` - Build query string
-8. `tests/Unit.Tests/Handlers/[Resource]/List[Resource]HandlerTests.cs` - Update mocks
+- `Web.csproj` does **not** currently reference FluentValidation.
+- Blog post validation today is mainly domain guard clauses plus handler error
+  wrapping.
 
-## Related Patterns
-- **Result<T> Pattern**: Repository methods return `Result<T>` for error handling
-- **CQRS**: Queries are separate from commands
-- **Pagination**: Filters apply before skip/limit operations
-- **Validation**: FluentValidation rules for all query parameters
+Rule:
 
-## See Also
-- Sam's history: `.squad/agents/sam/history.md` (Search/Filter implementation section)
-- Team decision: `.squad/decisions/inbox/sam-search-filter.md`
-- MongoDB Filter Builders: https://www.mongodb.com/docs/drivers/csharp/current/fundamentals/builders/
+- Do not invent generic validator files just because the imported skill used
+  them.
+- If FluentValidation is introduced later, colocate validators with the feature
+  and keep the property names identical to the MediatR query.
+
+### Explicit non-fit items for later deletion review
+
+The imported skill included several patterns that are **not current MyBlog
+conventions**:
+
+- **`Builders<T>.Filter` + `BsonRegularExpression` examples** — MyBlog uses the EF
+  Core adapter first.
+- **Minimal API endpoint examples** — current blog list flow is Blazor + MediatR,
+  not `IEndpointRouteBuilder` list endpoints.
+- **HTTP client query-string builders** — MyBlog pages currently call handlers
+  directly rather than a separate REST client.
+- **Repository methods returning `Result<T>`** — current repositories return
+  domain entities and leave result wrapping to handlers.
+- **Pagination contract examples** — current blog list query is unpaged; if
+  paging is introduced later, document it as a separate repo convention.
+
+If MyBlog later exposes REST endpoints for blog lists, revisit this skill and
+promote only the pieces that map to the new code path.
+
+### Files that usually change together
+
+1. `src/Web/Features/BlogPosts/List/GetBlogPostsQuery.cs`
+2. `src/Web/Features/BlogPosts/List/GetBlogPostsHandler.cs`
+3. `src/Domain/Interfaces/IBlogPostRepository.cs`
+4. `src/Web/Data/MongoDbBlogPostRepository.cs`
+5. `tests/Unit.Tests/Handlers/GetBlogPostsHandlerTests.cs`
+6. `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs`
+
+### References
+
+- `src/Web/Features/BlogPosts/List/GetBlogPostsQuery.cs`
+- `src/Web/Features/BlogPosts/List/GetBlogPostsHandler.cs`
+- `src/Domain/Interfaces/IBlogPostRepository.cs`
+- `src/Web/Data/MongoDbBlogPostRepository.cs`
+- `tests/Unit.Tests/Handlers/GetBlogPostsHandlerTests.cs`
+- `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs`
+- [MongoDB EF Core Provider](https://www.mongodb.com/docs/entity-framework/current/)

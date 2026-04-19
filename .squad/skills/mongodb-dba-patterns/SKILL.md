@@ -1,201 +1,210 @@
-# MongoDB DBA Patterns Skill
+---
+name: mongodb-dba-patterns
+confidence: medium
+description: >
+  MyBlog-specific MongoDB operations guidance for Aspire-managed local runtime,
+  MongoDB.EntityFrameworkCore mappings, repository ownership, and shared-environment
+  DBA work that still needs explicit review before production use.
+---
 
-## Overview
+## MongoDB DBA Patterns (MyBlog)
 
-Expert DBA administration patterns for MongoDB 7.x+ as used in IssueManager. Covers cluster management,
-database/collection operations, backup/restore, performance tuning (indexes, profiling), security
-(authentication, roles, TLS), and upgrade guidance. Applies to the `MongoDB.EntityFrameworkCore` driver
-stack and WiredTiger storage engine.
+### Why this exists
 
-## When to Use
+MyBlog runs MongoDB through .NET Aspire and `MongoDB.EntityFrameworkCore`, not
+through hand-written driver repositories. This skill narrows MongoDB guidance to
+real MyBlog code paths so Sam, Gimli, Boromir, and Frodo know which changes are
+live conventions versus future-only operator notes.
 
-- Setting up or reconfiguring a MongoDB replica set or standalone instance for local dev or production
-- Creating/dropping databases or collections for IssueManager entities (Issues, Categories, Statuses, Comments)
-- Running or scheduling backups with `mongodump` / `mongorestore`
-- Diagnosing slow queries, missing indexes, or high memory usage
-- Configuring SCRAM-SHA-256 authentication, role-based access control, or TLS/mTLS
-- Planning or executing a MongoDB version upgrade (e.g., 6.x → 7.x)
-- Evaluating deprecated or removed features and migrating to modern alternatives
+### Current MyBlog MongoDB map
 
-## Confidence
+| Area | Canonical files | Owner | Current rule |
+|---|---|---|---|
+| Local runtime wiring | `src/AppHost/AppHost.cs`, `src/Web/Program.cs` | Boromir + Sam | AppHost defines `mongodb` and database `myblog`; Web consumes it through `AddMongoDBClient("myblog")`. |
+| EF Core mapping | `src/Web/Data/BlogDbContext.cs` | Sam | `BlogPost` maps to collection `blogposts`; `Version` is the optimistic concurrency token. |
+| Repository layer | `src/Domain/Interfaces/IBlogPostRepository.cs`, `src/Web/Data/MongoDbBlogPostRepository.cs` | Sam | Repositories return domain entities; handlers wrap results in `Result` / `Result<T>`. |
+| Read-side caching | `src/Web/Features/BlogPosts/List/GetBlogPostsHandler.cs`, `src/Web/Features/BlogPosts/Edit/EditBlogPostHandler.cs` | Sam | Mongo-backed reads are cached at handler level, not in the repository. |
+| Integration proof | `tests/Integration.Tests/Infrastructure/MongoDbFixture.cs`, `tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs` | Gimli | Testcontainers-backed Mongo is the canonical verification path for persistence behavior. |
+| Secrets / external hardening | runtime config + deployment pipeline | Frodo + Boromir | User Secrets / secret stores own credentials; never commit connection strings with secrets. |
 
-`low` — first time this skill is being formally established for the project.
+### Use this skill when
 
-## Key Patterns
+- changing Mongo wiring in Aspire AppHost or `Program.cs`
+- changing collection mapping, concurrency tokens, or document shape
+- diagnosing slow repository reads or missing index support
+- planning backups, restores, or Mongo version upgrades for a shared environment
+- tightening Mongo authentication, TLS, or least-privilege access
+- investigating Mongo-backed integration test failures
 
-### Cluster and Replica Set Management
+### MyBlog operational rules
+
+1. **Use Aspire for local Mongo first.**
+   - Start from `src/AppHost` with `dotnet run`.
+   - Do not hard-code a local Mongo connection string in `appsettings.json` just
+     to bypass Aspire.
+
+2. **Change schema shape in code, not in ad hoc shell sessions.**
+   - Collection name, concurrency, and entity shape live in
+     `BlogDbContext` + `BlogPost`.
+   - If a Mongo admin step is required, document it beside the code change and
+     hand it to Boromir for environment rollout.
+
+3. **Repository work stays EF Core-first.**
+   - `MongoDbBlogPostRepository` uses short-lived contexts from
+     `IDbContextFactory<BlogDbContext>`.
+   - Do not introduce raw `IMongoCollection<T>` usage unless the EF provider
+     cannot express the query and Sam explicitly signs off.
+
+4. **Handler caching remains outside the repository.**
+   - Query caches belong in MediatR handlers.
+   - Any Mongo change that affects list/detail reads must also review cache keys
+     and invalidation in the handler layer.
+
+5. **Integration tests are the contract check.**
+   - Mongo persistence, ordering, and concurrency changes require matching
+     updates in `Integration.Tests`.
+   - Gimli owns the test side; Sam owns runtime implementation.
+
+### Local development and inspection
+
+Preferred tooling:
+
+- **MongoDB for VS Code** or **MongoDB Compass** for collection inspection,
+  indexes, and explain plans
+- **Aspire dashboard** for connection/runtime visibility
+- **`mongosh`** only when GUI tooling cannot answer the question
+
+Example inspection flow for MyBlog:
 
 ```bash
-# Initiate a single-node replica set (required for transactions / EF Core change tracking)
-mongosh --eval 'rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "localhost:27017" }] })'
-
-# Check replica set status
-mongosh --eval 'rs.status()'
-
-# Add a secondary member
-mongosh --eval 'rs.add("host2:27017")'
+cd src/AppHost
+dotnet run
 ```
 
-**Key principles:**
-- IssueManager uses `MongoDB.EntityFrameworkCore`, which requires a replica set for multi-document transactions
-- Always run `rs.status()` after topology changes before starting the application
-- Use Aspire's MongoDB resource for local development; configure replica set in `AppHost`
+Then connect with the connection string surfaced by Aspire and inspect the live
+`myblog.blogposts` collection. For test failures, use the connection string from
+`MongoDbFixture` and the per-test database name created in the test.
 
-### Database and Collection Creation
+### Collection and mapping conventions
+
+Current canonical mapping:
 
 ```csharp
-// EF Core / MongoDB.EntityFrameworkCore — collections are created implicitly on first write.
-// To create them explicitly (e.g., with schema validation), use the MongoDB C# driver:
-var database = client.GetDatabase("IssueManagerDb");
-await database.CreateCollectionAsync("Issues", new CreateCollectionOptions
+protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-    Validator = new BsonDocument("$jsonSchema", /* schema */),
-    ValidationLevel = DocumentValidationLevel.Strict
-});
+    var entity = modelBuilder.Entity<BlogPost>();
+    entity.ToCollection("blogposts");
+    entity.HasKey(p => p.Id);
+    entity.Property(p => p.Version).IsConcurrencyToken();
+}
 ```
 
-**Key principles:**
-- Prefer letting EF Core create collections on first use during development
-- Add schema validators in staging/production to enforce document shape
-- Collection names in IssueManager: `Issues`, `Categories`, `Statuses`, `Comments`
+Rules:
 
-### Backup and Restore
+- Keep collection names lowercase and stable once data exists.
+- Treat `Version` concurrency behavior as part of the storage contract.
+- If document shape changes, update the entity, mapping, repository usage, and
+  integration tests in the same change.
+
+### Backup and restore guidance
+
+MyBlog has **no automated backup workflow in-repo today**. Local Aspire and
+Testcontainers databases are disposable; backup guidance matters only for a
+shared or production Mongo environment.
+
+If a shared environment is introduced, Boromir owns automation and Sam verifies
+collection-level restore assumptions.
+
+Example commands for a future shared environment:
 
 ```bash
-# Full database backup
-mongodump --uri="mongodb://localhost:27017" --db=IssueManagerDb --out=/backup/$(date +%F)
+mongodump --uri="<shared-mongo-connection-string>" \
+  --db=myblog \
+  --out=./backups/mongo/2026-04-19
 
-# Restore from backup
-mongorestore --uri="mongodb://localhost:27017" --db=IssueManagerDb /backup/2026-03-03/IssueManagerDb
-
-# Single-collection backup
-mongodump --uri="mongodb://localhost:27017" --db=IssueManagerDb --collection=Issues --out=/backup/issues
+mongorestore --drop \
+  --uri="<staging-mongo-connection-string>" \
+  --db=myblog \
+  ./backups/mongo/2026-04-19/myblog
 ```
 
-**Key principles:**
-- Schedule `mongodump` via cron; store backups off-host (Azure Blob, S3)
-- Test restores on a non-production instance before relying on backups
-- For Atlas clusters, use Atlas Backup (continuous) instead of `mongodump`
+Rules:
 
-### Performance Tuning
+- Never treat disposable local/Testcontainers data as a backup source.
+- Always rehearse restore on a non-production target before calling a backup
+  strategy complete.
+- Keep backup credentials out of scripts committed to the repo.
+
+### Performance and index review
+
+Current read hotspot:
+
+- `MongoDbBlogPostRepository.GetAllAsync()` sorts by `CreatedAt` descending.
+- `GetBlogPostsHandler` caches the DTO list in memory + Redis.
+
+MyBlog rules:
+
+- Any new filter or alternate sort added to the repository triggers an index
+  review for `blogposts`.
+- Sam proposes index shape; Gimli verifies the query path with integration tests;
+  Boromir applies/shared-environment rollout when needed.
+- Use Compass / VS Code explain plans before adding driver-only code.
+
+Recommended current review candidate if the list grows materially:
 
 ```javascript
-// Create a compound index to support paginated list queries
-db.Issues.createIndex({ "Author.Name": 1, "CreatedAt": -1 }, { name: "idx_author_created" })
-
-// Partial index for non-archived issues (mirrors the Archived filter in IssueRepository)
-db.Issues.createIndex({ "CreatedAt": -1 }, { partialFilterExpression: { "Archived": false }, name: "idx_active_created" })
-
-// Identify slow operations (threshold: 100ms)
-db.setProfilingLevel(1, { slowms: 100 })
-db.system.profile.find().sort({ ts: -1 }).limit(10).pretty()
-
-// Explain a query
-db.Issues.find({ "Archived": false }).sort({ "CreatedAt": -1 }).explain("executionStats")
+db.blogposts.createIndex({ CreatedAt: -1 }, { name: "idx_blogposts_created_desc" })
 ```
 
-**Key principles:**
-- Every repository filter field should have a supporting index
-- Use partial indexes for the `Archived: false` base filter — dramatically reduces index size
-- Run `explain("executionStats")` on any query with `COLLSCAN` stage and add an index
-- Disable profiling in production unless actively investigating; it adds overhead
+This is a **candidate**, not a declared current production index.
 
-### Security
+### Security and secret handling
 
-```javascript
-// Create application user with least-privilege role
-use IssueManagerDb
-db.createUser({
-  user: "issuemanager_app",
-  pwd: passwordPrompt(),   // avoid plain-text passwords in scripts
-  roles: [{ role: "readWrite", db: "IssueManagerDb" }]
-})
+- Local credentials belong in User Secrets or Aspire-managed secrets, never in
+  committed `appsettings*.json` values with real secrets.
+- Shared-environment Mongo should use SCRAM auth and TLS.
+- Frodo reviews least-privilege requirements before any non-local Mongo rollout.
+- Do not log raw connection strings, passwords, or certificates.
 
-// Create read-only reporting user
-db.createUser({
-  user: "issuemanager_readonly",
-  pwd: passwordPrompt(),
-  roles: [{ role: "read", db: "IssueManagerDb" }]
-})
-```
+### Package and upgrade guidance
 
-**Key principles:**
-- Use SCRAM-SHA-256 (default in MongoDB 4.0+); never use SCRAM-SHA-1 for new installations
-- Store the connection string with credentials in User Secrets (`dotnet user-secrets`) or Azure Key Vault — never in `appsettings.json`
-- Enable TLS on all non-localhost connections; set `tls=true` in the connection URI
-- Apply the principle of least privilege: the app user should have `readWrite` only on `IssueManagerDb`
-- Enable MongoDB auditing for production clusters to track admin operations
+MyBlog pins Mongo packages directly in `src/Web/Web.csproj` today:
 
-### Upgrades and Compatibility
+- `Aspire.MongoDB.Driver`
+- `MongoDB.EntityFrameworkCore`
 
-```bash
-# Check current feature compatibility version before upgrading
-mongosh --eval 'db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 })'
+Upgrade rules:
 
-# Set FCV to current major version (run after upgrading binaries)
-mongosh --eval 'db.adminCommand({ setFeatureCompatibilityVersion: "7.0", confirm: true })'
-```
+1. Upgrade one major MongoDB server version at a time.
+2. Check the EF Core provider release notes before bumping package versions.
+3. Re-run repository integration tests, especially ordering and concurrency.
+4. Treat provider upgrades as Sam-owned code work plus Boromir-owned environment
+   coordination.
 
-**Key principles:**
-- Always upgrade one major version at a time (e.g., 6.0 → 7.0, not 5.0 → 7.0)
-- Set FCV to current version before upgrading to next
-- Verify application compatibility with `MongoDB.Driver` and `MongoDB.EntityFrameworkCore` release notes
+### Explicit non-fit items for later deletion review
 
-## Tools
+The imported skill carried guidance that is not part of normal MyBlog flow yet:
 
-| Tool | Purpose |
-|------|---------|
-| **MongoDB Compass** | GUI for schema inspection, index management, query explain plans, aggregation builder |
-| **VS Code MongoDB Extension** (MongoDB for VS Code) | Run queries, browse collections, manage connections directly from VS Code |
-| **mongodump / mongorestore** | CLI backup and restore utilities |
-| **mongosh** | Modern MongoDB shell for administrative commands |
-| **MongoDB Atlas** | Managed cloud clusters; use Atlas Backup instead of `mongodump` on Atlas |
+- **Manual replica-set initiation steps** — local MyBlog uses Aspire and
+  Testcontainers; we do not manually bootstrap replica sets in normal work.
+- **IssueManager collection examples** — not part of this repo and removed from
+  the retained guidance.
+- **Atlas-only cluster administration detail** — useful only if MyBlog adopts a
+  managed shared Mongo deployment later.
+- **Always-on profiling guidance** — premature for the current small training
+  app; only use profiling during a targeted investigation.
 
-**Preferred workflow:** Use VS Code extension or Compass for day-to-day exploration; resort to shell commands
-only when automation or scripting is required.
+If MyBlog stays Aspire-local and test-container-only, revisit whether the
+shared-environment backup/upgrade sections should be trimmed further in
+Milestone 3.
 
-## MongoDB Version Notes (7.x+)
+### References
 
-| Deprecated / Removed | Modern Alternative |
-|----------------------|--------------------|
-| `db.collection.ensureIndex()` | `db.collection.createIndex()` / `createIndexes` |
-| MMAPv1 storage engine | WiredTiger (default since 3.2; MMAPv1 removed in 4.2) |
-| `db.eval()` | Aggregation pipeline or application-side logic |
-| `geoHaystack` index type | `2dsphere` index |
-| `snapshot` query option | Snapshot read concern / sessions |
-| `$where` with JavaScript | `$expr` with aggregation expressions |
-
-**MongoDB.EntityFrameworkCore compatibility:**
-- Requires MongoDB 5.0+ (replica set or Atlas)
-- MongoDB 7.0 is the recommended minimum for IssueManager production deployments
-- Check [MongoDB EF Core Provider releases](https://github.com/mongodb/mongo-efcore-provider/releases) for driver version matrix
-
-## Gotchas
-
-1. **Replica set required** — `MongoDB.EntityFrameworkCore` needs a replica set for multi-document
-   transactions. A standalone `mongod` will throw `NotSupportedException` at runtime.
-2. **FCV must match before upgrade** — Skipping `setFeatureCompatibilityVersion` causes the new binary
-   to fail to start.
-3. **`mongodump` is not a point-in-time backup** — On a replica set under write load, use `--oplog`
-   flag to capture a consistent snapshot.
-4. **Index builds block in foreground** — In MongoDB 4.2+ index builds always use the optimized
-   background approach, but on large collections they still hold collection-level intent locks; schedule
-   during low-traffic windows.
-5. **Connection string credentials** — Never commit credentials to source control.
-   Use `dotnet user-secrets` locally and Azure Key Vault in production.
-6. **Driver version pinning** — `MongoDB.Driver` and `MongoDB.EntityFrameworkCore` must be compatible
-   versions. Check `Directory.Packages.props` before upgrading either package.
-7. **`createdAt` field timezone** — MongoDB stores dates as UTC. Ensure `DateTime` values set in C#
-   are `DateTimeKind.Utc` before inserting to avoid timezone drift issues.
-
-## References
-
-- [MongoDB 7.0 Release Notes](https://www.mongodb.com/docs/manual/release-notes/7.0/)
-- [MongoDB C# Driver Documentation](https://www.mongodb.com/docs/drivers/csharp/current/)
+- `src/AppHost/AppHost.cs`
+- `src/Web/Program.cs`
+- `src/Web/Data/BlogDbContext.cs`
+- `src/Web/Data/MongoDbBlogPostRepository.cs`
+- `tests/Integration.Tests/Infrastructure/MongoDbFixture.cs`
 - [MongoDB EF Core Provider](https://www.mongodb.com/docs/entity-framework/current/)
-- [Index Strategies](https://www.mongodb.com/docs/manual/applications/indexes/)
-- [Role-Based Access Control](https://www.mongodb.com/docs/manual/core/authorization/)
-- [mongodump / mongorestore](https://www.mongodb.com/docs/database-tools/mongodump/)
-- [Replica Set Administration](https://www.mongodb.com/docs/manual/administration/replica-set-maintenance/)
-- [Security Checklist](https://www.mongodb.com/docs/manual/administration/security-checklist/)
 - [MongoDB for VS Code](https://www.mongodb.com/products/tools/vs-code)
+- [mongodump / mongorestore](https://www.mongodb.com/docs/database-tools/mongodump/)
