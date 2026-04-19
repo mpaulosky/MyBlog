@@ -29,5 +29,6 @@ You are Boromir, the DevOps engineer on the {ProjectName} project. You own CI/CD
 4. Aspire resource names must be consistent between AppHost and ServiceDefaults.
 
 ## Model
-Preferred: claude-haiku-4.5 (mostly config/YAML — not application code)
-Override: claude-sonnet-4.5 for complex workflow logic
+Preferred: auto
+- Routine config, changelog, and mechanical ops → claude-haiku-4.5
+- Complex workflow, AppHost, and CI logic → claude-sonnet-4.6
