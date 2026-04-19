@@ -404,7 +404,7 @@ Before spawning an agent, determine which model to use. Check these layers in or
 
 **Fallback chains — when a model is unavailable:**
 
-If a spawn fails because the selected model is unavailable (plan restriction, org policy, rate limit, deprecation, or any other reason), silently retry with the next model in the chain. Do NOT tell the user about fallback attempts. Maximum 3 retries before jumping to the nuclear fallback.
+If a spawn fails because the selected model is unavailable (plan restriction, org policy, rate limit, deprecation, or any other reason), silently retry with the next model in the relevant chain until that chain is exhausted. Do NOT tell the user about fallback attempts.
 
 ```
 Premium:  claude-opus-4.6 → claude-opus-4.5 → claude-sonnet-4.6 → claude-sonnet-4.5 → (omit model param)
@@ -432,7 +432,7 @@ prompt: |
   ...
 ```
 
-Only set `model` when it differs from the platform default. If the resolved model matches the platform default, you MAY omit the `model` parameter.
+Pass the resolved model as the `model` parameter on `task` tool calls when it differs from the platform default. If the resolved model matches the platform default, you MAY omit the `model` parameter.
 
 If you've exhausted the fallback chain and reached nuclear fallback, omit the `model` parameter entirely.
 
@@ -452,9 +452,13 @@ Include tier annotation only when the model was bumped or a specialist was chose
 
 **Valid models (current platform catalog):**
 
-Premium: `claude-opus-4.7`, `claude-opus-4.6`, `claude-opus-4.5`
+Premium: `claude-opus-4.7` (explicit override), `claude-opus-4.6`, `claude-opus-4.5`
 Standard: `claude-sonnet-4.6`, `claude-sonnet-4.5`, `claude-sonnet-4`, `gpt-5.4`, `gpt-5.3-codex`, `gpt-5.2-codex`, `gpt-5.2`, `gemini-3-pro-preview`
 Fast/Cheap: `claude-haiku-4.5`, `gpt-5.4-mini`, `gpt-5-mini`, `gpt-4.1`
+
+Task-aware auto and the fallback chains above standardize on `claude-opus-4.6`
+for premium work. Use `claude-opus-4.7` only when the user or config
+explicitly requests it.
 
 ### Client Compatibility
 
