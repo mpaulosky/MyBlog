@@ -24,3 +24,13 @@
 - Keep docs accurate and scoped to what project actually is
 - Never add features/tech that don't exist in codebase
 - Links point to real repo (mpaulosky/MyBlog), not template repos
+
+## 2026-04-19 — CONTRIBUTING.md Pre-Push & PR Sections (Skills Review)
+
+As part of DevOps skills/playbooks review, Pippin assigned to update CONTRIBUTING.md with pre-push validation gates and PR review process.
+
+**Action:** Add two new sections to CONTRIBUTING.md (1h) — see Frodo's history for details.
+
+**Collaboration:** Pippin + Frodo (CONTRIBUTING.md co-owners).
+
+**Timeline:** Week 1 (1h estimated).

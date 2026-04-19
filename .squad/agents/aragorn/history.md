@@ -68,3 +68,19 @@ Successfully implemented standardized copyright headers across the entire MyBlog
 **PR created:** https://github.com/mpaulosky/MyBlog/pull/7
 
 **Decision record:** `.squad/decisions/inbox/aragorn-copyright-headers.md`
+
+## 2026-04-19 — Skills & Playbooks Adoption Review
+
+Reviewed 19 imported skills and 3 playbooks from architecture perspective. Findings: 9 directly useful, 5 needing adaptation, 5 low-value.
+
+**Top 3 Adoptions:**
+1. Pre-Push Test Gate + Build Repair — ready to enforce immediately
+2. Testcontainers Shared Fixture — reduce integration test startup 46s → 2s
+3. MongoDB DBA Patterns — formalize governance, indexing, query standards
+
+**Key Decisions:**
+- Audit pre-push hook (30min) — confirm 4 gates active
+- Finalize release playbook binding with Boromir (3h) — MyBlog-specific variant
+- Route MongoDB work to Gimli/Sam with filter-pattern injection
+
+**Outcome:** Decision merged to decisions.md (section 6). Ready for Phase 1 implementation (immediate).

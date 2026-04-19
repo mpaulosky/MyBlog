@@ -145,3 +145,15 @@ Remove ALL test code related to Weather and Counter from the test projects. Thes
    - Pull latest changes to avoid duplication
    - Review what's been done already (via `git log`, `git show`)
    - Add complementary work if needed, or verify and open PR if complete
+
+## 2026-04-19 — Testcontainers Adoption (Skills Review)
+
+As part of squad skills/playbooks review, testcontainers-shared-fixture pattern identified as highest-ROI optimization for integration tests.
+
+**Scope:** Reduce startup time from ~46s (per-class) to ~2s (shared containers) via MongoDB shared fixture + xunit collection parallelization.
+
+**Next Steps:** Map to MyBlog collections (BlogPosts, Authors, Comments, Tags, Categories); configure `xunit.runner.json` with `parallelizeAssembly: false` (collection-level only).
+
+**Timeline:** Sprint 7 (2h estimated).
+
+**Owner:** Gimli (Testing) — routed with `testcontainers-shared-fixture` skill.

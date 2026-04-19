@@ -341,3 +341,25 @@ When a feature branch is merged via PR and GitHub auto-deletes the remote, local
 
 **Key insight:**
 The same ruleset that blocked PR #13 also blocks PR #14 — this is consistent behavior. Documentation is valuable for team reference; owner action required to unblock.
+
+## 2026-04-19 — DevOps Skills & Playbooks Review
+
+Reviewed squad skills/playbooks from DevOps perspective. Identified 5 high-priority gaps in automation, branch validation, and PR gating.
+
+**Week 1 Actions (4.5h):**
+1. Auto-install pre-push hook via post-checkout (1h)
+2. Add Docker check to Gate 0.5 (1h)
+3. Enforce squad branch regex in Gate 0 (1h)
+4. Update CONTRIBUTING.md with pre-push section (1h)
+5. Link build-repair prompt (30min)
+
+**Week 2–3 Actions (8h):**
+1. Create PR gate automation workflow (3h)
+2. Add pre-commit merged-PR guard (1h)
+3. Configure GitHub branch protection rules (1h)
+4. Create lightweight MyBlog release playbook with Aragorn (2h)
+5. Assign or automate Ralph (Work Monitor) role (1h)
+
+**Key Gap Closed:** Broken code reaching CI — pre-push hooks catch 90% locally before CI.
+
+**Outcome:** Decision merged to decisions.md (section 7). High-priority roadmap ready for queue.
