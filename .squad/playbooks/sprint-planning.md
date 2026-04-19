@@ -93,6 +93,16 @@ Todo ID: {todo-id}"
 **Issue title convention:** `[Sprint N] {Verb} {Noun}`
 (e.g., `[Sprint 1] Add BlogPost entity and repository`)
 
+**Mandatory format — every issue must satisfy both:**
+
+| Field | Requirement |
+|-------|-------------|
+| Title | Must start with `[Sprint N]` prefix |
+| Milestone | Must be set to `Sprint N: {Theme}` before any branch is created |
+
+> **Hard rule:** An issue without a milestone or without the `[Sprint N]` prefix in its
+> title is incomplete. No branch or code may reference it until both fields are set.
+
 After creating each issue, **Aragorn immediately triages** it:
 - Replace `squad` label with `squad:{member}` (e.g., `squad:sam`)
 - This triggers normal issue routing for that member
@@ -292,22 +302,31 @@ Before any agent writes, modifies, or commits code, a GitHub issue **must** exis
 
 ```
 1. Does a GitHub issue exist for this work?
-   YES → confirm it is assigned to the correct milestone + Project #4, then proceed to Step 1
+   YES → does the issue have:
+         a) a milestone set to "Sprint N: {Theme}"?
+         b) a title starting with "[Sprint N]"?
+         If either is missing → fix it now before touching any file.
+         Then proceed to Step 1.
    NO  → CREATE the issue now before touching any file
-         → Assign to milestone, add to Project #4
+         → Title MUST start with "[Sprint N]"
+         → Milestone MUST be set to "Sprint N: {Theme}"
+         → Add to Project #4
          → Create squad/{issue}-{slug} branch
          → THEN and only then begin writing code
 ```
 
-If you skip this gate and write code without an issue, you have violated the squad's process.
-The work must be stashed, the issue created retroactively, a proper branch checked out, and
-the stash re-applied before committing. This costs time — follow the gate.
+If you skip this gate and write code without an issue, or create an issue without the
+sprint prefix and milestone, you have violated the squad's process. The work must be
+stashed, the issue corrected, a proper branch checked out, and the stash re-applied
+before committing. This costs time — follow the gate.
 
 ---
 
 ## Anti-Patterns
 
 - ❌ **Writing any code before a GitHub issue exists** — always create the issue first
+- ❌ **Creating an issue without setting its milestone** — every issue must be assigned to `Sprint N: {Theme}` before any branch is created
+- ❌ **Creating an issue whose title does not start with `[Sprint N]`** — the sprint prefix is mandatory; bare titles like "Fix login bug" are invalid
 - ❌ **Implementing a `[[PLAN]]` request without first running the sprint planning ceremony** — plan → issue → branch → code
 - ❌ **Opening `squad/{issue}` PRs directly to `dev`** during an active sprint
 - ❌ **Skipping worktree** — always work in `../MyBlog-sprint-{N}/` for isolation

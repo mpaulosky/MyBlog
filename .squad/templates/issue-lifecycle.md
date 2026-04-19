@@ -54,6 +54,19 @@ squad/{issue-number}-{kebab-case-slug}
 ```
 Example: `squad/42-fix-login-validation`
 
+**Mandatory issue format:**
+
+Every GitHub issue created by Squad MUST satisfy both of the following before any
+branch or code references it:
+
+| Field | Requirement | Example |
+|-------|-------------|---------|
+| Title | Starts with `[Sprint N]` prefix | `[Sprint 3] Add BlogPost list page` |
+| Milestone | Set to `Sprint N: {Theme}` | `Sprint 3: MongoDB Persistence` |
+
+If either field is missing, set it before creating the branch. An issue without a
+sprint assignment is considered incomplete and must not be used as a branch target.
+
 ### Azure DevOps
 
 | ADO State | Squad Board State |
