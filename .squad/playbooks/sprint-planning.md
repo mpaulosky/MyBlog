@@ -111,7 +111,7 @@ gh project list --owner mpaulosky
 gh project item-add 4 --owner mpaulosky --url {issue-url}
 ```
 
-New items land in **Backlog** automatically. Move to **In Sprint** when the sprint begins:
+New items land in **Backlog** automatically. Move each item to **In Sprint** when the sprint begins — this is a **manual action** performed at sprint kickoff:
 
 ```bash
 # Update item status to "In Sprint"
@@ -122,6 +122,9 @@ gh project item-edit \
   --project-id {PROJECT_ID} \
   --single-select-option-id {IN_SPRINT_OPTION_ID}
 ```
+
+> **Note:** "In Review" and "Done" transitions are **automated** by
+> `.github/workflows/project-board-automation.yml` — see Step 6.
 
 ---
 
@@ -185,8 +188,12 @@ gh pr create \
 The standard **PR merge process** (`pr-merge-process.md`) applies normally,
 but the base branch is `sprint/{N}-{slug}` instead of `dev`.
 
-Move the project board item to **In Review** when the PR is open.
-Move to **Done** after it merges into the sprint branch.
+**Project board transitions are automated** by `.github/workflows/project-board-automation.yml`:
+- PR opened → issue moves to **In Review** automatically
+- PR merged → issue moves to **Done** automatically
+
+The PR body must include `Closes #{issue-number}` (or `Fixes`/`Resolves`) for the
+automation to find and update the linked issue. No manual board moves are needed.
 
 ---
 
