@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Installs the pre-push gate hook from .github/hooks/pre-push into the local Git hooks directory.
 # Safe to re-run: skips if already up-to-date, backs up any differing hook before overwriting.
 

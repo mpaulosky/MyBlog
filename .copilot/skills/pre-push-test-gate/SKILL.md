@@ -14,7 +14,7 @@ description: >
 
 The pre-push hook (`.github/hooks/pre-push`) enforces **5 gates** that mirror CI. It runs automatically on every `git push` and blocks the push if any gate fails.
 
-> 📋 **For the step-by-step execution playbook, see:** `.squad/playbooks/pre-push-process.md`
+> 📋 **For setup and day-to-day usage, see:** `docs/CONTRIBUTING.md`
 
 ### The 5 Gates
 
@@ -72,7 +72,6 @@ chmod +x .git/hooks/pre-push
 ### Related Documents
 
 - **Hook source:** `.github/hooks/pre-push`
-- **Execution playbook:** `.squad/playbooks/pre-push-process.md`
+- **Contributor guide:** `docs/CONTRIBUTING.md` (Initial Setup and Pre-Push Gate sections)
 - **Build repair prompt:** `.github/prompts/build-repair.prompt.md`
-- **Contributing guide:** `docs/CONTRIBUTING.md` (Pre-Push Gates section)
 - **Ceremonies:** `.squad/ceremonies.md` (Build Repair Check)

@@ -113,7 +113,7 @@ INTEGRATION_PROJECTS=(
 echo -e "\n${CYAN}🐋 Checking Docker availability for integration tests...${RESET}"
 if ! docker info &>/dev/null; then
   echo -e "${RED}❌ Docker daemon is not running.${RESET}"
-  echo -e "${YELLOW}   Integration tests require Docker (Testcontainers: mongo:7.0, Azurite).${RESET}"
+  echo -e "${YELLOW}   Integration tests require Docker for the MongoDB Testcontainers dependency.${RESET}"
   echo -e "${RED}   Start Docker and re-push. Skipping integration tests is not allowed.${RESET}"
   exit 1
 else
