@@ -1,44 +1,53 @@
 ---
 name: "release-process"
-description: "⚠️ LEGACY/DEPRECATED. This skill contains outdated release patterns for BlazorWebFormsComponents (upstream fork). Use `.squad/skills/release-process-base/SKILL.md` for generic patterns or `.squad/playbooks/release-issuetracker.md` for IssueTrackerApp-specific steps."
+description: "MyBlog-specific release coordination for dev→main promotion, manual tagging, and hotfix backports."
 domain: "release-workflow"
-confidence: "low"
-status: "deprecated"
-source: "legacy"
+confidence: "high"
+status: "active"
+source: "bound to MyBlog repo workflow"
 ---
 
-## ⚠️ This Skill Is Deprecated
+## Release Process — MyBlog
 
-This skill contains project-specific release processes from **BlazorWebFormsComponents** and is no longer the primary reference for release work on this project.
+Use this skill only for MyBlog release coordination.
 
-### Why Deprecated?
+### When to use
 
-- Designed for a different repository (upstream fork `FritzAndFriends/BlazorWebFormsComponents`)
-- Does not reflect IssueTrackerApp's release model (single-branch, NBGV, minimal artifacts)
-- Overlaps with the new generic skill and project playbook (see below)
+- Preparing a release PR from `dev` to `main`
+- Tagging a release on `main`
+- Creating optional GitHub Release notes for a tagged commit
+- Releasing a `hotfix/*` branch and backporting it to `dev`
 
-### What to Use Instead
+### When not to use
 
-**For generic release workflow patterns (any project):**
-→ `.squad/skills/release-process-base/SKILL.md`
-- Framework-agnostic versioning strategies (static file, NBGV, tag-only)
-- Two-branch vs. single-branch models
-- Merge strategies and CI/CD architecture
-- Common troubleshooting
+- Normal feature PRs to `dev`
+- CI/CD workflow authoring or deployment automation changes
+- Generic release design work across multiple repositories
 
-**For IssueTrackerApp-specific release steps:**
-→ `.squad/playbooks/release-issuetracker.md`
-- Single-branch model (all work on `main`)
-- NBGV version management
-- Step-by-step release commands
-- IssueTrackerApp-specific CI/CD configuration
+### MyBlog release facts
 
-### Can This Be Deleted?
+- Authoritative steps live in `.squad/playbooks/release-myblog.md`
+- Versioning is defined by `GitVersion.yml`
+- The only active release-adjacent workflows today are `.github/workflows/ci.yml`
+  and `.github/workflows/hotfix-backport-reminder.yml`
+- MyBlog does **not** currently have `squad-release.yml`, `squad-promote.yml`,
+  package publishing, or automated production deployment
+- Release owner is Aragorn (approval, scope, gate) with Boromir (execution,
+  workflow verification)
 
-Yes, after all old references to this skill are cleaned up and team members migrate to the new resources. Track cleanup in issues or decisions; deletion is safe once migration is complete.
+### Required output
 
----
+A release task should leave behind one of these outcomes:
 
-**Last Updated:** 2026-04-13  
-**Deprecated By:** Frodo (Tech Writer)  
-**Replacement Strategy:** Generic skill + project playbook
+1. A reviewed `dev` → `main` release PR ready to merge
+2. A tagged `main` commit with optional GitHub Release notes
+3. A merged hotfix on `main` with a confirmed backport path to `dev`
+
+### Related assets
+
+- `.squad/playbooks/release-myblog.md`
+- `GitVersion.yml`
+- `.github/workflows/ci.yml`
+- `.github/workflows/hotfix-backport-reminder.yml`
+- `.squad/skills/release-process-base/SKILL.md` (quarantined; do not inject for
+  normal MyBlog work)

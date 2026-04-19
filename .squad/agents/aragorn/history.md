@@ -95,3 +95,87 @@ Led architectural validation of 4-milestone Skills & Playbooks adoption roadmap.
 - Next: Monitor M1 implementation with constraints active
 
 Decision logged: `.squad/decisions.md` entry #8
+
+## 2026-04-19: Sprint 1.2 Completion — Route Process Skills Into Workflow
+
+Completed Milestone 1b (Sprint 1.2) by embedding guardrails skills into normal squad routing.
+
+**Decision 12: Route Process Skills Into Normal Squad Workflow**
+
+Updated `.squad/routing.md` to make guardrails explicit at every handoff:
+
+1. **Skills Injection Rules (refined):**
+   - Pre-push gate: "Any push-capable work"
+   - Build repair: "When build/test health is red"
+   - PR merge playbook: "When PR review starts"
+   - Merged-PR guard: "Before committing to old squad branches"
+
+2. **Workflow Guardrails (5 numbered rules):**
+   - Before push-ready handoff → pre-push gate + playbook
+   - Build/test red → build repair first (not normal feature work)
+   - PR work → PR merge playbook as checklist
+   - Old squad branch → merged-PR guard before commit
+   - No quarantined imports (building-protection stays excluded)
+
+3. **Quarantine Clarity:**
+   - Explicitly marked `building-protection` as do-NOT-inject
+   - Prevents accidental reuse of Minecraft skill pending M3 disposition
+
+**Impact:** Future coordinators now have explicit routing rules for guardrails adoption. Push-capable work, build repair, PR gates, and branch safety all automatically injected at the right moments.
+
+**Files Modified:**
+- `.squad/routing.md` — Skills section extended; Workflow Guardrails section clarified
+
+**Timeline:** Completed as part of coordinated M1.2 effort with Pippin.
+
+**Constraints Satisfied:**
+- ✅ Roadmap review decision logged (section 8, decisions.md)
+- ✅ Boromir pre-push audit completed (Sprint 1.1)
+- ✅ M1.2 routing PR does not modify agent charters or inbox
+
+**Outcome:** ✅ Routing table now fully describes post-S1.1 workflow with explicit guardrails at every step.
+
+## 2026-04-19: Milestone 3 Roadmap Completion (Final)
+
+**Milestone:** 3 (Adapt-or-Delete Cleanup & Roadmap Completion)  
+**Outcome:** ✅ Complete
+
+Finalized all remaining roadmap decisions for Milestone 3 to enable sprint 3 cleanup execution.
+
+### Key Achievements
+
+1. **Release Guidance Finalized (Decision #13)**
+   - Confirmed MyBlog-specific release routing (skills/release-process → playbooks/release-myblog)
+   - Approved deletion of generic release-process-base template (replaced by repo-specific guidance)
+   - Clarified branch model: `dev` → `main` (no back-sync); hotfixes backport to `dev` only
+   - Release ownership: Aragorn scope approval → Boromir operational execution
+
+2. **Asset Disposition Approved (Decision #14)**
+   - Approved deletion of post-build-validation, static-config-pattern, building-protection, release-process-base
+   - Confirmed microsoft-code-reference retention (rewrite queued, Boromir backlog)
+   - Delegated manifest publication to Pippin (DELETED-ASSETS.md)
+
+### Cross-Team Coordination
+
+- **Coordinated with Boromir:** Merged-branch guard decision (Decision #12) — keep guidance-only, defer automation pending incident frequency
+- **Coordinated with Pippin:** Published DELETED-ASSETS.md manifest as authoritative reference for future contributors
+- **Routed with Scribe:** All three decisions consolidated to decisions.md; inbox merged; agent history cross-linked
+
+### Modified Assets
+
+- Decision merged: Decision #13 (Release guidance fit) → `.squad/decisions.md`
+- Decision merged: Decision #14 (Delete non-fit assets) → `.squad/decisions.md`
+- Orchestration logged: `2026-04-19T04-04-30-aragorn-sprint-3-roadmap.md`
+
+### Roadmap Impact
+
+- Milestone 3 "Adapt-or-Delete" pass now complete
+- Release work scope & ownership crystal clear
+- Sprint 3 cleanup can proceed with full decision context
+- No misleading generic guidance remains in routing layer
+
+**Constraints Satisfied:**
+- ✅ Release guidance anchored to real `dev`/`main`/`hotfix` workflow  
+- ✅ All imports explicitly marked adapt/delete/retain  
+- ✅ Decisions logged with structured rationale  
+- ✅ Cross-team coordination documented  
