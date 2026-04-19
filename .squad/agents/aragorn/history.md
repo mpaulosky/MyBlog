@@ -85,13 +85,42 @@ Reviewed 19 imported skills and 3 playbooks from architecture perspective. Findi
 
 **Outcome:** Decision merged to decisions.md (section 6). Ready for Phase 1 implementation (immediate).
 
-## 2026-04-19: Roadmap Rubber-Duck Review (Sprint 0)
 
-Led architectural validation of 4-milestone Skills & Playbooks adoption roadmap. Approved with 5 targeted changes and 3 execution constraints. Key findings:
-- Milestone sequence correct; ownership appropriate
-- Identified need for Sprint 1 split (1.1 pre-push tightening + 1.2 governance)
-- Added pre-flight checklist, effort estimates, release decision logic, deleted-assets manifest
-- Execution constraints: review sign-off gate, pre-push audit, routing PR isolation
-- Next: Monitor M1 implementation with constraints active
+## 2026-04-19: Sprint 1.2 Completion — Route Process Skills Into Workflow
 
-Decision logged: `.squad/decisions.md` entry #8
+Completed Milestone 1b (Sprint 1.2) by embedding guardrails skills into normal squad routing.
+
+**Decision 12: Route Process Skills Into Normal Squad Workflow**
+
+Updated `.squad/routing.md` to make guardrails explicit at every handoff:
+
+1. **Skills Injection Rules (refined):**
+   - Pre-push gate: "Any push-capable work"
+   - Build repair: "When build/test health is red"
+   - PR merge playbook: "When PR review starts"
+   - Merged-PR guard: "Before committing to old squad branches"
+
+2. **Workflow Guardrails (5 numbered rules):**
+   - Before push-ready handoff → pre-push gate + playbook
+   - Build/test red → build repair first (not normal feature work)
+   - PR work → PR merge playbook as checklist
+   - Old squad branch → merged-PR guard before commit
+   - No quarantined imports (building-protection stays excluded)
+
+3. **Quarantine Clarity:**
+   - Explicitly marked `building-protection` as do-NOT-inject
+   - Prevents accidental reuse of Minecraft skill pending M3 disposition
+
+**Impact:** Future coordinators now have explicit routing rules for guardrails adoption. Push-capable work, build repair, PR gates, and branch safety all automatically injected at the right moments.
+
+**Files Modified:**
+- `.squad/routing.md` — Skills section extended; Workflow Guardrails section clarified
+
+**Timeline:** Completed as part of coordinated M1.2 effort with Pippin.
+
+**Constraints Satisfied:**
+- ✅ Roadmap review decision logged (section 8, decisions.md)
+- ✅ Boromir pre-push audit completed (Sprint 1.1)
+- ✅ M1.2 routing PR does not modify agent charters or inbox
+
+**Outcome:** ✅ Routing table now fully describes post-S1.1 workflow with explicit guardrails at every step.

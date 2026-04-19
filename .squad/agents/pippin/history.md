@@ -25,12 +25,35 @@
 - Never add features/tech that don't exist in codebase
 - Links point to real repo (mpaulosky/MyBlog), not template repos
 
-## 2026-04-19 — CONTRIBUTING.md Pre-Push & PR Sections (Skills Review)
+## 2026-04-19 — Sprint 1.2 Completion — Governance & Documentation Alignment
 
-As part of DevOps skills/playbooks review, Pippin assigned to update CONTRIBUTING.md with pre-push validation gates and PR review process.
+Completed Milestone 1b (Sprint 1.2) by aligning governance and documentation to reflect Sprint 1.1 hardened workflow.
 
-**Action:** Add two new sections to CONTRIBUTING.md (1h) — see Frodo's history for details.
+**Two Major Decisions Recorded:**
 
-**Collaboration:** Pippin + Frodo (CONTRIBUTING.md co-owners).
+### Decision 10: Document Guardrails Update
 
-**Timeline:** Week 1 (1h estimated).
+Updated `docs/CONTRIBUTING.md` to accurately reflect post-Sprint 1.1 enforced workflow:
+- Branch naming enforcement: `squad/{issue}-{slug}` (not optional)
+- Automatic hook installation on clone via post-checkout
+- 5 sequential pre-push gates (clear descriptions, retry behavior)
+- Troubleshooting section with concrete examples
+- PR workflow alignment (CI wait gate, squash-merge flow)
+
+**Impact:** Contributors now see the actual workflow, reducing onboarding friction and failed pushes.
+
+### Decision 11: Merged-Branch Awareness Guidance
+
+Added lightweight guidance section to CONTRIBUTING.md warning about committed on merged branches:
+- Voluntary (not enforced yet)
+- Safe recovery path: `git checkout main && git pull && squad/{new-issue}-{slug}`
+- Defers automation (pre-commit guard) to Sprint 2 frequency review
+
+**Impact:** Contributors have clear path if they accidentally work on merged branch; team can measure frequency before automating.
+
+**Files Modified:**
+- `docs/CONTRIBUTING.md` — +3 new sections (branch naming, auto-install, merged-branch awareness)
+
+**Timeline:** Completed as part of coordinated M1.2 effort with Aragorn.
+
+**Outcome:** ✅ CONTRIBUTING.md now matches Sprint 1.1 enforced reality.

@@ -36,12 +36,35 @@ How to decide who handles what.
 
 ## Skills
 
-When routing work in these domains, inject the listed skill into the agent's spawn prompt:
-`Relevant skill: .squad/skills/{name}/SKILL.md — read before starting.`
+When routing work in these domains, inject the listed asset into the agent's
+spawn prompt:
+`Relevant asset: {path} — read before starting.`
 
-| Domain | Skill | When to Inject |
+| Domain | Asset | When to Inject |
 |--------|-------|----------------|
-| Blazor Tailwind theming, dark/light mode, FOUC, localStorage, color themes | `blazor-tailwind-theme-persistence` | Any Legolas task touching App.razor, NavMenu, MainLayout, theme toggle, or `tailwind-color-theme` storage key |
+| Blazor Tailwind theming, dark/light mode, FOUC, localStorage, color themes | `.squad/skills/blazor-tailwind-theme-persistence/SKILL.md` | Any Legolas task touching App.razor, NavMenu, MainLayout, theme toggle, or `tailwind-color-theme` storage key |
+| Push-capable squad work | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. This is the default for normal `squad/{issue}-{slug}` delivery after Sprint 1.1. |
+| Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push Gates 2–4 run. Aragorn owns this route and can delegate the repair. |
+| PR review, approval, merge, and post-merge cleanup | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, CHANGES_REQUESTED lockout, squash merge, and cleanup. |
+| Resumed work on an existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md` | Any agent about to `git commit` on a branch with prior PR activity or an uncertain session state. Check for an already-merged PR before committing. |
+| Imported non-fit skills | `.squad/skills/building-protection/SKILL.md` | Do **not** inject for MyBlog work. This skill is Minecraft-specific and stays quarantined until Milestone 3 disposition work decides whether to adapt or delete it. |
+
+## Workflow Guardrails
+
+After Sprint 1.1, these process assets are part of normal squad flow:
+
+1. **Before any push-ready handoff**, route through the pre-push gate skill and
+   pre-push playbook so agents respect the live MyBlog hook: `squad/{issue}-{slug}`
+   branch naming, Release build, `Architecture.Tests`, `Unit.Tests`, and
+   `Integration.Tests`.
+2. **When build or test health is red**, route through build repair first. Do not
+   treat a broken branch as normal feature work.
+3. **When PR work starts**, Aragorn and any spawned reviewers use the PR merge
+   playbook as the governing checklist.
+4. **When a session resumes on an older squad branch**, apply the merged-PR guard
+   before committing so work does not strand on a merged branch.
+5. **Do not normalize quarantined imports.** If an asset does not fit MyBlog yet,
+   keep it out of normal routing until a later disposition decision is made.
 
 ## Rules
 

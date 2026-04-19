@@ -2,46 +2,7 @@
 
 ## Active Decisions
 
-### 1. Consolidate Common @using Directives into _Imports.razor Files
-
-**Date:** 2025-01-29  
-**Author:** Legolas (Frontend Developer)  
-**Status:** ✅ Implemented & Merged  
-**PR:** #4
-
-#### Decision
-
-Consolidate common `@using` directives into the appropriate `_Imports.razor` files while keeping file-specific usings in individual components.
-
-#### Implementation Details
-
-**Features/_Imports.razor** — Added:
-- `@using Microsoft.AspNetCore.Authorization`
-- `@using MediatR`
-
-**Removed from 9 files:** 14 redundant @using directives
-
-**Criteria for centralization:**
-- Appears in 2+ files under same `_Imports.razor` scope
-- Represents common framework dependency
-- Not tied to specific feature implementation
-
-#### Verification
-
-✅ Build passed (Release config, 0 errors, 0 warnings)  
-✅ 76/76 tests passing  
-✅ Code review approved  
-✅ Main updated to commit 60426b1
-
-#### Impact
-
-- **Code maintainability:** Improved (less duplication)
-- **Readability:** Slightly reduced (must reference _Imports for context)
-- **Developer experience:** Improved (new pages inherit common usings)
-- **Build time:** No change
-
----
-### 2. Remove Blazor Template Demo Pages (Weather & Counter)
+### 1. Remove Blazor Template Demo Pages (Weather & Counter)
 
 **Status:** ✅ Implemented  
 **PR:** https://github.com/mpaulosky/MyBlog/pull/6  
@@ -60,7 +21,7 @@ The MyBlog project was initialized from the Blazor Server template, which includ
 - Code coverage: 91.64%
 - Cleaner project structure focused on blog functionality
 
-### 3. Standardized Copyright Headers for C# Files
+### 2. Standardized Copyright Headers for C# Files
 
 **Status:** ✅ Implemented  
 **PR:** https://github.com/mpaulosky/MyBlog/pull/7  
@@ -103,7 +64,7 @@ Adopted standardized 7-line copyright header format for all C# (`.cs`) files in 
 - 9 additional lines per file (header + blank line separator)
 - Requires maintenance for new files (can be automated)
 
-### 4. CI Workflow Conventions — global.json SDK and Version Stamping
+### 3. CI Workflow Conventions — global.json SDK and Version Stamping
 
 **Date:** 2026-04-18  
 **Author:** Boromir (DevOps & CI/CD Engineer)  
@@ -147,7 +108,7 @@ A comment like `// Get the default branch name (main, master, etc.)` next to `co
 
 **Impact:** Affects all future workflow files in `.github/workflows/`. Any workflow touching .NET setup must use `global-json-file`. Any workflow using GitVersion must use `nuGetVersion`.
 
-### 5. Support Auth0 Role Claim Namespace Variations
+### 4. Support Auth0 Role Claim Namespace Variations
 
 **Date:** 2026-04-19  
 **Authors:** Frodo (Security), Legolas (Frontend)  
@@ -178,7 +139,7 @@ Infer role claim types from the authenticated user's claims when a claim type en
 
 ---
 
-### 6. Squad Skills & Playbooks Adoption Review
+### 5. Squad Skills & Playbooks Adoption Review
 
 **Lead:** Aragorn (Lead / Architect)  
 **Scope:** Evaluate 19 imported skills and 3 playbooks for MyBlog project adoption  
@@ -219,7 +180,7 @@ The imported skill library is **high-quality and broadly relevant**. Of 19 skill
 
 ---
 
-### 7. DevOps Skills & Playbooks Review for MyBlog
+### 6. DevOps Skills & Playbooks Review for MyBlog
 
 **Author:** Boromir (DevOps)  
 **Date:** 2026-04-19  
@@ -282,7 +243,7 @@ MyBlog has **strong process documentation** through playbooks and skills. Howeve
 
 ---
 
-### 7.1. PR #12 Follow-ups — Pre-Push Gate References
+### 6.1. PR #12 Follow-ups — Pre-Push Gate References
 
 **Date:** 2026-04-19  
 **Author:** Boromir (DevOps Engineer)  
@@ -301,7 +262,7 @@ The pre-push skill should point contributors to `docs/CONTRIBUTING.md` as the au
 
 ---
 
-### 8. Roadmap Rubber-Duck Review — Sprint 0 Complete
+### 7. Roadmap Rubber-Duck Review — Sprint 0 Complete
 
 **Date:** 2026-04-19  
 **Lead:** Aragorn (Lead / Architect)  
@@ -351,7 +312,7 @@ The 4-milestone Skills & Playbooks adoption roadmap has been validated against l
 
 ---
 
-### 9. Sprint 1.1 — Hook Hardening (Completed)
+### 8. Sprint 1.1 — Hook Hardening (Completed)
 
 **Date:** 2026-04-18  
 **Author:** Boromir (DevOps / Infra)  
@@ -422,6 +383,161 @@ Sprint 1.1 implements the two planned low-risk guardrail changes to harden the p
 - **Reliability:** Hook installation automatic on clone (eliminates bypass path)
 - **Discoverability:** Clear error messages guide contributors to fix branch names
 - **Adoption:** Prepares foundation for Sprint 1.2 (workflow alignment & docs)
+
+---
+
+### 9. Document Guardrails Update (Sprint 1.2)
+
+**Date:** 2026-04-19  
+**Owner:** Pippin (Docs)  
+**Status:** ✅ Implemented  
+**Related:** Sprint 1.2 / Milestone 1b
+
+Updated `docs/CONTRIBUTING.md` to accurately reflect the enforced workflow after Sprint 1.1 hook hardening.
+
+#### Changes Made
+
+1. **Branch Naming Enforcement (Gate 0)**
+   - Clarified that the pre-push hook now strictly enforces `squad/{issue}-{slug}` branch naming.
+   - Added examples: `squad/42-fix-login-validation`, `squad/103-add-blog-search-feature`.
+   - Removed outdated language about merely blocking `main`/`dev` pushes.
+
+2. **Gate Documentation Accuracy**
+   - Gate 0: Now describes strict `squad/*` naming + `main`/`dev` block (not just the latter).
+   - Gate 1–4: Confirmed and clarified exact test projects, Docker requirement, and retry behavior.
+   - Added emphasis on 3 retry attempts for Gates 2–4.
+
+3. **Hook Installation**
+   - Updated to reflect that hooks are now installed **automatically** on clone via `post-checkout`.
+   - Noted that manual reinstall via `./scripts/install-hooks.sh` is available if needed.
+   - Removed outdated language suggesting manual installation was required.
+
+4. **PR Workflow Alignment**
+   - Added explicit reference to playbooks: `.squad/playbooks/pre-push-process.md` and `.squad/playbooks/pr-merge-process.md`.
+   - Clarified PR creation, CI wait gate, and squash-merge flow.
+   - Added note about automatic branch cleanup and manual cleanup commands.
+
+5. **Troubleshooting Section**
+   - Added concrete troubleshooting subsections for build, test, and Docker failures.
+   - Cross-referenced naming conventions and DateTime assertion patterns from pre-push playbook.
+
+#### Rationale
+
+Contributors follow `docs/CONTRIBUTING.md` for onboarding and workflow. If the doc does not match the enforced workflow, new team members will be confused, leading to failed local pushes, wasted CI cycles, and support burden.
+
+By aligning the doc with the actual enforced workflow (post-Sprint 1.1 hardening):
+- **Reduce onboarding friction:** New contributors see the actual rules, not aspirational docs.
+- **Improve success rate:** Contributors understand branch naming and hook behavior upfront.
+- **Enable self-service troubleshooting:** Troubleshooting section mirrors playbook guidance.
+- **Provide clear escalation paths:** Links to playbooks allow deeper investigation without asking maintainers.
+
+#### Impact
+
+- ✅ CONTRIBUTING.md now matches Sprint 1.1 enforced workflow
+- ✅ All internal links verified (relative paths from /docs/)
+- ✅ No governance files modified
+
+---
+
+### 10. Merged-Branch Awareness Guidance (Sprint 1.2)
+
+**Decided:** Pippin (Docs)  
+**Date:** 2026-04-19  
+**Status:** ✅ Implemented  
+**Sprint:** 1.2 / Milestone 1b
+
+Added a lightweight, contributor-facing section to `docs/CONTRIBUTING.md` that warns about committing on already-merged branches and provides a safe recovery path.
+
+#### Decision
+
+Add guidance to `docs/CONTRIBUTING.md` warning contributors not to commit on merged branches and documenting safe recovery path, without claiming automation enforcement.
+
+#### Rationale
+
+- **Risk:** Contributors sometimes continue work on `squad/*` branches after their PR has been merged. This creates orphaned commits that diverge from main and clutter the branch history.
+- **Gap:** Current docs did not explicitly warn against this or provide a safe path.
+- **Approach:** Document the risk and recovery path now (Sprint 1.2) as a lightweight quarantine. Defer heavier automation (e.g., a pre-commit guard) until Sprint 2 repo-fit review determines whether the frequency justifies the complexity.
+
+#### What Changed
+
+Added **"After Your PR Is Merged"** subsection under "Pull Requests" in `docs/CONTRIBUTING.md` that:
+
+1. **Warns** contributors not to commit on merged branches
+2. **Guides recovery:** `git checkout dev`, `git pull origin dev`, then create a fresh `squad/{issue}-{slug}` branch
+3. **Explains why:** "New commits on a merged branch create orphaned history; starting fresh on a new issue branch keeps the repository clean"
+4. **Does NOT claim automation:** guidance is voluntary, not enforced by hook or CI
+
+#### Related Artifacts
+
+- **CONTRIBUTING.md** — Updated with merged-branch awareness section
+- **Merged-PR Guard Skill** — `.squad/skills/merged-pr-guard/SKILL.md` (higher-level automation deferred)
+
+#### Future
+
+After Sprint 2 repo-fit review, the team may decide to:
+- Implement a pre-commit guard if the frequency warrants automation
+- Keep the guidance-only approach if contributors naturally avoid the anti-pattern
+- Escalate to a stricter hook if orphaned branches remain a problem
+
+This decision does not block either path; it just documents the interim lightweight quarantine.
+
+#### Impact
+
+- ✅ Contributors now have explicit guidance and recovery path
+- ✅ Voluntary (not enforced); allows team to measure frequency before automating
+- ✅ Defers higher-friction automation until justified by data
+
+---
+
+### 11. Route Process Skills Into Normal Squad Workflow
+
+**Author:** Aragorn (Lead / Architect)  
+**Date:** 2026-04-19  
+**Status:** ✅ Implemented  
+**Sprint:** 1.2 / Milestone 1b
+
+MyBlog's adopted process guardrails now belong in normal squad routing, not just in standalone skills and playbooks. Coordinators should inject the pre-push, build-repair, merged-branch, and PR-merge assets whenever work reaches those states.
+
+`building-protection` remains explicitly quarantined. It is still a Minecraft skill and should not be treated as part of MyBlog's working process.
+
+#### Decision
+
+Embed guardrails skills (pre-push, build-repair, merged-branch, PR-merge) into `.squad/routing.md` as formal routing rules so that future squad work automatically receives these assets at the right handoff points.
+
+#### Rationale
+
+Sprint 1.1 already hardened the live workflow by enforcing `squad/{issue}-{slug}` branches and auto-installing hooks. Routing now needs to surface the same guardrails so future squad work follows the real MyBlog delivery path by default instead of relying on ad hoc memory.
+
+Keeping `building-protection` in the routing table as a do-not-inject asset is intentional. It prevents accidental reuse of a non-fit imported skill while the later adapt-or-delete pass is still pending.
+
+#### Changes Made
+
+**Updated `.squad/routing.md` — Skills section:**
+
+| Domain | Asset | When to Inject |
+|--------|-------|----------------|
+| Push-capable squad work | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. Default for normal `squad/{issue}-{slug}` delivery. |
+| Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push gates run. Aragorn owns this route. |
+| PR review, approval, merge | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, merge, and cleanup. |
+| Resumed work on existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md` | Any agent about to `git commit` on a branch with prior PR activity or uncertain session state. Check for already-merged PR before committing. |
+
+**Updated `.squad/routing.md` — Workflow Guardrails section:**
+
+Added 5 numbered workflow rules that clarify when/how guardrails apply post-Sprint 1.1:
+
+1. Before any push-ready handoff, route through the pre-push gate skill and playbook
+2. When build/test health is red, route through build repair first (not normal feature work)
+3. When PR work starts, use PR merge playbook as governing checklist
+4. When resuming a squad branch, apply the merged-PR guard before committing
+5. Do not normalize quarantined imports (e.g., building-protection stays out until M3 disposition)
+
+#### Impact
+
+- ✅ Push-capable work now points to the same pre-push guardrails every time
+- ✅ Build/test repair work is explicitly escalated instead of hidden inside normal implementation
+- ✅ PR review and merge flow stay tied to Aragorn's gatekeeping process
+- ✅ Quarantined imported skills remain visible without becoming part of normal MyBlog execution
+- ✅ Future coordinators have explicit routing rules for guardrails adoption
 
 ---
 
