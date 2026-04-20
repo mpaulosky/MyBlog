@@ -56,3 +56,17 @@ Case A: `appsettings.json` has empty strings for `Auth0:Domain` and `Auth0:Clien
 - Auth0 SDK validates options during `builder.Build()` — validate config *before* registering services to get actionable error messages
 - AppHost does NOT inject Auth0 env vars — developers must set user secrets manually on `src/Web`
 - `appsettings.Development.json` should document required secret keys (with empty values) so developers know what to configure
+
+## 2026-04-19 — MongoDB Query Patterns Adoption (Skills Review)
+
+As part of squad skills/playbooks review, MongoDB DBA patterns + filter pattern identified for formalization.
+
+**Scope:** All `GetAllAsync()` repository methods use `Builders<T>.Filter` pattern; optional params in interface; validation in handlers.
+
+**Action:** Audit all `I*Repository` interfaces + implementations against filter-pattern. Create `.squad/playbooks/repository-query-patterns.md` runbook.
+
+**Collaboration:** With Gimli (Testing) for comprehensive repository layer standardization.
+
+**Timeline:** Sprint 7 (2h estimated).
+
+**Owner:** Sam (Domain Model) — routed with `mongodb-filter-pattern` skill injection.

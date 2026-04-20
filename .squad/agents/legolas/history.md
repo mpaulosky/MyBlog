@@ -1,5 +1,47 @@
 # Legolas — Agent History
 
+## Core Context
+
+### Blazor Component Architecture & Frontend Patterns (MyBlog)
+
+**UI Component Structure:**
+- **VSA (Vertical Slice Architecture):** Pages under `src/Web/Features/{feature}/{action}` (e.g., BlogPosts/Create, UserManagement)
+- **Layout:** `MainLayout.razor` + `NavMenu.razor` (role-gated with `<AuthorizeView Roles="...">`)
+- **Components:** `ConfirmDeleteDialog.razor`, reusable form components
+- **Styling:** Bootstrap 5 (temporary); queued for Tailwind migration (Skill in .squad/skills/)
+- **Auth Awareness:** Role-based navigation links, Admin-only sections
+
+**Blazor Validation & Form Patterns:**
+- EditForm with DataAnnotations validation
+- Validation CSS classes: `.valid.modified`, `.invalid`, `.validation-message` (preserved through any migration)
+- DateTime assertions in tests use `FluentAssertions` with tolerance windows
+
+**Tailwind Migration (Deferred — M3):**
+- Current: Bootstrap 5 via NuGet + wwwroot/lib/bootstrap/
+- Blocker: Skill gaps identified (v3 vs v4 conflict, content path mismatch, AuthorizeView not preserved)
+- Planned: Legolas to lead migration with corrected skill; prioritize Hamburger nav state management and role-gated visibility
+
+**Authentication & Role Claims:**
+- Auth0 integration (Frodo owns security)
+- Role claims support namespace variations (e.g., `https://myblog/roles`, `https://articlesite.com/roles`)
+- RoleClaimsHelper infers role claim types by namespace tail (ends with `role` or `roles`)
+
+**Key UI Decisions:**
+- Decision 1: Consolidated @using directives in _Imports.razor (reduces duplication across 9 files)
+- Decision 2: Removed Counter/Weather template pages (cleaned 113 lines, improved focus)
+- Decision 5: Support Auth0 role claim namespace variations (profile card + NavMenu now robust to auth branding drift)
+
+**Testing Coverage:**
+- Component smoke tests: Counter, Weather removed; remaining pages tested via RazorSmokeTests.cs
+- Integration tests: ConfirmDeleteDialog, Create/Edit pages; 9 tests passing
+
+**Known Gotchas:**
+- Blazor asset fingerprinting requires `@Assets["lib/..."]` syntax (not plain href)
+- NavLink `.active` class applied automatically; Tailwind has no default styling (must be added)
+- Bootstrap Icons embedded as inline SVG in NavMenu.razor.css (migrate carefully to Tailwind)
+
+---
+
 ## 2025-07-19 — Tailwind Migration Skill Review
 
 ### What I Learned
@@ -310,3 +352,63 @@ bg-primary-hover  # Old custom hover state (now use dark: variant)
 
 **Filed:** `.squad/decisions/inbox/legolas-remove-weather-counter.md`
 
+
+---
+
+## 2026-04-18 — PR #11 CSS Artifact Review
+
+### Verdict
+**APPROVE_READY** — The large `src/Web/wwwroot/css/tailwind.css` expansion (1918 lines) is a legitimate compiled artifact.
+
+### Analysis
+
+**What PR #11 Contains:**
+- `src/Web/wwwroot/css/tailwind.css` — expanded from 2 lines (minified) to 1918 lines (pretty-printed)
+- `.squad/agents/boromir/history.md` — updated with CI/CD work docs (not my domain)
+- `src/Web/Features/UserManagement/ManageRoles.razor` — one line removed (redundant `@using` cleanup, consistent with prior work)
+
+**Why the CSS expansion is correct:**
+1. **app.css source is identical** — Tailwind v4 CSS-first configuration (`@import "tailwindcss"`, `@source` directives, `@theme inline`) is unchanged on both dev and PR branch
+2. **Commit context confirms intent** — PR title "commit leftover uncommitted changes from cicd-phase3-4" indicates this branch stalled and `npm run tw:build` was never executed there; now it's being committed as a recovery
+3. **Output matches Tailwind v4.2.2 format** — header `/*! tailwindcss v4.2.2 | MIT License */` and proper `@layer` structure
+4. **Pretty-printing is idiomatic** — Tailwind v4 output is pretty-printed by default; development environment, not minified for production
+5. **No stale artifacts** — the CSS is fully generated from current app.css source (verified by comparing Tailwind token variables and component layer styles)
+
+**Consistent with project history:**
+- Per my earlier entries: app.css was migrated to Tailwind v4 CSS-first in 2025-04-17
+- MSBuild + npm integration documented in `.squad/decisions.md` (Boromir's CI conventions)
+- All semantic tokens and component classes resolve from app.css correctly
+
+**Secondary file (ManageRoles.razor):**
+- Removes `@using MyBlog.Web.Features.UserManagement` — consistent with consolidation of imports into `_Imports.razor` (documented in my 2025-01-29 history)
+- Expected cleanup
+
+### Decision
+No concerns. This is intentional recovery of uncommitted CSS from a stalled branch. Merge approved from Blazor/CSS perspective.
+
+**Filed:** `.squad/decisions/inbox/legolas-pr11-css-check.md`
+
+
+### 2026-04-18 — PR #11 CSS Artifact Validation (Final Summary)
+
+- Validated Tailwind CSS expansion in PR #11 as intentional v4.2.2 compiled output
+- Confirmed no design token regressions; artifact semantically valid
+- Verdict: APPROVE_READY; no blocker issues
+- Secondary fix: removed redundant @using from ManageRoles.razor
+- Decision documented in `.squad/decisions/decisions.md`
+- Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-legolas.md`
+
+## 2026-04-19 — Admin Role UI Fix (Cross-Agent with Frodo)
+
+**Work:** Diagnosed UI symptom (missing admin role in Profile/NavMenu) and traced root cause to role claim namespace mismatch.
+
+**Issue:** Profile.razor and NavMenu admin links were hidden because role resolution failed when Auth0 sent `https://articlesite.com/roles` instead of expected `https://myblog/roles`.
+
+**Collaboration:** Aligned fix path with Frodo's security implementation of role claim normalization.
+
+**Validation:**
+- ✅ Profile.razor now correctly displays admin role after Frodo's role claim updates
+- ✅ NavMenu admin links appear for users with admin role
+- ✅ UI components automatically benefit from role claim normalization
+
+**Status:** ✅ Completed — Fix verified and decision merged to decisions.md

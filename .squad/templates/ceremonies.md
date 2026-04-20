@@ -22,6 +22,29 @@
 
 ---
 
+## Sprint Planning
+
+| Field | Value |
+|-------|-------|
+| **Trigger** | auto |
+| **When** | on plan creation or material update |
+| **Condition** | any `plan.md` created or materially updated |
+| **Facilitator** | Ralph (decompose) + Aragorn (GH artifacts) |
+| **Participants** | Ralph, Aragorn, Boromir |
+| **Time budget** | focused |
+| **Enabled** | ✅ yes |
+
+**Agenda:**
+1. Ralph reviews `plan.md` and SQL todos, groups into logical sprints (3–6 issues each)
+2. Aragorn creates one GitHub milestone per sprint (`Sprint N: {Theme}`)
+3. Aragorn creates GitHub issues per todo, assigned to milestones, triaged with `squad:{member}` label
+4. Aragorn adds all issues to the **MyBlog** GitHub Project board (Backlog column)
+5. Boromir creates `sprint/{N}-{slug}` branch and `../MyBlog-sprint-{N}/` worktree per sprint
+
+**See:** `.squad/playbooks/sprint-planning.md`
+
+---
+
 ## Retrospective
 
 | Field | Value |

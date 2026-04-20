@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-The following versions of AINotesApp are currently supported with security updates:
+The following versions of MyBlog are currently supported with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -13,42 +13,71 @@ The following versions of AINotesApp are currently supported with security updat
 
 ## Security Features
 
-AINotesApp implements the following security measures:
+MyBlog implements the following security measures:
 
 ### Authentication & Authorization
 
-- **ASP.NET Core Identity** - User authentication and password management
-- **Per-user data isolation** - Users can only access their own notes
-- **Authorization checks** - All CQRS handlers verify user ownership
-- **Secure password storage** - Passwords are hashed using Identity's default algorithms
+- **Auth0 integration** - Enterprise-grade authentication and identity management
+- **Role-based access control (RBAC)** - Author and Admin roles enforced on all protected routes
+- **Admin authorization enforcement** - User management and other admin-only UI functionality are guarded via the `Admin` role
+- **Principle of least privilege** - Management API scopes limited to required operations only
 
 ### Data Protection
 
-- **SQL injection protection** - Entity Framework Core parameterized queries
-- **XSS protection** - Blazor's automatic HTML encoding
-- **CSRF protection** - Built-in anti-forgery tokens
-- **HTTPS enforcement** - Recommended for production deployments
+- **CSRF protection** - `UseAntiforgery()` middleware enabled in ASP.NET Core pipeline
+- **HTTPS enforcement** - Redirected on all requests; HSTS enabled in production
+- **Blazor automatic HTML encoding** - Razor components automatically encode output to prevent injection attacks
 
 ### API Security
 
-- **OpenAI API key protection** - Stored in user secrets or environment variables
-- **Input validation** - All commands validate user input
-- **Error handling** - Sensitive information not exposed in error messages
+- **Auth0 Management API secrets protection** - M2M credentials stored only in user secrets or environment variables; never committed to source control
+- **No raw secret logging** - Secrets never logged or echoed, even in debug paths
+- **Error handling** - Auth0 errors wrapped in Result objects for consistent handling; user-facing sanitization of error details depends on the calling layer
 
-### Database Security
+### MongoDB Security
 
-- **User isolation** - Database queries filtered by UserId
-- **Migration safety** - Code-first migrations with version control
-- **Connection string security** - Stored in appsettings.json (excluded from source control for production)
+- **Connection security** - MongoDB connection managed through Aspire service container; credentials stored in environment configuration
+- **Typed query API** - EF Core MongoDB access uses LINQ and strongly typed operations rather than string-concatenated query language
+- **User authorization** - All blog post operations guard against unauthorized access via authorization policies
+
+## Auth0 Secrets Management Policy
+
+**CRITICAL: Auth0 Management API secrets must NEVER appear in source code or committed config files.**
+
+### Local Development
+
+After creating an M2M (Machine-to-Machine) application in Auth0, store secrets using .NET User Secrets:
+
+```bash
+dotnet user-secrets set "Auth0:ManagementApiDomain"       "your-tenant.us.auth0.com"
+dotnet user-secrets set "Auth0:ManagementApiClientId"     "YOUR_M2M_CLIENT_ID"
+dotnet user-secrets set "Auth0:ManagementApiClientSecret" "YOUR_M2M_CLIENT_SECRET"
+```
+
+Secrets are stored locally at `~/.microsoft/usersecrets/<UserSecretsId>/secrets.json` (Linux/macOS) and `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json` (Windows), and are never committed to git.
+
+### CI/CD Environments
+
+- GitHub Actions secrets: `AUTH0_MANAGEMENT_CLIENT_ID`, `AUTH0_MANAGEMENT_CLIENT_SECRET` (configured via repository settings)
+- Pass secrets to workflow steps via `${{ secrets.AUTH0_MANAGEMENT_CLIENT_ID }}`
+- Never log, echo, or expose secrets in workflow logs, even conditionally
+
+### Configuration Files
+
+- **Safe to commit:** `appsettings.json` with non-secret Auth0 settings (Domain, ClientId only)
+- **Never commit:** `ClientSecret`, M2M credentials, or any sensitive configuration
+- See `.squad/skills/auth0-management-security/SKILL.md` and `docs/AUTH0_SETUP.md` for implementation details
+
+---
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in AINotesApp, please report it responsibly:
+If you discover a security vulnerability in MyBlog, please report it responsibly:
 
 ### How to Report
 
 **Email:** <matthew.paulosky@outlook.com>  
-**Subject:** [SECURITY] AINotesApp Vulnerability Report
+**Subject:** [SECURITY] MyBlog Vulnerability Report
 
 **Please do NOT open a public GitHub issue for security vulnerabilities.**
 
@@ -83,13 +112,13 @@ When reporting a security vulnerability, please include:
 
 Security updates will be published:
 
-- In the [GitHub Security Advisories](https://github.com/mpaulosky/AINotesApp/security/advisories)
+- In the [GitHub Security Advisories](https://github.com/mpaulosky/MyBlog/security/advisories)
 - In the project [CHANGELOG.md](../CHANGELOG.md) (if one exists)
 - In release notes for security-related releases
 
 ## Security Best Practices for Contributors
 
-When contributing to AINotesApp, please follow these security guidelines:
+When contributing to MyBlog, please follow these security guidelines:
 
 ### Code Review
 
@@ -113,23 +142,21 @@ When contributing to AINotesApp, please follow these security guidelines:
 
 - Use **User Secrets** for local development (`dotnet user-secrets`)
 - Use **Environment Variables** for production
-- Never commit `appsettings.Production.json` with secrets
-- Add sensitive files to `.gitignore`
+- Store all sensitive configuration outside of source control
 
 ### Data Validation
 
-- Validate all user input in CQRS handlers
-- Use parameterized queries (Entity Framework Core does this automatically)
+- Validate all user input at the domain model level (e.g., `ArgumentException.ThrowIfNullOrWhiteSpace`)
 - Sanitize data before rendering in Blazor components (Blazor does this automatically)
 
 ## Known Security Considerations
 
 ### Current Limitations
 
-- **OpenAI API calls** - Notes content is sent to OpenAI for AI features (embeddings, summaries, tags)
-- **Local development** - Uses SQL Server Express with Trusted Connection
-- **No rate limiting** - Consider implementing rate limiting for production
-- **No audit logging** - User actions are not currently logged
+- **No Auth0 rate limiting caching** - Every role query or assignment hits the Auth0 Management API (adequate for current scale; plan caching for production)
+- **No structured audit logging** - Admin role operations are not currently logged; planned for future release
+- **No input length limits** - Blog post title and content fields lack length constraints
+- **No rate limiting** - Consider implementing API rate limiting for production
 
 ### Recommendations for Production
 
@@ -141,13 +168,20 @@ When contributing to AINotesApp, please follow these security guidelines:
 6. **Security headers** - Add security headers (CSP, X-Frame-Options, etc.)
 7. **Monitor dependencies** - Use GitHub Dependabot for security alerts
 
+## Related Documentation
+
+- **[AUTH0_SETUP.md](AUTH0_SETUP.md)** - Complete Auth0 configuration guide for developers
+- **[.squad/skills/auth0-management-security/SKILL.md](../.squad/skills/auth0-management-security/SKILL.md)** - Auth0 secrets management and security patterns
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Contributor workflow and code review process
+
 ## Security Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [ASP.NET Core Security Best Practices](https://learn.microsoft.com/aspnet/core/security/)
-- [Entity Framework Core Security](https://learn.microsoft.com/ef/core/miscellaneous/security)
 - [Blazor Security](https://learn.microsoft.com/aspnet/core/blazor/security/)
+- [Auth0 Security Best Practices](https://auth0.com/docs/secure/security-guidance)
+- [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets)
 
 ---
 
-Thank you for helping keep AINotesApp secure!
+Thank you for helping keep MyBlog secure!

@@ -1,188 +1,267 @@
 # Contributing to MyBlog
 
-Thank you for your interest in contributing to MyBlog — a learning project for .NET development!
+Thank you for your interest in contributing to MyBlog! This document is the
+canonical contributor guide for project setup, workflow, and pull request
+expectations.
 
-## Table of Contents
+## Initial Setup
 
-- [Code of Conduct](#code-of-conduct)
-- [Before You Start](#before-you-start)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Design Decisions](#design-decisions)
-- [How to Contribute](#how-to-contribute)
-- [Testing Requirements](#testing-requirements)
-- [Code Style](#code-style)
+### 1. Clone the Repository
 
-## Welcome
-
-MyBlog is a **training project**. We welcome contributions that:
-- Keep the project focused on learning (no production complexity)
-- Follow clean architecture principles
-- Include tests for all new functionality
-- Have clear, descriptive commit messages
-
-## Code of Conduct
-
-We have adopted the Contributor Covenant. Contributors are expected to adhere to this code. Please report unwanted behavior to [@mpaulosky](mailto:matthew.paulosky@outlook.com).
-
-## Before You Start
-
-This is a learning project for practicing:
-- .NET Aspire orchestration
-- Blazor Server rendering
-- Clean architecture (Domain/Web layer separation)
-- Test-driven development with xUnit, FluentAssertions, NetArchTest.Rules
-
-**Key principle**: Keep it simple. We use an in-memory repository by design — no database, no authentication, no external services.
-
-## Quick Start
-
-1. **Fork** the repository: https://github.com/mpaulosky/MyBlog/fork
-2. **Clone** your fork and create a feature branch:
-   ```bash
-   git clone https://github.com/<your-username>/MyBlog.git
-   cd MyBlog
-   git checkout -b feature/your-feature-name
-   ```
-3. **Make your changes** following the code style guidelines
-4. **Add or update tests** (required for all code changes)
-5. **Run the full test suite**:
-   ```bash
-   dotnet test
-   ```
-6. **Commit** with clear messages (present tense, reference issues if applicable):
-   ```bash
-   git commit -m "Add blog post filtering feature"
-   ```
-7. **Push** and open a Pull Request to `main`
-
-## Project Structure
-
-```
-MyBlog/
-├── src/
-│   ├── AppHost/              # .NET Aspire orchestration entry point
-│   ├── Domain/               # BlogPost entity, repository interfaces, in-memory implementation
-│   ├── ServiceDefaults/      # Aspire shared configuration (OpenTelemetry, health checks)
-│   └── Web/                  # Blazor Server application
-│       └── Components/
-│           ├── Pages/BlogPosts/  # Index, Create, Edit Razor pages
-│           ├── Pages/            # Home, Error, NotFound
-│           ├── Shared/           # ConfirmDeleteDialog
-│           └── Layout/           # MainLayout, NavMenu, ReconnectModal
-├── tests/
-│   ├── Unit.Tests/           # Entity and repository unit tests
-│   ├── Architecture.Tests/    # Layer dependency validation
-│   └── Integration.Tests/     # Stubbed for future Aspire integration
-├── docs/                     # Documentation
-├── Directory.Build.props     # Centralized build settings
-├── global.json               # .NET SDK version lock
-└── MyBlog.slnx               # Solution file
-```
-
-## Design Decisions
-
-This project adheres to these core principles:
-
-1. **Blazor Server** for interactive server rendering — simplest way to learn Aspire + dynamic UI together
-2. **In-memory repository only** — training project, no database setup required
-3. **.NET Aspire orchestration** — learn service composition and health checks
-4. **Clean architecture** — Domain and Web layers clearly separated
-5. **Repository pattern** — `IBlogPostRepository` interface with in-memory implementation
-6. **Repository naming** (`MyBlog` context) vs project names** — `AppHost`, `Domain`, `Web` have no `MyBlog.` prefix (intentional: repo name provides context)
-
-If you have architectural suggestions, please open an issue to discuss first.
-
-## How to Contribute
-
-### Report a Bug
-
-[Create an issue](https://github.com/mpaulosky/MyBlog/issues):
-- Use the **Bug** label
-- Include steps to reproduce, expected behavior, and actual behavior
-- Attach screenshots if helpful
-
-### Suggest an Enhancement
-
-[Create an issue](https://github.com/mpaulosky/MyBlog/issues):
-- Use the **Enhancement** label
-- Explain the use case and why it aligns with the project's learning goals
-
-### Write Code
-
-1. Link your work to an open issue (create one if needed)
-2. Follow the [Testing Requirements](#testing-requirements)
-3. Follow the [Code Style](#code-style) guidelines
-4. Keep changes focused and clear
-
-### Write Documentation
-
-Help keep `/docs` and [README.md](../README.md) accurate:
-- Update docs if you change architecture or features
-- Add architecture decision records (ADRs) for significant changes
-- Link documentation from the main README
-
-## Testing Requirements
-
-**All new code must include tests. Pull requests without tests will be delayed.**
-
-### Unit Tests
-
-- Add tests in `tests/Unit.Tests/`
-- Use **xUnit** for test framework
-- Use **FluentAssertions** for assertions (e.g., `result.Should().BeTrue()`)
-- Use **NSubstitute** for mocks
-- Follow the **AAA pattern**: Arrange / Act / Assert
-
-Example:
-```csharp
-[Fact]
-public void Create_WithValidTitle_ReturnsNewBlogPost()
-{
-    // Arrange
-    var title = "My First Post";
-    var content = "Content here";
-    var author = "Me";
-
-    // Act
-    var post = BlogPost.Create(title, content, author);
-
-    // Assert
-    post.Title.Should().Be(title);
-    post.IsPublished.Should().BeFalse();
-}
-```
-
-### Architecture Tests
-
-- Use **NetArchTest.Rules** to verify layer dependencies
-- Ensure Domain does not reference Web
-- Ensure tests don't reference implementation details unnecessarily
-
-Run all tests before pushing:
 ```bash
-dotnet test
+git clone https://github.com/mpaulosky/MyBlog.git
+cd MyBlog
 ```
 
-## Code Style
+### 2. Install Git Hooks (Automatic)
 
-- **Namespaces**: Follow the RootNamespace pattern (e.g., `MyBlog.Domain`, `MyBlog.Web`)
-- **Formatting**: Follow C# conventions (use `.editorconfig` if configured)
-- **Comments**: Only comment complex logic; clean code is self-documenting
-- **Methods**: Prefer small, focused methods with clear names
-- **Async/Await**: Use `async` for I/O operations; use `.Result` is discouraged
-- **Short project names**: No `MyBlog.` prefix on folder/project names; repo context provides clarity
+**Hooks are installed automatically on clone.** If needed, reinstall manually:
 
-## PR Review Checklist
+```bash
+./scripts/install-hooks.sh
+```
 
-Before opening a PR:
-- [ ] All tests pass: `dotnet test`
-- [ ] Code follows style guidelines
-- [ ] New features have unit tests
-- [ ] Documentation updated if applicable
-- [ ] Commit messages are clear and present-tense
-- [ ] No unrelated changes included
+This installs a **pre-push gate** that validates your code before it reaches
+GitHub. The hook also installs a post-checkout hook that ensures the pre-push
+gate stays current as the repo evolves.
 
----
+### What the Pre-Push Gate Enforces
 
-Thank you for contributing to MyBlog! Questions? Open an issue or reach out to [@mpaulosky](https://github.com/mpaulosky).
+The pre-push hook automatically runs before every `git push` and enforces
+**5 sequential gates**:
+
+| Gate | Rule | Enforced Behavior |
+|------|------|--------|
+| **0** | Squad branch naming | Rejects pushes on non-`squad/{issue}-{slug}` branches; blocks `main` and `dev` |
+| **1** | Untracked source files | Warns if `.razor` or `.cs` files exist but are not staged; prompts to confirm before proceeding |
+| **2** | Release build | Runs `dotnet build MyBlog.slnx --configuration Release`; zero warnings or errors required |
+| **3** | Unit & architecture tests | Runs `tests/Architecture.Tests` and `tests/Unit.Tests` (Release configuration) |
+| **4** | Integration tests | Runs `tests/Integration.Tests` (Release configuration; Docker daemon required) |
+
+**Retry logic:** Gates 2–4 allow up to **3 attempts**. Between failures, the
+hook pauses and prompts you to fix errors, then retries automatically.
+
+### Branch Naming (Strict)
+
+All work must be on a `squad/{issue}-{slug}` branch. Examples:
+
+```bash
+git checkout -b squad/42-fix-login-validation
+git checkout -b squad/103-add-blog-search-feature
+```
+
+The pre-push hook rejects any push from a branch that does not match this
+pattern, or from `main`/`dev`.
+
+### Bypassing the Gate (Emergency Only)
+
+In rare cases where you need to push despite failures:
+
+```bash
+git push --no-verify
+```
+
+**Use sparingly.** The hook only blocks clearly broken code. Pushing broken code
+to a `squad/*` branch still allows CI to catch it and blocks merge to `dev`, but
+wasting CI cycles is not ideal. Fix locally first.
+
+## Development Workflow
+
+### Prerequisites
+
+- **.NET 10 SDK** — [Download](https://dotnet.microsoft.com/en-us/download)
+- **Docker daemon** — Required for `tests/Integration.Tests` (Gates 4)
+- **Auth0 account** — See [AUTH0_SETUP.md](AUTH0_SETUP.md) for Auth0 configuration
+
+### Building and Testing Locally
+
+```bash
+# Restore dependencies
+dotnet restore MyBlog.slnx
+
+# Build the solution (Release config, as Gate 2 does)
+dotnet build MyBlog.slnx --configuration Release
+
+# Run all tests (as Gates 3 and 4 do)
+dotnet test MyBlog.slnx --configuration Release
+
+# Run the application (via Aspire AppHost)
+cd src/AppHost
+dotnet run
+```
+
+### Creating a Feature Branch
+
+1. Start from `dev`:
+
+```bash
+git checkout dev
+git pull origin dev
+```
+
+2. Create a `squad/*` branch with the issue number and a kebab-case slug:
+
+```bash
+git checkout -b squad/42-fix-login-validation
+```
+
+The pre-push gate will reject any other branch name.
+
+### Pushing Your Work
+
+Before `git push`:
+
+1. Verify you are on a `squad/*` branch:
+
+```bash
+git symbolic-ref --short HEAD
+```
+
+2. Ensure all untracked `.razor` and `.cs` files are staged or intentionally
+   excluded from git.
+
+3. Run the pre-push gates locally to catch errors early:
+
+```bash
+# The hook runs automatically on git push, but you can test manually:
+dotnet build MyBlog.slnx --configuration Release
+dotnet test tests/Architecture.Tests --configuration Release --no-build
+dotnet test tests/Unit.Tests --configuration Release --no-build
+dotnet test tests/Integration.Tests --configuration Release --no-build  # requires Docker
+```
+
+4. Push:
+
+```bash
+git push
+```
+
+If the pre-push gate fails, fix the errors and retry `git push`. The hook will
+re-run all gates again.
+
+### Pull Requests
+
+1. Create a PR **from your `squad/*` branch to `dev`**:
+
+```bash
+gh pr create \
+  --base dev \
+  --title "feat(scope): description" \
+  --body "Closes #<issue-number>
+
+## Changes
+- Your changes here
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing done"
+```
+
+2. **Wait for CI to pass** — all checks must be green before requesting review.
+
+3. Address code review feedback. If changes are needed, push corrections to the
+   same branch.
+
+4. Once all reviewers approve and CI is green, squash-merge to `dev`:
+
+```bash
+gh pr merge <PR-number> --squash --delete-branch
+```
+
+5. After merge, local branch cleanup is automatic via the post-checkout hook,
+   but you can also manually clean up orphaned branches:
+
+```bash
+git checkout dev
+git pull origin dev
+git fetch --prune
+git branch -vv | grep gone | awk '{print $1}' | xargs -r git branch -D
+```
+
+### After Your PR Is Merged
+
+**⚠️ Important:** Do not keep committing on your `squad/*` branch after your PR
+has been merged. If you need to continue work on related issues:
+
+1. **Switch to `dev` and pull the latest:**
+
+```bash
+git checkout dev
+git pull origin dev
+```
+
+2. **Create a fresh `squad/{issue}-{slug}` branch for your next task:**
+
+```bash
+git checkout -b squad/45-next-issue
+```
+
+3. **Push to the new branch** — the pre-push gate will guide you.
+
+If you accidentally commit on a merged branch, you can recover by following these
+same steps. New commits on a merged branch create orphaned history; starting fresh
+on a new issue branch keeps the repository clean and your work tracking obvious.
+
+## Code Standards
+
+### .NET Conventions
+
+- Follow .NET naming conventions (PascalCase for types, camelCase for locals)
+- Use C# 14 features where appropriate
+- Keep methods focused and testable
+
+### Testing
+
+- Write unit tests for new domain logic
+- Maintain or improve code coverage
+- Use xUnit, FluentAssertions, and NSubstitute
+
+### Architecture Rules
+
+- Domain layer must not depend on Web layer
+- Use repository and feature-slice patterns already present in the solution
+- Keep Blazor components focused on presentation concerns
+
+## Resources and References
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Solution structure and design decisions
+- [AUTH0_SETUP.md](AUTH0_SETUP.md) — Auth0 configuration guide
+- [README.md](../README.md) — Project overview and getting started
+- [Pre-Push Process Playbook](../.squad/playbooks/pre-push-process.md) — Detailed pre-push
+  troubleshooting and gate descriptions
+- [PR Review & Merge Process](../.squad/playbooks/pr-merge-process.md) — End-to-end PR
+  lifecycle and reviewer protocol
+
+## Troubleshooting
+
+### Build Failures (Gate 2)
+
+- **Warnings treated as errors:** The Release config enforces
+  `TreatWarningsAsErrors=true`. Fix warnings first.
+- **Missing file references:** Stage any new `.razor` or `.cs` files with
+  `git add`, then retry.
+- **NuGet restore failure:** Run `dotnet restore` manually and retry.
+
+### Test Failures (Gates 3 & 4)
+
+- **Architecture test failure:** Check naming conventions (commands →
+  `Command`, queries → `Query`, handlers → `Handler`, validators →
+  `Validator`).
+- **DateTime equality failures:** Assert individual fields instead of
+  whole-record equality; `UtcNow` changes between calls.
+- **Docker not running (Gate 4):** Start Docker Desktop and retry.
+- **Container startup timeout:** Increase Docker resources and verify
+  images are pulled.
+
+### Hook Not Installed
+
+If the pre-push hook is missing:
+
+```bash
+./scripts/install-hooks.sh
+```
+
+## Questions?
+
+Open an issue or reach out to [@mpaulosky](https://github.com/mpaulosky).

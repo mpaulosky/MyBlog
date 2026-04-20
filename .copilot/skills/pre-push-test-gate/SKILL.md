@@ -14,7 +14,7 @@ description: >
 
 The pre-push hook (`.github/hooks/pre-push`) enforces **5 gates** that mirror CI. It runs automatically on every `git push` and blocks the push if any gate fails.
 
-> 📋 **For the step-by-step execution playbook, see:** `.squad/playbooks/pre-push-process.md`
+> 📋 **For setup and day-to-day usage, see:** `docs/CONTRIBUTING.md`
 
 ### The 5 Gates
 
@@ -22,31 +22,24 @@ The pre-push hook (`.github/hooks/pre-push`) enforces **5 gates** that mirror CI
 |------|------|-------------|-----------|
 | **0** | Branch protection | Checks current branch | Push is to `main` or `dev` |
 | **1** | Untracked source files | Scans for untracked `.razor`/`.cs` files | Untracked source files found (prompts y/N) |
-| **2** | Release build | `dotnet build IssueTrackerApp.slnx --configuration Release` | Build fails (3 retries) |
-| **3** | Unit/Arch/bUnit tests | Runs 6 test projects in Release mode | Any test project fails (3 retries) |
-| **4** | Integration tests | Runs 4 integration test projects (Docker required) | Any test project fails (3 retries) |
+| **2** | Release build | `dotnet build MyBlog.slnx --configuration Release` | Build fails (3 retries) |
+| **3** | Unit/Arch tests | Runs 2 test projects in Release mode | Any test project fails (3 retries) |
+| **4** | Integration tests | Runs 1 integration test project (Docker required) | Any test project fails (3 retries) |
 
-### Gate 3 — Unit Test Projects (6 total)
+### Gate 3 — Unit Test Projects (2 total)
 
 ```
 tests/Architecture.Tests/Architecture.Tests.csproj
-tests/Domain.Tests/Domain.Tests.csproj
-tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj
-tests/Persistence.MongoDb.Tests/Persistence.MongoDb.Tests.csproj
-tests/Web.Tests/Web.Tests.csproj
-tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.csproj
+tests/Unit.Tests/Unit.Tests.csproj
 ```
 
-### Gate 4 — Integration Test Projects (4 total, Docker required)
+### Gate 4 — Integration Test Projects (1 total, Docker required)
 
 ```
-tests/Persistence.MongoDb.Tests.Integration/Persistence.MongoDb.Tests.Integration.csproj
-tests/Web.Tests.Integration/Web.Tests.Integration.csproj
-tests/Persistence.AzureStorage.Tests.Integration/Persistence.AzureStorage.Tests.Integration.csproj
-tests/AppHost.Tests/AppHost.Tests.csproj
+tests/Integration.Tests/Integration.Tests.csproj
 ```
 
-These use Testcontainers (mongo:7.0, Azurite) and Aspire DCP. Docker daemon MUST be running.
+These use Testcontainers (MongoDb) and Aspire DCP. Docker daemon MUST be running.
 
 ### Retry Behavior
 
@@ -79,7 +72,6 @@ chmod +x .git/hooks/pre-push
 ### Related Documents
 
 - **Hook source:** `.github/hooks/pre-push`
-- **Execution playbook:** `.squad/playbooks/pre-push-process.md`
+- **Contributor guide:** `docs/CONTRIBUTING.md` (Initial Setup and Pre-Push Gate sections)
 - **Build repair prompt:** `.github/prompts/build-repair.prompt.md`
-- **Contributing guide:** `CONTRIBUTING.md` (Pre-Push Gates section)
 - **Ceremonies:** `.squad/ceremonies.md` (Build Repair Check)

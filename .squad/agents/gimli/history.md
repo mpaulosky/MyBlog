@@ -145,3 +145,128 @@ Remove ALL test code related to Weather and Counter from the test projects. Thes
    - Pull latest changes to avoid duplication
    - Review what's been done already (via `git log`, `git show`)
    - Add complementary work if needed, or verify and open PR if complete
+
+## 2026-04-19 — Testcontainers Adoption (Skills Review)
+
+As part of squad skills/playbooks review, testcontainers-shared-fixture pattern identified as highest-ROI optimization for integration tests.
+
+**Scope:** Reduce startup time from ~46s (per-class) to ~2s (shared containers) via MongoDB shared fixture + xunit collection parallelization.
+
+**Next Steps:** Map to MyBlog collections (BlogPosts, Authors, Comments, Tags, Categories); configure `xunit.runner.json` with `parallelizeAssembly: false` (collection-level only).
+
+**Timeline:** Sprint 7 (2h estimated).
+
+**Owner:** Gimli (Testing) — routed with `testcontainers-shared-fixture` skill.
+
+## 2026-04-20 — Sprint 2: Testing Patterns Extraction
+
+### Task
+Extract and refine testing patterns from current MyBlog assets into cohesive,
+reusable squad guidance. Improve existing skills to reflect real repo patterns
+and conventions.
+
+### Work Done
+
+1. **Reviewed current testing SKILL assets:**
+   - `testcontainers-shared-fixture/SKILL.md` — MongoDB fixture patterns
+   - `webapp-testing/SKILL.md` — bUnit and browser testing guidance
+   - Real test projects: `tests/Integration.Tests/`, `tests/Unit.Tests/`, `tests/Architecture.Tests/`
+
+2. **Refined testcontainers-shared-fixture/SKILL.md:**
+   - Expanded "Current repo fit" section with real measurements (~2–3s startup, acceptable for MVP)
+   - Renamed "Retained MyBlog conventions" → "MyBlog Tested Patterns (Established)"
+     - Added fixture responsibility isolation details (what it does, what it doesn't)
+     - Clarified xUnit configuration rationale (parallelizeAssembly: false, parallelizeTestCollections: true)
+   - Added "Real MyBlog Examples" section with working code from repo:
+     - BlogPostIntegrationCollection.cs (collection definition)
+     - MongoDbBlogPostRepositoryTests.cs (test class pattern)
+     - MongoDbFixture.cs (fixture implementation with TestContextFactory)
+   - Added "Next-step guidance for new domains" — how to create AuthorIntegration, CommentIntegration, etc.
+   - Updated "Current Test Coverage" to list BlogPostIntegration's 9 passing tests
+   - Clarified rejections (performance claims, seeding patterns, IAsyncLifetime on test classes)
+
+3. **Refined webapp-testing/SKILL.md:**
+   - Expanded "Current repo fit" with real numbers (59 unit tests, 91.64% coverage, test files listed)
+   - Renamed "Retained MyBlog guidance" → "MyBlog-Tested Patterns (Established)"
+   - Added "bUnit test structure in MyBlog" with patterns for BunitContext base class and RenderForUser() helper
+   - Added "Real MyBlog Test Structure" section showing working code examples:
+     - NavMenuTests.cs (authentication states)
+     - BunitContext.cs base class with CreatePrincipal() and RenderForUser() helpers
+   - Added "Example: When to write a browser test" — scenario-based guidance
+   - Added more concrete "Good MyBlog use cases" (4 specific scenarios)
+   - Updated rejections to reflect no Playwright installation, no browser jobs today
+
+4. **Created NEW SKILL: unit-test-conventions/SKILL.md** ✅
+   - Comprehensive guide for unit tests in `tests/Unit.Tests/`
+   - Covers file headers (7-line copyright block, required by charter rule #6)
+   - Test namespace pattern (`MyBlog.Unit.Tests.{Folder}`)
+   - AAA pattern with comments (required by charter rule #3)
+   - FluentAssertions `.Should()` everywhere (charter rule)
+   - NSubstitute mocking patterns:
+     - Standard substitutes pattern for handler tests
+     - IMemoryCache.Set<T> gotcha (extension method → mock CreateEntry() instead)
+     - IMemoryCache.TryGetValue out-param pattern
+   - Domain entity tests (BlogPost pattern, no mocks, test factories)
+   - Handler tests (Vertical Slice pattern, all deps mocked)
+   - bUnit component tests (BunitContext base class, RenderForUser helper)
+   - Critical gotchas:
+     - NEVER compare two Dto.Empty calls (DateTime.UtcNow called each time)
+     - GenerateSlug trailing underscore is expected, not a bug
+   - Real working code examples from repo (BlogPostTests, GetBlogPostsHandlerTests, EditBlogPostHandlerTests, ProfileTests)
+   - Namespace/file organization
+   - Local test run command
+   - Coverage goals (80–85%)
+
+### Key Learnings
+
+1. **MyBlog's testing stack is mature and battle-tested:**
+   - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
+   - Unit tests: 59 tests with 91.64% line coverage, all handlers + domain + components covered
+   - Architecture tests: VSA + layer rules enforced
+   - bUnit component tests: Clean auth mocking pattern with TestAuthorizationService
+
+2. **Patterns extraction requires grounding in real code:**
+   - Cannot document intent without seeing actual implementations
+   - Real examples > abstract rules (code > explanation)
+   - Test classes show the patterns better than generic guidance
+
+3. **Three distinct testing domains with different conventions:**
+   - **Integration**: Fixture + collection + per-test isolation
+   - **Unit**: AAA + mocking + assertions, split by entity/handler/component
+   - **Component**: bUnit with auth context + claim assertions
+
+4. **File headers are critical for team consistency:**
+   - Every test file MUST have the 7-line block (charter rule #6)
+   - This was flagged in PR #2 review — ALL test files were missing headers
+   - Now documented explicitly in unit-test-conventions skill
+
+5. **No new skills created for existing patterns:**
+   - testcontainers and webapp-testing were already good patterns
+   - Refinement (not creation) is the right approach for 70–80% patterns
+   - Only created unit-test-conventions because it was extractable from 4+ test files and not documented
+
+### Outcomes
+
+**Skills improved:**
+1. `testcontainers-shared-fixture/SKILL.md` — +50% more detailed, with real code + next-step guidance
+2. `webapp-testing/SKILL.md` — +40% more detailed, with real code + examples
+3. `unit-test-conventions/SKILL.md` — NEW, 14KB comprehensive guide
+
+**Documentation impact:**
+- Testcontainers patterns now crystal clear (collection definition, fixture, factory, per-test isolation)
+- Unit test conventions documented (headers, AAA, mocking, assertions) for future contributors
+- Component testing patterns visible (BunitContext, CreatePrincipal, RenderForUser)
+- Real working code examples in all three skills
+
+**Team velocity:**
+- Future test authors can now reference SKILL files instead of copying patterns
+- New domain collections (Author, Comment, Tag) have clear guidance
+- PR reviews can cite these skills for test quality gates
+
+### Learnings for Gimli
+
+1. Skills extraction is about making implicit patterns explicit. Always ground guidance in real code.
+2. Three-tier testing (integration / unit / component) requires three distinct SKILL docs or clear sections within one.
+3. File headers matter for consistency — enforce them in reviews (charter rule #6).
+4. AAA comments aren't optional — they're team convention (charter rule #3).
+5. NSubstitute gotchas (IMemoryCache.Set<T>) should be called out explicitly in training.

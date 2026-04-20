@@ -103,3 +103,108 @@ Security findings:
 7. **[CLEAN] Auth middleware order** — UseAuthentication → UseAuthorization → UseAntiforgery is correct.
 
 8. **[CLEAN] ManageRoles and Profile authorization** — Both pages correctly gated with `[Authorize(Roles = "Admin")]` and `[Authorize]` respectively.
+
+### PR #11 & #12 Security Review — 2026-04-18
+
+**PR #11** — `squad/cleanup-uncommitted-changes` → `dev` (3 files: boromir history, ManageRoles.razor, tailwind.css)
+
+**Verdict:** NEEDS_HUMAN_DECISION
+
+- **[CLEAN] ManageRoles.razor** — Removed redundant `@using MyBlog.Web.Features.UserManagement` (already in `_Imports.razor` per Decision #1). `[Authorize(Roles = "Admin")]` gate remains intact. No security impact.
+- **[CLEAN] No secrets** — No credentials or tokens in any changed file.
+- **[INFO] Non-minified tailwind.css** — Committed CSS expanded from 1 minified line to 1918 pretty-printed lines with nested CSS syntax. Not a security issue, but the nested `&:` syntax may have browser compatibility implications. Needs Legolas (frontend) to confirm this is intentional and not a build artifact mismatch.
+
+**PR #12** — `squad/prepush-gate` → `dev` (8 files: pre-push hook, install-hooks.sh, CONTRIBUTING.md, SKILL.md, PR template, squad docs)
+
+**Verdict:** APPROVE_READY
+
+- **[CLEAN] Shell script security** — `install-hooks.sh` and `.github/hooks/pre-push` use proper variable quoting, no eval/exec of user input, `set -e` / `set -uo pipefail`, and no injection vectors.
+- **[CLEAN] No secrets** — No credentials committed. PR template checklist correctly includes secrets check.
+- **[LOW] Shebang portability** — `install-hooks.sh:1` uses `#!/bin/bash`; pre-push hook uses `#!/usr/bin/env bash`. Minor inconsistency, not a security issue.
+- **[LOW] Stale Azurite reference** — `pre-push:116` mentions Azurite but only MongoDB Testcontainers are used. Misleading, not dangerous.
+- **[LOW] Dead playbook link** — `SKILL.md:17,75` references `.squad/playbooks/pre-push-process.md` which does not exist.
+
+### 2026-04-18 — PR #11 & #12 Security Review (Final Summary)
+
+- Completed security reviews for PR #11 (cleanup-uncommitted-changes) and PR #12 (prepush-gate)
+- PR #11 verdict: NEEDS_HUMAN_DECISION (pending Legolas CSS confirmation); approved from security
+- PR #12 verdict: APPROVE_READY (shell security clean, minor non-blocking issues)
+- All findings recorded in session history; decisions consolidated by Scribe
+- Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-gandalf.md`
+
+### PR #16 Security Review — 2026-04-19
+
+**PR:** `squad/1001-sprint-1-1` → `dev` (30 files: shell hooks, install script, squad skills, routing, integration tests)
+
+**Verdict:** SECURITY APPROVED
+
+**Key Findings:**
+
+1. **[CLEAN] Shell Script Security** — All three hook-related files (`.github/hooks/pre-push`, `.github/hooks/post-checkout`, `scripts/install-hooks.sh`) use proper variable quoting, `set -e` error handling, safe `git rev-parse` path discovery, and no eval/exec of user input.
+
+2. **[CLEAN] Gate 0 Branch Regex** — New enforcement pattern `^squad/[0-9]+-[a-z0-9-]+$` is a strict allowlist with no injection vectors.
+
+3. **[CLEAN] No Secrets** — No credentials, tokens, or API keys in any changed file. New Auth0 skills correctly document secrets management via User Secrets and CI environment variables only.
+
+4. **[CLEAN] Auth0 Skills** — Both `.squad/skills/auth0-management-api/SKILL.md` and `.squad/skills/auth0-management-security/SKILL.md` correctly document:
+   - Least-privilege scope guidance
+   - AdminPolicy enforcement boundary
+   - Secrets-never-committed rule
+
+5. **[CLEAN] Routing Table** — Skill injection rules in `.squad/routing.md` correctly reference auth0-management-security skill for security audits.
+
+6. **[CLEAN] No Auth Changes** — No modifications to `appsettings*.json`, `Program.cs`, or any authorization pipeline code.
+
+**CI Status:** 7/8 checks passed (Test Results, Coverage Summary, Unit Tests, Architecture Tests, Integration Tests, build-and-test, Prepare); Agent check still in progress (non-blocking).
+
+Posted security approval comment to PR #16.
+
+### PR #16 Merge to dev — 2026-04-19
+
+**PR:** squad/1001-sprint-1-1 → dev (30 files: hooks, install script, skills, routing, integration tests)
+
+**Verdict:** SECURITY APPROVED
+
+**Key Findings (Final):**
+
+1. **[CLEAN] Shell Script Security** — All three hook-related files use proper variable quoting, `set -e` error handling, safe `git rev-parse` path discovery, and no eval/exec of user input.
+
+2. **[CLEAN] Gate 0 Branch Regex** — Enforcement pattern `^squad/[0-9]+-[a-z0-9-]+$` is a strict allowlist with no injection vectors.
+
+3. **[CLEAN] No Secrets** — No credentials, tokens, or API keys in any changed file. New Auth0 skills correctly document secrets management via User Secrets and CI environment variables only.
+
+4. **[CLEAN] Auth0 Skills** — Both skills correctly document least-privilege scope guidance, AdminPolicy enforcement boundary, and secrets-never-committed rule.
+
+5. **[CLEAN] Routing Table** — Skill injection rules correctly reference auth0-management-security skill for security audits.
+
+6. **[CLEAN] No Auth Changes** — No modifications to `appsettings*.json`, `Program.cs`, or any authorization pipeline code.
+
+**CI Status:** 7/8 checks passed (Agent check non-blocking).
+
+**Cross-team:** Aragorn merged PR #16 to dev with non-destructive integration. Local dev now ahead of origin/dev by 5 commits. Sprint 1.1 complete.
+
+**Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-gandalf.md`
+### PR #17 Security Review — 2026-04-19
+
+**PR #17** — `squad/1002-boromir-history-update` → `dev` (29 files: skills docs, playbooks, agent histories)
+
+**Verdict:** APPROVE ✅
+
+**Scope:** All changes confined to `.squad/` directory — documentation only, no feature code.
+
+**Security Checks:**
+- **[CLEAN] No hardcoded secrets** — Secret references in skill docs are environment variable names only (GITHUB_TOKEN, NUGET_API_KEY), not values
+- **[CLEAN] Auth guidance correct** — Auth0 skills correctly emphasize user-secrets for local dev, GitHub Actions secrets for CI
+- **[CLEAN] No sensitive file changes** — src/, appsettings, Program.cs unaffected
+
+**Merge Conflict Resolution:**
+Resolved 7 add/add conflicts in `.squad/skills/` by accepting `origin/dev` versions (Sprint 2 mining adaptations with MyBlog-specific paths and ownership rules):
+- auth0-management-api/SKILL.md
+- auth0-management-security/SKILL.md
+- mongodb-dba-patterns/SKILL.md
+- mongodb-filter-pattern/SKILL.md
+- release-process/SKILL.md
+- testcontainers-shared-fixture/SKILL.md
+- webapp-testing/SKILL.md
+
+**Learning:** Add/add conflicts in skill files result from parallel imports. The `origin/dev` versions are authoritative when adapted for MyBlog conventions (file paths, ownership rules, real examples).

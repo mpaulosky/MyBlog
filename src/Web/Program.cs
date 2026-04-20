@@ -11,10 +11,16 @@ using System.Security.Claims;
 
 using Auth0.AspNetCore.Authentication;
 
+using FluentValidation;
+
+using MediatR;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 
+using MyBlog.Domain.Behaviors;
+using MyBlog.Domain.Entities;
 using MyBlog.Web.Components;
 using MyBlog.Web.Security;
 
@@ -90,9 +96,18 @@ builder.Services.AddScoped<MongoDbBlogPostRepository>();
 builder.Services.AddScoped<IBlogPostRepository>(sp =>
 		sp.GetRequiredService<MongoDbBlogPostRepository>());
 
-// MediatR — scans Web assembly for all handlers
+// MediatR — scans Web and Domain assemblies for all handlers
 builder.Services.AddMediatR(cfg =>
-		cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(BlogPost).Assembly); // Domain
+});
+
+// FluentValidation — scans Domain assembly for all validators
+builder.Services.AddValidatorsFromAssembly(typeof(BlogPost).Assembly);
+
+// Register ValidationBehavior pipeline
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // HttpClient for Auth0 Management API
 builder.Services.AddHttpClient();

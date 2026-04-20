@@ -4,6 +4,7 @@
 *.user
 *.suo
 .vs/
+.idea/
 *.nupkg
 *.snupkg
 TestResults/

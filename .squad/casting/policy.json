@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "name": "MyBlog Squad Casting Policy",
+  "created": "2026-04-18T00:00:00Z",
+  "defaults": {
+    "max_concurrent_agents": 5,
+    "default_timeout_minutes": 120,
+    "retry_policy": {
+      "max_retries": 2,
+      "backoff_seconds": 30
+    },
+    "routing": {
+      "auto_escalate_blockers": true,
+      "lead_approval_required": false,
+      "parallel_spawning": true
+    }
+  },
+  "team_size": 11,
+  "guidelines": {
+    "note": "This policy reflects the current MyBlog team. Adjust max_concurrent_agents and routing rules as team size changes.",
+    "agent_count_with_coordinator": 11,
+    "agent_count_without_coordinator": 10
+  }
+}
