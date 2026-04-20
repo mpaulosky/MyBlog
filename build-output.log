@@ -1,16 +1,20 @@
-The command could not be loaded, possibly because:
-  * You intended to execute a .NET application:
-      The application 'build' does not exist or is not a managed .dll or .exe.
-  * You intended to execute a .NET SDK command:
-      A compatible .NET SDK was not found.
+  Domain -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/Domain/bin/Debug/net10.0/Domain.dll
+  ServiceDefaults -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/ServiceDefaults/bin/Debug/net10.0/ServiceDefaults.dll
+  Web -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/Web/bin/Debug/net10.0/Web.dll
+  
+  > tw:build
+  > npx @tailwindcss/cli -i ./src/Web/wwwroot/css/app.css -o ./src/Web/wwwroot/css/tailwind.css --minify
+  
+  ≈ tailwindcss v4.2.2
+  
+  Done in 77ms
+  AppHost -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/AppHost/bin/Debug/net10.0/AppHost.dll
+  Architecture.Tests -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/tests/Architecture.Tests/bin/Debug/net10.0/Architecture.Tests.dll
+  Unit.Tests -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/tests/Unit.Tests/bin/Debug/net10.0/Unit.Tests.dll
+  Integration.Tests -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/tests/Integration.Tests/bin/Debug/net10.0/Integration.Tests.dll
 
-Requested SDK version: 10.0.202
-global.json file: /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/global.json
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
 
-Installed SDKs:
-
-Install the [10.0.202] .NET SDK or update [/home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/global.json] to match an installed SDK.
-
-Learn about SDK resolution:
-https://aka.ms/dotnet/sdk-not-found
-10.0.106 [/usr/lib/dotnet/sdk]
+Time Elapsed 00:00:03.11
