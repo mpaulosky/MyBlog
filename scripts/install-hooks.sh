@@ -60,7 +60,8 @@ fi
 
 echo ""
 echo "The hook enforces 5 gates on every 'git push':"
-echo "  0. Enforces squad/{issue}-{slug} branch naming"
+echo "  0. Enforces branch naming — squad/{issue}-{slug} runs all gates;"
+echo "       sprint/{N}-{slug} passes Gate 0 and exits (skips feature gates)"
 echo "  1. Warns about untracked .razor/.cs source files"
 echo "  2. Release build  (dotnet build MyBlog.slnx --configuration Release)"
 echo "  3. Unit/arch tests (tests/Architecture.Tests, tests/Unit.Tests)"
