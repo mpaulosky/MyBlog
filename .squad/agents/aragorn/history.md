@@ -337,3 +337,66 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 - ✅ Issue #18 awaiting merge auto-close
 - ⏳ PR #19 awaiting Boromir CI resolution
 
+---
+
+## 2026-04-20 — Sprint 3 PR Gate Review (#60, #62, #63)
+
+**Scope:** Architecture gate review of 3 open Sprint 3 PRs, all targeting `sprint/3-mongodb-persistence`
+
+**Actions taken:**
+1. Read squad context (history, decisions, playbook, identity files)
+2. Fetched PR metadata, diffs, CI checks, and commit history for all 3 PRs
+3. Discovered `squad-test.yml` does NOT trigger on `sprint/**` PRs — only `main`, `dev`, `squad/**`
+4. Posted review comments with verdicts on each PR (see GitHub issue comments)
+5. Authored this history entry and decisions inbox file
+
+---
+
+### PR #62 — `fix(#61)`: Allow sprint/* branches through Gate 0 pre-push check
+
+**Verdict: ✅ APPROVE**
+
+- Minimal 18-line diff, surgically correct
+- `sprint/*` early-exit placed correctly before squad gate assertion
+- Regex `^sprint/[0-9]+-[a-z0-9-]+$` consistent with squad naming pattern
+- Updated error messages list both valid formats
+- No tests needed (shell script, no C# code)
+- CI not triggered (sprint/* base) — acceptable for this change type
+
+---
+
+### PR #63 — `feat(#32)`: Add build properties to Directory.Build.props
+
+**Verdict: 🟡 CONDITIONAL APPROVE** _(pending local build confirmation)_
+
+- 6-line diff to `Directory.Build.props`: adds `LangVersion=latest`, `EnableNETAnalyzers`, `AnalysisMode=All`, `EnforceCodeStyleInBuild=true`, `CodeAnalysisTreatWarningsAsErrors=false`
+- `CodeAnalysisTreatWarningsAsErrors=false` correctly decouples analyzer warnings from `TreatWarningsAsErrors=true` (compiler)
+- Risk: `AnalysisMode=All` is broad — could surface many new analyzer warnings in devs' local builds; consider `Recommended` if warning count is high
+- **Unchecked acceptance criterion:** `dotnet build MyBlog.slnx --configuration Release` must be confirmed locally since CI did not run
+- Ready to merge once build confirmation provided
+
+---
+
+### PR #60 — `test(#59)`: Add UI component tests, Profile page, RoleClaimsHelper
+
+**Verdict: ❌ NEEDS_CHANGES** _(3 blocking items)_
+
+**Blocking:**
+1. `mergeable_state: "dirty"` — merge conflicts on `sprint/3-mongodb-persistence`; must rebase/merge and resolve before merge
+2. Missing copyright headers (Decision #2) on `RoleClaimsHelper.cs` and `AssemblyInfo.cs`
+3. PR attributed to "Ralph (Meta-coordinator)" — incorrect; Ralph is a coordinator, not a code domain agent. UI → Legolas, Security → Gandalf, Tests → Gimli
+
+**Non-blocking observations:**
+- Duplicate `InternalsVisibleTo` entries in AssemblyInfo.cs (`MyBlog.Unit.Tests` AND `Unit.Tests`) — confirm canonical name
+- PR body path for Profile.razor does not match actual path (`Components/Pages/` vs `Features/UserManagement/`)
+- AuthorizeView guards preserved in NavMenu rewrite ✅ (critical concern from prior history entry)
+- `RoleClaimsHelper` design is sound — configurable via `Auth0:RoleClaimTypes`, JSON array expansion handled
+
+---
+
+### Systemic Finding: CI Gap on `sprint/**` Branches
+
+`squad-test.yml` triggers on PRs targeting `main`, `dev`, `squad/**` — but NOT `sprint/**`. All Sprint 3 PRs bypass the build/test pipeline. Pre-push gates run locally but provide no remote CI verification. A follow-up issue should be opened to add `sprint/**` to the CI trigger list.
+
+**Next Actor:** Ralph — coordinate fix cycle on PR #60 (resolve conflicts + copyright headers). PRs #62 and #63 are pending final approval from mpaulosky.
+
