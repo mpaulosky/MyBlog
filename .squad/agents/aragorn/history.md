@@ -400,3 +400,52 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 
 **Next Actor:** Ralph — coordinate fix cycle on PR #60 (resolve conflicts + copyright headers). PRs #62 and #63 are pending final approval from mpaulosky.
 
+---
+
+## 2026-04-20 — PR #60 Deep Review (Sprint 3 — UI Tests, Profile, RoleClaimsHelper)
+
+Conducted a comprehensive full-diff review of PR #60. The initial gate review (above) identified 3 blockers; this deeper review reveals additional regressions that make the PR more complex than initially assessed.
+
+### Key Finding: Sprint Branch Has Evolved Past the PR
+
+A `git diff origin/sprint/3-mongodb-persistence origin/squad/59-ui-component-tests-profile-roleclaimshelper` across all changed files revealed the sprint branch has SUPERIOR versions of several files. Merging the PR would **regress** already-committed improvements:
+
+| File | Regression if PR merges |
+|------|------------------------|
+| `Profile.razor` | Loses `_sensitiveClaimTypes` filter — exposes `nonce`, `c_hash`, `at_hash`, `aud`, etc. to end users |
+| `NavMenu.razor` | Loses `ILogger<NavMenu>` + exception logging; empty `catch { }` swallows errors silently |
+| `NavMenu.razor` | Loses `role="button"` + `tabindex="0"` on hamburger — accessibility regression |
+| `Program.cs` | Loses copyright header |
+| All 8 new `.cs` files | Lose copyright headers (Decision #2 violation) |
+
+### Critical Test Failure
+
+`RazorSmokeTests.cs` in the PR adds `Counter_Increments_WhenButtonClicked` and `Weather_LoadsForecasts` tests that reference `Counter` and `Weather` components **deleted in PR #6** (Decision #1). Build failure confirmed via grep — those types do not exist in `src/Web/`.
+
+### CI Gap Confirmed
+
+`squad-test.yml` does not trigger on `sprint/**` PRs. All 8 check runs for PR #60 were Copilot agent jobs. No build/test validation ran remotely. This is why the Counter/Weather compile failure was not caught automatically.
+
+### Architecture Assessment
+
+- ✅ `RoleClaimsHelper` design: configurable `Auth0:RoleClaimTypes`, JSON/CSV expansion, deduplication — sound
+- ✅ `Profile.razor` at `Features/UserManagement/` — correct VSA placement
+- ✅ `PostConfigure<OpenIdConnectOptions>` pattern in `Program.cs` — correct  
+- ✅ `@implements IDisposable` with proper `Dispose()` unregistering `LocationChanged` in NavMenu
+- ✅ `TestAuthorizationService` — well-designed, reusable
+- ❌ `AssemblyInfo.cs` duplicate `InternalsVisibleTo("Unit.Tests")` — should only have `"MyBlog.Unit.Tests"`
+- ❌ Package version regression in `Unit.Tests.csproj` (coverlet.collector 6.0.4 vs sprint's 10.0.0)
+
+### Review Posted
+
+Full REQUEST_CHANGES review posted as comment on PR #60 (GitHub limits self-review to comment-only). Review body includes 8 required-fix items and clear rebase instructions.
+
+### Next Actor
+
+Author (Ralph/Legolas) must:
+1. Rebase onto latest `sprint/3-mongodb-persistence`
+2. Verify Counter/Weather tests are gone after rebase
+3. Ensure `_sensitiveClaimTypes` filter, logger, and accessibility attributes are retained
+4. Add copyright headers to `RoleClaimsHelper.cs` and `AssemblyInfo.cs` (other files resolved by rebase)
+5. Remove duplicate `InternalsVisibleTo("Unit.Tests")`
+
