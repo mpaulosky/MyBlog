@@ -120,6 +120,14 @@ jobs:
             --logger "trx;LogFileName=integration-tests.trx" \
             --collect:"XPlat Code Coverage" \
             --results-directory ./test-results/integration
+      
+      - name: Run E2E Tests
+        run: |
+          dotnet test tests/E2E.Tests/E2E.Tests.csproj \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=e2e-tests.trx" \
+            --results-directory ./test-results/e2e
 
       - name: Upload Integration Test Results
         uses: actions/upload-artifact@v7

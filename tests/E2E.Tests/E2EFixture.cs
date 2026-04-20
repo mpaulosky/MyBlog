@@ -7,7 +7,7 @@
 //Project Name :  E2E.Tests
 //=======================================================
 
-namespace Tests.E2E;
+namespace MyBlog.E2E.Tests;
 
 public sealed class E2EFixture : IAsyncLifetime
 {
@@ -23,11 +23,13 @@ public sealed class E2EFixture : IAsyncLifetime
 
 		// Act — start the application and wait for the web resource to be healthy
 		await App.StartAsync();
-		await App.WaitForHealthyAsync("web");
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+		await App.WaitForHealthyAsync("web", cts.Token);
 	}
 
 	public async ValueTask DisposeAsync()
 	{
-		await App.DisposeAsync();
+		if (App is not null)
+			await App.DisposeAsync();
 	}
 }

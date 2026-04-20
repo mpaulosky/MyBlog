@@ -7,7 +7,7 @@
 //Project Name :  E2E.Tests
 //=======================================================
 
-namespace Tests.E2E;
+namespace MyBlog.E2E.Tests;
 
 [Collection("E2EIntegration")]
 public class WebAppTests(E2EFixture fixture)

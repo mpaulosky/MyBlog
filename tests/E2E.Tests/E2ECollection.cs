@@ -7,7 +7,7 @@
 //Project Name :  E2E.Tests
 //=======================================================
 
-namespace Tests.E2E;
+namespace MyBlog.E2E.Tests;
 
 [CollectionDefinition("E2EIntegration")]
 public class E2ECollection : ICollectionFixture<E2EFixture>;
