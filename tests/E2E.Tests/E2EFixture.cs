@@ -7,13 +7,15 @@
 //Project Name :  E2E.Tests
 //=======================================================
 
+using Aspire.Hosting;
+
 namespace MyBlog.E2E.Tests;
 
 public sealed class E2EFixture : IAsyncLifetime
 {
 	public DistributedApplication App { get; private set; } = null!;
 
-	public async ValueTask InitializeAsync()
+	public async Task InitializeAsync()
 	{
 		// Arrange — build the Aspire app host for E2E testing
 		var appHost = await DistributedApplicationTestingBuilder
@@ -27,7 +29,7 @@ public sealed class E2EFixture : IAsyncLifetime
 		await App.WaitForHealthyAsync("web", cts.Token);
 	}
 
-	public async ValueTask DisposeAsync()
+	public async Task DisposeAsync()
 	{
 		if (App is not null)
 			await App.DisposeAsync();
