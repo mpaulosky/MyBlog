@@ -42,7 +42,7 @@ jobs:
         uses: gittools/actions/gitversion/execute@v4
         continue-on-error: true
         with:
-          useConfigFile: true
+          configFilePath: ./GitVersion.yml
 
       - name: Set Version Variables
         id: version
