@@ -1,0 +1,20 @@
+  Domain -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/Domain/bin/Debug/net10.0/Domain.dll
+  ServiceDefaults -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/ServiceDefaults/bin/Debug/net10.0/ServiceDefaults.dll
+  Web -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/Web/bin/Debug/net10.0/Web.dll
+  
+  > tw:build
+  > npx @tailwindcss/cli -i ./src/Web/wwwroot/css/app.css -o ./src/Web/wwwroot/css/tailwind.css --minify
+  
+  ≈ tailwindcss v4.2.2
+  
+  Done in 77ms
+  AppHost -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/src/AppHost/bin/Debug/net10.0/AppHost.dll
+  Architecture.Tests -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/tests/Architecture.Tests/bin/Debug/net10.0/Architecture.Tests.dll
+  Unit.Tests -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/tests/Unit.Tests/bin/Debug/net10.0/Unit.Tests.dll
+  Integration.Tests -> /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/tests/Integration.Tests/bin/Debug/net10.0/Integration.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.11
