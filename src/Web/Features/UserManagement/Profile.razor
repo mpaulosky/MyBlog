@@ -30,7 +30,14 @@ else
 				}
 
 				<div class="space-y-2">
-					<h2 class="!text-2xl">@_displayName</h2>
+					<div class="flex flex-wrap items-center gap-2">
+						<h2 class="!text-2xl">@_displayName</h2>
+						@if (_isAdmin)
+						{
+							<span class="rounded-full bg-red-600 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm dark:bg-red-700"
+							      title="Administrator">Admin</span>
+						}
+					</div>
 					<p class="!text-base !font-medium text-gray-600 dark:text-gray-300">@_emailAddress</p>
 					@if (!string.IsNullOrWhiteSpace(_userId))
 					{
@@ -61,7 +68,14 @@ else
 						<div class="flex flex-wrap gap-2">
 							@foreach (var role in _roles)
 							{
-								<span class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-300">@role</span>
+								@if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+								{
+									<span class="rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">@role</span>
+								}
+								else
+								{
+									<span class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-300">@role</span>
+								}
 							}
 						</div>
 					}
@@ -121,6 +135,7 @@ else
 	private string _userId = string.Empty;
 	private string _pictureUrl = string.Empty;
 	private string _initials = "?";
+	private bool _isAdmin;
 	private IReadOnlyList<string> _roles = [];
 	private IReadOnlyList<Claim> _claims = [];
 
@@ -161,6 +176,7 @@ else
 
 		_initials = GetInitials(_displayName, _emailAddress);
 		_roles = RoleClaimsHelper.GetRoles(_user);
+		_isAdmin = _roles.Contains("Admin", StringComparer.OrdinalIgnoreCase);
 		_claims = _user.Claims
 			.Where(c => !_sensitiveClaimTypes.Contains(c.Type))
 			.OrderBy(c => c.Type)
