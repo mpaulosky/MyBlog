@@ -1,0 +1,16 @@
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'build' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
+
+Requested SDK version: 10.0.202
+global.json file: /home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/global.json
+
+Installed SDKs:
+
+Install the [10.0.202] .NET SDK or update [/home/mpaulosky/Repos/MyBlog.worktrees/copilot-worktree-2026-04-20T15-34-36/global.json] to match an installed SDK.
+
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
+10.0.106 [/usr/lib/dotnet/sdk]
