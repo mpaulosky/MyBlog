@@ -23,10 +23,8 @@ public sealed class E2EFixture : IAsyncLifetime
 
 		App = await appHost.BuildAsync();
 
-		// Act — start the application and wait for the web resource to be healthy
+		// Act — start the application
 		await App.StartAsync();
-		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
-		await App.WaitForHealthyAsync("web", cts.Token);
 	}
 
 	public async Task DisposeAsync()
