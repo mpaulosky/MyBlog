@@ -7,14 +7,6 @@
 //Project Name :  Unit.Tests
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     RoleClaimsHelperTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 using Microsoft.Extensions.Configuration;
 
 using MyBlog.Web.Security;
@@ -157,5 +149,95 @@ public class RoleClaimsHelperTests
 
 		// Assert
 		result.Should().Equal("Admin", "User");
+	}
+
+	[Fact]
+	public void GetRoles_ReturnsEmpty_WhenUserHasNoClaims()
+	{
+		// Arrange
+		var principal = new ClaimsPrincipal(new ClaimsIdentity([], "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
+
+		// Act
+		var result = RoleClaimsHelper.GetRoles(principal);
+
+		// Assert
+		result.Should().BeEmpty();
+	}
+
+	[Fact]
+	public void GetRoles_ReturnsRoles_FromAuth0NamespacedClaim()
+	{
+		// Arrange
+		var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+		{
+						new Claim("https://myblog/roles", "[\"Admin\",\"Author\"]")
+				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
+
+		// Act
+		var result = RoleClaimsHelper.GetRoles(principal);
+
+		// Assert
+		result.Should().Equal("Admin", "Author");
+	}
+
+	[Fact]
+	public void GetRoles_ReturnsRoles_FromStandardRoleClaim()
+	{
+		// Arrange
+		var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+		{
+						new Claim(ClaimTypes.Role, "Admin"),
+						new Claim(ClaimTypes.Role, "Editor")
+				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
+
+		// Act
+		var result = RoleClaimsHelper.GetRoles(principal);
+
+		// Assert
+		result.Should().Equal("Admin", "Editor");
+	}
+
+	[Fact]
+	public void GetRoles_IgnoresNonRoleClaims_WhenMixedClaimsPresent()
+	{
+		// Arrange
+		var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+		{
+						new Claim(ClaimTypes.Role, "Admin"),
+						new Claim(ClaimTypes.Email, "user@example.com"),
+						new Claim(ClaimTypes.Name, "Test User"),
+						new Claim("department", "Engineering")
+				}, "TestAuth", ClaimTypes.Name, ClaimTypes.Role));
+
+		// Act
+		var result = RoleClaimsHelper.GetRoles(principal);
+
+		// Assert
+		result.Should().ContainSingle().Which.Should().Be("Admin");
+	}
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData("")]
+	[InlineData("   ")]
+	public void ExpandRoleValues_ReturnsEmpty_WhenInputIsNullOrWhitespace(string? input)
+	{
+		// Arrange (none)
+		// Act
+		var result = RoleClaimsHelper.ExpandRoleValues(input);
+
+		// Assert
+		result.Should().BeEmpty();
+	}
+
+	[Fact]
+	public void ExpandRoleValues_ReturnsEmpty_WhenJsonIsInvalid()
+	{
+		// Arrange (none)
+		// Act
+		var result = RoleClaimsHelper.ExpandRoleValues("[not-valid-json");
+
+		// Assert
+		result.Should().BeEmpty();
 	}
 }
