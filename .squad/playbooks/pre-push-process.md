@@ -2,9 +2,20 @@
 
 **Owner:** Boromir (DevOps) + Aragorn (Lead)
 **Ref:** `.github/hooks/pre-push`, `CONTRIBUTING.md`
-**Last Updated:** 2026-04-13
+**Last Updated:** 2026-04-19
 
 ---
+
+> ⛔ **HARD BLOCK — `git push --no-verify` is prohibited.**
+> Bypassing the pre-push hook defeats all local quality gates (build, tests,
+> coverage). CI becomes the first place failures are discovered — wasting
+> everyone's time. **Fix the root cause instead:**
+> - SDK mismatch → install the SDK version pinned in `global.json` from https://dot.net
+> - Hook not installed → run `scripts/install-hooks.sh`
+> - Docker not running → start Docker Desktop / `sudo systemctl start docker`
+>
+> Any `--no-verify` push requires **prior written approval from Ralph + Aragorn**
+> documented in a GitHub issue comment. Undocumented bypasses are a retro action item.
 
 ## Overview
 

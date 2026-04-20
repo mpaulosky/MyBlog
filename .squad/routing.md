@@ -62,11 +62,12 @@ spawn prompt:
 
 After Sprint 1.1, these process assets are part of normal squad flow:
 
-1. **Before writing any code**, a GitHub issue MUST exist for the work. This is an
-   absolute gate with no exceptions. If no issue exists, create it first — assign
-   to the correct milestone, add to Project #4 — then create the `squad/{issue}-{slug}`
-   branch, and only then write code. See the Hard Gate section in
-   `.squad/playbooks/sprint-planning.md`.
+1. **Before writing any code**, a GitHub issue MUST exist for the work AND it must be
+   **sprint-stamped** — title starts with `[Sprint N]`, milestone is set to
+   `Sprint N: {Theme}`, and it is added to Project #4. This is an absolute gate with
+   no exceptions. If no issue exists, create it now; if an issue exists but lacks the
+   sprint prefix or milestone, correct it before touching any file. See the Hard Gate
+   section in `.squad/playbooks/sprint-planning.md`.
 2. **Before any push-ready handoff**, route through the pre-push gate skill and
    pre-push playbook so agents respect the live MyBlog hook: `squad/{issue}-{slug}`
    branch naming, Release build, `Architecture.Tests`, `Unit.Tests`, and
@@ -85,7 +86,24 @@ After Sprint 1.1, these process assets are part of normal squad flow:
    `.squad/playbooks/sprint-planning.md`.
 8. **When a user makes any coding request** (direct instruction, `[[PLAN]]`, or
    follow-on work), the very first agent action is to check whether a GitHub issue
-   exists. If not, create it before any file is opened or modified.
+   exists with a `[Sprint N]` title prefix and a sprint milestone set. If the issue
+   is missing, create it. If it exists but lacks the prefix or milestone, fix those
+   fields before any file is opened or modified.
+9. **When any production code is written or modified** (Domain, Web, Persistence,
+   AppHost), Gimli MUST be spawned in parallel to write or update unit tests.
+   No feature branch closes without corresponding test authoring. The coverage gate
+   (currently 89% line threshold in `Unit.Tests.csproj`) must pass locally before
+   push. This is not optional — test coverage is a first-class deliverable.
+10. **`git push --no-verify` is PROHIBITED.** It bypasses all pre-push quality gates
+    (build, tests, coverage) and wastes CI time when failures are discovered
+    remotely. If the hook fails due to a local SDK mismatch, fix the root cause:
+    install the SDK version pinned in `global.json` (e.g., `dotnet-install.sh`
+    or download from https://dot.net). SDK mismatch is never a valid bypass reason.
+    Any `--no-verify` push requires prior documented approval from Ralph + Aragorn.
+11. **When new architectural patterns are introduced** (new CQRS handler type, new
+    service abstraction, new Blazor rendering pattern, new repository strategy), a
+    rubber duck review MUST be run before the branch is pushed. Document the
+    pattern decision in `.squad/decisions/inbox/` and route to Aragorn for ADR.
 
 ## Rules
 
@@ -94,5 +112,5 @@ After Sprint 1.1, these process assets are part of normal squad flow:
 3. **Quick facts → coordinator answers directly.** Don't spawn an agent for "what port does the server run on?"
 4. **When two agents could handle it**, pick the one whose domain is the primary concern.
 5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
-6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
+6. **Anticipate downstream work.** If a feature is being built, spawn Gimli (tests), Frodo (doc impact), and Pippin (changelog note) in parallel with the feature author. Tests are not an afterthought — they ship with the code.
 7. **Issue-labeled work** — when a `squad:{member}` label is applied to an issue, route to that member. The Lead handles all `squad` (base label) triage.
