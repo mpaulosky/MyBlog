@@ -1,0 +1,113 @@
+name: Project Board Automation
+
+on:
+  pull_request:
+    types: [opened, closed]
+
+# repository-projects: write covers Projects v2 for user-owned repos.
+# If mutations fail with a 403, store a PAT with 'project' scope as
+# secrets.GH_PROJECT_TOKEN and replace secrets.GITHUB_TOKEN below.
+permissions:
+  issues: read
+  pull-requests: read
+  repository-projects: write
+
+env:
+  PROJECT_ID: PVT_kwHOA5k0b84BVFTy
+  STATUS_FIELD_ID: PVTSSF_lAHOA5k0b84BVFTyzhQjgPk
+  IN_REVIEW_OPTION_ID: df73e18b
+  DONE_OPTION_ID: "98236657"
+
+jobs:
+  update-project-board:
+    # Trigger on PR open OR on PR merge (not plain close)
+    if: >
+      github.event.action == 'opened' ||
+      (github.event.action == 'closed' && github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Move linked issues on project board
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const action = context.payload.action;
+            const pr     = context.payload.pull_request;
+
+            const optionId   = action === 'opened' ? process.env.IN_REVIEW_OPTION_ID : process.env.DONE_OPTION_ID;
+            const columnName = action === 'opened' ? 'In Review' : 'Done';
+
+            // Parse "Closes #N", "Fixes #N", "Resolves #N" (case-insensitive)
+            const body         = pr.body || '';
+            const issueNumbers = [...body.matchAll(/(?:closes|fixes|resolves)\s+#(\d+)/gi)]
+                                   .map(m => parseInt(m[1]));
+
+            if (issueNumbers.length === 0) {
+              core.info(`PR #${pr.number}: no linked issues found — skipping`);
+              return;
+            }
+
+            core.info(`PR #${pr.number} (${action}): moving issues [${issueNumbers.join(', ')}] → ${columnName}`);
+
+            for (const issueNumber of issueNumbers) {
+              // Resolve issue node ID
+              let issueNodeId;
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo:  context.repo.repo,
+                  issue_number: issueNumber,
+                });
+                issueNodeId = issue.node_id;
+              } catch (err) {
+                core.warning(`Could not fetch issue #${issueNumber}: ${err.message}`);
+                continue;
+              }
+
+              // Find the project item for this issue in the MyBlog project board
+              const projectQuery = await github.graphql(`
+                query($nodeId: ID!) {
+                  node(id: $nodeId) {
+                    ... on Issue {
+                      projectItems(first: 20) {
+                        nodes {
+                          id
+                          project { id }
+                        }
+                      }
+                    }
+                  }
+                }
+              `, { nodeId: issueNodeId });
+
+              const projectItem = projectQuery.node?.projectItems?.nodes?.find(
+                item => item.project.id === process.env.PROJECT_ID
+              );
+
+              if (!projectItem) {
+                core.warning(`Issue #${issueNumber} is not on the MyBlog project board — skipping`);
+                continue;
+              }
+
+              // Update the Status field
+              await github.graphql(`
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $projectId
+                    itemId:    $itemId
+                    fieldId:   $fieldId
+                    value:     { singleSelectOptionId: $optionId }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `, {
+                projectId: process.env.PROJECT_ID,
+                itemId:    projectItem.id,
+                fieldId:   process.env.STATUS_FIELD_ID,
+                optionId:  optionId,
+              });
+
+              core.info(`✅ Issue #${issueNumber} → ${columnName}`);
+            }

@@ -2,6 +2,34 @@
 
 Reference for connecting Squad to a repository and managing the issue→branch→PR→merge lifecycle.
 
+## Mandatory Issue Format
+
+> **Every issue must satisfy all three requirements before any branch or PR may reference it.**
+
+| Requirement | Rule |
+|-------------|------|
+| **Title prefix** | Must begin with `[Sprint N]` — e.g. `[Sprint 2] Add ValidationBehavior pipeline` |
+| **Milestone** | Must be set to `Sprint N: {Theme}` — e.g. `Sprint 2: Domain Restructure (CQRS/MediatR)` |
+| **Project board** | Must be added to Project #4 (MyBlog) and moved to **In Sprint** |
+
+**Creating an issue (canonical command):**
+
+```bash
+gh issue create \
+  --title "[Sprint N] {Verb} {Noun}" \
+  --milestone "Sprint N: {Theme}" \
+  --label "squad" \
+  --body "..."
+```
+
+An issue that lacks the `[Sprint N]` prefix or the milestone is **not sprint-stamped**
+and must be corrected before it is acted upon. No agent may create a branch, write code,
+or open a PR for an issue that is not sprint-stamped. See also: the Hard Gate in
+`.squad/playbooks/sprint-planning.md` and Workflow Guardrails #1 and #8 in
+`.squad/routing.md`.
+
+---
+
 ## Repo Connection Format
 
 When connecting Squad to an issue tracker, store the connection in `.squad/team.md`:
@@ -53,6 +81,19 @@ Each platform tracks issue lifecycle differently. Squad normalizes these into a 
 squad/{issue-number}-{kebab-case-slug}
 ```
 Example: `squad/42-fix-login-validation`
+
+**Mandatory issue format:**
+
+Every GitHub issue created by Squad MUST satisfy both of the following before any
+branch or code references it:
+
+| Field | Requirement | Example |
+|-------|-------------|---------|
+| Title | Starts with `[Sprint N]` prefix | `[Sprint 3] Add BlogPost list page` |
+| Milestone | Set to `Sprint N: {Theme}` | `Sprint 3: MongoDB Persistence` |
+
+If either field is missing, set it before creating the branch. An issue without a
+sprint assignment is considered incomplete and must not be used as a branch target.
 
 ### Azure DevOps
 
