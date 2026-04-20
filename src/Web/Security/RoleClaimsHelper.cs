@@ -55,7 +55,7 @@ public static class RoleClaimsHelper
             || tail.Equals("role", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static IReadOnlyList<string> GetEffectiveRoleClaimTypes(IEnumerable<Claim> claims, IEnumerable<string>? roleClaimTypes)
+    private static string[] GetEffectiveRoleClaimTypes(IEnumerable<Claim> claims, IEnumerable<string>? roleClaimTypes)
     {
         return (roleClaimTypes ?? DefaultRoleClaimTypes)
             .Append(ClaimTypes.Role)
@@ -105,6 +105,8 @@ public static class RoleClaimsHelper
 
     public static void AddRoleClaims(ClaimsIdentity identity, IEnumerable<string> roleClaimTypes)
     {
+        ArgumentNullException.ThrowIfNull(identity);
+
         foreach (var roleClaimType in GetEffectiveRoleClaimTypes(identity.Claims, roleClaimTypes))
         {
             foreach (var claim in identity.FindAll(roleClaimType).ToList())
