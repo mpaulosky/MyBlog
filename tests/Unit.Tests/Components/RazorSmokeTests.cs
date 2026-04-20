@@ -7,14 +7,6 @@
 //Project Name :  Unit.Tests
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     RazorSmokeTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 using MediatR;
 
 using Microsoft.AspNetCore.Components;

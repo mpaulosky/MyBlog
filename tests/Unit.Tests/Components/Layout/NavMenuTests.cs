@@ -7,14 +7,6 @@
 //Project Name :  Unit.Tests
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     NavMenuTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;

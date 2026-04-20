@@ -7,14 +7,6 @@
 //Project Name :  Unit.Tests
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     RoleClaimsHelperTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 using Microsoft.Extensions.Configuration;
 
 using MyBlog.Web.Security;
