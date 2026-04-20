@@ -146,7 +146,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="v${{ steps.gitversion.outputs.semVer }}"
+          TAG="v${{ steps.gitversion.outputs.majorMinorPatch }}"
           echo "Creating tag: $TAG"
           git tag "$TAG" || echo "Tag already exists: $TAG"
           git push origin "$TAG" || echo "Tag already pushed"
