@@ -89,7 +89,7 @@ template use case was approved, and no such keep decision exists.
 
 ## Deleted Playbooks
 
-### 1. release-issuetracker
+### 1. release-MyBlog
 
 **Removed:** Sprint 3 (Milestone 3)  
 **Original Imported From:** IssueTrackerApp release workflow  

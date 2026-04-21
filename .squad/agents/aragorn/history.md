@@ -213,7 +213,7 @@ Resolved remaining non-outdated Copilot review suggestions on PR #17 (squad/1002
 
 **Suggestions addressed (2 non-outdated):**
 1. ✅ `.squad/skills/static-config-pattern/SKILL.md` — Added missing YAML front matter per `.squad/templates/skill.md` template
-2. ✅ `.squad/playbooks/release-issuetracker.md` — Marked as legacy/external reference with clear warning banner
+2. ✅ `.squad/playbooks/release-MyBlog.md` — Marked as legacy/external reference with clear warning banner
 
 **Outdated suggestions (skipped, 24 total):**
 - Many review threads became stale after Gandalf's conflict-resolution commit (89bcf1c)
@@ -239,7 +239,7 @@ Resolved remaining non-outdated Copilot review suggestions on PR #17 (squad/1002
 ### Modified Assets
 
 - Fixed: `.squad/skills/static-config-pattern/SKILL.md` (added YAML front matter)
-- Fixed: `.squad/playbooks/release-issuetracker.md` (added legacy warning banner)
+- Fixed: `.squad/playbooks/release-MyBlog.md` (added legacy warning banner)
 - Commit: `1bd6243` — "docs: resolve Copilot review suggestions on PR #17"
 
 **Status:** PR #17 ready for CI + re-review after this commit passes checks
@@ -441,4 +441,3 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 **Tag push gate exception:** The pre-push hook blocks direct `dev` branch pushes but cannot distinguish a tag push from a branch push. Tag pushes for releases require `--no-verify` since they target a specific commit SHA (not advancing a branch), making the branch-protection check semantically inapplicable. This is documented here for future release operators.
 
 **Release ownership (per Decision #13):** Aragorn validates scope and approves the release contents; Boromir owns operational CI/CD execution. For sprint releases where CI is already confirmed green, Aragorn may proceed directly without a separate Boromir handoff.
-

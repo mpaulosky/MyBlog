@@ -46,7 +46,7 @@ cd src\Web
 The Web.csproj already has a `UserSecretsId`. Verify it exists:
 
 ```powershell
-# Should show: <UserSecretsId>issuetracker-web-secrets</UserSecretsId>
+# Should show: <UserSecretsId>MyBlog-web-secrets</UserSecretsId>
 Select-String -Path Web.csproj -Pattern "UserSecretsId"
 ```
 
@@ -74,7 +74,7 @@ For **MongoDB Atlas** (cloud database), get your connection string from [MongoDB
 2. Copy the connection string (replace `<password>` with your actual password)
 
 ```powershell
-dotnet user-secrets set "MongoDB:ConnectionString" "mongodb+srv://username:password@cluster.mongodb.net/issuetracker-db?retryWrites=true&w=majority"
+dotnet user-secrets set "MongoDB:ConnectionString" "mongodb+srv://username:password@cluster.mongodb.net/MyBlog-db?retryWrites=true&w=majority"
 ```
 
 ### Step 5: Verify Your Secrets
@@ -99,9 +99,9 @@ Secrets are stored **outside** the repository in your user profile:
 
 | OS      | Location                                                                           |
 |---------|------------------------------------------------------------------------------------|
-| Windows | `%APPDATA%\Microsoft\UserSecrets\issuetracker-web-secrets\secrets.json`            |
-| macOS   | `~/.microsoft/usersecrets/issuetracker-web-secrets/secrets.json`                   |
-| Linux   | `~/.microsoft/usersecrets/issuetracker-web-secrets/secrets.json`                   |
+| Windows | `%APPDATA%\Microsoft\UserSecrets\MyBlog-web-secrets\secrets.json`            |
+| macOS   | `~/.microsoft/usersecrets/MyBlog-web-secrets/secrets.json`                   |
+| Linux   | `~/.microsoft/usersecrets/MyBlog-web-secrets/secrets.json`                   |
 
 You can view/edit this file directly if needed.
 
@@ -149,7 +149,7 @@ env:
 
 ```bash
 az group create \
-  --name issuetracker-rg \
+  --name MyBlog-rg \
   --location eastus
 ```
 
@@ -159,8 +159,8 @@ Key Vault names must be globally unique (3-24 characters, alphanumeric and hyphe
 
 ```bash
 az keyvault create \
-  --name issuetracker-kv \
-  --resource-group issuetracker-rg \
+  --name MyBlog-kv \
+  --resource-group MyBlog-rg \
   --location eastus \
   --sku standard
 ```
@@ -171,15 +171,15 @@ Azure Key Vault uses `--` as the section separator (translated to `:` by .NET):
 
 ```bash
 # Auth0 secrets
-az keyvault secret set --vault-name issuetracker-kv --name "Auth0--Domain" --value "your-tenant.us.auth0.com"
-az keyvault secret set --vault-name issuetracker-kv --name "Auth0--ClientId" --value "your-client-id"
-az keyvault secret set --vault-name issuetracker-kv --name "Auth0--ClientSecret" --value "your-client-secret"
+az keyvault secret set --vault-name MyBlog-kv --name "Auth0--Domain" --value "your-tenant.us.auth0.com"
+az keyvault secret set --vault-name MyBlog-kv --name "Auth0--ClientId" --value "your-client-id"
+az keyvault secret set --vault-name MyBlog-kv --name "Auth0--ClientSecret" --value "your-client-secret"
 
 # MongoDB Atlas connection string
-az keyvault secret set --vault-name issuetracker-kv --name "MongoDB--ConnectionString" --value "mongodb+srv://user:pass@cluster.mongodb.net/issuetracker-db"
+az keyvault secret set --vault-name MyBlog-kv --name "MongoDB--ConnectionString" --value "mongodb+srv://user:pass@cluster.mongodb.net/MyBlog-db"
 
 # Optional: SendGrid
-az keyvault secret set --vault-name issuetracker-kv --name "SendGrid--ApiKey" --value "SG.your-api-key"
+az keyvault secret set --vault-name MyBlog-kv --name "SendGrid--ApiKey" --value "SG.your-api-key"
 ```
 
 ### Step 4: Deploy Your App (Azure Container Apps Example)
@@ -187,16 +187,16 @@ az keyvault secret set --vault-name issuetracker-kv --name "SendGrid--ApiKey" --
 ```bash
 # Create Container Apps environment
 az containerapp env create \
-  --name issuetracker-env \
-  --resource-group issuetracker-rg \
+  --name MyBlog-env \
+  --resource-group MyBlog-rg \
   --location eastus
 
 # Deploy the app with managed identity enabled
 az containerapp create \
-  --name issuetracker-app \
-  --resource-group issuetracker-rg \
-  --environment issuetracker-env \
-  --image your-registry/issuetracker:latest \
+  --name MyBlog-app \
+  --resource-group MyBlog-rg \
+  --environment MyBlog-env \
+  --image your-registry/MyBlog:latest \
   --target-port 8080 \
   --ingress external \
   --system-assigned
@@ -207,13 +207,13 @@ az containerapp create \
 ```bash
 # Get the app's managed identity principal ID
 PRINCIPAL_ID=$(az containerapp identity show \
-  --name issuetracker-app \
-  --resource-group issuetracker-rg \
+  --name MyBlog-app \
+  --resource-group MyBlog-rg \
   --query principalId -o tsv)
 
 # Grant the identity permission to read secrets
 az keyvault set-policy \
-  --name issuetracker-kv \
+  --name MyBlog-kv \
   --object-id $PRINCIPAL_ID \
   --secret-permissions get list
 ```
@@ -223,9 +223,9 @@ az keyvault set-policy \
 ```bash
 # Set the Key Vault URI as an environment variable
 az containerapp update \
-  --name issuetracker-app \
-  --resource-group issuetracker-rg \
-  --set-env-vars "KeyVault__Uri=https://issuetracker-kv.vault.azure.net/"
+  --name MyBlog-app \
+  --resource-group MyBlog-rg \
+  --set-env-vars "KeyVault__Uri=https://MyBlog-kv.vault.azure.net/"
 ```
 
 ### Alternative: Azure App Service
@@ -234,16 +234,16 @@ For App Service instead of Container Apps:
 
 ```bash
 # Enable managed identity
-az webapp identity assign --name issuetracker-app --resource-group issuetracker-rg
+az webapp identity assign --name MyBlog-app --resource-group MyBlog-rg
 
 # Get principal ID
-PRINCIPAL_ID=$(az webapp identity show --name issuetracker-app --resource-group issuetracker-rg --query principalId -o tsv)
+PRINCIPAL_ID=$(az webapp identity show --name MyBlog-app --resource-group MyBlog-rg --query principalId -o tsv)
 
 # Grant Key Vault access (same as above)
-az keyvault set-policy --name issuetracker-kv --object-id $PRINCIPAL_ID --secret-permissions get list
+az keyvault set-policy --name MyBlog-kv --object-id $PRINCIPAL_ID --secret-permissions get list
 
 # Set Key Vault URI in app settings
-az webapp config appsettings set --name issuetracker-app --resource-group issuetracker-rg --settings KeyVault__Uri=https://issuetracker-kv.vault.azure.net/
+az webapp config appsettings set --name MyBlog-app --resource-group MyBlog-rg --settings KeyVault__Uri=https://MyBlog-kv.vault.azure.net/
 ```
 
 ---
@@ -293,7 +293,7 @@ The API key looks like: `SG.xxxxxx.yyyyyy` (starts with `SG.`)
 # From src\Web directory
 dotnet user-secrets set "SendGrid:ApiKey" "SG.your-api-key-here"
 dotnet user-secrets set "SendGrid:FromEmail" "noreply@yourdomain.com"
-dotnet user-secrets set "SendGrid:FromName" "IssueTracker"
+dotnet user-secrets set "SendGrid:FromName" "MyBlog"
 ```
 
 #### GitHub Actions
@@ -308,9 +308,9 @@ Add to repository secrets (**Settings → Secrets → Actions**):
 #### Azure Key Vault
 
 ```bash
-az keyvault secret set --vault-name issuetracker-kv --name "SendGrid--ApiKey" --value "SG.your-api-key"
-az keyvault secret set --vault-name issuetracker-kv --name "SendGrid--FromEmail" --value "noreply@yourdomain.com"
-az keyvault secret set --vault-name issuetracker-kv --name "SendGrid--FromName" --value "IssueTracker"
+az keyvault secret set --vault-name MyBlog-kv --name "SendGrid--ApiKey" --value "SG.your-api-key"
+az keyvault secret set --vault-name MyBlog-kv --name "SendGrid--FromEmail" --value "noreply@yourdomain.com"
+az keyvault secret set --vault-name MyBlog-kv --name "SendGrid--FromName" --value "MyBlog"
 ```
 
 ### SendGrid Configuration in appsettings.json
@@ -322,7 +322,7 @@ The base configuration (no secrets) should look like:
   "SendGrid": {
     "ApiKey": "",
     "FromEmail": "",
-    "FromName": "IssueTracker"
+    "FromName": "MyBlog"
   }
 }
 ```
@@ -431,7 +431,7 @@ dotnet user-secrets set "Email:FromEmail" "noreply@yourdomain.com"
 
 1. **Is your IP whitelisted?** In MongoDB Atlas → Network Access, add your IP or `0.0.0.0/0` for testing
 2. **Is the password URL-encoded?** Special characters like `@` or `#` must be encoded
-3. **Is the database name correct?** Check the connection string includes `/issuetracker-db`
+3. **Is the database name correct?** Check the connection string includes `/MyBlog-db`
 
 ---
 
