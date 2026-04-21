@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyBlog</title>
+    <meta name="description" content="A modern Bloging application built with .NET Aspire, Blazor, and MongoDB.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #24292e;
+            background-color: #ffffff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2em;
+            margin: 0.67em 0;
+            color: #24292e;
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 0.3em;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            color: #24292e;
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 0.3em;
+        }
+        h3 {
+            font-size: 1.25em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            color: #24292e;
+        }
+        h4 {
+            font-size: 1em;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            color: #24292e;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ul, ol {
+            margin-bottom: 16px;
+            padding-left: 2em;
+        }
+        li {
+            margin-bottom: 0.25em;
+        }
+        code {
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 3px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            border-radius: 3px;
+            margin-bottom: 16px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            font-size: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        table th,
+        table td {
+            padding: 6px 13px;
+            border: 1px solid #d0d7de;
+        }
+        table th {
+            font-weight: 600;
+            background-color: #f6f8fa;
+        }
+        table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+        hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }
+        .badges {
+            margin: 16px 0;
+        }
+        .badges img {
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .nav-links {
+            margin: 1em 0;
+            font-size: 1.1em;
+        }
+        strong {
+            font-weight: 600;
+        }
+        em {
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MyBlog</h1>
+
+        <p>A modern issue tracking application built with .NET Aspire, Blazor, and MongoDB.</p>
+
+        <div class="badges">
+            <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet" alt=".NET 10"></a>
+            <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-ci.yml"><img src="https://img.shields.io/badge/Tests-xUnit-blueviolet?logo=github" alt="xUnit Tests"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/releases/latest"><img src="https://img.shields.io/github/v/release/mpaulosky/MyBlog?logo=github&color=blue&label=Release" alt="Latest Release"></a>
+        </div>
+
+        <div class="badges">
+            <a href="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-ci.yml"><img src="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-ci.yml/badge.svg" alt="CI/CD"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-test.yml"><img src="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-test.yml/badge.svg" alt="Test Suite"></a>
+        </div>
+
+        <div class="badges">
+            <a href="https://codecov.io/gh/mpaulosky/MyBlog"><img src="https://codecov.io/gh/mpaulosky/MyBlog/branch/main/graph/badge.svg" alt="CodeCov Coverage"></a>
+            <a href="https://codecov.io/gh/mpaulosky/MyBlog/commits/main"><img src="https://img.shields.io/badge/Coverage-Trend-blue?logo=codecov" alt="Coverage Trend"></a>
+        </div>
+
+        <div class="badges">
+            <a href="https://github.com/mpaulosky/MyBlog/issues?q=is%3Aopen+is%3Aissue"><img src="https://img.shields.io/github/issues/mpaulosky/MyBlog?color=0366d6" alt="Open Issues"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/issues?q=is%3Aclosed+is%3Aissue"><img src="https://img.shields.io/github/issues-closed/mpaulosky/MyBlog?color=6f42c1" alt="Closed Issues"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/pulls?q=is%3Aopen+is%3Apr"><img src="https://img.shields.io/github/issues-pr/mpaulosky/MyBlog?color=28a745" alt="Open PRs"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/pulls?q=is%3Aclosed+is%3Apr"><img src="https://img.shields.io/github/issues-pr-closed/mpaulosky/MyBlog?color=6f42c1" alt="Closed PRs"></a>
+        </div>
+
+        <p class="nav-links"><a href="blog/">📝 Dev Blog</a></p>
+
+        <h2>Overview</h2>
+
+        <p>MyBlog is a full-stack web application for managing issues and tracking project progress. It demonstrates modern .NET development practices using the latest technologies and architectural patterns.</p>
+
+        <h2>Features</h2>
+
+        <h3>Core Functionality</h3>
+
+        <h3>Security</h3>
+
+        <ul>
+            <li><strong>Auth0 Authentication</strong>: Secure login with Authorization Code + PKCE flow</li>
+            <li><strong>Role-Based Authorization</strong>: Admin and User policies for fine-grained access control</li>
+            <li><strong>Security Hardening</strong>: Protection against open redirect and CSRF attacks</li>
+        </ul>
+
+        <h3>User Interface</h3>
+
+        <ul>
+            <li><strong>Dark Mode</strong>: System-aware dark mode with manual override (light/dark/system)</li>
+            <li><strong>Color Schemes</strong>: 4 built-in themes (Blue, Red, Green, Yellow)</li>
+            <li><strong>Responsive Design</strong>: TailwindCSS v4 for modern, responsive UI</li>
+            <li><strong>Theme Persistence</strong>: User preferences saved to localStorage</li>
+        </ul>
+
+        <h2>Technology Stack</h2>
+
+        <h3>Backend</h3>
+
+        <ul>
+            <li><strong>.NET 10</strong> with <strong>C# 14</strong></li>
+            <li><strong>.NET Aspire</strong> for orchestration and service management</li>
+            <li><strong>MongoDB</strong> with <strong>MongoDB.EntityFrameworkCore</strong> for data persistence</li>
+            <li><strong>Redis</strong> for distributed caching</li>
+            <li><strong>MediatR</strong> for CQRS pattern implementation</li>
+            <li><strong>FluentValidation</strong> for robust data validation</li>
+        </ul>
+
+        <h3>Frontend</h3>
+
+        <ul>
+            <li><strong>Blazor Interactive Server Rendering</strong> for responsive UI</li>
+            <li><strong>TailwindCSS v4</strong> with <code>@tailwindcss/cli</code> for styling</li>
+            <li><strong>MSBuild Integration</strong> for automatic CSS compilation</li>
+        </ul>
+
+        <h3>Observability</h3>
+
+        <ul>
+            <li><strong>OpenTelemetry</strong> for distributed tracing and metrics</li>
+            <li><strong>Azure Application Insights</strong> integration</li>
+            <li><strong>Health Checks</strong> for MongoDB and Redis connectivity</li>
+        </ul>
+
+        <h3>DevOps</h3>
+
+        <ul>
+            <li><strong>14 GitHub Workflows</strong> for CI/CD automation</li>
+            <li><strong>DocFX</strong> for API documentation generation</li>
+            <li><strong>CodeCov</strong> for test coverage reporting</li>
+        </ul>
+
+        <h2>Project Structure</h2>
+
+        <pre><code>MyBlog/
+├── src/
+│   ├── AppHost/                  # .NET Aspire orchestration
+│   ├── ServiceDefaults/          # Cross-cutting concerns (OpenTelemetry, health checks)
+│   ├── Web/                      # Blazor Interactive Server application
+│   │   ├── Components/Theme/     # ThemeProvider, ThemeToggle components
+│   │   ├── Styles/               # TailwindCSS source files
+│   │   └── Auth/                 # Authentication endpoints
+│   ├── Domain/                   # Business logic and entities
+│   │   ├── Models/               # Issue, Category, Status, Comment, User
+│   │   ├── DTOs/                 # Data transfer objects
+│   │   └── Abstractions/         # Result&lt;T&gt; pattern, IRepository&lt;T&gt;
+│   └── Persistence.MongoDb/      # Data access layer with MongoDB EF Core
+├── tests/                        # Unit, integration, and E2E tests
+├── docs/                         # Documentation
+└── Directory.Packages.props      # Centralized package versioning
+</code></pre>
+
+        <h2>Getting Started</h2>
+
+        <h3>Prerequisites</h3>
+
+        <ul>
+            <li>.NET 10 SDK or later</li>
+            <li>Node.js 18+ (for TailwindCSS compilation)</li>
+            <li>MongoDB Atlas cluster (or local MongoDB)</li>
+            <li>Redis instance (for caching)</li>
+            <li>Auth0 tenant configuration</li>
+        </ul>
+
+        <h3>Development Setup</h3>
+
+        <ol>
+            <li>
+                <p><strong>Clone the repository</strong></p>
+                <pre><code>git clone https://github.com/mpaulosky/MyBlog.git
+cd MyBlog
+</code></pre>
+            </li>
+            <li>
+                <p><strong>Restore .NET dependencies</strong></p>
+                <pre><code>dotnet restore
+</code></pre>
+            </li>
+            <li>
+                <p><strong>Install npm dependencies</strong> (for TailwindCSS)</p>
+                <pre><code>cd src/Web
+npm install
+cd ../..
+</code></pre>
+            </li>
+            <li>
+                <p><strong>Build the solution</strong> (includes CSS compilation via MSBuild)</p>
+                <pre><code>dotnet build
+</code></pre>
+            </li>
+            <li>
+                <p><strong>Run tests</strong></p>
+                <pre><code>dotnet test
+</code></pre>
+            </li>
+            <li>
+                <p><strong>Run the application</strong> (via Aspire AppHost)</p>
+                <pre><code>cd src/AppHost
+dotnet run
+</code></pre>
+            </li>
+        </ol>
+
+        <h3>TailwindCSS Development</h3>
+
+        <p>For active CSS development with hot reload:</p>
+
+        <pre><code>cd src/Web
+npm run css:watch
+</code></pre>
+
+        <p>This watches for changes in Razor components and automatically recompiles CSS.</p>
+
+        <h3>Configuration</h3>
+
+        <h4>User Secrets Setup</h4>
+
+        <pre><code>cd src/Web
+dotnet user-secrets init
+dotnet user-secrets set "Auth0:Domain" "your-tenant.auth0.com"
+dotnet user-secrets set "Auth0:ClientId" "your-client-id"
+dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
+</code></pre>
+
+        <h4>Auth0 Configuration</h4>
+
+        <ol>
+            <li>Create an Auth0 Application (Regular Web Application)</li>
+            <li>Configure Allowed Callback URLs: <code>https://localhost:7xxx/callback</code></li>
+            <li>Configure Allowed Logout URLs: <code>https://localhost:7xxx/</code></li>
+            <li>Enable Authorization Code Flow with PKCE</li>
+            <li>Create roles: <code>Admin</code>, <code>User</code></li>
+        </ol>
+
+        <h4>Environment Variables</h4>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Auth0__Domain</code></td>
+                    <td>Auth0 tenant domain</td>
+                </tr>
+                <tr>
+                    <td><code>Auth0__ClientId</code></td>
+                    <td>Auth0 application client ID</td>
+                </tr>
+                <tr>
+                    <td><code>Auth0__ClientSecret</code></td>
+                    <td>Auth0 application client secret</td>
+                </tr>
+                <tr>
+                    <td><code>ConnectionStrings__mongodb</code></td>
+                    <td>MongoDB connection string</td>
+                </tr>
+                <tr>
+                    <td><code>ConnectionStrings__redis</code></td>
+                    <td>Redis connection string</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Theming</h2>
+
+        <p>MyBlog supports dark mode and multiple color schemes. See <a href="THEMING.md">docs/THEMING.md</a> for details.</p>
+
+        <h3>Quick Start</h3>
+
+        <ul>
+            <li><strong>Toggle Theme</strong>: Click the theme toggle button in the header</li>
+            <li><strong>Change Color</strong>: Select from Blue, Red, Green, or Yellow schemes</li>
+            <li><strong>System Mode</strong>: Follows your OS dark/light preference</li>
+        </ul>
+
+        <h2>Documentation</h2>
+
+        <ul>
+            <li><a href="ARCHITECTURE.md">ARCHITECTURE.md</a> - Solution architecture overview</li>
+            <li><a href="FEATURES.md">FEATURES.md</a> - Detailed feature documentation</li>
+            <li><a href="THEMING.md">THEMING.md</a> - Theming and customization guide</li>
+            <li><a href="LIBRARIES.md">LIBRARIES.md</a> - NuGet and npm package references</li>
+            <li><a href="CONTRIBUTING.md">CONTRIBUTING.md</a> - Contribution guidelines</li>
+            <li><a href="SECURITY.md">SECURITY.md</a> - Security guidelines</li>
+            <li><a href="CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a> - Community standards</li>
+        </ul>
+
+        <h2>Architecture</h2>
+
+        <h3>Domain Layer</h3>
+
+        <ul>
+            <li><strong>Result&lt;T&gt; Pattern</strong>: Explicit success/failure handling with <code>ResultErrorCode</code> enum</li>
+            <li><strong>Models</strong>: <code>Issue</code>, <code>Category</code>, <code>Status</code>, <code>Comment</code>, <code>User</code> (embedded document)</li>
+            <li><strong>DTOs</strong>: Strongly-typed data transfer objects for API boundaries</li>
+            <li><strong>Repository Interface</strong>: Generic <code>IRepository&lt;T&gt;</code> for data access abstraction</li>
+        </ul>
+
+        <h3>Persistence Layer</h3>
+
+        <ul>
+            <li><strong>IssueTrackerDbContext</strong>: MongoDB EF Core context with configuration</li>
+            <li><strong>Entity Configurations</strong>: Fluent API configuration for MongoDB mapping</li>
+            <li><strong>Change Tracking</strong>: Automatic persistence with async operations</li>
+        </ul>
+
+        <h3>Web Layer</h3>
+
+        <ul>
+            <li><strong>Authentication Endpoints</strong>: <code>/login</code>, <code>/logout</code> with security hardening</li>
+            <li><strong>Theme Components</strong>: <code>ThemeProvider</code> cascading parameter, <code>ThemeToggle</code> UI</li>
+            <li><strong>JavaScript Interop</strong>: <code>themeManager</code> for localStorage persistence</li>
+        </ul>
+
+        <h2>Testing</h2>
+
+        <p>The project includes multiple testing layers:</p>
+
+        <ul>
+            <li><strong>Unit Tests</strong>: Business logic validation with NSubstitute mocks</li>
+            <li><strong>Integration Tests</strong>: Full application testing with TestContainers</li>
+            <li><strong>Blazor Component Tests</strong>: bUnit for UI component verification</li>
+            <li><strong>E2E Tests</strong>: Playwright for browser-based testing</li>
+            <li><strong>Architecture Tests</strong>: Verify project dependencies and conventions</li>
+        </ul>
+
+        <h2>API Documentation</h2>
+
+        <p>API endpoints are documented with OpenAPI 3.0+ specifications via Scalar:</p>
+
+        <ul>
+            <li>Navigate to <code>/api/docs</code> to view interactive API documentation</li>
+            <li>All REST endpoints include XML documentation comments</li>
+            <li>Request/response schemas are auto-generated from models</li>
+        </ul>
+
+        <h2>Release Notes</h2>
+
+        <!-- RELEASES_START -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Date</th>
+                    <th>Highlights</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.6.0"><strong>v0.6.0</strong></a> <span style="background:#dafbe1;color:#1a7f37;font-size:0.75em;padding:2px 6px;border-radius:10px;font-weight:600;">Latest</span></td>
+                    <td>2026-04-02</td>
+                    <td>Labels Feature — multi-value tag input, filter by label, AddLabelCommand/RemoveLabelCommand CQRS, 1,167 tests</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.5.0">v0.5.0</a></td>
+                    <td>2026-04-02</td>
+                    <td>Admin User Management — Auth0 Management API, /admin/users, UserListTable, RoleBadge, EditUserRolesModal, UserAuditLogPanel</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.4.0">v0.4.0</a></td>
+                    <td>2026-04-01</td>
+                    <td>Voting &amp; Prioritization — upvote/unvote issues, vote badge, Top Voted sort, SignalR broadcast</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.3.0">v0.3.0</a></td>
+                    <td>2026-04-01</td>
+                    <td>Polish Sprint — dashboard UI fixes, Redis caching, restore command, assignee field</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.2.0">v0.2.0</a></td>
+                    <td>2026-03-30</td>
+                    <td>UI refresh, GitHub Pages blog, full test coverage audit, E2E testing infrastructure</td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- RELEASES_END -->
+
+        <p>View all releases → <a href="https://github.com/mpaulosky/MyBlog/releases">github.com/mpaulosky/MyBlog/releases</a></p>
+
+        <h2>Dev Blog</h2>
+
+        <!-- BLOG_START -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Title</th>
+                    <th>Tags</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2026-04-02</td>
+                    <td><a href="blog/2026-04-02-release-v0-6-0.md">Release v0.6.0 — Labels Feature</a></td>
+                    <td>release, v0.6.0, labels, cqrs, blazor, bunit</td>
+                </tr>
+                <tr>
+                    <td>2026-04-02</td>
+                    <td><a href="blog/2026-04-02-release-v0-5-0.md">Release v0.5.0 — Admin User Management</a></td>
+                    <td>release, v0.5.0, admin, auth0, blazor</td>
+                </tr>
+                <tr>
+                    <td>2026-04-01</td>
+                    <td><a href="blog/2026-04-01-release-v0-4-0.md">Release v0.4.0 — Voting &amp; Prioritization</a></td>
+                    <td>release, v0.4.0, voting</td>
+                </tr>
+                <tr>
+                    <td>2026-04-01</td>
+                    <td><a href="blog/2026-04-01-release-v0-3-0.md">Release v0.3.0 — Polish Sprint</a></td>
+                    <td>release, v0.3.0, dashboard, redis</td>
+                </tr>
+                <tr>
+                    <td>2026-03-30</td>
+                    <td><a href="blog/2026-03-30-release-v0-2-0.md">Release v0.2.0 — Features, Fixes &amp; Developer Tooling</a></td>
+                    <td>release, v0.2.0</td>
+                </tr>
+                <tr>
+                    <td>2026-03-27</td>
+                    <td><a href="blog/2026-03-27-apphost-aspire-playwright-e2e-tests.md">Adding AppHost.Tests — Aspire Integration + Playwright E2E Tests</a></td>
+                    <td>tests, aspire, playwright, e2e</td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- BLOG_END -->
+
+        <p>View all posts → <a href="blog/index.md">docs/blog/index.md</a></p>
+
+        <h2>License</h2>
+
+        <p>Licensed under the MIT License. See <a href="LICENSE">LICENSE</a> file for details.</p>
+
+        <h2>Contributing</h2>
+
+        <p>We welcome contributions! Please see <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for guidelines.</p>
+
+        <hr>
+
+        <p><strong>Status</strong>: Active Development | <strong>Latest Release</strong>: <a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.4.0">v0.4.0</a> | <strong>Maintained By</strong>: @mpaulosky</p>
+    </div>
+</body>
+</html>

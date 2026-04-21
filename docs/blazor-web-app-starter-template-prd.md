@@ -185,7 +185,7 @@ authentication, Redis distributed caching, Aspire orchestration, and full Squad 
 - **NG-3**: Separate `AppHost.Tests` project — Playwright-based E2E tests are a future enhancement.
 - **NG-4**: Automated scaffolding CLI tool — this PRD documents the manual process; automation is a future enhancement.
 - **NG-5**: Data seeding with sample data — the template includes the seeding infrastructure but no domain-specific seed data.
-- **NG-6**: Full IssueTracker domain features — the template provides the structural skeleton, not the business logic.
+- **NG-6**: Full MyBlog domain features — the template provides the structural skeleton, not the business logic.
 
 ### Intentional Divergences from IssueTrackerApp
 
@@ -203,7 +203,7 @@ The following table documents deliberate differences between the template and Is
 | Chart.js integration | Included as optional (`wwwroot/js/charts.js`) | File present but not wired to components; available for projects that need charting. |
 | Blog/readme sync workflows | Excluded | IssueTrackerApp-specific documentation workflows. |
 | `Web.Endpoints.*` directly injects `DbContext` | Refactored to use service facades only | Deliberate improvement: cleaner separation via `Web.Components.*` and `Web.Endpoints.*` → service facades → MediatR → repositories. |
-| `ARCHITECTURE.md`, `FEATURES.md`, `LIBRARIES.md`, `TESTING.md`, `THEMING.md` in docs | Not copied from IssueTrackerApp | IssueTracker-specific content; `TESTING.md` and `THEMING.md` may be regenerated with template-specific content in a future enhancement. |
+| `ARCHITECTURE.md`, `FEATURES.md`, `LIBRARIES.md`, `TESTING.md`, `THEMING.md` in docs | Not copied from IssueTrackerApp | MyBlog-specific content; `TESTING.md` and `THEMING.md` may be regenerated with template-specific content in a future enhancement. |
 
 ---
 

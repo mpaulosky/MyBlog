@@ -2,7 +2,33 @@
 
 ## Active Decisions
 
-### 1. Remove Blazor Template Demo Pages (Weather & Counter)
+### 1. Versioning Strategy: Sprint Tags → Pure Semantic Versioning
+
+**Status:** ✅ Decided  
+**Date:** 2026-04-20  
+**Decided by:** User + Coordinator
+
+Switch from sprint-based release tags (`v1.0.0-sprint3`) to pure semantic versioning (`v1.0.1`, `v1.0.2`, ...) with GitVersion automation in CI/CD.
+
+**Rationale:**
+- GitVersion is already running in `.github/workflows/ci.yml` (active since Sprint 3 setup)
+- Sprint tags impose manual friction (guessing next tag, remembering conventions)
+- Pure semver decouples version from scope — cleaner for production releases
+- Main branch configured to increment Patch on each commit (GitVersion.yml verified)
+- Backward compatible: `v1.0.0-sprint3` remains the final sprint tag; subsequent releases start at `v1.0.1`
+
+**Implementation:**
+- No code changes needed — GitVersion config already correct
+- Release workflow: merge PR → CI auto-tags with semver → Aragorn creates GitHub release from tag
+- Discipline: Aragorn ceases manual `-sprint#` tagging; CI handles versioning deterministically
+- First post-sprint release: v1.0.1 (marks sprint-to-semver cutover)
+
+**Decisions Impacted:**
+- Release process documentation updated
+- Team no longer manually tracks `-sprint#` suffixes
+- Version bumping fully automated via GitVersion
+
+### 2. Remove Blazor Template Demo Pages (Weather & Counter)
 
 **Status:** ✅ Implemented  
 **PR:** https://github.com/mpaulosky/MyBlog/pull/6  
@@ -984,7 +1010,7 @@ Sprint 3 now has the needed follow-through context:
    `.squad/playbooks/release-myblog.md`.
 2. No decision ever approved a live MyBlog use case for the Minecraft-only
    `building-protection` skill.
-3. The old `release-issuetracker` playbook has already been replaced and should
+3. The old `release-MyBlog` playbook has already been replaced and should
    remain deleted.
 
 #### Decision
@@ -1013,7 +1039,7 @@ Sprint 3 now has the needed follow-through context:
 
 #### Related Asset Manifest
 
-See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-issuetracker.
+See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-MyBlog.
 
 ---
 
@@ -1298,4 +1324,3 @@ $ gh pr merge 19 --squash --delete-branch
 **Boromir Decision:** PR #19 investigation complete. Workflow rerun succeeded, all checks passed, PR merged to dev. Artifact cleanup integrated.
 
 **Status:** ✅ COMPLETE
-
