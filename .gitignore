@@ -26,3 +26,4 @@ src/Web/wwwroot/css/tailwind.css
 .squad-workstream
 
 .fake
+*.lscache
