@@ -415,10 +415,6 @@ jobs:
       - name: Build AppHost.Tests
         run: dotnet build tests/E2E.Tests/E2E.Tests.csproj --configuration Release --no-restore
 
-      - name: Install Playwright browsers
-        run: |
-          pwsh tests/E2E.Tests/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
-
       - name: Run AppHost.Tests
         id: apphost-tests
         run: |
