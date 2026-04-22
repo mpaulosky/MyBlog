@@ -38,7 +38,7 @@ var auth0Domain = builder.Configuration["Auth0:Domain"];
 var auth0ClientId = builder.Configuration["Auth0:ClientId"];
 
 // In Development/Testing, provide mock values; in Production, require real credentials
-if (!builder.Environment.IsDevelopment())
+if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("Testing"))
 {
 	if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
 	{
@@ -51,7 +51,7 @@ if (!builder.Environment.IsDevelopment())
 }
 else if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
 {
-	// Development: Use test/mock values if not configured
+	// Development/Testing: Use test/mock values if not configured
 	auth0Domain ??= "test.auth0.com";
 	auth0ClientId ??= "test-client-id";
 }
