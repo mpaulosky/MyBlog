@@ -7,9 +7,9 @@
 //Project Name :  Domain
 //=======================================================
 
-using Domain.Abstractions;
-
 using MediatR;
+
+using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Domain.Features.BlogPosts.Commands.DeleteBlogPost;
 

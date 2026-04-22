@@ -119,7 +119,7 @@ else
             if (result.Failure)
             {
                 _error = result.Error;
-                if (result.ErrorCode == global::Domain.Abstractions.ResultErrorCode.Concurrency)
+                if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Concurrency)
                     _concurrencyError = true;
                 _showDeleteDialog = false;
                 _postToDelete = null;

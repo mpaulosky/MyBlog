@@ -7,7 +7,6 @@
 //Project Name :  Web
 //=======================================================
 
-global using Domain.Abstractions;
 global using MediatR;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Caching.Distributed;

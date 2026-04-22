@@ -88,7 +88,9 @@ fi
 # ── Gate 3: Unit + Architecture tests ──────────────────────────────────────
 TEST_PROJECTS=(
   "tests/Architecture.Tests/Architecture.Tests.csproj"
-  "tests/Unit.Tests/Unit.Tests.csproj"
+  "tests/Domain.Tests/Domain.Tests.csproj"
+  "tests/Web.Tests/Web.Tests.csproj"
+  "tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj"
 )
 TEST_ATTEMPT=0
 TESTS_OK=false
@@ -122,7 +124,7 @@ fi
 # ── Gate 4: Docker-backed integration tests ────────────────────────────────
 # Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
-  "tests/Integration.Tests/Integration.Tests.csproj"
+  "tests/Web.Tests.Integration/Web.Tests.Integration.csproj"
 )
 
 echo -e "\n${CYAN}🐋 Checking Docker availability for integration tests...${RESET}"

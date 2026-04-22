@@ -7,10 +7,9 @@
 //Project Name :  Domain
 //=======================================================
 
-using Domain.Abstractions;
-
 using MediatR;
 
+using MyBlog.Domain.Abstractions;
 using MyBlog.Domain.Entities;
 
 namespace MyBlog.Domain.Features.BlogPosts.Queries.GetBlogPostById;

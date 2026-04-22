@@ -7,6 +7,8 @@
 //Project Name :  Web
 //=======================================================
 
+using MyBlog.Domain.Abstractions;
+
 namespace MyBlog.Web.Features.BlogPosts.Delete;
 
 public sealed class DeleteBlogPostHandler(
