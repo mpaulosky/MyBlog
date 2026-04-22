@@ -17,6 +17,7 @@ public class WebAppTests(E2EFixture fixture)
 	{
 		// Arrange
 		var httpClient = fixture.App.CreateHttpClient("web");
+		httpClient.Timeout = TimeSpan.FromSeconds(300); // Increase timeout for CI
 
 		// Act
 		var response = await httpClient.GetAsync("/");
