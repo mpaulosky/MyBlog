@@ -426,6 +426,14 @@ jobs:
         id: apphost-tests
         run: |
           mkdir -p test-results
+          echo "Starting AppHost.Tests..."
+          echo "Playwright CLI version:"
+          playwright --version || echo "playwright not found"
+          echo "Checking Playwright browsers:"
+          ls -la ~/.cache/ms-playwright/ 2>/dev/null || echo "No playwright cache found"
+          echo "dotnet version:"
+          dotnet --version
+          
           dotnet test tests/AppHost.Tests \
             --configuration Release \
             --no-build \
@@ -435,7 +443,7 @@ jobs:
             --collect:"XPlat Code Coverage"
           exit_code=$?
           if [ $exit_code -ne 0 ]; then
-            echo "::error::AppHost.Tests failed"
+            echo "::error::AppHost.Tests failed with exit code $exit_code"
           fi
           exit $exit_code
 
