@@ -86,8 +86,8 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 				.AddCascadingValue("CurrentBrightness", "dark"));
 
 		// Assert — sun icon rendered (user clicks to switch to light)
-		cut.Find("button[aria-label]").GetAttribute("aria-label").Should().Contain("dark", because: "dark mode toggle should indicate current dark state");
-		cut.Markup.Should().ContainAny("sun", "☀", "M12 3v1m0 16v1", because: "dark mode shows sun icon");
+		cut.Find("button[aria-label]").GetAttribute("aria-label").Should().Contain("dark", "dark mode toggle should indicate current dark state");
+		cut.Markup.Should().ContainAny("sun", "☀", "M12 3v1m0 16v1", "dark mode shows sun icon");
 	}
 
 	[Fact]
@@ -99,7 +99,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 				.AddCascadingValue("CurrentBrightness", "light"));
 
 		// Assert — moon icon rendered (user clicks to switch to dark)
-		cut.Markup.Should().ContainAny("moon", "🌙", "M20.354", because: "light mode shows moon icon");
+		cut.Markup.Should().ContainAny("moon", "🌙", "M20.354", "light mode shows moon icon");
 	}
 
 	[Fact]

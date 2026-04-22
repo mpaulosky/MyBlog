@@ -110,7 +110,9 @@
 </head>
 
 <body>
-  <Routes />
+  <ThemeProvider @rendermode="InteractiveServer">
+    <Routes />
+  </ThemeProvider>
   <ReconnectModal />
   <script src="js/theme.js"></script>
   <script src="@Assets["_framework/blazor.web.js"]"></script>

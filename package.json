@@ -2,8 +2,8 @@
   "name": "myblog",
   "private": true,
   "scripts": {
-    "tw:build": "npx @tailwindcss/cli -i ./src/Web/wwwroot/css/app.css -o ./src/Web/wwwroot/css/tailwind.css --minify",
-    "tw:watch": "npx @tailwindcss/cli -i ./src/Web/wwwroot/css/app.css -o ./src/Web/wwwroot/css/tailwind.css --watch"
+    "tw:build": "npx @tailwindcss/cli -i ./src/Web/Styles/input.css -o ./src/Web/wwwroot/css/tailwind.css --minify",
+    "tw:watch": "npx @tailwindcss/cli -i ./src/Web/Styles/input.css -o ./src/Web/wwwroot/css/tailwind.css --watch"
   },
   "devDependencies": {
     "tailwindcss": "^4.2.0",

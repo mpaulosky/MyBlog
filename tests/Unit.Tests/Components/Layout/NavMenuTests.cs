@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using MyBlog.Unit.Tests.Testing;
 using MyBlog.Web.Components.Layout;
+using MyBlog.Web.Components.Theme;
 
 namespace MyBlog.Unit.Tests.Components.Layout;
 
@@ -78,19 +79,34 @@ public class NavMenuTests : BunitContext
 		JSInterop.Mode = JSRuntimeMode.Loose;
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("green");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("dark");
+		JSInterop.SetupVoid("themeManager.setColor", "yellow");
+		JSInterop.SetupVoid("themeManager.setBrightness", "light");
 
-		// Act
-		var cut = RenderForUser(CreatePrincipal(name: "Theme User", roles: ["Admin"]));
+		var principal = CreatePrincipal(name: "Theme User", roles: ["Admin"]);
 
-		// Assert
-		cut.WaitForAssertion(() => cut.Markup.Should().Contain("Theme User"));
+		// Act — render ThemeProvider wrapping NavMenu so cascading values flow through
+		var cut = Render<ThemeProvider>(parameters => parameters
+				.AddCascadingValue(Task.FromResult(new AuthenticationState(principal)))
+				.AddChildContent<NavMenu>());
+
+		// Assert — wait for JS theme loading and username to appear
+		cut.WaitForAssertion(() =>
+		{
+			cut.Markup.Should().Contain("Theme User");
+			JSInterop.Invocations.Should().Contain(inv => inv.Identifier == "themeManager.getColor");
+			JSInterop.Invocations.Should().Contain(inv => inv.Identifier == "themeManager.getBrightness");
+		});
+
+		// Interact with theme controls
 		cut.Find("select").Change("yellow");
 		cut.FindAll("button").Last().Click();
 
-		JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.getColor");
-		JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.getBrightness");
-		JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.setColor");
-		JSInterop.Invocations.Should().Contain(invocation => invocation.Identifier == "themeManager.setBrightness");
+		// Assert JS set-calls were triggered
+		cut.WaitForAssertion(() =>
+		{
+			JSInterop.Invocations.Should().Contain(inv => inv.Identifier == "themeManager.setColor");
+			JSInterop.Invocations.Should().Contain(inv => inv.Identifier == "themeManager.setBrightness");
+		});
 	}
 
 	private IRenderedComponent<NavMenu> RenderForUser(ClaimsPrincipal principal)
