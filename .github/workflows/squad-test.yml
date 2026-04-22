@@ -87,8 +87,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-  test-unit:
-    name: "Unit.Tests"
+  test-domain:
+    name: "Domain.Tests"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: build
@@ -113,20 +113,62 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Run Unit Tests
+      - name: Run Domain Tests
         run: |
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
+          dotnet test tests/Domain.Tests \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
-            --logger "trx;LogFileName=unit.trx" \
+            --logger "trx;LogFileName=domain.trx" \
             --results-directory test-results \
             --verbosity minimal
 
-      - name: Upload Unit Test Results
+      - name: Upload Domain Test Results
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: unit-test-results
+          name: domain-test-results
+          path: test-results
+
+  test-web:
+    name: "Web.Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run Web Tests
+        run: |
+          dotnet test tests/Web.Tests \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --logger "trx;LogFileName=web.trx" \
+            --results-directory test-results \
+            --verbosity minimal
+
+      - name: Upload Web Test Results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: web-test-results
           path: test-results
 
   test-architecture:
@@ -189,6 +231,66 @@ jobs:
           name: architecture-test-results
           path: test-results
 
+  test-bunit:
+    name: "Web.Tests.Bunit"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Blazor Tests
+        run: dotnet build tests/Web.Tests.Bunit --configuration Release --no-restore
+
+      - name: Run bUnit Tests
+        id: bunit-tests
+        run: |
+          mkdir -p test-results
+          if [ ! -d "tests/Web.Tests.Bunit" ]; then
+            echo "::notice::Blazor/bUnit test project not found at tests/Web.Tests.Bunit - skipping"
+            exit 0
+          fi
+
+          # Run tests using dotnet test
+          dotnet test tests/Web.Tests.Bunit \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=bunit.trx" \
+            --results-directory "$GITHUB_WORKSPACE/test-results" \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+          exit_code=$?
+
+          if [ $exit_code -ne 0 ]; then
+            echo "::error::Blazor component tests failed"
+          fi
+          exit $exit_code
+
+      - name: Upload bUnit Test Results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: bunit-test-results
+          path: test-results
+
   test-integration:
     name: "Web.Tests.Integration"
     runs-on: ubuntu-latest
@@ -243,19 +345,19 @@ jobs:
         run: dotnet restore
 
       - name: Build Integration Tests
-        run: dotnet build tests/Integration.Tests/Integration.Tests.csproj --configuration Release --no-restore
+        run: dotnet build tests/Web.Tests.Integration --configuration Release --no-restore
 
       - name: Run Integration Tests
         id: integration-tests
         run: |
           mkdir -p test-results
-          if [ ! -d "tests/Integration.Tests" ]; then
-            echo "::notice::Integration test project not found at tests/Integration.Tests - skipping"
+          if [ ! -d "tests/Web.Tests.Integration" ]; then
+            echo "::notice::Integration test project not found at tests/Web.Tests.Integration - skipping"
             exit 0
           fi
 
           # Run tests using dotnet test
-          dotnet test tests/Integration.Tests/Integration.Tests.csproj \
+          dotnet test tests/Web.Tests.Integration \
             --configuration Release \
             --no-build \
             --verbosity normal \
@@ -311,13 +413,17 @@ jobs:
         run: dotnet restore
 
       - name: Build AppHost.Tests
-        run: dotnet build tests/E2E.Tests/E2E.Tests.csproj --configuration Release --no-restore
+        run: dotnet build tests/AppHost.Tests --configuration Release --no-restore
+
+      - name: Install Playwright browsers
+        run: |
+          pwsh tests/AppHost.Tests/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
 
       - name: Run AppHost.Tests
         id: apphost-tests
         run: |
           mkdir -p test-results
-          dotnet test tests/E2E.Tests/E2E.Tests.csproj \
+          dotnet test tests/AppHost.Tests \
             --configuration Release \
             --no-build \
             --verbosity normal \
@@ -342,8 +448,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs:
-      - test-unit
+      - test-domain
+      - test-web
       - test-architecture
+      - test-bunit
       - test-integration
       - test-apphost
     if: always()
@@ -411,8 +519,10 @@ jobs:
     timeout-minutes: 10
     needs:
       - build
-      - test-unit
+      - test-domain
+      - test-web
       - test-architecture
+      - test-bunit
       - test-integration
       - test-apphost
     if: always()
@@ -443,8 +553,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Job Status" >> $GITHUB_STEP_SUMMARY
           echo "- **Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Unit.Tests:** ${{ needs.test-unit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Domain.Tests:** ${{ needs.test-domain.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web.Tests:** ${{ needs.test-web.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Architecture.Tests:** ${{ needs.test-architecture.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web.Tests.Bunit:** ${{ needs.test-bunit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests.Integration:** ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **AppHost.Tests (Aspire + Playwright E2E):** ${{ needs.test-apphost.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -455,15 +567,16 @@ jobs:
 
           # Set overall status
           build_status="${{ needs.build.result }}"
-          unit_status="${{ needs.test-unit.result }}"
+          domain_status="${{ needs.test-domain.result }}"
+          web_status="${{ needs.test-web.result }}"
           arch_status="${{ needs.test-architecture.result }}"
+          bunit_status="${{ needs.test-bunit.result }}"
           integration_status="${{ needs.test-integration.result }}"
           apphost_status="${{ needs.test-apphost.result }}"
 
-          if [[ "$build_status" == "failure" || "$unit_status" == "failure" || \
-                "$arch_status" == "failure" || \
-                "$integration_status" == "failure" || \
-                "$apphost_status" == "failure" ]]; then
+          if [[ "$build_status" == "failure" || "$domain_status" == "failure" || "$web_status" == "failure" || \
+                "$arch_status" == "failure" || "$bunit_status" == "failure" || \
+                "$integration_status" == "failure" || "$apphost_status" == "failure" ]]; then
             echo "❌ **Overall Status:** FAILED" >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ **Overall Status:** PASSED" >> $GITHUB_STEP_SUMMARY
