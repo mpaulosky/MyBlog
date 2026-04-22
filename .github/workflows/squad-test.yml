@@ -415,6 +415,14 @@ jobs:
       - name: Build AppHost.Tests
         run: dotnet build tests/AppHost.Tests --configuration Release --no-restore
 
+      - name: Pre-pull Docker images for Aspire
+        run: |
+          echo "Pre-pulling Docker images for Aspire..."
+          docker pull mongo:8.2 &
+          docker pull redis:8.6 &
+          wait
+          echo "Docker images pre-pulled successfully"
+
       - name: Install Playwright CLI
         run: dotnet tool install -g Microsoft.Playwright.CLI
 
