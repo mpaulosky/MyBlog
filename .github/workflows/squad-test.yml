@@ -416,8 +416,8 @@ jobs:
         run: dotnet build tests/AppHost.Tests --configuration Release --no-restore
 
       - name: Install Playwright browsers
-        run: |
-          pwsh tests/AppHost.Tests/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
+        working-directory: tests/AppHost.Tests
+        run: playwright install chromium --with-deps
 
       - name: Run AppHost.Tests
         id: apphost-tests
