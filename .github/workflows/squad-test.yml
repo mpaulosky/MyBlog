@@ -189,66 +189,6 @@ jobs:
           name: architecture-test-results
           path: test-results
 
-  test-bunit:
-    name: "Web.Tests.Bunit"
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: build
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: global.json
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v5
-        with:
-          path: ${{ github.workspace }}/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build Blazor Tests
-        run: dotnet build tests/Unit.Tests/Unit.Tests.csproj --configuration Release --no-restore
-
-      - name: Run bUnit Tests
-        id: bunit-tests
-        run: |
-          mkdir -p test-results
-          if [ ! -d "tests/Unit.Tests" ]; then
-            echo "::notice::Blazor/bUnit test project not found at tests/Unit.Tests - skipping"
-            exit 0
-          fi
-
-          # Run tests using dotnet test
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
-            --configuration Release \
-            --no-build \
-            --logger "trx;LogFileName=bunit.trx" \
-            --results-directory "$GITHUB_WORKSPACE/test-results" \
-            --collect:"XPlat Code Coverage" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
-          exit_code=$?
-
-          if [ $exit_code -ne 0 ]; then
-            echo "::error::Blazor component tests failed"
-          fi
-          exit $exit_code
-
-      - name: Upload bUnit Test Results
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: bunit-test-results
-          path: test-results
-
   test-integration:
     name: "Web.Tests.Integration"
     runs-on: ubuntu-latest
@@ -404,7 +344,6 @@ jobs:
     needs:
       - test-unit
       - test-architecture
-      - test-bunit
       - test-integration
       - test-apphost
     if: always()
@@ -474,7 +413,6 @@ jobs:
       - build
       - test-unit
       - test-architecture
-      - test-bunit
       - test-integration
       - test-apphost
     if: always()
@@ -507,7 +445,6 @@ jobs:
           echo "- **Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Unit.Tests:** ${{ needs.test-unit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Architecture.Tests:** ${{ needs.test-architecture.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Web.Tests.Bunit:** ${{ needs.test-bunit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests.Integration:** ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **AppHost.Tests (Aspire + Playwright E2E):** ${{ needs.test-apphost.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -520,12 +457,11 @@ jobs:
           build_status="${{ needs.build.result }}"
           unit_status="${{ needs.test-unit.result }}"
           arch_status="${{ needs.test-architecture.result }}"
-          bunit_status="${{ needs.test-bunit.result }}"
           integration_status="${{ needs.test-integration.result }}"
           apphost_status="${{ needs.test-apphost.result }}"
 
           if [[ "$build_status" == "failure" || "$unit_status" == "failure" || \
-                "$arch_status" == "failure" || "$bunit_status" == "failure" || \
+                "$arch_status" == "failure" || \
                 "$integration_status" == "failure" || \
                 "$apphost_status" == "failure" ]]; then
             echo "❌ **Overall Status:** FAILED" >> $GITHUB_STEP_SUMMARY
