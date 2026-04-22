@@ -57,8 +57,8 @@ public class AspireManager : IAsyncLifetime
 
 		// Wait for the web process to be alive before tests run.
 		// Uses /alive (not /health) to avoid blocking on Redis/MongoDB in CI.
-		// CI cold-start can take up to 2 min; local dev is typically ~10 s.
-		await WaitForWebHealthyAsync(TimeSpan.FromSeconds(120));
+		// CI cold-start can take up to 3 min; local dev is typically ~10 s.
+		await WaitForWebHealthyAsync(TimeSpan.FromSeconds(180));
 	}
 
 	/// <summary>
