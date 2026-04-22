@@ -33,17 +33,27 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
 		.AddInteractiveServerComponents();
 
-// Auth0 authentication
+// Auth0 authentication — required only in Production
 var auth0Domain = builder.Configuration["Auth0:Domain"];
 var auth0ClientId = builder.Configuration["Auth0:ClientId"];
 
-if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+// In Development/Testing, provide mock values; in Production, require real credentials
+if (!builder.Environment.IsDevelopment())
 {
-	throw new InvalidOperationException(
-			"Auth0 configuration is missing or incomplete. Set these user secrets for the Web project:\n" +
-			"  dotnet user-secrets set \"Auth0:Domain\" \"<your-tenant>.auth0.com\" --project src/Web\n" +
-			"  dotnet user-secrets set \"Auth0:ClientId\" \"<your-client-id>\" --project src/Web\n" +
-			"  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
+	if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+	{
+		throw new InvalidOperationException(
+				"Auth0 configuration is missing or incomplete. Set these user secrets for the Web project:\n" +
+				"  dotnet user-secrets set \"Auth0:Domain\" \"<your-tenant>.auth0.com\" --project src/Web\n" +
+				"  dotnet user-secrets set \"Auth0:ClientId\" \"<your-client-id>\" --project src/Web\n" +
+				"  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
+	}
+}
+else if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+{
+	// Development: Use test/mock values if not configured
+	auth0Domain ??= "test.auth0.com";
+	auth0ClientId ??= "test-client-id";
 }
 
 var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
