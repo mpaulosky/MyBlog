@@ -60,7 +60,7 @@ public class EditBlogPostHandlerTests
 		// Arrange
 		var id = Guid.NewGuid();
 		var command = new EditBlogPostCommand(id, "T", "C");
-		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns((BlogPost?)null);
+		_repo.GetByIdAsync(Arg.Is<Guid>(g => g == id), Arg.Any<CancellationToken>()).Returns((BlogPost?)null);
 
 		// Act
 		var result = await _handler.Handle(command, CancellationToken.None);
