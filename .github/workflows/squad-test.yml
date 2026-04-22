@@ -115,7 +115,7 @@ jobs:
 
       - name: Run Domain Tests
         run: |
-          dotnet test tests/Domain.Tests \
+          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             --logger "trx;LogFileName=domain.trx" \
@@ -157,7 +157,7 @@ jobs:
 
       - name: Run Web Tests
         run: |
-          dotnet test tests/Web.Tests \
+          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             --logger "trx;LogFileName=web.trx" \
@@ -258,19 +258,19 @@ jobs:
         run: dotnet restore
 
       - name: Build Blazor Tests
-        run: dotnet build tests/Web.Tests.Bunit --configuration Release --no-restore
+        run: dotnet build tests/Unit.Tests/Unit.Tests.csproj --configuration Release --no-restore
 
       - name: Run bUnit Tests
         id: bunit-tests
         run: |
           mkdir -p test-results
-          if [ ! -d "tests/Web.Tests.Bunit" ]; then
-            echo "::notice::Blazor/bUnit test project not found at tests/Web.Tests.Bunit - skipping"
+          if [ ! -d "tests/Unit.Tests" ]; then
+            echo "::notice::Blazor/bUnit test project not found at tests/Unit.Tests - skipping"
             exit 0
           fi
 
           # Run tests using dotnet test
-          dotnet test tests/Web.Tests.Bunit \
+          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
             --configuration Release \
             --no-build \
             --logger "trx;LogFileName=bunit.trx" \
@@ -345,19 +345,19 @@ jobs:
         run: dotnet restore
 
       - name: Build Integration Tests
-        run: dotnet build tests/Web.Tests.Integration --configuration Release --no-restore
+        run: dotnet build tests/Integration.Tests/Integration.Tests.csproj --configuration Release --no-restore
 
       - name: Run Integration Tests
         id: integration-tests
         run: |
           mkdir -p test-results
-          if [ ! -d "tests/Web.Tests.Integration" ]; then
-            echo "::notice::Integration test project not found at tests/Web.Tests.Integration - skipping"
+          if [ ! -d "tests/Integration.Tests" ]; then
+            echo "::notice::Integration test project not found at tests/Integration.Tests - skipping"
             exit 0
           fi
 
           # Run tests using dotnet test
-          dotnet test tests/Web.Tests.Integration \
+          dotnet test tests/Integration.Tests/Integration.Tests.csproj \
             --configuration Release \
             --no-build \
             --verbosity normal \
@@ -413,17 +413,17 @@ jobs:
         run: dotnet restore
 
       - name: Build AppHost.Tests
-        run: dotnet build tests/AppHost.Tests --configuration Release --no-restore
+        run: dotnet build tests/E2E.Tests/E2E.Tests.csproj --configuration Release --no-restore
 
       - name: Install Playwright browsers
         run: |
-          pwsh tests/AppHost.Tests/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
+          pwsh tests/E2E.Tests/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
 
       - name: Run AppHost.Tests
         id: apphost-tests
         run: |
           mkdir -p test-results
-          dotnet test tests/AppHost.Tests \
+          dotnet test tests/E2E.Tests/E2E.Tests.csproj \
             --configuration Release \
             --no-build \
             --verbosity normal \
