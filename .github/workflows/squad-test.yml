@@ -87,8 +87,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-  test-domain:
-    name: "Domain.Tests"
+  test-unit:
+    name: "Unit.Tests"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: build
@@ -113,62 +113,20 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Run Domain Tests
+      - name: Run Unit Tests
         run: |
           dotnet test tests/Unit.Tests/Unit.Tests.csproj \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
-            --logger "trx;LogFileName=domain.trx" \
+            --logger "trx;LogFileName=unit.trx" \
             --results-directory test-results \
             --verbosity minimal
 
-      - name: Upload Domain Test Results
+      - name: Upload Unit Test Results
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: domain-test-results
-          path: test-results
-
-  test-web:
-    name: "Web.Tests"
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: build
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: global.json
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v5
-        with:
-          path: ${{ github.workspace }}/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Run Web Tests
-        run: |
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
-            --configuration Release \
-            --collect:"XPlat Code Coverage" \
-            --logger "trx;LogFileName=web.trx" \
-            --results-directory test-results \
-            --verbosity minimal
-
-      - name: Upload Web Test Results
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: web-test-results
+          name: unit-test-results
           path: test-results
 
   test-architecture:
@@ -444,8 +402,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs:
-      - test-domain
-      - test-web
+      - test-unit
       - test-architecture
       - test-bunit
       - test-integration
@@ -515,8 +472,7 @@ jobs:
     timeout-minutes: 10
     needs:
       - build
-      - test-domain
-      - test-web
+      - test-unit
       - test-architecture
       - test-bunit
       - test-integration
@@ -549,8 +505,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Job Status" >> $GITHUB_STEP_SUMMARY
           echo "- **Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Domain.Tests:** ${{ needs.test-domain.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Web.Tests:** ${{ needs.test-web.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit.Tests:** ${{ needs.test-unit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Architecture.Tests:** ${{ needs.test-architecture.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests.Bunit:** ${{ needs.test-bunit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests.Integration:** ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
@@ -563,16 +518,15 @@ jobs:
 
           # Set overall status
           build_status="${{ needs.build.result }}"
-          domain_status="${{ needs.test-domain.result }}"
-          web_status="${{ needs.test-web.result }}"
+          unit_status="${{ needs.test-unit.result }}"
           arch_status="${{ needs.test-architecture.result }}"
           bunit_status="${{ needs.test-bunit.result }}"
           integration_status="${{ needs.test-integration.result }}"
           apphost_status="${{ needs.test-apphost.result }}"
 
-          if [[ "$build_status" == "failure" || "$domain_status" == "failure" || "$web_status" == "failure" || \
+          if [[ "$build_status" == "failure" || "$unit_status" == "failure" || \
                 "$arch_status" == "failure" || "$bunit_status" == "failure" || \
-                "$integration_status" == "failure" || "$mongodb_status" == "failure" || \
+                "$integration_status" == "failure" || \
                 "$apphost_status" == "failure" ]]; then
             echo "❌ **Overall Status:** FAILED" >> $GITHUB_STEP_SUMMARY
           else
