@@ -15,10 +15,8 @@ namespace AppHost.Tests;
 /// <summary>
 /// Playwright tests for the IssueTrackerApp web resource.
 /// </summary>
-public class WebPlaywrightTests : BasePlaywrightTests
+public class WebPlaywrightTests(AspireManager aspireManager) : BasePlaywrightTests(aspireManager)
 {
-	public WebPlaywrightTests(AspireManager aspireManager) : base(aspireManager) { }
-
 	[Fact]
 	public async Task WebHomePageLoads()
 	{

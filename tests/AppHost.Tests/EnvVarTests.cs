@@ -39,7 +39,7 @@ public class EnvVarTests
 #pragma warning restore CS0618 // Type or member is obsolete
 
 		// Assert
-		envVars.Should().ContainKey("ConnectionStrings__mongodb");
+		envVars.Should().ContainKey("ConnectionStrings__myblog");
 	}
 
 	[Fact]

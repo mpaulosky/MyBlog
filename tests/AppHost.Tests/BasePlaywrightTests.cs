@@ -18,13 +18,9 @@ namespace AppHost.Tests;
 /// <see cref="AppHostTestCollection"/> collection fixture — AppHost starts once per test run.
 /// </summary>
 [Collection(AppHostTestCollection.Name)]
-public abstract class BasePlaywrightTests : IAsyncDisposable
+public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncDisposable
 {
-
-	protected BasePlaywrightTests(AspireManager aspireManager) =>
-		AspireManager = aspireManager ?? throw new ArgumentNullException(nameof(aspireManager));
-
-	AspireManager AspireManager { get; }
+	AspireManager AspireManager { get; } = aspireManager ?? throw new ArgumentNullException(nameof(aspireManager));
 	PlaywrightManager PlaywrightManager => AspireManager.PlaywrightManager;
 
 	// CI cold-start can take up to 2 min; local dev is typically ~10 s
@@ -168,6 +164,3 @@ public abstract class BasePlaywrightTests : IAsyncDisposable
 			await context.DisposeAsync();
 	}
 }
-
-
-
