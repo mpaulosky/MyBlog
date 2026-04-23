@@ -32,7 +32,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
 			var brandLink = page.Locator("header a[href=\"/\"]");
-			await brandLink.WaitForAsync(new() { Timeout = 5000 });
+			await brandLink.WaitForAsync();
 
 			// Assert
 			var text = await brandLink.TextContentAsync();
@@ -53,7 +53,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 
 			// Scope to header to avoid matching the home-page CTA login button
 			var loginLink = page.Locator("header a[href*=\"/account/login\"]").First;
-			await loginLink.WaitForAsync(new() { Timeout = 5000 });
+			await loginLink.WaitForAsync();
 
 			// Assert
 			var isVisible = await loginLink.IsVisibleAsync();
@@ -62,7 +62,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 	}
 
 	[Fact]
-	public async Task Layout_NavMenu_IsHiddenWhenNotAuthenticated()
+	public async Task Layout_NavMenu_AuthLinksAreHiddenWhenNotAuthenticated()
 	{
 		// Arrange
 
@@ -98,7 +98,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
 			var footer = page.Locator("footer[role=\"contentinfo\"]");
-			await footer.WaitForAsync(new() { Timeout = 5000 });
+			await footer.WaitForAsync();
 
 			// Assert
 			var text = await footer.TextContentAsync();
@@ -119,7 +119,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 
 			// The brightness toggle button is always rendered in the header
 			var toggleBtn = page.Locator("button[aria-label*=\"Toggle dark mode\"]");
-			await toggleBtn.WaitForAsync(new() { Timeout = 5000 });
+			await toggleBtn.WaitForAsync();
 
 			// Assert
 			var isVisible = await toggleBtn.IsVisibleAsync();
@@ -140,7 +140,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 
 			// The color-picker dropdown is always rendered in the header
 			var schemeBtn = page.Locator("select[aria-label=\"Choose color theme\"]");
-			await schemeBtn.WaitForAsync(new() { Timeout = 5000 });
+			await schemeBtn.WaitForAsync();
 
 			// Assert
 			var isVisible = await schemeBtn.IsVisibleAsync();

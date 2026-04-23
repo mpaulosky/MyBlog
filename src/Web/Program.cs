@@ -179,7 +179,7 @@ app.Run();
 [ExcludeFromCodeCoverage(Justification = "Test-only endpoint for E2E testing")]
 static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
 {
-	var roleValue = string.IsNullOrEmpty(role) ? "user" : role;
+	var roleValue = string.IsNullOrWhiteSpace(role) ? "user" : role;
 
 	// Create claims for the test user
 	var claims = new List<Claim>

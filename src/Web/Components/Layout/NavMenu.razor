@@ -64,7 +64,7 @@
 			@* Mobile nav (shown when peer checkbox is checked) *@
 			<div class="hidden peer-checked:flex flex-col pb-4 md:hidden gap-1"
 			     id="mobile-menu">
-				<NavLink class="nav-link py-2 block" href="" Match="NavLinkMatch.All">Home</NavLink>
+				<NavLink class="nav-link py-2 block" href="/" Match="NavLinkMatch.All">Home</NavLink>
 
 				<NavLink class="nav-link py-2 block" href="blog">Blog Posts</NavLink>
 
@@ -85,6 +85,8 @@
 						<NavLink class="nav-link py-2 block" href="admin/users">Manage Users</NavLink>
 					</Authorized>
 				</AuthorizeView>
+
+				<ThemeSelector />
 
 				<AuthorizeView>
 					<Authorized>
