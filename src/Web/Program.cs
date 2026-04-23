@@ -108,15 +108,14 @@ builder.Services.AddScoped<MongoDbBlogPostRepository>();
 builder.Services.AddScoped<IBlogPostRepository>(sp =>
 		sp.GetRequiredService<MongoDbBlogPostRepository>());
 
-// MediatR — scans Web and Domain assemblies for all handlers
+// MediatR — scans Web assembly for all handlers
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-    cfg.RegisterServicesFromAssembly(typeof(BlogPost).Assembly); // Domain
 });
 
-// FluentValidation — scans Domain assembly for all validators
-builder.Services.AddValidatorsFromAssembly(typeof(BlogPost).Assembly);
+// FluentValidation — scans Web assembly for all validators
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 // Register ValidationBehavior pipeline
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
