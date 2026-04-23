@@ -9,6 +9,8 @@
 
 using System.Text.Json;
 
+using MyBlog.Domain.Abstractions;
+
 namespace MyBlog.Web.Features.BlogPosts.List;
 
 public sealed class GetBlogPostsHandler(

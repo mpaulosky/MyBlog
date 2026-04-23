@@ -1,0 +1,9 @@
+@namespace MyBlog.Web.Components.Theme
+
+<CascadingValue TValue="ThemeProvider" Value="this" IsFixed="false">
+	<CascadingValue TValue="string" Name="CurrentColor" Value="@CurrentColor" IsFixed="false">
+		<CascadingValue TValue="string" Name="CurrentBrightness" Value="@CurrentBrightness" IsFixed="false">
+			@ChildContent
+		</CascadingValue>
+	</CascadingValue>
+</CascadingValue>

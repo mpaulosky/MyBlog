@@ -1,0 +1,20 @@
+@namespace MyBlog.Web.Components.Theme
+
+<ThemeColorDropdownComponent OnColorChanged="HandleColorChanged" />
+<ThemeBrightnessToggleComponent OnBrightnessChanged="HandleBrightnessChanged" />
+
+@code {
+	[CascadingParameter] private ThemeProvider? Provider { get; set; }
+
+	private async Task HandleColorChanged(string color)
+	{
+		if (Provider is not null)
+			await Provider.SetColor(color);
+	}
+
+	private async Task HandleBrightnessChanged(string brightness)
+	{
+		if (Provider is not null)
+			await Provider.SetBrightness(brightness);
+	}
+}

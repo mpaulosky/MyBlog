@@ -10,6 +10,8 @@
 using Auth0.ManagementApi;
 using Auth0.ManagementApi.Users;
 
+using MyBlog.Domain.Abstractions;
+
 namespace MyBlog.Web.Features.UserManagement;
 
 public sealed class UserManagementHandler(
