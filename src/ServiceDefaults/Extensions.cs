@@ -7,6 +7,8 @@
 //Project Name :  ServiceDefaults
 //=======================================================
 
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +25,7 @@ namespace MyBlog.ServiceDefaults;
 // Adds common Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
 // This project should be referenced by each service project in your solution.
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
+[ExcludeFromCodeCoverage(Justification = "Aspire infrastructure bootstrap — not business logic")]
 public static class Extensions
 {
     private const string HealthEndpointPath = "/health";

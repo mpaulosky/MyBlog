@@ -2,7 +2,7 @@
 
 <button @onclick="OnToggle"
         class="p-1.5 rounded hover:bg-primary-500 dark:hover:bg-primary-600 text-white transition"
-        aria-label="@($"Toggle dark mode (currently {CurrentBrightness})")"
+        aria-label="Toggle dark mode (currently @CurrentBrightness)"
         title="Toggle dark mode">
 	@if (CurrentBrightness == "dark")
 	{

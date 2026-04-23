@@ -31,7 +31,8 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			var brandLink = page.Locator("header a[href=\"/\"]");
+			// font-bold targets the brand link only (mobile Home link lacks this class)
+			var brandLink = page.Locator("header a[href=\"/\"][class*=\"font-bold\"]");
 			await brandLink.WaitForAsync();
 
 			// Assert
@@ -62,7 +63,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 	}
 
 	[Fact]
-	public async Task Layout_NavMenu_IsHiddenWhenNotAuthenticated()
+	public async Task Layout_NavMenu_AuthLinksAreHiddenWhenNotAuthenticated()
 	{
 		// Arrange
 
@@ -72,12 +73,17 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The <nav> element is always present but its links are wrapped in <AuthorizeView>.
-			// For anonymous users the nav is empty — no NavLink anchors inside it.
-			var navLinkCount = await page.Locator("nav[aria-label=\"Main navigation\"] a").CountAsync();
+			// The <nav> element is always present. For anonymous users, only public links are shown.
+			// "Blog Posts" link is always visible (not auth-protected), but profile, new post, etc. are hidden.
+			var nav = page.Locator("nav[aria-label=\"Main navigation\"]");
+			await nav.WaitForAsync();
+
+			// Check that auth-protected links are NOT visible
+			var profileLink = page.Locator("nav[aria-label=\"Main navigation\"] a[href=\"profile\"]");
+			var profileCount = await profileLink.CountAsync();
 
 			// Assert
-			navLinkCount.Should().Be(0);
+			profileCount.Should().Be(0, "profile link should not be visible to anonymous users");
 		});
 	}
 
@@ -112,8 +118,8 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The brightness toggle button is always rendered in the header
-			var toggleBtn = page.Locator("button[aria-label=\"Toggle brightness\"]");
+			// The brightness toggle button is rendered in header; .First targets desktop (mobile duplicate hidden by default)
+			var toggleBtn = page.Locator("button[aria-label*=\"Toggle dark mode\"]").First;
 			await toggleBtn.WaitForAsync();
 
 			// Assert
@@ -133,8 +139,8 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The color-picker button is always rendered in the header
-			var schemeBtn = page.Locator("button[aria-label=\"Choose color theme\"]");
+			// The color-picker dropdown is always rendered in the header; .First targets desktop (mobile duplicate hidden by default)
+			var schemeBtn = page.Locator("select[aria-label=\"Choose color theme\"]").First;
 			await schemeBtn.WaitForAsync();
 
 			// Assert

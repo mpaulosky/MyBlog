@@ -20,3 +20,7 @@ builder.AddProject<Projects.Web>("web")
     .WaitFor(redis);
 
 builder.Build().Run();
+
+// Exclude the compiler-generated Program class from coverage.
+[System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Aspire host bootstrap — not business logic")]
+public partial class Program { }

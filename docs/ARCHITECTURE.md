@@ -32,7 +32,7 @@ MyBlog/
 │   ├── ServiceDefaults/      # Aspire shared configuration (OpenTelemetry, health checks)
 │   └── Web/                  # Blazor Server app — VSA feature slices, MediatR handlers, Auth0
 │       └── Features/
-│           └── BlogPosts/    # Vertical slice: Commands, Queries, Handlers, DTOs
+│           └── BlogPosts/    # Web orchestration: caching, DTOs, UI handlers
 ├── tests/
 │   ├── Unit.Tests/           # BlogPost entity tests, handler unit tests (NSubstitute mocks)
 │   ├── Architecture.Tests/    # NetArchTest.Rules layer dependency enforcement
@@ -40,7 +40,7 @@ MyBlog/
 ├── docs/
 │   ├── decisions/            # Architecture Decision Records (ADRs)
 │   │   ├── index.md          # ADR index
-│   │   └── ADR-001-architecture-decisions.md
+│   │   ├── ADR-001-architecture-decisions.md
 │   └── ...                   # ARCHITECTURE.md, CONTRIBUTING.md, etc.
 ├── Directory.Build.props     # Centralized build configuration
 ├── global.json               # .NET SDK version lock
@@ -60,10 +60,11 @@ MyBlog/
 #### Domain
 
 - **Purpose**: Core business logic and domain model
-- **Responsibility**: BlogPost entity and value objects
+- **Responsibility**: BlogPost entity, value objects, domain-layer CQRS handlers
 - **Dependencies**: None on other projects
 - **Key Types**:
   - `BlogPost` — Domain entity with factory method `Create(title, content, author)` and mutation methods `Update()`, `Publish()`, `Unpublish()`
+  - `CreateBlogPostCommandHandler`, `UpdateBlogPostCommandHandler`, etc. — Pure domain logic handlers (no infrastructure concerns)
 
 #### ServiceDefaults
 
@@ -75,16 +76,15 @@ MyBlog/
 #### Web
 
 - **Purpose**: Blazor Server user interface + application logic via MediatR
-- **Responsibility**: Feature slices (VSA), Blazor components/pages, Auth0 integration, caching
+- **Responsibility**: Feature slices (VSA), Blazor components/pages, Auth0 integration, caching, DTOs
 - **Dependencies**: Domain; resolves MongoDB + Redis via Aspire
 - **Structure**:
   ```
   Web/
   ├── Features/
   │   └── BlogPosts/
-  │       ├── BlogPostCommands.cs    # Create/Update/Delete commands + validators
-  │       ├── BlogPostQueries.cs     # GetById/GetAll queries (cacheable)
-  │       └── BlogPostHandlers.cs    # MediatR handlers (IDbContextFactory, IDistributedCache)
+  │       ├── Create/, Delete/, Edit/, List/  # Web handlers with caching & DTOs
+  │       └── Components (Create.razor, etc.)
   ├── Components/
   │   ├── Layout/
   │   │   ├── MainLayout.razor       # Root layout wrapper
@@ -92,16 +92,16 @@ MyBlog/
   │   │   └── ReconnectModal.razor   # Aspire reconnection UI
   │   ├── Pages/
   │   │   ├── BlogPosts/
-  │   │   │   ├── Index.razor        # List all posts (sends GetAllQuery via MediatR)
-  │   │   │   ├── Create.razor       # New post form (sends CreateCommand)
-  │   │   │   └── Edit.razor         # Edit post form (sends UpdateCommand / DeleteCommand)
+  │   │   │   ├── Index.razor        # List all posts (sends GetBlogPostsQuery via MediatR)
+  │   │   │   ├── Create.razor       # New post form (sends CreateBlogPostCommand)
+  │   │   │   └── Edit.razor         # Edit post form (sends EditBlogPostCommand)
   │   │   ├── Home.razor             # Landing page
   │   │   ├── Error.razor            # Error handler
   │   │   └── NotFound.razor         # 404 handler
   │   ├── Shared/
   │   │   └── ConfirmDeleteDialog.razor  # Reusable delete confirmation
   │   └── App.razor                  # Root Blazor component
-  └── Program.cs                     # DI: MediatR, DbContextFactory, Auth0, Redis
+  └── Program.cs                     # DI: MediatR (scans both Domain & Web), DbContextFactory, Auth0, Redis
   ```
 
 #### Test Projects
@@ -388,4 +388,4 @@ All significant design choices are documented in [`docs/decisions/`](decisions/i
 
 **Maintained by**: @mpaulosky  
 **Project Status**: Training / Learning  
-**Last Updated**: 2026-04-17
+**Last Updated**: 2026-04-23
