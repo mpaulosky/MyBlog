@@ -123,6 +123,7 @@ public class RazorSmokeTests : BunitContext
 		cut.Markup.Should().Contain("id=\"main-content\"");
 		cut.Markup.Should().Contain("Body content");
 		cut.Markup.Should().Contain("Training Project");
+		cut.Find("footer").GetAttribute("role").Should().Be("contentinfo");
 	}
 
 	[Fact]

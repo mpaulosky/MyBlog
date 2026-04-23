@@ -7,6 +7,7 @@
 //Project Name :  Web
 //=======================================================
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 
 using Auth0.AspNetCore.Authentication;
@@ -166,30 +167,7 @@ app.MapGet("/Account/Logout", async ctx =>
 // Test-only login endpoint for E2E testing (Development/Testing environments only)
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {
-	app.MapGet("/test/login", async (HttpContext ctx, string? role) =>
-	{
-		var roleValue = string.IsNullOrEmpty(role) ? "user" : role;
-
-		// Create claims for the test user
-		var claims = new List<Claim>
-		{
-			new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
-			new Claim(ClaimTypes.Name, "Test User"),
-			new Claim(ClaimTypes.Email, "test@example.com"),
-			new Claim(ClaimTypes.Role, roleValue),
-		};
-
-		var identity = new ClaimsIdentity(claims, "TestScheme");
-		var principal = new ClaimsPrincipal(identity);
-
-		// Sign in with cookie-based authentication
-		await ctx.SignInAsync("Cookies", principal, new AuthenticationProperties
-		{
-			IsPersistent = true,
-		});
-
-		ctx.Response.Redirect("/");
-	}).AllowAnonymous();
+	app.MapGet("/test/login", MapTestLoginEndpoint).AllowAnonymous();
 }
 
 app.MapRazorComponents<App>()
@@ -197,3 +175,33 @@ app.MapRazorComponents<App>()
 
 app.MapDefaultEndpoints();
 app.Run();
+
+[ExcludeFromCodeCoverage(Justification = "Test-only endpoint for E2E testing")]
+static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
+{
+	var roleValue = string.IsNullOrEmpty(role) ? "user" : role;
+
+	// Create claims for the test user
+	var claims = new List<Claim>
+	{
+		new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
+		new Claim(ClaimTypes.Name, "Test User"),
+		new Claim(ClaimTypes.Email, "test@example.com"),
+		new Claim(ClaimTypes.Role, roleValue),
+	};
+
+	var identity = new ClaimsIdentity(claims, "TestScheme");
+	var principal = new ClaimsPrincipal(identity);
+
+	// Sign in with cookie-based authentication
+	await ctx.SignInAsync("Cookies", principal, new AuthenticationProperties
+	{
+		IsPersistent = true,
+	});
+
+	ctx.Response.Redirect("/");
+}
+
+// Exclude the compiler-generated Program class (top-level bootstrap statements) from coverage.
+[ExcludeFromCodeCoverage(Justification = "Application bootstrap entry-point — not business logic")]
+public partial class Program { }

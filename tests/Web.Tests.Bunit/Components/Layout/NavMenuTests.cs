@@ -109,6 +109,30 @@ public class NavMenuTests : BunitContext
 		});
 	}
 
+	[Fact]
+	public void NavMenu_RendersInsideHeaderElement()
+	{
+		// Arrange (none)
+		// Act
+		var cut = RenderForUser(CreatePrincipal(authenticated: false));
+
+		// Assert — NavMenu must be wrapped in a <header> landmark element
+		cut.Find("header").Should().NotBeNull();
+		cut.Find("header nav").Should().NotBeNull();
+	}
+
+	[Fact]
+	public void NavMenu_BrandNavLink_PointsToRoot()
+	{
+		// Arrange (none)
+		// Act
+		var cut = RenderForUser(CreatePrincipal(authenticated: false));
+
+		// Assert — brand link navigates to "/"
+		var brandLink = cut.Find("a[href='/']");
+		brandLink.TextContent.Should().Contain("MyBlog");
+	}
+
 	private IRenderedComponent<NavMenu> RenderForUser(ClaimsPrincipal principal)
 	{
 		return Render<NavMenu>(parameters => parameters
