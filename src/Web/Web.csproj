@@ -44,6 +44,8 @@
       <BlazorStaticAssets Include="$(IntermediateOutputPath)publish\wwwroot\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(BlazorStaticAssets)" DestinationFolder="$(OutputPath)wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <!-- Also copy to source wwwroot so dotnet run finds them -->
+    <Copy SourceFiles="@(BlazorStaticAssets)" DestinationFolder="$(MSBuildProjectDirectory)\wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
