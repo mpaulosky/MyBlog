@@ -118,8 +118,8 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The brightness toggle button is always rendered in the header
-			var toggleBtn = page.Locator("button[aria-label*=\"Toggle dark mode\"]");
+			// The brightness toggle button is rendered in header; .First targets desktop (mobile duplicate hidden by default)
+			var toggleBtn = page.Locator("button[aria-label*=\"Toggle dark mode\"]").First;
 			await toggleBtn.WaitForAsync();
 
 			// Assert
