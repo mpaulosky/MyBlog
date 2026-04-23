@@ -49,11 +49,11 @@ if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("
 				"  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
 	}
 }
-else if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+else if (string.IsNullOrWhiteSpace(auth0Domain) || string.IsNullOrWhiteSpace(auth0ClientId))
 {
 	// Development/Testing: Use test/mock values if not configured
-	auth0Domain ??= "test.auth0.com";
-	auth0ClientId ??= "test-client-id";
+	auth0Domain = "test.auth0.com";
+	auth0ClientId = "test-client-id";
 }
 
 var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
