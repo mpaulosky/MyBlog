@@ -24,11 +24,26 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <RootNamespace>MyBlog.Web</RootNamespace>
     <UserSecretsId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</UserSecretsId>
+    <!-- Ensure Blazor static assets are generated during build for E2E tests -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
   </PropertyGroup>
 
   <!-- Build Tailwind CSS (skip on CI environments where npm is not installed) -->
   <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true'">
     <Exec Command="npm run tw:build" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
+  </Target>
+
+  <!-- Generate Blazor static assets after build for E2E tests -->
+  <Target Name="GenerateBlazorAssets" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <!-- Publish to intermediate directory to generate static assets -->
+    <Exec Command="dotnet publish -c $(Configuration) -o $(IntermediateOutputPath)publish --self-contained false --no-build" IgnoreExitCode="true" />
+    <!-- Copy Blazor framework files to bin/Release output -->
+    <ItemGroup>
+      <BlazorStaticAssets Include="$(IntermediateOutputPath)publish\wwwroot\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BlazorStaticAssets)" DestinationFolder="$(OutputPath)wwwroot\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

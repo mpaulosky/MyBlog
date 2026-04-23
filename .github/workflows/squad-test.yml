@@ -415,6 +415,9 @@ jobs:
       - name: Build AppHost.Tests
         run: dotnet build tests/AppHost.Tests --configuration Release --no-restore
 
+      - name: Publish Web project to generate Blazor static assets
+        run: dotnet publish src/Web --configuration Release --no-restore
+
       - name: Pre-pull Docker images for Aspire
         run: |
           echo "Pre-pulling Docker images for Aspire..."
