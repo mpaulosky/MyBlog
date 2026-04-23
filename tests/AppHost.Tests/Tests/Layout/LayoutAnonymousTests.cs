@@ -29,10 +29,10 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
 			var brandLink = page.Locator("header a[href=\"/\"]");
-			await brandLink.WaitForAsync();
+			await brandLink.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
 			var text = await brandLink.TextContentAsync();
@@ -49,11 +49,11 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
 			// Scope to header to avoid matching the home-page CTA login button
 			var loginLink = page.Locator("header a[href*=\"/account/login\"]").First;
-			await loginLink.WaitForAsync();
+			await loginLink.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
 			var isVisible = await loginLink.IsVisibleAsync();
@@ -70,10 +70,14 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
 			// The <nav> element is always present but its links are wrapped in <AuthorizeView>.
 			// For anonymous users the nav is empty — no NavLink anchors inside it.
+			// Wait for the layout to be interactive before checking nav state
+			var nav = page.Locator("nav[aria-label=\"Main navigation\"]");
+			await nav.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 5000 });
+
 			var navLinkCount = await page.Locator("nav[aria-label=\"Main navigation\"] a").CountAsync();
 
 			// Assert
@@ -90,10 +94,10 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
 			var footer = page.Locator("footer[role=\"contentinfo\"]");
-			await footer.WaitForAsync();
+			await footer.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
 			var text = await footer.TextContentAsync();
@@ -110,11 +114,11 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
 			// The brightness toggle button is always rendered in the header
 			var toggleBtn = page.Locator("button[aria-label=\"Toggle brightness\"]");
-			await toggleBtn.WaitForAsync();
+			await toggleBtn.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
 			var isVisible = await toggleBtn.IsVisibleAsync();
@@ -131,11 +135,11 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
 			// The color-picker button is always rendered in the header
 			var schemeBtn = page.Locator("button[aria-label=\"Choose color theme\"]");
-			await schemeBtn.WaitForAsync();
+			await schemeBtn.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
 			var isVisible = await schemeBtn.IsVisibleAsync();
