@@ -17,7 +17,10 @@ node_modules/
 # Tailwind CSS compiled output
 src/Web/wwwroot/css/tailwind.css
 
-# Squad: ignore runtime state (logs, inbox, sessions)
+# Blazor build artifacts (should not be in source control)
+src/Web/wwwroot/_framework/
+src/Web/wwwroot/**/*.br
+src/Web/wwwroot/**/*.gz
 .squad/orchestration-log/
 .squad/log/
 .squad/decisions/inbox/
