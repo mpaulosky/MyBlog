@@ -31,7 +31,8 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			var brandLink = page.Locator("header a[href=\"/\"]");
+			// font-bold targets the brand link only (mobile Home link lacks this class)
+			var brandLink = page.Locator("header a[href=\"/\"][class*=\"font-bold\"]");
 			await brandLink.WaitForAsync();
 
 			// Assert
@@ -138,8 +139,8 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 			await page.GotoAsync("/");
 			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The color-picker dropdown is always rendered in the header
-			var schemeBtn = page.Locator("select[aria-label=\"Choose color theme\"]");
+			// The color-picker dropdown is always rendered in the header; .First targets desktop (mobile duplicate hidden by default)
+			var schemeBtn = page.Locator("select[aria-label=\"Choose color theme\"]").First;
 			await schemeBtn.WaitForAsync();
 
 			// Assert
