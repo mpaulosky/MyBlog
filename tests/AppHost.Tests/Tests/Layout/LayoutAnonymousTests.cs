@@ -29,7 +29,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
 			var brandLink = page.Locator("header a[href=\"/\"]");
 			await brandLink.WaitForAsync(new() { Timeout = 5000 });
@@ -49,7 +49,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
 			// Scope to header to avoid matching the home-page CTA login button
 			var loginLink = page.Locator("header a[href*=\"/account/login\"]").First;
@@ -70,18 +70,19 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The <nav> element is always present but its links are wrapped in <AuthorizeView>.
-			// For anonymous users the nav is empty — no NavLink anchors inside it.
-			// Wait for the layout to be interactive before checking nav state
+			// The <nav> element is always present. For anonymous users, only public links are shown.
+			// "Blog Posts" link is always visible (not auth-protected), but profile, new post, etc. are hidden.
 			var nav = page.Locator("nav[aria-label=\"Main navigation\"]");
-			await nav.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 5000 });
+			await nav.WaitForAsync();
 
-			var navLinkCount = await page.Locator("nav[aria-label=\"Main navigation\"] a").CountAsync();
+			// Check that auth-protected links are NOT visible
+			var profileLink = page.Locator("nav[aria-label=\"Main navigation\"] a[href=\"profile\"]");
+			var profileCount = await profileLink.CountAsync();
 
 			// Assert
-			navLinkCount.Should().Be(0);
+			profileCount.Should().Be(0, "profile link should not be visible to anonymous users");
 		});
 	}
 
@@ -94,7 +95,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
 			var footer = page.Locator("footer[role=\"contentinfo\"]");
 			await footer.WaitForAsync(new() { Timeout = 5000 });
@@ -114,10 +115,10 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
 			// The brightness toggle button is always rendered in the header
-			var toggleBtn = page.Locator("button[aria-label=\"Toggle brightness\"]");
+			var toggleBtn = page.Locator("button[aria-label*=\"Toggle dark mode\"]");
 			await toggleBtn.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
@@ -135,10 +136,10 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		{
 			// Act
 			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-			// The color-picker button is always rendered in the header
-			var schemeBtn = page.Locator("button[aria-label=\"Choose color theme\"]");
+			// The color-picker dropdown is always rendered in the header
+			var schemeBtn = page.Locator("select[aria-label=\"Choose color theme\"]");
 			await schemeBtn.WaitForAsync(new() { Timeout = 5000 });
 
 			// Assert
