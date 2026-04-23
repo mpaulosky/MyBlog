@@ -1,19 +1,19 @@
 //=======================================================
 //Copyright (c) 2026. All rights reserved.
-//File Name :     CreateBlogPostCommandValidatorTests.cs
+//File Name :     CreateBlogPostDomainCommandValidatorTests.cs
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Domain.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using FluentValidation.TestHelper;
 
 using MyBlog.Domain.Features.BlogPosts.Commands.CreateBlogPost;
 
-namespace Domain.Domain.Commands;
+namespace Tests.Unit.Features.BlogPosts.Commands;
 
-public class CreateBlogPostCommandValidatorTests
+public class CreateBlogPostDomainCommandValidatorTests
 {
 	private readonly CreateBlogPostCommandValidator _validator = new();
 

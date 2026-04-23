@@ -1,3 +1,9 @@
+# Log files
+*.log
+
+# Coverage output directories
+coverage-output*/
+
 # .NET build artifacts
 [Bb]in/
 [Oo]bj/

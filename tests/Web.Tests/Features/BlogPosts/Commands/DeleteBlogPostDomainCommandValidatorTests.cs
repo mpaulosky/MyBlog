@@ -1,19 +1,19 @@
 //=======================================================
 //Copyright (c) 2026. All rights reserved.
-//File Name :     DeleteBlogPostCommandValidatorTests.cs
+//File Name :     DeleteBlogPostDomainCommandValidatorTests.cs
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Domain.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using FluentValidation.TestHelper;
 
 using MyBlog.Domain.Features.BlogPosts.Commands.DeleteBlogPost;
 
-namespace Domain.Domain.Commands;
+namespace Tests.Unit.Features.BlogPosts.Commands;
 
-public class DeleteBlogPostCommandValidatorTests
+public class DeleteBlogPostDomainCommandValidatorTests
 {
 	private readonly DeleteBlogPostCommandValidator _validator = new();
 

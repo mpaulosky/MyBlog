@@ -28,9 +28,7 @@ This document describes the solution structure, layer dependencies, and key desi
 MyBlog/
 ├── src/
 │   ├── AppHost/              # .NET Aspire orchestration entry point (wires MongoDB, Redis, Web)
-│   ├── Domain/               # Core domain layer: BlogPost entity, value objects, domain handlers
-│   │   └── Features/
-│   │       └── BlogPosts/    # Domain logic: pure CQRS handlers (no infrastructure)
+│   ├── Domain/               # Core domain layer: BlogPost entity, value objects
 │   ├── ServiceDefaults/      # Aspire shared configuration (OpenTelemetry, health checks)
 │   └── Web/                  # Blazor Server app — VSA feature slices, MediatR handlers, Auth0
 │       └── Features/
@@ -43,7 +41,6 @@ MyBlog/
 │   ├── decisions/            # Architecture Decision Records (ADRs)
 │   │   ├── index.md          # ADR index
 │   │   ├── ADR-001-architecture-decisions.md
-│   │   └── ADR-002-domain-features-architecture.md
 │   └── ...                   # ARCHITECTURE.md, CONTRIBUTING.md, etc.
 ├── Directory.Build.props     # Centralized build configuration
 ├── global.json               # .NET SDK version lock
@@ -68,7 +65,6 @@ MyBlog/
 - **Key Types**:
   - `BlogPost` — Domain entity with factory method `Create(title, content, author)` and mutation methods `Update()`, `Publish()`, `Unpublish()`
   - `CreateBlogPostCommandHandler`, `UpdateBlogPostCommandHandler`, etc. — Pure domain logic handlers (no infrastructure concerns)
-- **Note**: Domain handlers focus on business logic; Web handlers add orchestration (caching, DTOs). See [ADR-002](decisions/ADR-002-domain-features-architecture.md) for rationale.
 
 #### ServiceDefaults
 
@@ -107,10 +103,6 @@ MyBlog/
   │   └── App.razor                  # Root Blazor component
   └── Program.cs                     # DI: MediatR (scans both Domain & Web), DbContextFactory, Auth0, Redis
   ```
-- **Handler Pattern**: Two-layer CQRS
-  - **Domain handlers** (pure logic): `CreateBlogPostCommandHandler`, `GetAllBlogPostsQueryHandler`
-  - **Web handlers** (orchestration): `CreateBlogPostHandler`, `GetBlogPostsHandler` (with caching & DTOs)
-  - See [ADR-002](decisions/ADR-002-domain-features-architecture.md) for architectural rationale
 
 #### Test Projects
 
@@ -193,93 +185,6 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 ```
 
 The factory pattern is required for Blazor Server because `DbContext` is not thread-safe and must not be shared across concurrent render events on the same circuit. See [ADR-001 §6](decisions/ADR-001-architecture-decisions.md) for full rationale.
-
-### Two-Layer CQRS Handler Pattern
-
-MyBlog implements a **two-layer CQRS pattern** where both Domain and Web projects contain MediatR handlers for the same commands/queries. This is **not a violation of VSA** but rather a clean separation of concerns:
-
-#### Domain Handlers (Pure Business Logic)
-
-Located in `Domain/Features/BlogPosts/Commands/` and `Domain/Features/BlogPosts/Queries/`:
-
-- **Responsibility**: Domain business logic only
-- **Dependencies**: `IBlogPostRepository` only
-- **Returns**: Domain entities (`BlogPost`, `IReadOnlyList<BlogPost>`)
-- **No Infrastructure**: Zero knowledge of caching, DTOs, or Web concerns
-- **Testable**: Can be unit tested with mock repositories
-- **Reusable**: Could be called from REST API, GraphQL, or background jobs
-
-Example:
-```csharp
-public sealed class CreateBlogPostCommandHandler : IRequestHandler<CreateBlogPostCommand, Result<Guid>>
-{
-    private readonly IBlogPostRepository _repository;
-
-    public async Task<Result<Guid>> Handle(CreateBlogPostCommand request, CancellationToken cancellationToken)
-    {
-        var post = BlogPost.Create(request.Title, request.Content, request.Author);
-        await _repository.AddAsync(post, cancellationToken);
-        return Result.Ok(post.Id);
-    }
-}
-```
-
-#### Web Handlers (Application Orchestration)
-
-Located in `Web/Features/BlogPosts/Create/`, `/Edit/`, `/List/`, etc.:
-
-- **Responsibility**: Application-level orchestration for Blazor Server
-- **Infrastructure**: Caching (IMemoryCache, IDistributedCache), error handling, DTOs
-- **Returns**: DTOs (`BlogPostDto`) for Blazor components
-- **Cache Invalidation**: Write handlers explicitly clear caches
-- **Testing**: Tested separately to validate caching and error handling
-
-Example:
-```csharp
-public sealed class CreateBlogPostHandler(
-    IBlogPostRepository repo,
-    IMemoryCache localCache,
-    IDistributedCache distributedCache) : IRequestHandler<CreateBlogPostCommand, Result<Guid>>
-{
-    public async Task<Result<Guid>> Handle(CreateBlogPostCommand request, CancellationToken ct)
-    {
-        try
-        {
-            var post = BlogPost.Create(request.Title, request.Content, request.Author);
-            await repo.AddAsync(post, ct);
-            localCache.Remove("blog:all");                    // Invalidate query cache
-            _ = distributedCache.RemoveAsync("blog:all", ct);
-            return Result.Ok(post.Id);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail(ex.Message);
-        }
-    }
-}
-```
-
-#### Why Two Layers?
-
-1. **Separation of Concerns**: Domain logic isolated from infrastructure concerns
-2. **Testability**: Domain logic testable without caches or Blazor dependencies
-3. **Extensibility**: Future frontends (REST API, GraphQL) can reuse Domain handlers
-4. **Cache Invalidation**: Application layer owns cache lifecycle (not domain responsibility)
-5. **DTOs**: Web layer transforms domain entities to DTOs for UI contracts
-
-**Both layers are intentionally registered in Program.cs:**
-
-```csharp
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);  // Web handlers
-    cfg.RegisterServicesFromAssembly(typeof(BlogPost).Assembly); // Domain handlers
-});
-```
-
-When Blazor components dispatch `new CreateBlogPostCommand(...)`, the **Web handler is invoked** (due to registration order), providing caching and error handling. Domain handlers exist for testability and future extensibility.
-
-**See [ADR-002](decisions/ADR-002-domain-features-architecture.md) for complete architectural rationale, alternatives considered, and implementation notes.**
 
 ## Web Layer
 
@@ -478,7 +383,6 @@ All significant design choices are documented in [`docs/decisions/`](decisions/i
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-001](decisions/ADR-001-architecture-decisions.md) | Core Architecture Decisions (VSA, MongoDB, Redis, Auth0, RBAC) | Accepted |
-| [ADR-002](decisions/ADR-002-domain-features-architecture.md) | Domain/Features Layer Architecture (Two-Layer CQRS Pattern) | Accepted |
 
 ---
 

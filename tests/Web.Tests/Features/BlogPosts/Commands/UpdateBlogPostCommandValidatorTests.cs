@@ -4,14 +4,14 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Domain.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using FluentValidation.TestHelper;
 
 using MyBlog.Domain.Features.BlogPosts.Commands.UpdateBlogPost;
 
-namespace Domain.Domain.Commands;
+namespace Tests.Unit.Features.BlogPosts.Commands;
 
 public class UpdateBlogPostCommandValidatorTests
 {
