@@ -1,0 +1,95 @@
+name: Squad Mark Released
+
+on:
+  release:
+    types: [published, released]
+
+permissions:
+  repository-projects: write
+
+env:
+  PROJECT_ID:        PVT_kwHOA5k0b84BVFTy
+  STATUS_FIELD_ID:   PVTSSF_lAHOA5k0b84BVFTyzhQjgPk
+  DONE_OPTION_ID:    "98236657"
+  RELEASED_OPTION_ID: "8e246b27"
+
+jobs:
+  mark-released:
+    # Skip pre-releases (insider builds) and drafts — only real releases move items
+    if: ${{ !github.event.release.prerelease && !github.event.release.draft }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Move Done → Released on project board
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const PROJECT_ID        = process.env.PROJECT_ID;
+            const STATUS_FIELD_ID   = process.env.STATUS_FIELD_ID;
+            const DONE_OPTION_ID    = process.env.DONE_OPTION_ID;
+            const RELEASED_OPTION_ID = process.env.RELEASED_OPTION_ID;
+
+            let cursor = null;
+            let moved  = 0;
+
+            do {
+              const result = await github.graphql(`
+                query($projectId: ID!, $cursor: String) {
+                  node(id: $projectId) {
+                    ... on ProjectV2 {
+                      items(first: 100, after: $cursor) {
+                        pageInfo { hasNextPage endCursor }
+                        nodes {
+                          id
+                          fieldValues(first: 50) {
+                            nodes {
+                              ... on ProjectV2ItemFieldSingleSelectValue {
+                                optionId
+                                field {
+                                  ... on ProjectV2SingleSelectField { id }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `, { projectId: PROJECT_ID, cursor });
+
+              const items = result.node.items;
+              cursor = items.pageInfo.hasNextPage ? items.pageInfo.endCursor : null;
+
+              for (const item of items.nodes) {
+                // Match by field ID (not name) to avoid brittleness on renames
+                const isDone = item.fieldValues.nodes.some(
+                  fv => fv.field?.id === STATUS_FIELD_ID && fv.optionId === DONE_OPTION_ID
+                );
+                if (!isDone) continue;
+
+                await github.graphql(`
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId:    $itemId
+                      fieldId:   $fieldId
+                      value:     { singleSelectOptionId: $optionId }
+                    }) {
+                      projectV2Item { id }
+                    }
+                  }
+                `, {
+                  projectId: PROJECT_ID,
+                  itemId:    item.id,
+                  fieldId:   STATUS_FIELD_ID,
+                  optionId:  RELEASED_OPTION_ID,
+                });
+
+                moved++;
+                core.info(`✅ Item ${item.id} → Released`);
+              }
+            } while (cursor);
+
+            core.notice(`🎉 Moved ${moved} item(s) from Done → Released for ${context.payload.release.tag_name}`);

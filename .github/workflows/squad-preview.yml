@@ -26,4 +26,7 @@ jobs:
         run: dotnet build MyBlog.slnx --configuration Release --no-restore -p:TreatWarningsAsErrors=true
 
       - name: Run unit tests
-        run: dotnet test MyBlog.slnx --configuration Release --no-build --verbosity normal
+        run: |
+          dotnet test tests/Architecture.Tests --configuration Release --no-build --verbosity normal
+          dotnet test tests/Web.Tests --configuration Release --no-build --verbosity normal
+          dotnet test tests/Web.Tests.Integration --configuration Release --no-build --verbosity normal

@@ -441,3 +441,4 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 **Tag push gate exception:** The pre-push hook blocks direct `dev` branch pushes but cannot distinguish a tag push from a branch push. Tag pushes for releases require `--no-verify` since they target a specific commit SHA (not advancing a branch), making the branch-protection check semantically inapplicable. This is documented here for future release operators.
 
 **Release ownership (per Decision #13):** Aragorn validates scope and approves the release contents; Boromir owns operational CI/CD execution. For sprint releases where CI is already confirmed green, Aragorn may proceed directly without a separate Boromir handoff.
+
