@@ -18,17 +18,17 @@ IBlogPostCacheService cache)
 : IRequestHandler<EditBlogPostCommand, Result>,
 IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 {
-public async Task<Result> Handle(EditBlogPostCommand request, CancellationToken ct)
+public async Task<Result> Handle(EditBlogPostCommand request, CancellationToken cancellationToken)
 {
 try
 {
-var post = await repo.GetByIdAsync(request.Id, ct).ConfigureAwait(false);
+var post = await repo.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 if (post is null)
 return Result.Fail($"BlogPost {request.Id} not found.");
 post.Update(request.Title, request.Content);
-await repo.UpdateAsync(post, ct).ConfigureAwait(false);
-await cache.InvalidateAllAsync(ct).ConfigureAwait(false);
-await cache.InvalidateByIdAsync(request.Id, ct).ConfigureAwait(false);
+await repo.UpdateAsync(post, cancellationToken).ConfigureAwait(false);
+await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
+await cache.InvalidateByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 return Result.Ok();
 }
 catch (DbUpdateConcurrencyException)
@@ -47,7 +47,7 @@ return Result.Fail(ex.Message);
 }
 }
 
-public async Task<Result<BlogPostDto?>> Handle(GetBlogPostByIdQuery request, CancellationToken ct)
+public async Task<Result<BlogPostDto?>> Handle(GetBlogPostByIdQuery request, CancellationToken cancellationToken)
 {
 try
 {
@@ -55,9 +55,9 @@ var dto = await cache.GetOrFetchByIdAsync(
 request.Id,
 async () =>
 {
-var post = await repo.GetByIdAsync(request.Id, ct).ConfigureAwait(false);
+var post = await repo.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 return post?.ToDto();
-}, ct).ConfigureAwait(false);
+}, cancellationToken).ConfigureAwait(false);
 return Result.Ok<BlogPostDto?>(dto);
 }
 catch (OperationCanceledException)

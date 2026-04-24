@@ -16,13 +16,13 @@ public sealed class DeleteBlogPostHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache) : IRequestHandler<DeleteBlogPostCommand, Result>
 {
-public async Task<Result> Handle(DeleteBlogPostCommand request, CancellationToken ct)
+public async Task<Result> Handle(DeleteBlogPostCommand request, CancellationToken cancellationToken)
 {
 try
 {
-await repo.DeleteAsync(request.Id, ct).ConfigureAwait(false);
-await cache.InvalidateAllAsync(ct).ConfigureAwait(false);
-await cache.InvalidateByIdAsync(request.Id, ct).ConfigureAwait(false);
+await repo.DeleteAsync(request.Id, cancellationToken).ConfigureAwait(false);
+await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
+await cache.InvalidateByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 return Result.Ok();
 }
 catch (DbUpdateConcurrencyException)

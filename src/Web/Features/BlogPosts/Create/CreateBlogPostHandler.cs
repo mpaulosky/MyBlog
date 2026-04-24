@@ -16,13 +16,13 @@ public sealed class CreateBlogPostHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache) : IRequestHandler<CreateBlogPostCommand, Result<Guid>>
 {
-public async Task<Result<Guid>> Handle(CreateBlogPostCommand request, CancellationToken ct)
+public async Task<Result<Guid>> Handle(CreateBlogPostCommand request, CancellationToken cancellationToken)
 {
 try
 {
 var post = BlogPost.Create(request.Title, request.Content, request.Author);
-await repo.AddAsync(post, ct).ConfigureAwait(false);
-await cache.InvalidateAllAsync(ct).ConfigureAwait(false);
+await repo.AddAsync(post, cancellationToken).ConfigureAwait(false);
+await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
 return Result.Ok<Guid>(post.Id);
 }
 catch (OperationCanceledException)

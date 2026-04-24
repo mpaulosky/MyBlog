@@ -39,7 +39,7 @@ public sealed class RedisFixture : IAsyncLifetime
 	/// and the shared Redis container (L2). Each call returns an independent
 	/// instance so tests can verify the L2 path by comparing behaviour across instances.
 	/// </summary>
-	public IBlogPostCacheService CreateCacheService()
+	internal IBlogPostCacheService CreateCacheService()
 	{
 		var services = new ServiceCollection();
 		services.AddMemoryCache();
