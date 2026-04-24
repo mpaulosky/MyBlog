@@ -15,9 +15,7 @@ public class CachingLayerTests
 {
 	private static readonly System.Reflection.Assembly WebAssembly = typeof(GetBlogPostsQuery).Assembly;
 
-	// TDD-red: handlers still inject IDistributedCache directly.
-	// Remove Skip once Sam's #110 (IBlogPostCacheService handler refactor) merges.
-	[Fact(Skip = "TDD-red: pending #110 — handlers must be refactored to use IBlogPostCacheService")]
+	[Fact]
 	public void Features_Should_Not_Reference_IDistributedCache_Directly()
 	{
 		var result = Types.InAssembly(WebAssembly)
@@ -31,9 +29,7 @@ public class CachingLayerTests
 			"VSA handlers must delegate caching to IBlogPostCacheService, not reference IDistributedCache directly");
 	}
 
-	// TDD-red: handlers still inject IMemoryCache directly.
-	// Remove Skip once Sam's #110 (IBlogPostCacheService handler refactor) merges.
-	[Fact(Skip = "TDD-red: pending #110 — handlers must be refactored to use IBlogPostCacheService")]
+	[Fact]
 	public void Features_Should_Not_Reference_IMemoryCache_Directly()
 	{
 		var result = Types.InAssembly(WebAssembly)
