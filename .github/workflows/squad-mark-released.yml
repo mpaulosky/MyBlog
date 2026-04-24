@@ -3,6 +3,7 @@ name: Squad Mark Released
 on:
   release:
     types: [published, released]
+  workflow_dispatch: {}
 
 permissions:
   repository-projects: write
@@ -15,8 +16,8 @@ env:
 
 jobs:
   mark-released:
-    # Skip pre-releases (insider builds) and drafts — only real releases move items
-    if: ${{ !github.event.release.prerelease && !github.event.release.draft }}
+    # Skip pre-releases and drafts on release events; always run on manual dispatch
+    if: ${{ github.event_name == 'workflow_dispatch' || (!github.event.release.prerelease && !github.event.release.draft) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -92,4 +93,5 @@ jobs:
               }
             } while (cursor);
 
-            core.notice(`🎉 Moved ${moved} item(s) from Done → Released for ${context.payload.release.tag_name}`);
+            const tagName = context.payload.release?.tag_name ?? 'manual dispatch';
+            core.notice(`🎉 Moved ${moved} item(s) from Done → Released for ${tagName}`);
