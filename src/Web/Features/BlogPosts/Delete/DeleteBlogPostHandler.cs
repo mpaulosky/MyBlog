@@ -20,9 +20,9 @@ public async Task<Result> Handle(DeleteBlogPostCommand request, CancellationToke
 {
 try
 {
-await repo.DeleteAsync(request.Id, cancellationToken);
-await cache.InvalidateAllAsync(cancellationToken);
-await cache.InvalidateByIdAsync(request.Id, cancellationToken);
+await repo.DeleteAsync(request.Id, cancellationToken).ConfigureAwait(false);
+await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
+await cache.InvalidateByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 return Result.Ok();
 }
 catch (DbUpdateConcurrencyException)
@@ -31,9 +31,19 @@ return Result.Fail(
 "This post was modified by another user. Please reload and try again.",
 ResultErrorCode.Concurrency);
 }
-catch (Exception ex)
+catch (OperationCanceledException)
+{
+throw;
+}
+catch (InvalidOperationException ex)
 {
 return Result.Fail(ex.Message);
 }
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 }

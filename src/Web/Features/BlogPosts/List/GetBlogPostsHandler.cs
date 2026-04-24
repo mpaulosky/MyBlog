@@ -24,14 +24,24 @@ try
 var result = await cache.GetOrFetchAllAsync(
 async () =>
 {
-var all = await repo.GetAllAsync(cancellationToken);
+var all = await repo.GetAllAsync(cancellationToken).ConfigureAwait(false);
 return (IReadOnlyList<BlogPostDto>)all.Select(p => p.ToDto()).ToList();
-}, cancellationToken);
+}, cancellationToken).ConfigureAwait(false);
 return Result.Ok<IReadOnlyList<BlogPostDto>>(result);
 }
-catch (Exception ex)
+catch (OperationCanceledException)
+{
+throw;
+}
+catch (InvalidOperationException ex)
 {
 return Result.Fail<IReadOnlyList<BlogPostDto>>(ex.Message);
 }
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail<IReadOnlyList<BlogPostDto>>("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 }
