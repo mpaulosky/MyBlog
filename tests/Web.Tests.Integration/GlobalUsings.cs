@@ -13,3 +13,6 @@ global using Microsoft.EntityFrameworkCore;
 
 global using MyBlog.Domain.Entities;
 global using MyBlog.Web.Data;
+global using MyBlog.Web.Infrastructure.Caching;
+
+global using NSubstitute;
