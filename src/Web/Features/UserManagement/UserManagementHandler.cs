@@ -51,10 +51,20 @@ catch (OperationCanceledException)
 {
 throw;
 }
-catch (Exception ex)
+catch (InvalidOperationException ex)
 {
 return Result.Fail<IReadOnlyList<UserWithRolesDto>>(ex.Message);
 }
+catch (HttpRequestException ex)
+{
+return Result.Fail<IReadOnlyList<UserWithRolesDto>>(ex.Message);
+}
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail<IReadOnlyList<UserWithRolesDto>>("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 
 public async Task<Result> Handle(AssignRoleCommand request, CancellationToken cancellationToken)
@@ -72,10 +82,20 @@ catch (OperationCanceledException)
 {
 throw;
 }
-catch (Exception ex)
+catch (InvalidOperationException ex)
 {
 return Result.Fail(ex.Message);
 }
+catch (HttpRequestException ex)
+{
+return Result.Fail(ex.Message);
+}
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 
 public async Task<Result> Handle(RemoveRoleCommand request, CancellationToken cancellationToken)
@@ -93,10 +113,20 @@ catch (OperationCanceledException)
 {
 throw;
 }
-catch (Exception ex)
+catch (InvalidOperationException ex)
 {
 return Result.Fail(ex.Message);
 }
+catch (HttpRequestException ex)
+{
+return Result.Fail(ex.Message);
+}
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 
 public async Task<Result<IReadOnlyList<RoleDto>>> Handle(GetAvailableRolesQuery request, CancellationToken cancellationToken)
@@ -116,10 +146,20 @@ catch (OperationCanceledException)
 {
 throw;
 }
-catch (Exception ex)
+catch (InvalidOperationException ex)
 {
 return Result.Fail<IReadOnlyList<RoleDto>>(ex.Message);
 }
+catch (HttpRequestException ex)
+{
+return Result.Fail<IReadOnlyList<RoleDto>>(ex.Message);
+}
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail<IReadOnlyList<RoleDto>>("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 
 private async Task<ManagementApiClient> GetManagementClientAsync(CancellationToken cancellationToken)

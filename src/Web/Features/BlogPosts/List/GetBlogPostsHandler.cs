@@ -33,9 +33,15 @@ catch (OperationCanceledException)
 {
 throw;
 }
-catch (Exception ex)
+catch (InvalidOperationException ex)
 {
 return Result.Fail<IReadOnlyList<BlogPostDto>>(ex.Message);
 }
+#pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
+catch (Exception)
+{
+return Result.Fail<IReadOnlyList<BlogPostDto>>("An unexpected error occurred.");
+}
+#pragma warning restore CA1031
 }
 }
