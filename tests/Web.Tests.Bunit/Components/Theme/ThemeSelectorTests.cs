@@ -278,8 +278,8 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 		JSInterop.Mode = JSRuntimeMode.Loose;
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setColor", Arg.Any<string>());
-		JSInterop.SetupVoid("themeManager.setBrightness", Arg.Any<string>());
+		JSInterop.SetupVoid("themeManager.setColor");
+		JSInterop.SetupVoid("themeManager.setBrightness");
 	}
 
 	[Fact]
