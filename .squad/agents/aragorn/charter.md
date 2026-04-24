@@ -57,5 +57,6 @@ Preferred: auto
    // =============================================
    ```
    `.razor` files do **NOT** get copyright headers.
-7. **PR merge sequence:** CI pass → read Copilot review comments → parallel review → fix cycle if rejected → approve → squash merge → pull main. Never merge without unanimous reviewer approval.
+7. **PR merge sequence:** CI pass → read Copilot review comments → check Codecov report → parallel review → fix cycle if rejected → approve → squash merge → pull main. Never merge without unanimous reviewer approval.
 8. **Copilot review:** Before posting any PR review verdict, read GitHub Copilot's automated review comments (`gh pr view {N} --json reviews`). Address flagged bugs or security issues; style suggestions are discretionary.
+9. **Codecov check:** After reading Copilot comments, check the Codecov bot comment on the PR (`gh pr view {N} --comments | grep -A 20 'codecov'`). Flag and investigate any coverage **decrease** ≥ 1%. Minor decreases (< 1%) are acceptable if the changed code is infrastructure/config. Coverage increases or no change are always acceptable.

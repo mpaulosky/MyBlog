@@ -154,4 +154,23 @@ var result = await _handler.Handle(command, CancellationToken.None);
 result.Failure.Should().BeTrue();
 result.ErrorCode.Should().Be(ResultErrorCode.Concurrency);
 }
+
+[Fact]
+public async Task HandleGetById_CacheServiceThrows_ReturnsFailResult()
+{
+// Arrange
+var id = Guid.NewGuid();
+_cache.GetOrFetchByIdAsync(
+		id,
+		Arg.Any<Func<Task<BlogPostDto?>>>(),
+		Arg.Any<CancellationToken>())
+	.ThrowsAsync(new InvalidOperationException("redis down"));
+
+// Act
+var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
+
+// Assert
+result.Failure.Should().BeTrue();
+result.Error.Should().Contain("redis down");
+}
 }
