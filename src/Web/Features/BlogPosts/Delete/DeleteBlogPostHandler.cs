@@ -12,7 +12,7 @@ using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.BlogPosts.Delete;
 
-public sealed class DeleteBlogPostHandler(
+internal sealed class DeleteBlogPostHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache) : IRequestHandler<DeleteBlogPostCommand, Result>
 {

@@ -10,7 +10,7 @@
 namespace MyBlog.Web.Infrastructure.Caching;
 
 /// <summary>Cache key constants for the BlogPost two-tier cache.</summary>
-public static class BlogPostCacheKeys
+internal static class BlogPostCacheKeys
 {
 	/// <summary>Key for the list of all blog posts.</summary>
 	public const string All = "blog:all";

@@ -12,7 +12,7 @@ using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
-public sealed class CreateBlogPostHandler(
+internal sealed class CreateBlogPostHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache) : IRequestHandler<CreateBlogPostCommand, Result<Guid>>
 {

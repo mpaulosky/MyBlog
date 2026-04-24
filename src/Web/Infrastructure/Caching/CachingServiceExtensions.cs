@@ -9,7 +9,7 @@
 
 namespace MyBlog.Web.Infrastructure.Caching;
 
-public static class CachingServiceExtensions
+internal static class CachingServiceExtensions
 {
 	/// <summary>
 	/// Registers the two-tier (L1 in-memory + L2 Redis) <see cref="IBlogPostCacheService"/>

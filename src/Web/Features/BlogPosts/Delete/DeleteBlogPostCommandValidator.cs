@@ -11,7 +11,7 @@ using FluentValidation;
 
 namespace MyBlog.Web.Features.BlogPosts.Delete;
 
-public sealed class DeleteBlogPostCommandValidator : AbstractValidator<DeleteBlogPostCommand>
+internal sealed class DeleteBlogPostCommandValidator : AbstractValidator<DeleteBlogPostCommand>
 {
 	public DeleteBlogPostCommandValidator()
 	{

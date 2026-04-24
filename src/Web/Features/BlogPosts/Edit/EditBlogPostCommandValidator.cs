@@ -11,7 +11,7 @@ using FluentValidation;
 
 namespace MyBlog.Web.Features.BlogPosts.Edit;
 
-public sealed class EditBlogPostCommandValidator : AbstractValidator<EditBlogPostCommand>
+internal sealed class EditBlogPostCommandValidator : AbstractValidator<EditBlogPostCommand>
 {
 	public EditBlogPostCommandValidator()
 	{

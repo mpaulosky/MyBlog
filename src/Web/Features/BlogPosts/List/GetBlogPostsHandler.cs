@@ -12,7 +12,7 @@ using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.BlogPosts.List;
 
-public sealed class GetBlogPostsHandler(
+internal sealed class GetBlogPostsHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache) : IRequestHandler<GetBlogPostsQuery, Result<IReadOnlyList<BlogPostDto>>>
 {

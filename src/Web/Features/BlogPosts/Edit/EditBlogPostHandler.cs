@@ -12,7 +12,7 @@ using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.BlogPosts.Edit;
 
-public sealed class EditBlogPostHandler(
+internal sealed class EditBlogPostHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache)
 : IRequestHandler<EditBlogPostCommand, Result>,
