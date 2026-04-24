@@ -1010,7 +1010,7 @@ Sprint 3 now has the needed follow-through context:
    `.squad/playbooks/release-myblog.md`.
 2. No decision ever approved a live MyBlog use case for the Minecraft-only
    `building-protection` skill.
-3. The old `release-issuetracker` playbook has already been replaced and should
+3. The old `release-MyBlog` playbook has already been replaced and should
    remain deleted.
 
 #### Decision
@@ -1039,7 +1039,7 @@ Sprint 3 now has the needed follow-through context:
 
 #### Related Asset Manifest
 
-See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-issuetracker.
+See `.squad/decisions/DELETED-ASSETS.md` for comprehensive documentation of all deletions, including building-protection, release-process-base, post-build-validation, static-config-pattern, and release-MyBlog.
 
 ---
 
@@ -1324,4 +1324,3 @@ $ gh pr merge 19 --squash --delete-branch
 **Boromir Decision:** PR #19 investigation complete. Workflow rerun succeeded, all checks passed, PR merged to dev. Artifact cleanup integrated.
 
 **Status:** ✅ COMPLETE
-

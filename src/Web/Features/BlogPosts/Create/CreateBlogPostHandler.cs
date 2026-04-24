@@ -7,6 +7,8 @@
 //Project Name :  Web
 //=======================================================
 
+using MyBlog.Domain.Abstractions;
+
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
 public sealed class CreateBlogPostHandler(

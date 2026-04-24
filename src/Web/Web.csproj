@@ -6,15 +6,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.MongoDB.Driver" Version="13.2.2" />
-    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.2.2" />
-    <PackageReference Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="8.1.0" />
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
-    <PackageReference Include="MediatR" Version="14.1.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.6" />
-    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Aspire.MongoDB.Driver" />
+    <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
+    <PackageReference Include="Auth0.AspNetCore.Authentication" />
+    <PackageReference Include="Auth0.ManagementApi" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="MongoDB.EntityFrameworkCore" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -24,11 +24,17 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <RootNamespace>MyBlog.Web</RootNamespace>
     <UserSecretsId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</UserSecretsId>
+    <!-- Ensure Blazor static assets are generated during build for E2E tests -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
   </PropertyGroup>
 
   <!-- Build Tailwind CSS (skip on CI environments where npm is not installed) -->
   <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true'">
     <Exec Command="npm run tw:build" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
   </Target>
+
+
 
 </Project>

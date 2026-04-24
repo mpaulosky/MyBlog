@@ -79,7 +79,7 @@ Published comprehensive deleted-assets manifest and coordinated final roadmap co
 1. **Deleted-Assets Manifest Published**
    - Created `.squad/decisions/DELETED-ASSETS.md` as canonical record
    - Documented 4 deleted skills: post-build-validation, static-config-pattern, building-protection, release-process-base
-   - Documented 1 deleted playbook: release-issuetracker
+   - Documented 1 deleted playbook: release-MyBlog
    - Documented 1 retained-&-clarified asset: microsoft-code-reference
    - Provided clear rationale & decision cross-references for each entry
    - Published reference table for future contributor triage

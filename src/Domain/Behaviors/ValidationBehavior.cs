@@ -7,11 +7,11 @@
 //Project Name :  Domain
 //=======================================================
 
-using Domain.Abstractions;
-
 using FluentValidation;
 
 using MediatR;
+
+using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Domain.Behaviors;
 

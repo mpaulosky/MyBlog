@@ -82,7 +82,7 @@ else if (_model is not null)
             Navigation.NavigateTo("/blog");
         else
         {
-            if (result.ErrorCode == global::Domain.Abstractions.ResultErrorCode.Concurrency)
+            if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Concurrency)
                 _concurrencyError = true;
             _error = result.Error;
         }

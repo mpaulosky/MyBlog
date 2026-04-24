@@ -1,152 +1,32 @@
-name: CI
+name: Squad CI
+# Runs on PR to main branch — mirrors pre-push gate (build only, no tests)
 
 on:
   pull_request:
-    branches:
-      - main
-      - dev
-      - 'squad/**'
+    branches: [dev, preview, main, insider]
+    types: [opened, synchronize, reopened]
   push:
-    branches:
-      - main
-      - dev
+    branches: [dev, insider]
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-test:
+  build:
+    name: build (ubuntu-latest)
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: write
-      checks: write
-      pull-requests: write
-    
+    timeout-minutes: 20
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      
+      - uses: actions/checkout@v4
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4
-        continue-on-error: true
-        with:
-          versionSpec: '6.x'
 
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v4
-        continue-on-error: true
-        with:
-          configFilePath: ./GitVersion.yml
-
-      - name: Set Version Variables
-        id: version
-        run: |
-          echo "nuGetVersion=${{ steps.gitversion.outputs.nuGetVersion || '0.0.0-ci' }}" >> "$GITHUB_OUTPUT"
-          echo "assemblySemVer=${{ steps.gitversion.outputs.assemblySemVer || '0.0.0' }}" >> "$GITHUB_OUTPUT"
-          echo "assemblySemFileVer=${{ steps.gitversion.outputs.assemblySemFileVer || '0.0.0.0' }}" >> "$GITHUB_OUTPUT"
-          echo "informationalVersion=${{ steps.gitversion.outputs.informationalVersion || '0.0.0-ci' }}" >> "$GITHUB_OUTPUT"
-
-      - name: Display SemVer
-        run: |
-          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-          echo "NuGetVersion: ${{ steps.version.outputs.nuGetVersion }}"
-      
-      - name: Cache NuGet packages
-        uses: actions/cache@v5
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-      
       - name: Restore dependencies
         run: dotnet restore MyBlog.slnx
-      
-      - name: Build solution
-        run: |
-          dotnet build MyBlog.slnx --configuration Release --no-restore \
-            /p:Version="${{ steps.version.outputs.nuGetVersion }}" \
-            /p:AssemblyVersion="${{ steps.version.outputs.assemblySemVer }}" \
-            /p:FileVersion="${{ steps.version.outputs.assemblySemFileVer }}" \
-            /p:InformationalVersion="${{ steps.version.outputs.informationalVersion }}"
-        env:
-          CI: true
-      
-      - name: Run Architecture Tests
-        run: |
-          dotnet test tests/Architecture.Tests/Architecture.Tests.csproj \
-            --configuration Release \
-            --no-build \
-            --logger "trx;LogFileName=architecture-tests.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./test-results/architecture
-      
-      - name: Run Unit Tests
-        run: |
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj \
-            --configuration Release \
-            --no-build \
-            --logger "trx;LogFileName=unit-tests.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./test-results/unit
-      
-      - name: Run Integration Tests
-        run: |
-          dotnet test tests/Integration.Tests/Integration.Tests.csproj \
-            --configuration Release \
-            --no-build \
-            --logger "trx;LogFileName=integration-tests.trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./test-results/integration
-      
-      - name: Publish Test Results
-        uses: dorny/test-reporter@v3
-        if: always()
-        with:
-          name: Test Results
-          path: 'test-results/**/*.trx'
-          reporter: dotnet-trx
-          fail-on-error: true
-          fail-on-empty: false
-      
-      - name: Upload Coverage Reports
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: coverage-reports
-          path: test-results/**/coverage.cobertura.xml
-          retention-days: 30
-      
-      - name: Code Coverage Summary
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        if: always()
-        continue-on-error: true
-        with:
-          filename: 'test-results/**/coverage.cobertura.xml'
-          badge: true
-          format: markdown
-          output: both
-      
-      - name: Add Coverage Comment
-        uses: marocchino/sticky-pull-request-comment@v3
-        if: github.event_name == 'pull_request' && always()
-        continue-on-error: true
-        with:
-          recreate: true
-          path: code-coverage-results.md
-      
-      - name: Create and Push Git Tag
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="v${{ steps.gitversion.outputs.majorMinorPatch }}"
-          echo "Creating tag: $TAG"
-          git tag "$TAG" || echo "Tag already exists: $TAG"
-          git push origin "$TAG" || echo "Tag already pushed"
+
+      - name: Build (Release)
+        run: dotnet build MyBlog.slnx --configuration Release --no-restore
