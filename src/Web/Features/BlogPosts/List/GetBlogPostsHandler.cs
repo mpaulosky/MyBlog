@@ -24,10 +24,14 @@ try
 var result = await cache.GetOrFetchAllAsync(
 async () =>
 {
-var all = await repo.GetAllAsync(ct);
+var all = await repo.GetAllAsync(ct).ConfigureAwait(false);
 return (IReadOnlyList<BlogPostDto>)all.Select(p => p.ToDto()).ToList();
-}, ct);
+}, ct).ConfigureAwait(false);
 return Result.Ok<IReadOnlyList<BlogPostDto>>(result);
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {

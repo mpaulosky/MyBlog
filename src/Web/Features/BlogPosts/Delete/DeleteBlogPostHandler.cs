@@ -20,9 +20,9 @@ public async Task<Result> Handle(DeleteBlogPostCommand request, CancellationToke
 {
 try
 {
-await repo.DeleteAsync(request.Id, ct);
-await cache.InvalidateAllAsync(ct);
-await cache.InvalidateByIdAsync(request.Id, ct);
+await repo.DeleteAsync(request.Id, ct).ConfigureAwait(false);
+await cache.InvalidateAllAsync(ct).ConfigureAwait(false);
+await cache.InvalidateByIdAsync(request.Id, ct).ConfigureAwait(false);
 return Result.Ok();
 }
 catch (DbUpdateConcurrencyException)
@@ -30,6 +30,10 @@ catch (DbUpdateConcurrencyException)
 return Result.Fail(
 "This post was modified by another user. Please reload and try again.",
 ResultErrorCode.Concurrency);
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {

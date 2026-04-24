@@ -27,13 +27,13 @@ GetUsersWithRolesQuery request, CancellationToken ct)
 {
 try
 {
-var client = await GetManagementClientAsync(ct);
-var usersPager = await client.Users.ListAsync(new ListUsersRequestParameters(), cancellationToken: ct);
+var client = await GetManagementClientAsync(ct).ConfigureAwait(false);
+var usersPager = await client.Users.ListAsync(new ListUsersRequestParameters(), cancellationToken: ct).ConfigureAwait(false);
 var result = new List<UserWithRolesDto>();
 await foreach (var user in usersPager)
 {
 var rolesPager = await client.Users.Roles.ListAsync(
-user.UserId ?? string.Empty, new ListUserRolesRequestParameters(), cancellationToken: ct);
+user.UserId ?? string.Empty, new ListUserRolesRequestParameters(), cancellationToken: ct).ConfigureAwait(false);
 var roles = new List<string>();
 await foreach (var role in rolesPager)
 {
@@ -47,6 +47,10 @@ roles));
 }
 return Result.Ok<IReadOnlyList<UserWithRolesDto>>(result);
 }
+catch (OperationCanceledException)
+{
+throw;
+}
 catch (Exception ex)
 {
 return Result.Fail<IReadOnlyList<UserWithRolesDto>>(ex.Message);
@@ -57,12 +61,16 @@ public async Task<Result> Handle(AssignRoleCommand request, CancellationToken ct
 {
 try
 {
-var client = await GetManagementClientAsync(ct);
+var client = await GetManagementClientAsync(ct).ConfigureAwait(false);
 await client.Users.Roles.AssignAsync(
 request.UserId,
 new AssignUserRolesRequestContent { Roles = [request.RoleId] },
-cancellationToken: ct);
+cancellationToken: ct).ConfigureAwait(false);
 return Result.Ok();
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {
@@ -74,12 +82,16 @@ public async Task<Result> Handle(RemoveRoleCommand request, CancellationToken ct
 {
 try
 {
-var client = await GetManagementClientAsync(ct);
+var client = await GetManagementClientAsync(ct).ConfigureAwait(false);
 await client.Users.Roles.DeleteAsync(
 request.UserId,
 new DeleteUserRolesRequestContent { Roles = [request.RoleId] },
-cancellationToken: ct);
+cancellationToken: ct).ConfigureAwait(false);
 return Result.Ok();
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {
@@ -91,14 +103,18 @@ public async Task<Result<IReadOnlyList<RoleDto>>> Handle(GetAvailableRolesQuery 
 {
 try
 {
-var client = await GetManagementClientAsync(ct);
-var rolesPager = await client.Roles.ListAsync(new ListRolesRequestParameters(), cancellationToken: ct);
+var client = await GetManagementClientAsync(ct).ConfigureAwait(false);
+var rolesPager = await client.Roles.ListAsync(new ListRolesRequestParameters(), cancellationToken: ct).ConfigureAwait(false);
 var roles = new List<RoleDto>();
 await foreach (var role in rolesPager)
 {
 roles.Add(new RoleDto(role.Id ?? string.Empty, role.Name ?? string.Empty));
 }
 return Result.Ok<IReadOnlyList<RoleDto>>(roles);
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {
@@ -124,9 +140,9 @@ client_id = clientId,
 client_secret = clientSecret,
 audience = $"https://{domain}/api/v2/",
 grant_type = "client_credentials"
-}, ct);
+}, ct).ConfigureAwait(false);
 tokenResponse.EnsureSuccessStatusCode();
-var tokenData = await tokenResponse.Content.ReadFromJsonAsync<TokenResponse>(ct);
+var tokenData = await tokenResponse.Content.ReadFromJsonAsync<TokenResponse>(ct).ConfigureAwait(false);
 return new ManagementApiClient(
 token: tokenData!.AccessToken,
 clientOptions: new ClientOptions { BaseUrl = $"https://{domain}/api/v2" });

@@ -21,9 +21,13 @@ public async Task<Result<Guid>> Handle(CreateBlogPostCommand request, Cancellati
 try
 {
 var post = BlogPost.Create(request.Title, request.Content, request.Author);
-await repo.AddAsync(post, ct);
-await cache.InvalidateAllAsync(ct);
+await repo.AddAsync(post, ct).ConfigureAwait(false);
+await cache.InvalidateAllAsync(ct).ConfigureAwait(false);
 return Result.Ok<Guid>(post.Id);
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {

@@ -22,13 +22,13 @@ public async Task<Result> Handle(EditBlogPostCommand request, CancellationToken 
 {
 try
 {
-var post = await repo.GetByIdAsync(request.Id, ct);
+var post = await repo.GetByIdAsync(request.Id, ct).ConfigureAwait(false);
 if (post is null)
 return Result.Fail($"BlogPost {request.Id} not found.");
 post.Update(request.Title, request.Content);
-await repo.UpdateAsync(post, ct);
-await cache.InvalidateAllAsync(ct);
-await cache.InvalidateByIdAsync(request.Id, ct);
+await repo.UpdateAsync(post, ct).ConfigureAwait(false);
+await cache.InvalidateAllAsync(ct).ConfigureAwait(false);
+await cache.InvalidateByIdAsync(request.Id, ct).ConfigureAwait(false);
 return Result.Ok();
 }
 catch (DbUpdateConcurrencyException)
@@ -36,6 +36,10 @@ catch (DbUpdateConcurrencyException)
 return Result.Fail(
 "This post was modified by another user. Please reload and try again.",
 ResultErrorCode.Concurrency);
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {
@@ -51,10 +55,14 @@ var dto = await cache.GetOrFetchByIdAsync(
 request.Id,
 async () =>
 {
-var post = await repo.GetByIdAsync(request.Id, ct);
+var post = await repo.GetByIdAsync(request.Id, ct).ConfigureAwait(false);
 return post?.ToDto();
-}, ct);
+}, ct).ConfigureAwait(false);
 return Result.Ok<BlogPostDto?>(dto);
+}
+catch (OperationCanceledException)
+{
+throw;
 }
 catch (Exception ex)
 {
