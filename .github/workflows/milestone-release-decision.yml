@@ -63,12 +63,12 @@ jobs:
         run: |
           gh issue comment "$ISSUE_NUMBER" --body "✅ **Release flow triggered.**
 
-- Version bump: \`${BUMP}\`
-- \`squad-milestone-release.yml\` dispatched — this will create the tag, push it, and publish a GitHub Release.
-- \`release-blog.yml\` will fire automatically on release publish and create a \`squad:bilbo\` blog brief.
-- Once Bilbo's PR merges, \`blog-readme-sync.yml\` will update \`README.md\` (the Page).
+          - Version bump: \`${BUMP}\`
+          - \`squad-milestone-release.yml\` dispatched — this will create the tag, push it, and publish a GitHub Release.
+          - \`release-blog.yml\` will fire automatically on release publish and create a \`squad:bilbo\` blog brief.
+          - Once Bilbo's PR merges, \`blog-readme-sync.yml\` will update \`README.md\` (the Page).
 
-Closing this review issue."
+          Closing this review issue."
 
           gh issue close "$ISSUE_NUMBER" --reason completed
 
@@ -109,25 +109,25 @@ Closing this review issue."
         run: |
           BODY="## Blog Post Brief: ${MILESTONE_TITLE}
 
-Bilbo, Ralph has reviewed the **${MILESTONE_TITLE}** milestone and decided: **blog post only** (no release).
+          Bilbo, Ralph has reviewed the **${MILESTONE_TITLE}** milestone and decided: **blog post only** (no release).
 
-### Post metadata
-- **Suggested filename:** \`docs/blog/${PUBLISH_DATE}-${SLUG}.md\`
-- **Suggested publish date:** ${PUBLISH_DATE}
-- **Review issue:** ${REVIEW_ISSUE_URL} (see for full issue list)
+          ### Post metadata
+          - **Suggested filename:** \`docs/blog/${PUBLISH_DATE}-${SLUG}.md\`
+          - **Suggested publish date:** ${PUBLISH_DATE}
+          - **Review issue:** ${REVIEW_ISSUE_URL} (see for full issue list)
 
-### Suggested post structure
-1. **Summary** — what this milestone accomplished (2–3 sentences)
-2. **What was built** — key features, fixes, or improvements with context
-3. **Technical highlights** — architecture decisions, tricky problems solved, patterns introduced
-4. **What's next** — follow-up work planned
+          ### Suggested post structure
+          1. **Summary** — what this milestone accomplished (2–3 sentences)
+          2. **What was built** — key features, fixes, or improvements with context
+          3. **Technical highlights** — architecture decisions, tricky problems solved, patterns introduced
+          4. **What's next** — follow-up work planned
 
-### Instructions
-- Write the post to \`docs/blog/${PUBLISH_DATE}-${SLUG}.md\`
-- Update \`docs/blog/index.md\` to add the new post at the top of the Recent Posts table
-- Follow existing post style (see \`docs/blog/2026-04-04-release-v0-7-0.md\`)
-- Open a PR targeting \`main\` when complete
-- Close both this issue and the review issue (#${REVIEW_ISSUE_NUMBER}) in the PR description"
+          ### Instructions
+          - Write the post to \`docs/blog/${PUBLISH_DATE}-${SLUG}.md\`
+          - Update \`docs/blog/index.md\` to add the new post at the top of the Recent Posts table
+          - Follow existing post style (see \`docs/blog/2026-04-04-release-v0-7-0.md\`)
+          - Open a PR targeting \`main\` when complete
+          - Close both this issue and the review issue (#${REVIEW_ISSUE_NUMBER}) in the PR description"
 
           gh issue create \
             --title "Blog post: ${MILESTONE_TITLE} — milestone recap" \
@@ -141,10 +141,10 @@ Bilbo, Ralph has reviewed the **${MILESTONE_TITLE}** milestone and decided: **bl
         run: |
           gh issue comment "$ISSUE_NUMBER" --body "📝 **Blog-only path selected.**
 
-A \`squad:bilbo\` blog brief issue has been created. Once Bilbo's PR merges:
-- \`docs/blog/index.md\` will be updated (the blog page)
-- \`blog-readme-sync.yml\` will update \`README.md\` (the Page)
+          A \`squad:bilbo\` blog brief issue has been created. Once Bilbo's PR merges:
+          - \`docs/blog/index.md\` will be updated (the blog page)
+          - \`blog-readme-sync.yml\` will update \`README.md\` (the Page)
 
-Closing this review issue."
+          Closing this review issue."
 
           gh issue close "$ISSUE_NUMBER" --reason completed

@@ -62,45 +62,45 @@ jobs:
         run: |
           BODY="## Milestone Review: ${MILESTONE_TITLE}
 
-Ralph, **${MILESTONE_TITLE}** has been closed with **${ISSUE_COUNT} issues** completed.
-Current latest release: \`${LAST_TAG}\`
+          Ralph, **${MILESTONE_TITLE}** has been closed with **${ISSUE_COUNT} issues** completed.
+          Current latest release: \`${LAST_TAG}\`
 
-### Closed Issues (${ISSUE_COUNT} total)
-${ISSUES_LIST}
+          ### Closed Issues (${ISSUE_COUNT} total)
+          ${ISSUES_LIST}
 
----
+          ---
 
-## 🔍 Release Candidate Checklist
+          ## 🔍 Release Candidate Checklist
 
-Review these criteria to decide between a full release or a blog-only post:
+          Review these criteria to decide between a full release or a blog-only post:
 
-| Criteria | Check |
-|----------|-------|
-| Contains user-facing features or enhancements? | (${FEATURE_COUNT} enhancement-labeled issues) |
-| Contains breaking changes or schema migrations? | Review issues above |
-| Significant enough to warrant a version bump? | Your call |
-| All CI gates green on \`main\`? | Check GitHub Actions |
-| Blog post needed either way? | **Yes — always** |
+          | Criteria | Check |
+          |----------|-------|
+          | Contains user-facing features or enhancements? | (${FEATURE_COUNT} enhancement-labeled issues) |
+          | Contains breaking changes or schema migrations? | Review issues above |
+          | Significant enough to warrant a version bump? | Your call |
+          | All CI gates green on \`main\`? | Check GitHub Actions |
+          | Blog post needed either way? | **Yes — always** |
 
----
+          ---
 
-## ✅ Your Decision
+          ## ✅ Your Decision
 
-**Option A — Release Candidate** (tag + GitHub Release + release blog post):
-> Add the label **\`release-candidate\`** to this issue.
-> Then choose the version bump type in the comment below (major / minor / patch).
+          **Option A — Release Candidate** (tag + GitHub Release + release blog post):
+          > Add the label **\`release-candidate\`** to this issue.
+          > Then choose the version bump type in the comment below (major / minor / patch).
 
-**Option B — Blog Only** (milestone summary blog post, no release):
-> Add the label **\`blog-only\`** to this issue.
+          **Option B — Blog Only** (milestone summary blog post, no release):
+          > Add the label **\`blog-only\`** to this issue.
 
-Either choice will automatically:
-- Trigger Bilbo to write the blog post
-- Update \`docs/blog/index.md\` (the blog page)
-- Sync \`README.md\` via the blog-readme-sync workflow
+          Either choice will automatically:
+          - Trigger Bilbo to write the blog post
+          - Update \`docs/blog/index.md\` (the blog page)
+          - Sync \`README.md\` via the blog-readme-sync workflow
 
----
+          ---
 
-*Triggered by milestone close at ${PUBLISH_DATE}. Workflow: \`milestone-blog.yml\`*"
+          *Triggered by milestone close at ${PUBLISH_DATE}. Workflow: \`milestone-blog.yml\`*"
 
           gh issue create \
             --title "📋 Milestone Review: ${MILESTONE_TITLE} — release or blog?" \
