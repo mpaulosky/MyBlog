@@ -7,15 +7,7 @@
 //Project Name :  Unit.Tests
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     ResultTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
-
+using System.Reflection;
 using MyBlog.Domain.Abstractions;
 
 namespace Web;
@@ -23,7 +15,7 @@ namespace Web;
 public class ResultTests
 {
 	[Fact]
-	public void Ok_CreatesSuccessfulNonGenericResult()
+	public void OkCreatesSuccessfulNonGenericResult()
 	{
 		// Arrange (none)
 		// Act
@@ -36,7 +28,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void Fail_CreatesFailedNonGenericResultWithCodeAndDetails()
+	public void FailCreatesFailedNonGenericResultWithCodeAndDetails()
 	{
 		// Arrange (none)
 		// Act
@@ -50,7 +42,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void GenericOk_CarriesValue()
+	public void GenericOkCarriesValue()
 	{
 		// Arrange (none)
 		// Act
@@ -61,7 +53,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void GenericFail_CreatesFailedResultWithCode()
+	public void GenericFailCreatesFailedResultWithCode()
 	{
 		// Arrange (none)
 		// Act
@@ -74,7 +66,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void FromValue_ReturnsFailedResultWhenValueIsNull()
+	public void FromValueReturnsFailedResultWhenValueIsNull()
 	{
 		// Arrange
 		string? value = null;
@@ -87,16 +79,48 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void ImplicitConversions_WorkForGenericResult()
+	public void GenericResultUsesExplicitToValue()
 	{
 		// Arrange
-		Result<string> result = "hello";
+		var result = Result<string>.FromValue("hello");
 
 		// Act
-		string? value = result;
+		string? value = result.ToValue();
 
 		// Assert
 		value.Should().Be("hello");
 		result.Value.Should().Be("hello");
+	}
+
+	[Fact]
+	public void GenericFailRequiresExplicitToValueAndReturnsNull()
+	{
+		// Arrange
+		var result = Result.Fail<string>("missing", ResultErrorCode.NotFound);
+
+		// Act
+		string? value = result.ToValue();
+
+		// Assert
+		value.Should().BeNull();
+		result.ErrorCode.Should().Be(ResultErrorCode.NotFound);
+	}
+
+	[Fact]
+	public void ResultTypesExposeNoConversionOperators()
+	{
+		// Arrange
+		var operatorNames = new[] { "op_Implicit", "op_Explicit" };
+
+		// Act
+		var operatorMethods = typeof(Result)
+			.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+			.Concat(typeof(Result<>).GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly))
+			.Where(method => operatorNames.Contains(method.Name))
+			.Select(method => method.Name)
+			.ToArray();
+
+		// Assert
+		operatorMethods.Should().BeEmpty();
 	}
 }

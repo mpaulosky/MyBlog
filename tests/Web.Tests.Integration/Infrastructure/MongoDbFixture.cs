@@ -18,7 +18,7 @@ public sealed class MongoDbFixture : IAsyncLifetime
 		new MongoDbBuilder().Build();
 #pragma warning restore CS0618
 
-	public string ConnectionString { get; private set; } = string.Empty;
+	private string ConnectionString { get; set; } = string.Empty;
 
 	public async Task InitializeAsync()
 	{
@@ -31,7 +31,7 @@ public sealed class MongoDbFixture : IAsyncLifetime
 		await _container.DisposeAsync();
 	}
 
-	public IDbContextFactory<BlogDbContext> CreateFactory(string dbName) =>
+	internal IDbContextFactory<BlogDbContext> CreateFactory(string dbName) =>
 		new TestContextFactory(ConnectionString, dbName);
 
 	private sealed class TestContextFactory(string connectionString, string dbName)

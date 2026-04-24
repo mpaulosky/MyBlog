@@ -8,7 +8,9 @@
 // =============================================
 
 using AppHost.Tests.Infrastructure;
+
 using FluentAssertions;
+
 using Microsoft.Playwright;
 
 namespace AppHost.Tests;

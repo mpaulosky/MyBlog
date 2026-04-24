@@ -9,6 +9,7 @@
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+
 using Microsoft.Extensions.Logging;
 
 namespace AppHost.Tests.Infrastructure;
@@ -119,22 +120,22 @@ public class AspireManager : IAsyncLifetime
 			{
 				attemptCount++;
 				var elapsed = DateTime.UtcNow - startTime;
-				
+
 				try
 				{
-					_logger.LogInformation("Attempt {AttemptCount} (elapsed {ElapsedSeconds:F1}s): Polling {Endpoint}/alive", 
+					_logger.LogInformation("Attempt {AttemptCount} (elapsed {ElapsedSeconds:F1}s): Polling {Endpoint}/alive",
 						attemptCount, elapsed.TotalSeconds, endpoint);
-					
+
 					var response = await client.GetAsync(new Uri("/alive", UriKind.Relative), cts.Token);
-					
+
 					_logger.LogInformation("Response status: {StatusCode}", response.StatusCode);
-					
+
 					if (response.IsSuccessStatusCode)
 					{
 						_logger.LogInformation("Web app is healthy! Status: {StatusCode}", response.StatusCode);
 						return;
 					}
-					
+
 					_logger.LogWarning("Received non-success status code: {StatusCode}. Will retry...", response.StatusCode);
 				}
 				catch (HttpRequestException ex)
