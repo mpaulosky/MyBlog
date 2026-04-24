@@ -24,6 +24,7 @@ using MyBlog.Domain.Behaviors;
 using MyBlog.Domain.Entities;
 using MyBlog.ServiceDefaults;
 using MyBlog.Web.Components;
+using MyBlog.Web.Infrastructure.Caching;
 using MyBlog.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -102,6 +103,9 @@ builder.AddRedisDistributedCache("redis");
 
 // Local in-memory cache (L1)
 builder.Services.AddMemoryCache();
+
+// BlogPost two-tier cache service (L1 + L2)
+builder.Services.AddBlogPostCaching();
 
 // Repository: concrete + interface
 builder.Services.AddScoped<MongoDbBlogPostRepository>();
