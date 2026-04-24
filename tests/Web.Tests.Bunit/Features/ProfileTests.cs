@@ -14,7 +14,7 @@ namespace Web.Features;
 public class ProfileTests : BunitContext
 {
 	[Fact]
-	public void Profile_RendersIdentityDetailsRolesPictureAndClaims()
+	public void ProfileRendersIdentityDetailsRolesPictureAndClaims()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -40,7 +40,7 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
-	public void Profile_UsesFallbackValues_WhenOptionalClaimsAreMissing()
+	public void ProfileUsesFallbackValuesWhenOptionalClaimsAreMissing()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -62,7 +62,7 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
-	public void Profile_AdminRoleBadge_HasRedColorClasses()
+	public void ProfileAdminRoleBadgeHasRedColorClasses()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -81,14 +81,14 @@ public class ProfileTests : BunitContext
 				.FirstOrDefault(span =>
 						span.TextContent.Trim() == "Admin"
 						&& span.GetAttribute("class") is { } cls
-						&& cls.Contains("bg-red-100"));
+						&& cls.Contains("bg-red-100", StringComparison.Ordinal));
 
 		adminBadge.Should().NotBeNull("Admin role should render with red-100 background");
-		adminBadge!.GetAttribute("class").Should().Contain("text-red-800");
+		adminBadge.GetAttribute("class").Should().Contain("text-red-800");
 	}
 
 	[Fact]
-	public void Profile_NonAdminRoleBadge_HasGreenColorClasses()
+	public void ProfileNonAdminRoleBadgeHasGreenColorClasses()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -107,14 +107,14 @@ public class ProfileTests : BunitContext
 				.FirstOrDefault(span =>
 						span.TextContent.Trim() == "Author"
 						&& span.GetAttribute("class") is { } cls
-						&& cls.Contains("bg-green-100"));
+						&& cls.Contains("bg-green-100", StringComparison.Ordinal));
 
 		authorBadge.Should().NotBeNull("Non-admin role should render with green-100 background");
-		authorBadge!.GetAttribute("class").Should().Contain("text-green-800");
+		authorBadge.GetAttribute("class").Should().Contain("text-green-800");
 	}
 
 	[Fact]
-	public void Profile_AdminHeaderBadge_HasRedBackgroundClass()
+	public void ProfileAdminHeaderBadgeHasRedBackgroundClass()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -133,7 +133,7 @@ public class ProfileTests : BunitContext
 				.FirstOrDefault(span =>
 						span.GetAttribute("title") == "Administrator"
 						&& span.GetAttribute("class") is { } cls
-						&& cls.Contains("bg-red-600"));
+						&& cls.Contains("bg-red-600", StringComparison.Ordinal));
 
 		headerBadge.Should().NotBeNull("Header Admin badge should render with bg-red-600");
 	}

@@ -7,14 +7,6 @@
 //Project Name :  Unit.Tests
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     RazorSmokeTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 
 using MediatR;
 
@@ -41,11 +33,11 @@ public class RazorSmokeTests : BunitContext
 	public RazorSmokeTests()
 	{
 		Services.AddAuthorizationCore();
-		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
+		Services.AddSingleton<IAuthorizationService>(new TestAuthorizationService());
 	}
 
 	[Fact]
-	public void Home_RendersWelcomeMessage()
+	public void HomeRendersWelcomeMessage()
 	{
 		// Arrange (none)
 		// Act
@@ -57,7 +49,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void Error_UsesCascadingHttpContextTraceIdentifier()
+	public void ErrorUsesCascadingHttpContextTraceIdentifier()
 	{
 		// Arrange
 		var httpContext = new DefaultHttpContext
@@ -73,7 +65,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void NotFound_RendersNotFoundMessage()
+	public void NotFoundRendersNotFoundMessage()
 	{
 		// Arrange (none)
 		// Act
@@ -85,7 +77,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void ConfirmDeleteDialog_ShowsDialog_WhenVisible()
+	public void ConfirmDeleteDialogShowsDialogWhenVisible()
 	{
 		// Arrange (none)
 		// Act
@@ -99,7 +91,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void RedirectToLogin_NavigatesToLoginWithReturnUrl()
+	public void RedirectToLoginNavigatesToLoginWithReturnUrl()
 	{
 		// Arrange
 		var navigation = Services.GetRequiredService<NavigationManager>();
@@ -112,7 +104,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void MainLayout_RendersMainContentTargetAndFooter()
+	public void MainLayoutRendersMainContentTargetAndFooter()
 	{
 		// Arrange (none)
 		// Act
@@ -127,7 +119,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void BlogIndex_RendersPostsForAuthorizedUser_AndCanOpenDeleteDialog()
+	public void BlogIndexRendersPostsForAuthorizedUserAndCanOpenDeleteDialog()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -152,7 +144,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void BlogIndex_ShowsEmptyState_WhenNoPostsExist()
+	public void BlogIndexShowsEmptyStateWhenNoPostsExist()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -169,7 +161,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void BlogIndex_ConfirmDelete_SendsDeleteCommandAndRefreshesList()
+	public void BlogIndexConfirmDeleteSendsDeleteCommandAndRefreshesList()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -192,7 +184,7 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.Find("button").Click();
-		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
+		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete", StringComparison.Ordinal)).Click();
 
 		// Assert
 		sender.Received(1).Send(Arg.Is<DeleteBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
@@ -200,7 +192,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void BlogIndex_ShowsConcurrencyWarning_WhenDeleteFailsWithConcurrency()
+	public void BlogIndexShowsConcurrencyWarningWhenDeleteFailsWithConcurrency()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -221,7 +213,7 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.Find("button").Click();
-		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
+		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete", StringComparison.Ordinal)).Click();
 
 		// Assert
 		cut.WaitForAssertion(() =>
@@ -232,7 +224,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void CreatePost_RendersForm()
+	public void CreatePostRendersForm()
 	{
 		// Arrange
 		Services.AddSingleton(Substitute.For<ISender>());
@@ -247,7 +239,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void CreatePost_SubmitsAndNavigatesToBlog_WhenCommandSucceeds()
+	public void CreatePostSubmitsAndNavigatesToBlogWhenCommandSucceeds()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -274,7 +266,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void EditPost_LoadsExistingPost()
+	public void EditPostLoadsExistingPost()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -296,7 +288,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void EditPost_ShowsConcurrencyMessage_WhenSaveFailsWithConcurrency()
+	public void EditPostShowsConcurrencyMessageWhenSaveFailsWithConcurrency()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -320,7 +312,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void EditPost_SubmitsAndNavigatesToBlog_WhenSaveSucceeds()
+	public void EditPostSubmitsAndNavigatesToBlogWhenSaveSucceeds()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -347,7 +339,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void ManageRoles_RendersUsersAndAvailableRoles()
+	public void ManageRolesRendersUsersAndAvailableRoles()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -378,7 +370,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void ManageRoles_AssignButton_SendsCommandAndRefreshesUsers()
+	public void ManageRolesAssignButtonSendsCommandAndRefreshesUsers()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -410,7 +402,7 @@ public class RazorSmokeTests : BunitContext
 		// Act
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
-		cut.FindAll("button").First(button => button.TextContent.Contains("+ Author")).Click();
+		cut.FindAll("button").First(button => button.TextContent.Contains("+ Author", StringComparison.Ordinal)).Click();
 
 		// Assert
 		sender.Received(1).Send(Arg.Is<AssignRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
@@ -418,7 +410,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void ManageRoles_RemoveButton_SendsCommandAndRefreshesUsers()
+	public void ManageRolesRemoveButtonSendsCommandAndRefreshesUsers()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -450,7 +442,7 @@ public class RazorSmokeTests : BunitContext
 		// Act
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
-		cut.FindAll("button").First(button => button.TextContent.Contains("- Author")).Click();
+		cut.FindAll("button").First(button => button.TextContent.Contains("- Author", StringComparison.Ordinal)).Click();
 
 		// Assert
 		sender.Received(1).Send(Arg.Is<RemoveRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());

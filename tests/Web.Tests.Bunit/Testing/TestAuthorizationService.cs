@@ -7,14 +7,6 @@
 //Project Name :  Web.Tests.Bunit
 //=======================================================
 
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     TestAuthorizationService.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace Web.Testing;
@@ -48,7 +40,7 @@ internal sealed class TestAuthorizationService : IAuthorizationService
 
 	public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
 	{
-		// Policy evaluation not implemented; grants access to authenticated users only.
+		// Policy evaluation isn't implemented; grants access to authenticated users only.
 		return Task.FromResult(user.Identity?.IsAuthenticated == true
 				? AuthorizationResult.Success()
 				: AuthorizationResult.Failed());
