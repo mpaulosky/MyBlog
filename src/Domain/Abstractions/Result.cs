@@ -107,11 +107,16 @@ public sealed class Result<T> : Result
 
 	public T? Value { get; }
 
+	public T? ToValue() => Value;
+
+	public static Result<T> FromValue(T? value) => Ok(value);
+
 	private static Result<T> Ok(T? value)
 	{
 		return new Result<T>(value, true);
 	}
 
+#pragma warning disable CA1000
 	public static new Result<T> Fail(string errorMessage)
 	{
 		return new Result<T>(default, false, errorMessage);
@@ -126,6 +131,7 @@ public sealed class Result<T> : Result
 	{
 		return new Result<T>(default, false, errorMessage, code, details);
 	}
+#pragma warning restore CA1000
 
 	public static implicit operator T?(Result<T>? result)
 	{
