@@ -61,9 +61,11 @@ public async Task Handle_Success_DoesNotCallInvalidateById()
 var command = new CreateBlogPostCommand("Title", "Content", "Author");
 
 // Act
-await _handler.Handle(command, CancellationToken.None);
+var result = await _handler.Handle(command, CancellationToken.None);
 
 // Assert
+result.Success.Should().BeTrue();
+await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
 await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 }
 }

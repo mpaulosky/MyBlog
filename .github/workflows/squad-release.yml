@@ -42,10 +42,16 @@ jobs:
             -p:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} \
             -p:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }}
 
-      - name: Run unit tests
+      - name: Run tests
         run: |
           dotnet test tests/Architecture.Tests --configuration Release --no-build --no-restore \
             --logger "trx;LogFileName=arch-results.trx"
+          dotnet test tests/Domain.Tests --configuration Release --no-build --no-restore \
+            --logger "trx;LogFileName=domain-results.trx"
+          dotnet test tests/Web.Tests --configuration Release --no-build --no-restore \
+            --logger "trx;LogFileName=web-results.trx"
+          dotnet test tests/Web.Tests.Integration --configuration Release --no-build --no-restore \
+            --logger "trx;LogFileName=web-integration-results.trx"
 
       - name: Create GitHub Release
         env:
