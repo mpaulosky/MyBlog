@@ -9,7 +9,7 @@
 
 using FluentValidation.TestHelper;
 
-using MyBlog.Domain.Features.BlogPosts.Commands.CreateBlogPost;
+using MyBlog.Web.Features.BlogPosts.Create;
 
 namespace Tests.Unit.Features.BlogPosts.Commands;
 

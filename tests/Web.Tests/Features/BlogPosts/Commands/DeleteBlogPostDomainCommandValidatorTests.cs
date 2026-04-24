@@ -9,7 +9,7 @@
 
 using FluentValidation.TestHelper;
 
-using MyBlog.Domain.Features.BlogPosts.Commands.DeleteBlogPost;
+using MyBlog.Web.Features.BlogPosts.Delete;
 
 namespace Tests.Unit.Features.BlogPosts.Commands;
 
