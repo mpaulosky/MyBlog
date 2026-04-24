@@ -1,15 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>MyBlog.Domain</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>MyBlog.Domain</RootNamespace>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FluentValidation" />
-    <PackageReference Include="MediatR" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="FluentValidation"/>
+		<PackageReference Include="MediatR"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Architecture.Tests"/>
+		<InternalsVisibleTo Include="Domain.Tests"/>
+		<InternalsVisibleTo Include="Web.Tests"/>
+		<InternalsVisibleTo Include="Web.Tests.Bunit"/>
+		<InternalsVisibleTo Include="Web.Tests.Integration"/>
+	</ItemGroup>
 
 </Project>

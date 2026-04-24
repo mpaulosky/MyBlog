@@ -7,15 +7,6 @@
 //Project Name :  Domain
 //=======================================================
 
-// =======================================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     Result.cs
-// Company :       mpaulosky
-// Author :        Matthew Paulosky
-// Solution Name : MyBlog
-// Project Name :  Domain
-// =======================================================
-
 namespace MyBlog.Domain.Abstractions;
 
 public enum ResultErrorCode
@@ -140,20 +131,5 @@ public sealed class Result<T> : Result
 	}
 #pragma warning restore CA1000 // Do not declare static members on generic types
 
-	public static implicit operator T?(Result<T>? result)
-	{
-		if (result is null)
-		{
-			// Return the language default for T? when the Result is null. For value types this will
-			// be the underlying default (e.g., 0 for int) which matches existing behavior.
-			return default;
-		}
 
-		return result.Value;
-	}
-
-	public static implicit operator Result<T>(T? value)
-	{
-		return Ok(value);
-	}
 }

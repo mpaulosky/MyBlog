@@ -7,7 +7,7 @@
 //Project Name :  Domain.Tests
 //=======================================================
 
-namespace Tests.Domain.Behaviors;
+namespace MyBlog.Domain.Tests.Behaviors;
 
 /// <summary>Test request returning a plain Result.</summary>
 public sealed record TestRequest : IRequest<Result>;

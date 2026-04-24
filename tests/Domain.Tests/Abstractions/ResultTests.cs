@@ -7,12 +7,14 @@
 //Project Name :  Domain.Tests
 //=======================================================
 
-namespace Tests.Domain.Abstractions;
+using System.Reflection;
+
+namespace MyBlog.Domain.Tests.Abstractions;
 
 public class ResultTests
 {
 	[Fact]
-	public void Ok_ReturnsSuccessResultWithNoError()
+	public void OkReturnsSuccessResultWithNoError()
 	{
 		// Arrange / Act
 		var result = Result.Ok();
@@ -24,7 +26,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void Fail_WithMessage_ReturnsFailureResultWithMessage()
+	public void FailWithMessageReturnsFailureResultWithMessage()
 	{
 		// Arrange
 		const string errorMessage = "Something went wrong";
@@ -39,7 +41,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void Fail_WithMessageAndErrorCode_ReturnsFailureResultWithCode()
+	public void FailWithMessageAndErrorCodeReturnsFailureResultWithCode()
 	{
 		// Arrange
 		const string errorMessage = "Not found";
@@ -54,7 +56,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void OkT_ReturnsSuccessResultWithValue()
+	public void OkTReturnsSuccessResultWithValue()
 	{
 		// Arrange
 		const string value = "hello";
@@ -69,7 +71,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void FailT_WithMessage_ReturnsFailureResultWithNullValue()
+	public void FailTWithMessageReturnsFailureResultWithNullValue()
 	{
 		// Arrange
 		const string errorMessage = "bad input";
@@ -84,7 +86,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void FromValue_NonNullValue_ReturnsSuccessResult()
+	public void FromValueNonNullValueReturnsSuccessResult()
 	{
 		// Arrange
 		const int value = 42;
@@ -98,7 +100,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void FromValue_NullValue_ReturnsFailureResultWithProvidedValueIsNullError()
+	public void FromValueNullValueReturnsFailureResultWithProvidedValueIsNullError()
 	{
 		// Arrange / Act
 		var result = Result.FromValue<string>(null);
@@ -109,10 +111,10 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void ImplicitConversion_ValueToResultT_ProducesSuccessResult()
+	public void FromValueProducesSuccessResult()
 	{
 		// Arrange / Act
-		Result<string> result = "world";
+		var result = Result<string>.FromValue("world");
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -120,33 +122,35 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void ImplicitConversion_ResultTToValue_ReturnsValue()
+	public void ToValueReturnsValue()
 	{
 		// Arrange
 		var result = Result.Ok<string>("data");
 
 		// Act
-		string? value = result;
+		string? value = result.ToValue();
 
 		// Assert
 		value.Should().Be("data");
 	}
 
 	[Fact]
-	public void ImplicitConversion_NullResultTToValue_ReturnsNull()
+	public void NullResultTToValueViaConditionalAccessReturnsNull()
 	{
 		// Arrange
-		Result<string>? result = null;
+		var result = GetNullStringResult();
 
 		// Act
-		string? value = result;
+		string? value = result?.ToValue();
 
 		// Assert
 		value.Should().BeNull();
 	}
 
+	private static Result<string>? GetNullStringResult() => null;
+
 	[Fact]
-	public void Ok_ErrorCode_IsNone()
+	public void OkErrorCodeIsNone()
 	{
 		// Arrange / Act
 		var result = Result.Ok();
@@ -156,12 +160,62 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void Fail_WithoutCode_ErrorCode_IsNone()
+	public void FailWithoutCodeErrorCodeIsNone()
 	{
 		// Arrange / Act
 		var result = Result.Fail("error");
 
 		// Assert
 		result.ErrorCode.Should().Be(ResultErrorCode.None);
+	}
+
+	[Fact]
+	public void GenericFromValueNullReturnsFailureResultWithValueCannotBeNullError()
+	{
+		// Arrange / Act
+		var result = Result<string>.FromValue(null);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be("Value cannot be null.");
+		result.Value.Should().BeNull();
+	}
+
+	[Fact]
+	public void GenericFailToValueReturnsNull()
+	{
+		// Arrange
+		var result = Result.Fail<string>("bad input", ResultErrorCode.Validation);
+
+		// Act
+		string? value = result.ToValue();
+
+		// Assert
+		value.Should().BeNull();
+		result.ErrorCode.Should().Be(ResultErrorCode.Validation);
+	}
+
+	[Fact]
+	public void ResultTypesDoNotDeclareImplicitOrExplicitConversionOperators()
+	{
+		// Arrange
+		var operatorNames = new[] { "op_Implicit", "op_Explicit" };
+
+		// Act
+		var resultOperators = typeof(Result)
+			.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+			.Where(method => operatorNames.Contains(method.Name))
+			.Select(method => method.Name)
+			.ToArray();
+
+		var genericResultOperators = typeof(Result<>)
+			.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+			.Where(method => operatorNames.Contains(method.Name))
+			.Select(method => method.Name)
+			.ToArray();
+
+		// Assert
+		resultOperators.Should().BeEmpty();
+		genericResultOperators.Should().BeEmpty();
 	}
 }

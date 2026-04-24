@@ -7,7 +7,7 @@
 //Project Name :  Domain.Tests
 //=======================================================
 
-namespace Tests.Domain.Entities;
+namespace MyBlog.Domain.Tests.Entities;
 
 public class BlogPostTests
 {

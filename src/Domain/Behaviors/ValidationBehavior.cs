@@ -28,7 +28,7 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
 		ArgumentNullException.ThrowIfNull(next);
 
 		if (!validators.Any())
-			return await next(cancellationToken);
+			return await next(cancellationToken).ConfigureAwait(false);
 
 		var context = new ValidationContext<TRequest>(request);
 		var failures = validators
@@ -43,7 +43,7 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
 			return (TResponse)CreateFailResult(typeof(TResponse), errorMessage);
 		}
 
-		return await next(cancellationToken);
+		return await next(cancellationToken).ConfigureAwait(false);
 	}
 
 	private static object CreateFailResult(Type resultType, string errorMessage)
@@ -55,7 +55,7 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
 		var valueType = resultType.GetGenericArguments()[0];
 		var method = typeof(Result)
 			.GetMethods()
-			.First(m => m.Name == "Fail" && m.IsGenericMethodDefinition && m.GetParameters().Length == 2);
+			.First(m => m is { Name: "Fail", IsGenericMethodDefinition: true } && m.GetParameters().Length == 2);
 		return method.MakeGenericMethod(valueType).Invoke(null, [errorMessage, ResultErrorCode.Validation])!;
 	}
 }

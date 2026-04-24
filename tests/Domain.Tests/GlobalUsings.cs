@@ -8,10 +8,14 @@
 //=======================================================
 
 global using FluentAssertions;
+
 global using FluentValidation;
 global using FluentValidation.Results;
+
 global using MediatR;
+
 global using MyBlog.Domain.Abstractions;
 global using MyBlog.Domain.Behaviors;
 global using MyBlog.Domain.Entities;
+
 global using NSubstitute;
