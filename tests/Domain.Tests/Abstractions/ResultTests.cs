@@ -98,7 +98,7 @@ public class ResultTests
 	}
 
 	[Fact]
-	public void FromValue_NullValue_ReturnsFailureResultWithNullMessage()
+	public void FromValue_NullValue_ReturnsFailureResultWithProvidedValueIsNullError()
 	{
 		// Arrange / Act
 		var result = Result.FromValue<string>(null);
