@@ -40,12 +40,18 @@ Bilbo write a release blog post for v1.2.0
 
 | Command | What it does |
 |---------|-------------|
+| `Review PR #{N}` | Shorthand — engages Aragorn as lead reviewer. Equivalent to `Aragorn review PR #{N}`. |
 | `{Member} review PR #{N}` | Member follows Critical Rule #7: waits for CI → reads Copilot review → posts verdict → merges if approved. |
 | `{Member} wait for the gh review on PR #{N}` | Member watches CI and the GitHub Copilot automated review before posting their own verdict. |
+
+> **Aragorn's review sequence (Critical Rules #7 & #8):**
+> CI pass → read Copilot review (fix bugs/security; style is discretionary) → parallel domain review → fix cycle if rejected → approve → squash merge → sync local.
+> Before any push: full test suite must pass locally — CI is never the first place failures are found.
 
 **Examples:**
 
 ```
+Review PR #131
 Aragorn review PR #128
 Aragorn wait for the gh review on PR #126 the review
 ```
@@ -129,7 +135,7 @@ fan squad begin work
 
 ### Ship a feature PR
 ```
-Aragorn review PR #{N}          ← CI check + Copilot review + verdict + merge
+Review PR #{N}                   ← CI check + Copilot review + verdict + merge
 clean up                         ← remove merged branches, sync repos
 ```
 
@@ -138,7 +144,7 @@ clean up                         ← remove merged branches, sync repos
 Is Sprint N a release candidate?
 → yes
 → PR opens dev → main
-Aragorn review PR #{N}
+Review PR #{N}
 → approved and merged
 ```
 
