@@ -64,11 +64,8 @@ public class GetBlogPostByIdHandlerTests
 				post.Id,
 				Arg.Any<Func<Task<BlogPostDto?>>>(),
 				Arg.Any<CancellationToken>())
-			.Returns(async callInfo =>
-			{
-				var fetchFn = callInfo.ArgAt<Func<Task<BlogPostDto?>>>(1);
-				return await fetchFn();
-			});
+			.Returns(callInfo => new ValueTask<BlogPostDto?>(
+				callInfo.ArgAt<Func<Task<BlogPostDto?>>>(1)()));
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(post.Id), CancellationToken.None);
@@ -90,11 +87,8 @@ public class GetBlogPostByIdHandlerTests
 				id,
 				Arg.Any<Func<Task<BlogPostDto?>>>(),
 				Arg.Any<CancellationToken>())
-			.Returns(async callInfo =>
-			{
-				var fetchFn = callInfo.ArgAt<Func<Task<BlogPostDto?>>>(1);
-				return await fetchFn();
-			});
+			.Returns(callInfo => new ValueTask<BlogPostDto?>(
+				callInfo.ArgAt<Func<Task<BlogPostDto?>>>(1)()));
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);

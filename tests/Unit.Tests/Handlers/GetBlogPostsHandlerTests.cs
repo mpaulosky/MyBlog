@@ -65,11 +65,8 @@ public class GetBlogPostsHandlerTests
 		_cache.GetOrFetchAllAsync(
 				Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
 				Arg.Any<CancellationToken>())
-			.Returns(async callInfo =>
-			{
-				var fetchFn = callInfo.ArgAt<Func<Task<IReadOnlyList<BlogPostDto>>>>(0);
-				return await fetchFn();
-			});
+			.Returns(callInfo => new ValueTask<IReadOnlyList<BlogPostDto>>(
+				callInfo.ArgAt<Func<Task<IReadOnlyList<BlogPostDto>>>>(0)()));
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
