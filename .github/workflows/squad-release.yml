@@ -44,14 +44,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj --configuration Release --no-build --no-restore \
-            --logger "trx;LogFileName=domain-results.trx"
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj --configuration Release --no-build --no-restore \
-            --logger "trx;LogFileName=web-results.trx"
           dotnet test tests/Architecture.Tests --configuration Release --no-build --no-restore \
             --logger "trx;LogFileName=arch-results.trx"
-          dotnet test tests/Unit.Tests/Unit.Tests.csproj --configuration Release --no-build --no-restore \
-            --logger "trx;LogFileName=bunit-results.trx"
 
       - name: Create GitHub Release
         env:

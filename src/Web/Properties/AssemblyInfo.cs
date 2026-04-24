@@ -9,4 +9,6 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Unit.Tests")]
+[assembly: InternalsVisibleTo("Web.Tests")]
+[assembly: InternalsVisibleTo("Web.Tests.Bunit")]
+[assembly: InternalsVisibleTo("Web.Tests.Integration")]

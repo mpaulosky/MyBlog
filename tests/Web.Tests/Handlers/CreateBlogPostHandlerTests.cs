@@ -53,4 +53,17 @@ var result = await _handler.Handle(command, CancellationToken.None);
 result.Failure.Should().BeTrue();
 result.Error.Should().Contain("insert failed");
 }
+
+[Fact]
+public async Task Handle_Success_DoesNotCallInvalidateById()
+{
+// Arrange — create should only bust the "all" list, not a specific post key
+var command = new CreateBlogPostCommand("Title", "Content", "Author");
+
+// Act
+await _handler.Handle(command, CancellationToken.None);
+
+// Assert
+await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+}
 }
