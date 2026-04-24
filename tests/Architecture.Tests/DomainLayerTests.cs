@@ -45,4 +45,15 @@ public class DomainLayerTests
 
 		types.Should().BeEmpty("InMemoryBlogPostRepository should have been deleted");
 	}
+
+	[Fact]
+	public void Domain_Should_Not_Have_Features()
+	{
+		var types = Types.InAssembly(typeof(BlogPost).Assembly)
+				.That()
+				.ResideInNamespaceStartingWith("MyBlog.Domain.Features")
+				.GetTypes();
+
+		types.Should().BeEmpty("CQRS handlers and commands belong in the Web project (VSA)");
+	}
 }

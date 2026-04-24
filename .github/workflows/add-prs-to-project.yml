@@ -1,0 +1,76 @@
+name: Add Pull Requests to Project
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: read
+  repository-projects: write
+
+env:
+  PROJECT_ID: PVT_kwHOA5k0b84BVFTy
+  STATUS_FIELD_ID: PVTSSF_lAHOA5k0b84BVFTyzhQjgPk
+  IN_REVIEW_OPTION_ID: df73e18b
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add PR to MyBlog project board
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+
+            core.info(`Adding PR #${pr.number} to project board...`);
+
+            // Add the PR to the project board and set Status → In Review
+            try {
+              const mutation = await github.graphql(`
+                mutation($projectId: ID!, $contentId: ID!) {
+                  addProjectV2ItemById(input: {
+                    projectId: $projectId
+                    contentId: $contentId
+                  }) {
+                    item {
+                      id
+                    }
+                  }
+                }
+              `, {
+                projectId: process.env.PROJECT_ID,
+                contentId: pr.node_id
+              });
+
+              const itemId = mutation.addProjectV2ItemById.item.id;
+
+              // Set Status to In Review
+              await github.graphql(`
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $projectId
+                    itemId: $itemId
+                    fieldId: $fieldId
+                    value: { singleSelectOptionId: $optionId }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `, {
+                projectId: process.env.PROJECT_ID,
+                itemId: itemId,
+                fieldId: process.env.STATUS_FIELD_ID,
+                optionId: process.env.IN_REVIEW_OPTION_ID
+              });
+
+              core.info(`✅ PR #${pr.number} added to project → In review`);
+            } catch (err) {
+              if (err.message.includes('403')) {
+                core.warning(`Access denied (403). If this persists, create a PAT with 'project' scope and store as secrets.GH_PROJECT_TOKEN`);
+              } else {
+                core.warning(`Could not add PR to project: ${err.message}`);
+              }
+            }
