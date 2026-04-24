@@ -14,10 +14,10 @@ var mongoDb = mongo.AddDatabase("myblog");
 var redis = builder.AddRedis("redis");
 
 builder.AddProject<Projects.Web>("web")
-    .WithReference(mongoDb)
-    .WithReference(redis)
-    .WaitFor(mongo)
-    .WaitFor(redis);
+		.WithReference(mongoDb)
+		.WithReference(redis)
+		.WaitFor(mongo)
+		.WaitFor(redis);
 
 builder.Build().Run();
 

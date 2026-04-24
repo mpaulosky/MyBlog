@@ -115,7 +115,7 @@ builder.Services.AddScoped<IBlogPostRepository>(sp =>
 // MediatR — scans Web assembly for all handlers
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+	cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
 });
 
 // FluentValidation — scans Web assembly for all validators
@@ -207,4 +207,4 @@ static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
 
 // Exclude the compiler-generated Program class (top-level bootstrap statements) from coverage.
 [ExcludeFromCodeCoverage(Justification = "Application bootstrap entry-point — not business logic")]
-public partial class Program { }
+internal partial class Program { }

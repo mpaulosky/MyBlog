@@ -14,7 +14,7 @@ namespace MyBlog.Web.Components.Theme;
 
 public partial class ThemeProvider : ComponentBase
 {
-	[Inject] private IJSRuntime Js { get; set; } = default!;
+	[Inject] private IJSRuntime Js { get; set; } = null!;
 
 	[Parameter] public RenderFragment? ChildContent { get; set; }
 
@@ -27,18 +27,18 @@ public partial class ThemeProvider : ComponentBase
 
 		try
 		{
-			CurrentColor = await Js.InvokeAsync<string>("themeManager.getColor");
+			CurrentColor = await Js.InvokeAsync<string>("themeManager.getColor").ConfigureAwait(true);
 		}
-		catch
+		catch (JSException)
 		{
 			// Keep default if localStorage is unavailable
 		}
 
 		try
 		{
-			CurrentBrightness = await Js.InvokeAsync<string>("themeManager.getBrightness");
+			CurrentBrightness = await Js.InvokeAsync<string>("themeManager.getBrightness").ConfigureAwait(true);
 		}
-		catch
+		catch (JSException)
 		{
 			// Keep default if localStorage is unavailable
 		}
@@ -50,13 +50,13 @@ public partial class ThemeProvider : ComponentBase
 	{
 		CurrentColor = color;
 		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setColor", color);
+		await Js.InvokeVoidAsync("themeManager.setColor", color).ConfigureAwait(true);
 	}
 
 	public async Task SetBrightness(string brightness)
 	{
 		CurrentBrightness = brightness;
 		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness);
+		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness).ConfigureAwait(true);
 	}
 }

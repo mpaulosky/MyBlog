@@ -11,12 +11,14 @@ using MongoDB.EntityFrameworkCore.Extensions;
 
 namespace MyBlog.Web.Data;
 
-public sealed class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(options)
+internal sealed class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(options)
 {
 	public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
+		ArgumentNullException.ThrowIfNull(modelBuilder);
+
 		var entity = modelBuilder.Entity<BlogPost>();
 		entity.ToCollection("blogposts");
 		entity.HasKey(p => p.Id);
