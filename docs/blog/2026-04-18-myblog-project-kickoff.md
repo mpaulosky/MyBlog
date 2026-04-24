@@ -14,7 +14,7 @@ MyBlog begins with a strong architectural foundation. Built on the Blazor Server
 
 When starting a new project, the first decisions matter. We chose:
 - **Blazor Server** for rapid, interactive web development with C#
-- **.NET 10** and **.NET Aspire 13.2.2** for modern, cloud-native capabilities
+- **.NET 10** and **.NET Aspire 13.2.3** for modern, cloud-native capabilities
 - **Clean architecture** with vertical slices to keep code organized and testable as the project grows
 - **In-memory persistence** initially to keep things simple while we establish patterns
 
