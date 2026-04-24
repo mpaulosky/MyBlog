@@ -15,6 +15,7 @@ global using Microsoft.Extensions.Caching.Memory;
 global using MyBlog.Domain.Entities;
 global using MyBlog.Domain.Interfaces;
 global using MyBlog.Web.Data;
+global using MyBlog.Web.Infrastructure.Caching;
 global using NSubstitute;
 global using NSubstitute.ExceptionExtensions;
 global using System.Security.Claims;
