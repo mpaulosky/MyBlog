@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyBlog</title>
-    <meta name="description" content="A modern Bloging application built with .NET Aspire, Blazor, and MongoDB.">
+    <meta name="description" content="A hands-on learning project for .NET Aspire orchestration, Blazor Server rendering, MongoDB, Redis caching, and CQRS with MediatR.">
     <style>
         * {
             margin: 0;
@@ -135,7 +135,7 @@
     <div class="container">
         <h1>MyBlog</h1>
 
-        <p>A modern issue tracking application built with .NET Aspire, Blazor, and MongoDB.</p>
+        <p>A hands-on learning project for .NET Aspire orchestration, Blazor Server rendering, MongoDB, Redis caching, and CQRS with MediatR.</p>
 
         <div class="badges">
             <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet" alt=".NET 10"></a>
@@ -165,11 +165,18 @@
 
         <h2>Overview</h2>
 
-        <p>MyBlog is a full-stack web application for managing issues and tracking project progress. It demonstrates modern .NET development practices using the latest technologies and architectural patterns.</p>
+        <p>MyBlog is a Blazor Server blog application demonstrating .NET Aspire orchestration, CQRS with MediatR, MongoDB persistence, Redis distributed caching, Auth0 authentication, and TailwindCSS v4 theming.</p>
 
         <h2>Features</h2>
 
         <h3>Core Functionality</h3>
+
+        <ul>
+            <li><strong>Blog Management</strong>: Create, edit, delete, publish/unpublish blog posts</li>
+            <li><strong>CQRS with MediatR</strong>: All operations use MediatR command/query handlers with FluentValidation pipeline</li>
+            <li><strong>Redis Caching</strong>: L1 (in-memory) + L2 (Redis distributed) cache via <code>IBlogPostCacheService</code></li>
+            <li><strong>Auth0 Authentication</strong>: Secure login with Authorization Code + PKCE; Role-Based Authorization</li>
+        </ul>
 
         <h3>Security</h3>
 
@@ -229,20 +236,27 @@
 
         <pre><code>MyBlog/
 ├── src/
-│   ├── AppHost/                  # .NET Aspire orchestration
-│   ├── ServiceDefaults/          # Cross-cutting concerns (OpenTelemetry, health checks)
-│   ├── Web/                      # Blazor Interactive Server application
-│   │   ├── Components/Theme/     # ThemeProvider, ThemeToggle components
-│   │   ├── Styles/               # TailwindCSS source files
-│   │   └── Auth/                 # Authentication endpoints
-│   ├── Domain/                   # Business logic and entities
-│   │   ├── Models/               # Issue, Category, Status, Comment, User
-│   │   ├── DTOs/                 # Data transfer objects
-│   │   └── Abstractions/         # Result&lt;T&gt; pattern, IRepository&lt;T&gt;
-│   └── Persistence.MongoDb/      # Data access layer with MongoDB EF Core
-├── tests/                        # Unit, integration, and E2E tests
-├── docs/                         # Documentation
-└── Directory.Packages.props      # Centralized package versioning
+│   ├── AppHost/                  # .NET Aspire orchestration (MongoDB + Redis)
+│   ├── Domain/                   # BlogPost entity, MediatR handlers, validators
+│   │   ├── Abstractions/         # Result&lt;T&gt;, IBlogPostRepository, IBlogPostCacheService
+│   │   ├── Behaviors/            # ValidationBehavior pipeline
+│   │   └── Entities/             # BlogPost domain entity
+│   ├── ServiceDefaults/          # OpenTelemetry, health checks, Aspire extensions
+│   └── Web/                      # Blazor Server application
+│       ├── Features/BlogPosts/   # Vertical slice: handlers, pages
+│       ├── Infrastructure/Caching/ # BlogPostCacheService (L1+L2)
+│       ├── Components/Theme/     # TailwindCSS theme components
+│       └── Security/             # Auth0 endpoints
+├── tests/
+│   ├── Unit.Tests/               # Domain entity + handler unit tests
+│   ├── Architecture.Tests/       # Layer dependency enforcement
+│   ├── Integration.Tests/        # Aspire integration tests
+│   ├── AppHost.Tests/            # Aspire AppHost + E2E tests
+│   ├── Web.Tests/                # Web layer tests
+│   ├── Web.Tests.Bunit/          # Blazor component tests (bUnit)
+│   └── Web.Tests.Integration/    # Web integration tests
+├── docs/                         # Documentation + GitHub Pages
+└── Directory.Packages.props      # Centralized NuGet versioning (CPM)
 </code></pre>
 
         <h2>Getting Started</h2>
@@ -273,9 +287,7 @@ cd MyBlog
             </li>
             <li>
                 <p><strong>Install npm dependencies</strong> (for TailwindCSS)</p>
-                <pre><code>cd src/Web
-npm install
-cd ../..
+                <pre><code>npm install
 </code></pre>
             </li>
             <li>
@@ -300,8 +312,7 @@ dotnet run
 
         <p>For active CSS development with hot reload:</p>
 
-        <pre><code>cd src/Web
-npm run css:watch
+        <pre><code>npm run tw:watch
 </code></pre>
 
         <p>This watches for changes in Razor components and automatically recompiles CSS.</p>
@@ -376,12 +387,13 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
 
         <ul>
             <li><a href="ARCHITECTURE.md">ARCHITECTURE.md</a> - Solution architecture overview</li>
-            <li><a href="FEATURES.md">FEATURES.md</a> - Detailed feature documentation</li>
-            <li><a href="THEMING.md">THEMING.md</a> - Theming and customization guide</li>
-            <li><a href="LIBRARIES.md">LIBRARIES.md</a> - NuGet and npm package references</li>
             <li><a href="CONTRIBUTING.md">CONTRIBUTING.md</a> - Contribution guidelines</li>
+            <li><a href="AUTH0_SETUP.md">AUTH0_SETUP.md</a> - Auth0 configuration guide</li>
+            <li><a href="TESTING.md">TESTING.md</a> - Test strategy and running instructions</li>
+            <li><a href="THEMING.md">THEMING.md</a> - Theming and customization guide</li>
             <li><a href="SECURITY.md">SECURITY.md</a> - Security guidelines</li>
             <li><a href="CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a> - Community standards</li>
+            <li><a href="REFERENCES.md">REFERENCES.md</a> - NuGet and npm package references</li>
         </ul>
 
         <h2>Architecture</h2>
@@ -389,26 +401,19 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
         <h3>Domain Layer</h3>
 
         <ul>
-            <li><strong>Result&lt;T&gt; Pattern</strong>: Explicit success/failure handling with <code>ResultErrorCode</code> enum</li>
-            <li><strong>Models</strong>: <code>Issue</code>, <code>Category</code>, <code>Status</code>, <code>Comment</code>, <code>User</code> (embedded document)</li>
-            <li><strong>DTOs</strong>: Strongly-typed data transfer objects for API boundaries</li>
-            <li><strong>Repository Interface</strong>: Generic <code>IRepository&lt;T&gt;</code> for data access abstraction</li>
-        </ul>
-
-        <h3>Persistence Layer</h3>
-
-        <ul>
-            <li><strong>IssueTrackerDbContext</strong>: MongoDB EF Core context with configuration</li>
-            <li><strong>Entity Configurations</strong>: Fluent API configuration for MongoDB mapping</li>
-            <li><strong>Change Tracking</strong>: Automatic persistence with async operations</li>
+            <li><strong>BlogPost Entity</strong>: Core domain entity with factory methods and immutable updates</li>
+            <li><strong>MediatR Handlers</strong>: CreateBlogPost, UpdateBlogPost, DeleteBlogPost, GetAllBlogPosts, GetBlogPostById</li>
+            <li><strong>ValidationBehavior</strong>: MediatR pipeline behavior with FluentValidation</li>
+            <li><strong>IBlogPostCacheService</strong>: Cache abstraction for L1+L2 caching strategy</li>
         </ul>
 
         <h3>Web Layer</h3>
 
         <ul>
-            <li><strong>Authentication Endpoints</strong>: <code>/login</code>, <code>/logout</code> with security hardening</li>
+            <li><strong>BlogPostCacheService</strong>: L1 (IMemoryCache) + L2 (IDistributedCache/Redis) implementation</li>
+            <li><strong>Auth0 Endpoints</strong>: <code>/login</code>, <code>/logout</code> with security hardening</li>
             <li><strong>Theme Components</strong>: <code>ThemeProvider</code> cascading parameter, <code>ThemeToggle</code> UI</li>
-            <li><strong>JavaScript Interop</strong>: <code>themeManager</code> for localStorage persistence</li>
+            <li><strong>Vertical Slices</strong>: Blog post pages co-located with handlers in <code>Web/Features/BlogPosts/</code></li>
         </ul>
 
         <h2>Testing</h2>
@@ -416,21 +421,13 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
         <p>The project includes multiple testing layers:</p>
 
         <ul>
-            <li><strong>Unit Tests</strong>: Business logic validation with NSubstitute mocks</li>
-            <li><strong>Integration Tests</strong>: Full application testing with TestContainers</li>
-            <li><strong>Blazor Component Tests</strong>: bUnit for UI component verification</li>
-            <li><strong>E2E Tests</strong>: Playwright for browser-based testing</li>
-            <li><strong>Architecture Tests</strong>: Verify project dependencies and conventions</li>
-        </ul>
-
-        <h2>API Documentation</h2>
-
-        <p>API endpoints are documented with OpenAPI 3.0+ specifications via Scalar:</p>
-
-        <ul>
-            <li>Navigate to <code>/api/docs</code> to view interactive API documentation</li>
-            <li>All REST endpoints include XML documentation comments</li>
-            <li>Request/response schemas are auto-generated from models</li>
+            <li><strong>Unit.Tests</strong>: Domain entity logic and MediatR handler behavior</li>
+            <li><strong>Architecture.Tests</strong>: Layer dependency enforcement</li>
+            <li><strong>Integration.Tests</strong>: Aspire integration tests</li>
+            <li><strong>AppHost.Tests</strong>: .NET Aspire host + E2E tests</li>
+            <li><strong>Web.Tests</strong>: Web layer unit tests</li>
+            <li><strong>Web.Tests.Bunit</strong>: Blazor component tests (bUnit)</li>
+            <li><strong>Web.Tests.Integration</strong>: Web integration tests</li>
         </ul>
 
         <h2>Release Notes</h2>
@@ -446,29 +443,24 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
             </thead>
             <tbody>
                 <tr>
-                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.6.0"><strong>v0.6.0</strong></a> <span style="background:#dafbe1;color:#1a7f37;font-size:0.75em;padding:2px 6px;border-radius:10px;font-weight:600;">Latest</span></td>
-                    <td>2026-04-02</td>
-                    <td>Labels Feature — multi-value tag input, filter by label, AddLabelCommand/RemoveLabelCommand CQRS, 1,167 tests</td>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0"><strong>v1.2.0</strong></a> <span style="background:#dafbe1;color:#1a7f37;font-size:0.75em;padding:2px 6px;border-radius:10px;font-weight:600;">Latest</span></td>
+                    <td>2026-04-24</td>
+                    <td>Redis &amp; Caching — IBlogPostCacheService L1+L2 abstraction, handler cache integration, bUnit tests</td>
                 </tr>
                 <tr>
-                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.5.0">v0.5.0</a></td>
-                    <td>2026-04-02</td>
-                    <td>Admin User Management — Auth0 Management API, /admin/users, UserListTable, RoleBadge, EditUserRolesModal, UserAuditLogPanel</td>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.1.0">v1.1.0</a></td>
+                    <td>2026-04-24</td>
+                    <td>Themes &amp; Testing — TailwindCSS v4 theme system (4 colors, dark/light/system), test project reorganization, flaky E2E fixes</td>
                 </tr>
                 <tr>
-                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.4.0">v0.4.0</a></td>
-                    <td>2026-04-01</td>
-                    <td>Voting &amp; Prioritization — upvote/unvote issues, vote badge, Top Voted sort, SignalR broadcast</td>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.0.1">v1.0.1</a></td>
+                    <td>2026-04-20</td>
+                    <td>Automatic semantic versioning enabled via GitVersion CI integration</td>
                 </tr>
                 <tr>
-                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.3.0">v0.3.0</a></td>
-                    <td>2026-04-01</td>
-                    <td>Polish Sprint — dashboard UI fixes, Redis caching, restore command, assignee field</td>
-                </tr>
-                <tr>
-                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.2.0">v0.2.0</a></td>
-                    <td>2026-03-30</td>
-                    <td>UI refresh, GitHub Pages blog, full test coverage audit, E2E testing infrastructure</td>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.0.0">v1.0.0</a></td>
+                    <td>2026-04-20</td>
+                    <td>First pure semantic release — CQRS/MediatR domain, E2E testing, CI hardening</td>
                 </tr>
             </tbody>
         </table>
@@ -489,34 +481,34 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
             </thead>
             <tbody>
                 <tr>
-                    <td>2026-04-02</td>
-                    <td><a href="blog/2026-04-02-release-v0-6-0.md">Release v0.6.0 — Labels Feature</a></td>
-                    <td>release, v0.6.0, labels, cqrs, blazor, bunit</td>
+                    <td>2026-04-24</td>
+                    <td><a href="blog/2026-04-24-release-v1-2-0.md">Release v1.2.0 — Redis &amp; Caching</a></td>
+                    <td>release, v1.2.0, redis, caching, sprint-5</td>
                 </tr>
                 <tr>
-                    <td>2026-04-02</td>
-                    <td><a href="blog/2026-04-02-release-v0-5-0.md">Release v0.5.0 — Admin User Management</a></td>
-                    <td>release, v0.5.0, admin, auth0, blazor</td>
+                    <td>2026-04-24</td>
+                    <td><a href="blog/2026-04-24-release-v1-1-0.md">Release v1.1.0 — Blazor Theming &amp; Testing</a></td>
+                    <td>release, v1.1.0, blazor, tailwind, testing, sprint-4</td>
                 </tr>
                 <tr>
-                    <td>2026-04-01</td>
-                    <td><a href="blog/2026-04-01-release-v0-4-0.md">Release v0.4.0 — Voting &amp; Prioritization</a></td>
-                    <td>release, v0.4.0, voting</td>
+                    <td>2026-04-20</td>
+                    <td><a href="blog/2026-04-20-release-v1-0-0.md">Release v1.0.0 — Semantic Versioning Transition</a></td>
+                    <td>release, v1.0.0, semver, ci</td>
                 </tr>
                 <tr>
-                    <td>2026-04-01</td>
-                    <td><a href="blog/2026-04-01-release-v0-3-0.md">Release v0.3.0 — Polish Sprint</a></td>
-                    <td>release, v0.3.0, dashboard, redis</td>
+                    <td>2026-04-20</td>
+                    <td><a href="blog/2026-04-20-sprint-3-e2e-tests-ci-hardening.md">Sprint 3 — E2E Testing &amp; CI Hardening</a></td>
+                    <td>e2e, aspire, ci, testing</td>
                 </tr>
                 <tr>
-                    <td>2026-03-30</td>
-                    <td><a href="blog/2026-03-30-release-v0-2-0.md">Release v0.2.0 — Features, Fixes &amp; Developer Tooling</a></td>
-                    <td>release, v0.2.0</td>
+                    <td>2026-04-20</td>
+                    <td><a href="blog/2026-04-20-sprint-2-cqrs-mediatr.md">Sprint 2 — CQRS &amp; MediatR Domain Layer</a></td>
+                    <td>cqrs, mediatr, domain, testing</td>
                 </tr>
                 <tr>
-                    <td>2026-03-27</td>
-                    <td><a href="blog/2026-03-27-apphost-aspire-playwright-e2e-tests.md">Adding AppHost.Tests — Aspire Integration + Playwright E2E Tests</a></td>
-                    <td>tests, aspire, playwright, e2e</td>
+                    <td>2026-04-18</td>
+                    <td><a href="blog/2026-04-18-myblog-project-kickoff.md">MyBlog Project Kickoff — Sprint 1</a></td>
+                    <td>aspire, blazor, clean-architecture</td>
                 </tr>
             </tbody>
         </table>
@@ -534,7 +526,7 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
 
         <hr>
 
-        <p><strong>Status</strong>: Active Development | <strong>Latest Release</strong>: <a href="https://github.com/mpaulosky/MyBlog/releases/tag/v0.4.0">v0.4.0</a> | <strong>Maintained By</strong>: @mpaulosky</p>
+        <p><strong>Status</strong>: Training Project | <strong>Latest Release</strong>: <a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0">v1.2.0</a> | <strong>Maintained By</strong>: @mpaulosky</p>
     </div>
 </body>
 </html>
