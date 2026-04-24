@@ -36,6 +36,7 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 		Func<IPage, Task> test,
 		ViewportSize? size = null)
 	{
+		ArgumentNullException.ThrowIfNull(test);
 		var endpoint = GetEndpoint(serviceName);
 		await WaitForWebReadyAsync(endpoint, DefaultTimeout);
 
@@ -58,8 +59,11 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 	protected Task InteractWithAuthenticatedPageAsync(
 		string serviceName,
 		Func<IPage, Task> test,
-		ViewportSize? size = null) =>
-		InteractWithRolePageAsync(serviceName, test, "user", size);
+		ViewportSize? size = null)
+	{
+		ArgumentNullException.ThrowIfNull(test);
+		return InteractWithRolePageAsync(serviceName, test, "user", size);
+	}
 
 	/// <summary>
 	/// Runs <paramref name="test"/> against a browser context authenticated as an Admin.
@@ -69,8 +73,11 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 	protected Task InteractWithAdminPageAsync(
 		string serviceName,
 		Func<IPage, Task> test,
-		ViewportSize? size = null) =>
-		InteractWithRolePageAsync(serviceName, test, "admin", size);
+		ViewportSize? size = null)
+	{
+		ArgumentNullException.ThrowIfNull(test);
+		return InteractWithRolePageAsync(serviceName, test, "admin", size);
+	}
 
 	private async Task InteractWithRolePageAsync(
 		string serviceName,
@@ -136,7 +143,7 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 			{
 				try
 				{
-					var response = await client.GetAsync("/alive", cts.Token);
+					var response = await client.GetAsync(new Uri("/alive", UriKind.Relative), cts.Token);
 					if (response.IsSuccessStatusCode)
 						return;
 				}

@@ -9,18 +9,18 @@
 
 using FluentValidation.TestHelper;
 
-using MyBlog.Domain.Features.BlogPosts.Commands.UpdateBlogPost;
+using MyBlog.Web.Features.BlogPosts.Edit;
 
 namespace Tests.Unit.Features.BlogPosts.Commands;
 
 public class UpdateBlogPostCommandValidatorTests
 {
-	private readonly UpdateBlogPostCommandValidator _validator = new();
+	private readonly EditBlogPostCommandValidator _validator = new();
 
 	[Fact]
 	public void Validate_ValidCommand_PassesValidation()
 	{
-		var command = new UpdateBlogPostCommand(Guid.NewGuid(), "Valid Title", "Valid Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "Valid Title", "Valid Content");
 
 		var result = _validator.TestValidate(command);
 
@@ -30,7 +30,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_EmptyId_FailsValidation()
 	{
-		var command = new UpdateBlogPostCommand(Guid.Empty, "Title", "Content");
+		var command = new EditBlogPostCommand(Guid.Empty, "Title", "Content");
 
 		var result = _validator.TestValidate(command);
 
@@ -42,7 +42,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[InlineData(null!)]
 	public void Validate_EmptyTitle_FailsValidation(string? title)
 	{
-		var command = new UpdateBlogPostCommand(Guid.NewGuid(), title!, "Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), title!, "Content");
 
 		var result = _validator.TestValidate(command);
 
@@ -52,7 +52,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_TitleExceedsMaxLength_FailsValidation()
 	{
-		var command = new UpdateBlogPostCommand(Guid.NewGuid(), new string('a', 201), "Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), new string('a', 201), "Content");
 
 		var result = _validator.TestValidate(command);
 
@@ -64,7 +64,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[InlineData(null!)]
 	public void Validate_EmptyContent_FailsValidation(string? content)
 	{
-		var command = new UpdateBlogPostCommand(Guid.NewGuid(), "Title", content!);
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", content!);
 
 		var result = _validator.TestValidate(command);
 

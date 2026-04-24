@@ -125,7 +125,7 @@ public class AspireManager : IAsyncLifetime
 					_logger.LogInformation("Attempt {AttemptCount} (elapsed {ElapsedSeconds:F1}s): Polling {Endpoint}/alive", 
 						attemptCount, elapsed.TotalSeconds, endpoint);
 					
-					var response = await client.GetAsync("/alive", cts.Token);
+					var response = await client.GetAsync(new Uri("/alive", UriKind.Relative), cts.Token);
 					
 					_logger.LogInformation("Response status: {StatusCode}", response.StatusCode);
 					
