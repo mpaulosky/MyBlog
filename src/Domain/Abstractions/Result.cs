@@ -107,9 +107,21 @@ public sealed class Result<T> : Result
 
 	public T? Value { get; }
 
+	public T? ToValue() => Value;
+
 	private static Result<T> Ok(T? value)
 	{
 		return new Result<T>(value, true);
+	}
+
+	// Suppress CA1000: static members on generic types are intentional here to provide
+	// a type-inferred factory API consistent with the non-generic Result base class.
+#pragma warning disable CA1000 // Do not declare static members on generic types
+	public static Result<T> FromValue(T? value)
+	{
+		if (value is null)
+			return Fail("Value cannot be null.");
+		return Ok(value);
 	}
 
 	public static new Result<T> Fail(string errorMessage)
@@ -126,6 +138,7 @@ public sealed class Result<T> : Result
 	{
 		return new Result<T>(default, false, errorMessage, code, details);
 	}
+#pragma warning restore CA1000 // Do not declare static members on generic types
 
 	public static implicit operator T?(Result<T>? result)
 	{

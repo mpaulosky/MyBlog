@@ -9,6 +9,7 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: CLSCompliant(false)]
 [assembly: InternalsVisibleTo("Unit.Tests")]
 [assembly: InternalsVisibleTo("Architecture.Tests")]
 [assembly: InternalsVisibleTo("Web.Tests")]
