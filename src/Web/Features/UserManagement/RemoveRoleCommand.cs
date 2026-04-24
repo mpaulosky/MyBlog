@@ -11,4 +11,4 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.UserManagement;
 
-public sealed record RemoveRoleCommand(string UserId, string RoleId) : IRequest<Result>;
+internal sealed record RemoveRoleCommand(string UserId, string RoleId) : IRequest<Result>;

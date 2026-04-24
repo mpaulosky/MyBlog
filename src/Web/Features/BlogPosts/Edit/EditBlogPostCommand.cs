@@ -11,4 +11,4 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.BlogPosts.Edit;
 
-public sealed record EditBlogPostCommand(Guid Id, string Title, string Content) : IRequest<Result>;
+internal sealed record EditBlogPostCommand(Guid Id, string Title, string Content) : IRequest<Result>;

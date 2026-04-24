@@ -11,6 +11,6 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.UserManagement;
 
-public sealed record GetAvailableRolesQuery : IRequest<Result<IReadOnlyList<RoleDto>>>;
+internal sealed record GetAvailableRolesQuery : IRequest<Result<IReadOnlyList<RoleDto>>>;
 
-public sealed record RoleDto(string Id, string Name);
+internal sealed record RoleDto(string Id, string Name);

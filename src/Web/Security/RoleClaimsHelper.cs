@@ -12,7 +12,7 @@ using System.Text.Json;
 
 namespace MyBlog.Web.Security;
 
-public static class RoleClaimsHelper
+internal static class RoleClaimsHelper
 {
     public static readonly string[] DefaultRoleClaimTypes =
     [

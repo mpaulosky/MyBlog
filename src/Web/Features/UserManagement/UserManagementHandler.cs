@@ -14,7 +14,7 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.UserManagement;
 
-public sealed class UserManagementHandler(
+internal sealed class UserManagementHandler(
 IConfiguration configuration,
 IHttpClientFactory httpClientFactory)
 : IRequestHandler<GetUsersWithRolesQuery, Result<IReadOnlyList<UserWithRolesDto>>>,
