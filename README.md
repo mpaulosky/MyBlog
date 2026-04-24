@@ -37,7 +37,7 @@ MyBlog is a Blazor Server blog application demonstrating modern .NET patterns: A
 ## Technology Stack
 
 - **.NET 10** with **C# 14**
-- **.NET Aspire 13.2.2** — Service orchestration, MongoDB + Redis resources, health checks
+- **.NET Aspire 13.2.3** — Service orchestration, MongoDB + Redis resources, health checks
 - **Blazor Server (Interactive Server Rendering)** — Dynamic UI with TailwindCSS v4 theming
 - **MongoDB** with **MongoDB.EntityFrameworkCore** — Blog post persistence
 - **Redis** — Distributed caching (L2 cache via `IDistributedCache`)
@@ -162,6 +162,18 @@ dotnet test
 - [SECURITY.md](docs/SECURITY.md) — Security guidelines
 - [CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md) — Community standards
 - [REFERENCES.md](docs/REFERENCES.md) — NuGet and npm package references
+
+## Dev Blog
+
+<!-- BLOG_START -->
+| Date | Title | Tags |
+|------|-------|------|
+| 2026-04-24 | [Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy](docs/blog/2026-04-24-release-v1-2-0.md) | release, v1.2.0, redis, caching, aspire, sprint-5 |
+| 2026-04-24 | [Release: v1.1.0 — Blazor Theme System with TailwindCSS v4](docs/blog/2026-04-24-release-v1-1-0.md) | release, v1.1.0, blazor, tailwind, theme, testing, sprint-4 |
+| 2026-04-20 | [Release: v1.0.0 — Semantic Versioning and Production Readiness](docs/blog/2026-04-20-release-v1-0-0.md) | release, semver, ci, devops |
+| 2026-04-20 | [Sprint 3: E2E Testing and CI Hardening](docs/blog/2026-04-20-sprint-3-e2e-tests-ci-hardening.md) | e2e, aspire, ci, testing, sprint-3 |
+| 2026-04-20 | [Sprint 2: CQRS and MediatR Deep Dive](docs/blog/2026-04-20-sprint-2-cqrs-mediatr.md) | cqrs, mediatr, testing, domain, sprint-2 |
+<!-- BLOG_END -->
 
 ## Release History
 
