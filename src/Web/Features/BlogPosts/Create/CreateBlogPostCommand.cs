@@ -11,5 +11,5 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
-public sealed record CreateBlogPostCommand(string Title, string Content, string Author)
+internal sealed record CreateBlogPostCommand(string Title, string Content, string Author)
 		: IRequest<Result<Guid>>;
