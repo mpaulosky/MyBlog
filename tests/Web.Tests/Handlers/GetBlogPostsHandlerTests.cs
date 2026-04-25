@@ -110,4 +110,21 @@ var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.No
 result.Failure.Should().BeTrue();
 result.Error.Should().Contain("db error");
 }
+
+[Fact]
+public async Task Handle_CacheServiceThrows_ReturnsFailResult()
+{
+// Arrange
+_cache.GetOrFetchAllAsync(
+Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
+Arg.Any<CancellationToken>())
+.ThrowsAsync(new InvalidOperationException("redis down"));
+
+// Act
+var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
+
+// Assert
+result.Failure.Should().BeTrue();
+result.Error.Should().Contain("redis down");
+}
 }

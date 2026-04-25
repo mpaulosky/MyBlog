@@ -9,4 +9,10 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Unit.Tests")]
+[assembly: CLSCompliant(false)]
+[assembly: InternalsVisibleTo("Architecture.Tests")]
+[assembly: InternalsVisibleTo("Web.Tests")]
+[assembly: InternalsVisibleTo("Web.Tests.Bunit")]
+[assembly: InternalsVisibleTo("Web.Tests.Integration")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+

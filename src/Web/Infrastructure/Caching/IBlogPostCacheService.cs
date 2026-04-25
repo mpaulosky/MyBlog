@@ -19,7 +19,7 @@ namespace MyBlog.Web.Infrastructure.Caching;
 /// <see cref="IDistributedCache"/> (StackExchange Redis) are also singletons,
 /// so captive-dependency rules are satisfied.
 /// </remarks>
-public interface IBlogPostCacheService
+internal interface IBlogPostCacheService
 {
 	/// <summary>
 	/// Returns all blog posts from the nearest cache tier, or invokes

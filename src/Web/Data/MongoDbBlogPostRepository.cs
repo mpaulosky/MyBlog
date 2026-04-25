@@ -9,7 +9,7 @@
 
 namespace MyBlog.Web.Data;
 
-public sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext> contextFactory)
+internal sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext> contextFactory)
 		: IBlogPostRepository
 {
 	public async Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default)

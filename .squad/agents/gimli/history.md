@@ -270,3 +270,19 @@ and conventions.
 3. File headers matter for consistency — enforce them in reviews (charter rule #6).
 4. AAA comments aren't optional — they're team convention (charter rule #3).
 5. NSubstitute gotchas (IMemoryCache.Set<T>) should be called out explicitly in training.
+
+## 2026-04-24 — ValidationBehavior ConfigureAwait Review
+
+### Task
+Review the scoped `ConfigureAwait(false)` change for `src/Domain/Behaviors/ValidationBehavior.cs` and decide whether either existing ValidationBehavior test file requires updates.
+
+### Outcome
+- `ConfigureAwait(false)` on the awaited `next(cancellationToken)` call is behavior-preserving for the current unit tests.
+- The existing assertions cover success/failure flow, error aggregation, and whether `next` is invoked; none of those expectations change with continuation-context configuration.
+- No updates are required in:
+  - `tests/Domain.Tests/Behaviors/ValidationBehaviorTests.cs`
+  - `tests/Web.Tests/Behaviors/ValidationBehaviorTests.cs`
+
+### Learnings
+1. For MyBlog test coverage, a `ConfigureAwait(false)` cleanup in a MediatR pipeline behavior is non-observable unless tests explicitly assert synchronization-context behavior.
+2. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.

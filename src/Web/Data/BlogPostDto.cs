@@ -9,7 +9,7 @@
 
 namespace MyBlog.Web.Data;
 
-public sealed record BlogPostDto(
+internal sealed record BlogPostDto(
     Guid Id,
     string Title,
     string Content,

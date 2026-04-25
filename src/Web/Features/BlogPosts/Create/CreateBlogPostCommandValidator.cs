@@ -11,7 +11,7 @@ using FluentValidation;
 
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
-public sealed class CreateBlogPostCommandValidator : AbstractValidator<CreateBlogPostCommand>
+internal sealed class CreateBlogPostCommandValidator : AbstractValidator<CreateBlogPostCommand>
 {
 	public CreateBlogPostCommandValidator()
 	{
