@@ -271,6 +271,59 @@ and conventions.
 4. AAA comments aren't optional — they're team convention (charter rule #3).
 5. NSubstitute gotchas (IMemoryCache.Set<T>) should be called out explicitly in training.
 
+## 2026-04-24 — Sprint 7: xUnit v3 Pilot — Domain.Tests Migration (#163 / #164)
+
+### Task
+Migrate `tests/Domain.Tests` from xUnit v2 (2.9.3) to xUnit v3 (3.2.2) as the Sprint 7 pilot, then verify no remaining compilation/runtime issues (issue #164).
+
+### Work Done
+
+**Branch**: `squad/163-domain-tests-xunit-v3-migration` / `squad/164-domain-tests-xunit-v3-fixes`
+
+1. **`Directory.Packages.props`** — Added `xunit.v3 3.2.2`; kept `xunit 2.9.3` for other projects still on v2.
+2. **`Domain.Tests.csproj`** — Replaced `xunit` → `xunit.v3` package reference; added `xunit.runner.json` as `<Content CopyToOutputDirectory="PreserveNewest"/>`.
+3. **`tests/Domain.Tests/xunit.runner.json`** — New file: `parallelizeAssembly: true`, `parallelizeTestCollections: true`, `methodDisplay: method`.
+4. **Zero source changes** — All 42 tests (`[Fact]`/`[Theory]` only, no output helpers, no fixtures) compiled and passed unchanged.
+
+**Test results**: 42/42 Domain.Tests pass; 219/219 total across Gate 3 suites.
+
+**#164 ACs verified**:
+- ✅ Build clean (0 errors; CA warnings exempted via `CodeAnalysisTreatWarningsAsErrors=false`)
+- ✅ `dotnet test --no-build` — 42/42 pass
+- ✅ `dotnet run` standalone executable — "Total: 42, Errors: 0, Failed: 0"
+- ✅ No `async void` tests, no removed types in use
+- ✅ Coverlet code coverage collected (`coverage.cobertura.xml` produced)
+
+### Key Learnings — xUnit v3 Migration
+
+1. **Package rename**: The xUnit v3 meta-package is `xunit.v3` (NOT `xunit` at version 3.x). The old `xunit` package stays at v2. Both coexist in `Directory.Packages.props`; each project's `.csproj` picks which one to use.
+
+2. **`[Fact]`/`[Theory]` are PRESERVED in v3** — contrary to what some docs suggest, these attributes are NOT renamed to `[Test]`. Simple test classes need zero source changes.
+
+3. **Namespace unchanged**: `Xunit` is still the namespace for `[Fact]`, `[Theory]`, `[InlineData]`, etc. `<Using Include="Xunit"/>` in the project file still works.
+
+4. **Standalone executable**: xUnit v3 projects run as standalone executables via `dotnet run --project <path>` (Microsoft Testing Platform integration). `dotnet test` continues to work too.
+
+5. **`ITestOutputHelper` still supported**: xUnit v3 prefers `TestContext.Current` for output capture, but constructor injection of `ITestOutputHelper` still works for backward compatibility. Zero source changes needed unless adopting the new API.
+
+6. **`IAsyncLifetime` value task change**: In v3, `IAsyncLifetime` uses `ValueTask` instead of `Task`. Not relevant here since Domain.Tests has no fixtures. Flag for Integration.Tests migration in Sprint 10–11.
+
+7. **`xunit.runner.visualstudio 3.1.5`** was already compatible with both v2 and v3 — no change needed.
+
+8. **Pre-existing CA warnings (CA1707, CA1515, CA1849)** on test names are exempted by `CodeAnalysisTreatWarningsAsErrors=false` in `Directory.Build.props`. `TreatWarningsAsErrors=true` is still active for real build errors.
+
+9. **Coverlet works unchanged** with xUnit v3. `--collect:"XPlat Code Coverage"` produces `coverage.cobertura.xml` as expected.
+
+10. **npm/Tailwind build gate**: Full solution build (`MyBlog.slnx`) requires npm install + `npm run tw:build` to pass. This is skipped with `Condition="'$(CI)' != 'true'"` on CI, but runs locally. Always run `npm install && npm run tw:build` from the repo root before pushing if node_modules is missing.
+
+### Outcomes
+
+- **PRs opened**: #170 (`squad/163-domain-tests-xunit-v3-migration`), targeting `sprint/7-xunit-v3-pilot`
+- **#164 verdict**: No source fixes required — Domain.Tests migrated cleanly.
+- **Pilot result**: xUnit v3 swap for a simple unit test project is a pure package-level change. No test rewrites. Pattern validated for Sprints 8–13 rollout.
+
+---
+
 ## 2026-04-24 — ValidationBehavior ConfigureAwait Review
 
 ### Task
