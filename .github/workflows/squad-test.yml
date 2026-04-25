@@ -189,6 +189,66 @@ jobs:
           name: architecture-test-results
           path: test-results
 
+  test-domain:
+    name: "Domain.Tests (xUnit v3 pilot)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Domain Tests
+        run: dotnet build tests/Domain.Tests --configuration Release --no-restore
+
+      - name: Run Domain Tests
+        id: domain-tests
+        run: |
+          mkdir -p test-results
+          if [ ! -d "tests/Domain.Tests" ]; then
+            echo "::notice::Domain test project not found at tests/Domain.Tests - skipping"
+            exit 0
+          fi
+
+          # xUnit v3 is fully compatible with dotnet test + XPlat Code Coverage + TRX logger
+          dotnet test tests/Domain.Tests \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=domain.trx" \
+            --results-directory "$GITHUB_WORKSPACE/test-results" \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+          exit_code=$?
+
+          if [ $exit_code -ne 0 ]; then
+            echo "::error::Domain tests failed"
+          fi
+          exit $exit_code
+
+      - name: Upload Domain Test Results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: domain-test-results
+          path: test-results
+
   test-bunit:
     name: "Web.Tests.Bunit"
     runs-on: ubuntu-latest
@@ -430,6 +490,7 @@ jobs:
     needs:
       - test-web
       - test-architecture
+      - test-domain
       - test-bunit
       - test-integration
       - test-apphost
@@ -500,6 +561,7 @@ jobs:
       - build
       - test-web
       - test-architecture
+      - test-domain
       - test-bunit
       - test-integration
       - test-apphost
@@ -533,6 +595,7 @@ jobs:
           echo "- **Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests:** ${{ needs.test-web.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Architecture.Tests:** ${{ needs.test-architecture.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Domain.Tests (xUnit v3 pilot):** ${{ needs.test-domain.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests.Bunit:** ${{ needs.test-bunit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Web.Tests.Integration:** ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **AppHost.Tests (Aspire + Playwright E2E):** ${{ needs.test-apphost.result }}" >> $GITHUB_STEP_SUMMARY
@@ -546,12 +609,14 @@ jobs:
           build_status="${{ needs.build.result }}"
           web_status="${{ needs.test-web.result }}"
           arch_status="${{ needs.test-architecture.result }}"
+          domain_status="${{ needs.test-domain.result }}"
           bunit_status="${{ needs.test-bunit.result }}"
           integration_status="${{ needs.test-integration.result }}"
           apphost_status="${{ needs.test-apphost.result }}"
 
           if [[ "$build_status" == "failure" || "$web_status" == "failure" || \
-                "$arch_status" == "failure" || "$bunit_status" == "failure" || \
+                "$arch_status" == "failure" || "$domain_status" == "failure" || \
+                "$bunit_status" == "failure" || \
                 "$integration_status" == "failure" || "$apphost_status" == "failure" ]]; then
             echo "❌ **Overall Status:** FAILED" >> $GITHUB_STEP_SUMMARY
           else
