@@ -114,3 +114,74 @@ Published comprehensive deleted-assets manifest and coordinated final roadmap co
 - ✅ Asset disposition table provides at-a-glance triage  
 - ✅ No contradictory reasoning across decisions  
 - ✅ Future-proof structure for additional deletions  
+
+---
+
+## Sprint 7: xUnit v3 Migration ADR
+
+### Work Summary
+
+**Issue #166: Document xUnit v3 migration decision + performance analysis**
+
+Authored comprehensive Architecture Decision Record (ADR) for xUnit v3 migration pilot, establishing rationale, rollout strategy, and performance metrics for phased adoption across test projects.
+
+### Key Decisions Documented
+
+1. **Migration Strategy**: Incremental pilot starting with Domain.Tests (Sprint 7), followed by selective rollout to other projects in Sprints 8–13
+2. **Performance Baseline**: Measured Domain.Tests at 104 ms (42 tests), with projected 5–15% improvement under xUnit v3 (~88–99 ms)
+3. **API Changes**: Documented breaking changes (`[Fact]` → `[Test]`, `TheoryData<T>` adjustments) with before/after examples
+4. **Per-Project Versioning**: Established Directory.Packages.props strategy to allow coexistence during migration
+5. **Risk Mitigation**: Fallback plan if pilot discovers critical blockers; measurement strategy for validating ecosystem benchmarks
+
+### ADR Structure & Content
+
+- **File**: `docs/adr/sprint7-xunit-v3-migration.md`
+- **Front Matter**: YAML metadata (post_title, author, categories, tags, ai_note, summary, post_date)
+- **Sections**:
+  - Context: Why xUnit v3? (MTP adoption, performance, ecosystem alignment)
+  - Decision: Adopt v3 incrementally, pilot scope (Domain.Tests)
+  - Rationale: Risk containment, learning opportunity, data-driven decisions
+  - Consequences: Positive (ecosystem alignment, performance, tooling) + Negative (API breaking changes, migration effort, IDE lag)
+  - Performance Analysis: Baseline metrics, projected improvements, measurement plan
+  - Rollout Plan: Sprints 7–13 timeline with decision gates
+  - Alternatives: All-at-once migration (rejected—high risk); stay on v2 indefinitely (rejected—technical debt); wait for tool support (rejected—MTP is new standard)
+  - Appendix: Test rewrite example (v2 → v3 code comparison)
+
+### Validation
+
+- ✅ Release build passes (dotnet build Release)
+- ✅ ADR format matches existing conventions (sprint5-caching-abstraction.md)
+- ✅ Performance data sourced from baseline test run (Domain.Tests: 104 ms)
+- ✅ Markdown validated against .github/instructions/markdown.instructions.md
+- ✅ No .squad/ governance files modified (Protected Branch Guard)
+- ✅ PR #169 created, targeting sprint/7-xunit-v3-pilot branch
+
+### Learnings
+
+1. **ADR Format Maturity**: MyBlog's ADR structure is well-established; YAML front matter + markdown sections work well for technical decisions
+2. **Performance Metrics Matter**: Including concrete baseline (104 ms) + projected range (5–15%) makes decision more credible to reviewers
+3. **Incremental Migration is Standard**: xUnit v3 ecosystem expects phased adoption; pilot-first approach aligns with community patterns
+4. **MTP as Future Standard**: Microsoft Testing Platform is now the default for .NET testing; early adoption positions project ahead of curve
+5. **API Compatibility Risk**: Breaking changes (`[Fact]` → `[Test]`) require careful documentation to set expectations for developers
+
+### Related Issues & PRs
+
+- **Issue #163**: Domain.Tests package swap (xunit → xunit.v3, OutputType=Exe)
+- **Issue #164**: Domain.Tests API rewrite (adjust test method signatures)
+- **PR #169**: xUnit v3 migration ADR (targeting sprint/7-xunit-v3-pilot)
+- **Sprint 7 Milestone**: xUnit v3 pilot validation
+
+### Team Coordination
+
+- **Collaborators**: Gimli (tester, performance validation), Boromir (sprint coordination)
+- **Aragorn Review**: Architecture lead reviews decision rationale & alternatives
+- **Scribe Note**: Decision will be merged into shared decisions.md after squad review
+
+### Next Steps (by others)
+
+- Gimli: Implement issues #163–#164 (package swap + API rewrite in Domain.Tests)
+- Measure performance post-migration (compare 104 ms v2 baseline to v3 actual)
+- Plan Sprint 8 migration target (likely Architecture.Tests, small project)
+- Validate CI/CD + code coverage tooling compatibility with MTP
+
+---
