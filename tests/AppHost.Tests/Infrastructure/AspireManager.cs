@@ -206,15 +206,16 @@ public class AspireManager : IAsyncLifetime
 	}
 
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		await PlaywrightManager.InitializeAsync();
 		await StartAppAsync();
 	}
-	public async Task DisposeAsync()
+	public async ValueTask DisposeAsync()
 	{
 		await PlaywrightManager.DisposeAsync();
 
 		await (App?.DisposeAsync() ?? ValueTask.CompletedTask);
+		GC.SuppressFinalize(this);
 	}
 }
