@@ -18,6 +18,7 @@ public class CachingLayerTests
 	[Fact]
 	public void Features_Should_Not_Reference_IDistributedCache_Directly()
 	{
+		// Arrange / Act
 		var result = Types.InAssembly(WebAssembly)
 				.That()
 				.ResideInNamespace("MyBlog.Web.Features")
@@ -25,6 +26,7 @@ public class CachingLayerTests
 				.HaveDependencyOnAny("Microsoft.Extensions.Caching.Distributed")
 				.GetResult();
 
+		// Assert
 		result.IsSuccessful.Should().BeTrue(
 			"VSA handlers must delegate caching to IBlogPostCacheService, not reference IDistributedCache directly");
 	}
@@ -32,6 +34,7 @@ public class CachingLayerTests
 	[Fact]
 	public void Features_Should_Not_Reference_IMemoryCache_Directly()
 	{
+		// Arrange / Act
 		var result = Types.InAssembly(WebAssembly)
 				.That()
 				.ResideInNamespace("MyBlog.Web.Features")
@@ -39,6 +42,7 @@ public class CachingLayerTests
 				.HaveDependencyOnAny("Microsoft.Extensions.Caching.Memory")
 				.GetResult();
 
+		// Assert
 		result.IsSuccessful.Should().BeTrue(
 			"VSA handlers must delegate caching to IBlogPostCacheService, not reference IMemoryCache directly");
 	}
