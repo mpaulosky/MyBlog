@@ -30,9 +30,11 @@ jobs:
           PREV_TAG=$(gh api "repos/${{ github.repository }}/releases" \
             --jq '[.[] | select(.tag_name != "'"${TAG}"'")] | sort_by(.published_at) | reverse | .[0].tag_name // "HEAD~50"')
 
-          echo "publish_date=$PUBLISH_DATE" >> "$GITHUB_OUTPUT"
-          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
-          echo "prev_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+          {
+            echo "publish_date=$PUBLISH_DATE"
+            echo "slug=$SLUG"
+            echo "prev_tag=$PREV_TAG"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Bilbo blog brief issue
         env:
@@ -73,6 +75,7 @@ jobs:
           - Close this issue in the PR description with \`Closes #<this-issue>\`"
 
           gh issue create \
+            --repo "${{ github.repository }}" \
             --title "Blog post: ${RELEASE_NAME} — release recap" \
             --body "$BODY" \
             --label "squad:bilbo"

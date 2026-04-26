@@ -41,9 +41,11 @@ jobs:
           BUMP=$(echo "$ISSUE_BODY" | grep -oE 'bump[: ]+(major|minor|patch)' | grep -oE '(major|minor|patch)' | head -1)
           BUMP=${BUMP:-minor}
 
-          echo "milestone_title=$MILESTONE_TITLE" >> "$GITHUB_OUTPUT"
-          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
-          echo "issue_number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          {
+            echo "milestone_title=$MILESTONE_TITLE"
+            echo "bump=$BUMP"
+            echo "issue_number=${{ github.event.issue.number }}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Trigger release workflow
         env:
@@ -51,6 +53,7 @@ jobs:
           BUMP: ${{ steps.info.outputs.bump }}
         run: |
           gh workflow run squad-milestone-release.yml \
+            --repo "${{ github.repository }}" \
             --field bump="${BUMP}" \
             --field milestone_number="${{ github.event.issue.number }}"
           echo "✅ Triggered squad-milestone-release.yml (bump: ${BUMP})"
@@ -61,7 +64,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           BUMP: ${{ steps.info.outputs.bump }}
         run: |
-          gh issue comment "$ISSUE_NUMBER" --body "✅ **Release flow triggered.**
+          gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body "✅ **Release flow triggered.**
 
           - Version bump: \`${BUMP}\`
           - \`squad-milestone-release.yml\` dispatched — this will create the tag, push it, and publish a GitHub Release.
@@ -70,7 +73,7 @@ jobs:
 
           Closing this review issue."
 
-          gh issue close "$ISSUE_NUMBER" --reason completed
+          gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --reason completed
 
   # ─────────────────────────────────────────────────────────────────────────────
   # PATH B: Blog Only
@@ -91,12 +94,11 @@ jobs:
           PUBLISH_DATE=$(date '+%Y-%m-%d')
           SLUG=$(echo "$MILESTONE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-\|-$//g')
 
-          # Pull closed issues list from the review issue body
-          ISSUES_BLOCK=$(echo "${{ github.event.issue.body }}" | sed -n '/### Closed Issues/,/---/p' | head -50)
-
-          echo "milestone_title=$MILESTONE_TITLE" >> "$GITHUB_OUTPUT"
-          echo "publish_date=$PUBLISH_DATE" >> "$GITHUB_OUTPUT"
-          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+          {
+            echo "milestone_title=$MILESTONE_TITLE"
+            echo "publish_date=$PUBLISH_DATE"
+            echo "slug=$SLUG"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Bilbo blog brief issue
         env:
@@ -130,6 +132,7 @@ jobs:
           - Close both this issue and the review issue (#${REVIEW_ISSUE_NUMBER}) in the PR description"
 
           gh issue create \
+            --repo "${{ github.repository }}" \
             --title "Blog post: ${MILESTONE_TITLE} — milestone recap" \
             --body "$BODY" \
             --label "squad:bilbo"
@@ -139,7 +142,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          gh issue comment "$ISSUE_NUMBER" --body "📝 **Blog-only path selected.**
+          gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body "📝 **Blog-only path selected.**
 
           A \`squad:bilbo\` blog brief issue has been created. Once Bilbo's PR merges:
           - \`docs/blog/index.md\` will be updated (the blog page)
@@ -147,4 +150,4 @@ jobs:
 
           Closing this review issue."
 
-          gh issue close "$ISSUE_NUMBER" --reason completed
+          gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --reason completed
