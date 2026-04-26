@@ -391,3 +391,4 @@ Migrate `tests/Web.Tests.Integration` from xUnit v2 to xUnit v3 (3.2.2), matchin
 4. **Runner JSON settings for integration tests** — Keep `parallelizeAssembly: false` for integration tests that share Docker containers. This prevents container port conflicts that would cause flaky tests.
 
 5. **Pre-push gate runs integration tests** — The repo's pre-push hook runs `tests/Web.Tests.Integration` automatically. All 12 tests passed including the Testcontainers-based MongoDB and Redis tests.
+2. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.
