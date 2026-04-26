@@ -286,3 +286,40 @@ Review the scoped `ConfigureAwait(false)` change for `src/Domain/Behaviors/Valid
 ### Learnings
 1. For MyBlog test coverage, a `ConfigureAwait(false)` cleanup in a MediatR pipeline behavior is non-observable unless tests explicitly assert synchronization-context behavior.
 2. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.
+## 2025 — Sprint 8 Wave 2: Architecture.Tests xUnit v3 Migration (#178 / #179)
+
+### Task
+Migrate `tests/Architecture.Tests/` to xUnit v3 API conventions (issue #178), then validate and fix any post-migration failures (issue #179).
+
+### Context
+Wave 1 (issues #182/#183) had already updated `Architecture.Tests.csproj` with the `xunit.v3` meta-package, `xunit.analyzers`, `xunit.runner.json`, and `<Using Include="Xunit"/>` global using before this session started. Wave 2 (this session) is the code-level migration.
+
+### Work Done
+
+**Issue #178 — Migration:**
+- Reviewed all 4 Architecture.Tests files: `DomainLayerTests.cs`, `VsaLayerTests.cs`, `ThemeLayerTests.cs`, `CachingLayerTests.cs`
+- Confirmed xUnit v3 is backward-compatible for `[Fact]` — no attribute changes required
+- Applied AAA (Arrange/Act/Assert) comments to all 11 test methods (Gimli Rule #3)
+- Extracted `assembly` local variable in `DomainLayerTests.cs` for clean Arrange/Act split
+- Extracted `domainAssembly` local variable in `VsaLayerTests.Data_Layer_Should_Not_Be_Referenced_Outside_Web`
+- All 11 architecture tests + 42 Domain.Tests passed after migration
+- PR #184 opened → target `sprint/8-xunit-v3-pilot`
+
+**Issue #179 — Failures check:**
+- Ran full test suite post-migration: 0 failures
+- No xUnit v3 API failures to fix in Architecture.Tests
+- Documented findings in PR #185
+
+### Key Learnings — xUnit v3 + NetArchTest AAA Pattern
+
+1. **xUnit v3 is backward-compatible for the full Architecture.Tests test surface.** `[Fact]`, `[Theory]`, `[InlineData]` are identical in v2 and v3. No attribute changes needed when migrating pure architecture tests.
+
+2. **NetArchTest builder = natural combined Arrange/Act.** The fluent chain `Types.InAssembly(asm).That()...GetResult()` cannot be cleanly split into separate Arrange and Act phases without a temp variable. Use `// Arrange / Act` as a combined block comment (same pattern used in Sprint 7 Domain.Tests pilot).
+
+3. **Extract assembly to local variable for full 3-part AAA.** When a test references `typeof(T).Assembly` inline in the fluent chain, extracting it into `var assembly = ...` enables a genuine 3-part Arrange/Act/Assert split.
+
+4. **Architecture.Tests vs Domain.Tests — key migration difference.** Domain.Tests uses async `[Fact]`; Architecture.Tests are synchronous. Both migrate identically for xUnit v3 because the async/await difference is irrelevant to the package migration.
+
+5. **`xunit.runner.json` parallelism is correctly scoped.** `parallelizeAssembly: true, parallelizeTestCollections: true` is safe for stateless architecture tests. No shared mutable state to cause race conditions.
+
+6. **Test count: 11 architecture tests** across 4 files. NetArchTest rules are fast (~72ms total) even with parallelism enabled.
