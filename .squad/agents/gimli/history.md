@@ -365,3 +365,29 @@ Completed full xUnit v2 → v3 migration for `tests/Web.Tests/`.
 - 9 files needed AAA comments applied
 - 4 files needed indentation fix (entire class body at col 0)
 - 2 files were already correct on all counts (Data/BlogPostMappingsTests.cs, Security/RoleClaimsHelperTests.cs)
+
+## Session: Issue #199 — Web.Tests.Integration xUnit v3 Migration (Sprint 11)
+
+### Task
+Migrate `tests/Web.Tests.Integration` from xUnit v2 to xUnit v3 (3.2.2), matching the established pattern in `Web.Tests` and `Web.Tests.Bunit`.
+
+### Work Done
+- **Csproj**: Swapped `xunit` → `xunit.v3`; changed runner JSON item from `<None Update>` to `<Content Include CopyToOutputDirectory="PreserveNewest"/>`.
+- **IntegrationTest1.cs**: Deleted — stale Aspire starter template with all methods commented out.
+- **File headers**: Fixed `Project Name: Integration.Tests` → `Web.Tests.Integration` in all 6 source files.
+- **IAsyncLifetime**: Updated `MongoDbFixture` and `RedisFixture` from `async Task` to `async ValueTask` for both `InitializeAsync` and `DisposeAsync` (xUnit v3 requirement).
+- **xUnit1051**: Threaded `TestContext.Current.CancellationToken` through all async repository and cache service calls in both test classes. All methods already had `CancellationToken ct = default` params — no production code changes needed.
+- **Verification**: All 12 integration tests pass (MongoDB + Redis via Testcontainers).
+- **PR**: [#200](https://github.com/mpaulosky/MyBlog/pull/200)
+
+### Key Learnings — xUnit v3 Integration Test Migration
+
+1. **`IAsyncLifetime` uses `ValueTask` in xUnit v3** — Both `InitializeAsync()` and `DisposeAsync()` must return `ValueTask`, not `Task`. The compiler handles the state machine naturally; existing `await Task`-returning calls inside work without any other changes.
+
+2. **`xUnit1051` fires on all async calls with CT overloads** — The rule is error-level by default in xUnit v3. The correct fix is to thread `TestContext.Current.CancellationToken` through the calls. Only use `<NoWarn>xUnit1051</NoWarn>` as a last resort when production methods genuinely lack CT parameters.
+
+3. **`TestContext.Current.CancellationToken` in lambdas** — Safe to capture inside `async () =>` lambdas used with `FluentAssertions.Should().ThrowAsync()` / `NotThrowAsync()`. The lambda closes over `ct` from the outer scope which is valid for the test lifetime.
+
+4. **Runner JSON settings for integration tests** — Keep `parallelizeAssembly: false` for integration tests that share Docker containers. This prevents container port conflicts that would cause flaky tests.
+
+5. **Pre-push gate runs integration tests** — The repo's pre-push hook runs `tests/Web.Tests.Integration` automatically. All 12 tests passed including the Testcontainers-based MongoDB and Redis tests.
