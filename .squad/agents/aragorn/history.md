@@ -442,3 +442,85 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 
 **Release ownership (per Decision #13):** Aragorn validates scope and approves the release contents; Boromir owns operational CI/CD execution. For sprint releases where CI is already confirmed green, Aragorn may proceed directly without a separate Boromir handoff.
 
+
+---
+
+## Learnings
+
+### Sprint 7 xUnit v3 Pilot Process (2025-07-01)
+
+**Pilot strategy:** Scoped xUnit v3 migration to `Domain.Tests` only for Sprint 7 rather than
+migrating all four test projects at once. This isolates breaking changes, creates a reusable
+migration playbook, and provides a low-cost failure mode if xUnit v3 has unexpected issues.
+
+**Metrics to track for test framework migrations:**
+- Test count (regression check — no tests should disappear)
+- Pass rate (must stay 100% or improve)
+- Execution time (v3 should be faster due to parallelism improvements)
+- Line/branch coverage % (threshold: ≥80% line, ≥60% branch — must not regress)
+- Build time (Release configuration)
+- CI feedback time (wall-clock minutes from push to green)
+- Compiler warnings and errors on upgrade
+
+**Validation approach for Phase 2:**
+1. `dotnet build -c Release` — zero errors, zero warnings gate
+2. `dotnet test tests/Domain.Tests -c Release` — 100% pass rate
+3. `dotnet test tests/ -c Release --collect:"XPlat Code Coverage"` — full coverage pass
+4. Check CI `squad-test.yml` run on the sprint branch for end-to-end confirmation
+5. Compare metrics against Sprint 6 baseline captured in tracking doc
+
+**Template reuse:** `docs/sprint-7-xunit-v3-pilot-retro.md` Appendix "Migration Playbook (Draft)"
+will become the reusable template for Unit.Tests (Sprint 8), Architecture.Tests (Sprint 9),
+and Blazor.Tests (Sprint 10) once filled in from Phase 2 results.
+
+**Inbox gitignore note:** `.squad/decisions/inbox/` is gitignored — tracking docs and decision
+records in the inbox are local-only until the Scribe processes them. Retro template goes in
+`docs/` (tracked); live tracking log stays in inbox (untracked). This is the correct pattern.
+
+**PR:** https://github.com/mpaulosky/MyBlog/pull/172
+
+---
+
+## Learnings
+
+### Sprint 8 xUnit v3 Architecture.Tests Pilot (2025-07-24)
+
+**Backward compatibility of NetArchTest attributes:** Architecture tests using only `[Fact]`
+require zero attribute changes when migrating from xUnit v2 to v3. The migration is purely
+structural — AAA comment additions and variable extractions for clarity. This means NetArchTest-based
+architecture test projects are the easiest migration surface in the entire test suite.
+
+**Sprint wave dependency chain effectiveness:** The three-wave model (Wave 1: Infrastructure →
+Wave 2: Code → Wave 3: Docs) with explicit blocking dependencies worked without any inter-wave
+blocking. Fan-out within Wave 3 (Pippin on ADR, Aragorn on retro running concurrently) reduced
+calendar time. This pattern should be the default for cross-cutting infrastructure changes.
+
+**Test metrics (Sprint 8 final):**
+- Architecture.Tests: 11 tests passing, 72ms total run time (parallel execution enabled)
+- Domain.Tests: 42 tests passing (Sprint 7 baseline maintained)
+- Combined: 53+ tests passing, 0 failures, 0 rework PRs
+
+**xUnit v3 rollout pattern (established):**
+- Use `xunit.v3` meta-package (3.2.2), `xunit.analyzers` (1.27.0), `xunit.runner.visualstudio` (3.1.1)
+- All versions centralized in `Directory.Packages.props` — no individual `.csproj` pins
+- Add `xunit.runner.json` with parallel execution enabled for stateless test projects
+- Wave 1 (Boromir) establishes package foundation; Wave 2 (Gimli) does code migration
+
+**AAA comment pattern for NetArchTest tests:**
+- Full 3-part AAA when assembly variable can be meaningfully extracted (DomainLayerTests)
+- Combined `// Arrange / Act` when assembly is a static class field (WebLayerTests)
+- Pattern documented in `.squad/decisions/inbox/gimli-xunit-v3-migration-pattern.md`
+
+**Recommendations for future test framework adoption:**
+1. Blazor.Tests (Sprint 9) — bUnit has explicit xUnit v3 support; migrate next
+2. Unit.Tests (Sprint 9–10) — simpler surface, can follow Blazor.Tests
+3. Integration.Tests — requires separate spike due to Docker/IAsyncLifetime changes
+4. New test projects: start with xUnit v3 from day one — no more xUnit v2 projects
+5. Capture baseline CI build time before migration begins (Sprint 7 gap — don't repeat)
+
+**Retrospective quality:** Sprint 7 retro was left as a `_TBD_` template. Sprint 8 retro
+is authored as a completed document at sprint close. Future retrospectives must be complete
+records, not planning templates left for "later."
+
+**Decision:** `.squad/decisions/inbox/aragorn-xunit-v3-rollout-strategy.md`
+**PR:** https://github.com/mpaulosky/MyBlog/pull/184 (pending)
