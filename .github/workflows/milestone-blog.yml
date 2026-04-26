@@ -40,13 +40,15 @@ jobs:
           PUBLISH_DATE=$(date -d "${CLOSED_AT}" '+%Y-%m-%d' 2>/dev/null || date '+%Y-%m-%d')
           LAST_TAG=$(gh api "repos/${{ github.repository }}/releases?per_page=1" --jq '.[0].tag_name // "none"')
 
-          echo "issues<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$ISSUES" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-          echo "count=$ISSUE_COUNT" >> "$GITHUB_OUTPUT"
-          echo "feature_count=$FEATURE_COUNT" >> "$GITHUB_OUTPUT"
-          echo "publish_date=$PUBLISH_DATE" >> "$GITHUB_OUTPUT"
-          echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
+          {
+            echo "issues<<EOF"
+            echo "$ISSUES"
+            echo "EOF"
+            echo "count=$ISSUE_COUNT"
+            echo "feature_count=$FEATURE_COUNT"
+            echo "publish_date=$PUBLISH_DATE"
+            echo "last_tag=$LAST_TAG"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Ralph review issue
         env:
@@ -103,6 +105,7 @@ jobs:
           *Triggered by milestone close at ${PUBLISH_DATE}. Workflow: \`milestone-blog.yml\`*"
 
           gh issue create \
+            --repo "${{ github.repository }}" \
             --title "📋 Milestone Review: ${MILESTONE_TITLE} — release or blog?" \
             --body "$BODY" \
             --label "squad:ralph,pending-review"
