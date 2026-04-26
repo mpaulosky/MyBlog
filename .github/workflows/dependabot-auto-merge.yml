@@ -47,6 +47,7 @@ jobs:
                     enablePullRequestAutoMerge(
                       input: {
                         pullRequestId: $pullRequestId
+                        mergeMethod: SQUASH
                       }
                     ) {
                       pullRequest {
@@ -130,6 +131,7 @@ jobs:
                       enablePullRequestAutoMerge(
                         input: {
                           pullRequestId: $pullRequestId
+                          mergeMethod: SQUASH
                         }
                       ) {
                         pullRequest {
