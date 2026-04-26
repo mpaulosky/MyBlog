@@ -323,3 +323,23 @@ Wave 1 (issues #182/#183) had already updated `Architecture.Tests.csproj` with t
 5. **`xunit.runner.json` parallelism is correctly scoped.** `parallelizeAssembly: true, parallelizeTestCollections: true` is safe for stateless architecture tests. No shared mutable state to cause race conditions.
 
 6. **Test count: 11 architecture tests** across 4 files. NetArchTest rules are fast (~72ms total) even with parallelism enabled.
+
+## 2026-04-26 — Sprint 9 Kickoff: Web.Tests xUnit v3 Migration Commenced
+
+**Issue #190 — Web.Tests xUnit v3 Migration (127 tests)**
+
+Commenced Phase 1 of Web.Tests xUnit v3 migration following established Sprint 8 (Architecture.Tests) pattern.
+
+**Scope:** 127 tests across Web.Tests (55) and Web.Tests.Bunit (72); largest single project migration to date.
+
+**Phases Planned:**
+1. **Phase 1 (In Progress):** Package swap — xunit → xunit.v3 meta-package, OutputType=Exe, xunit.analyzers, xunit.runner.json
+2. **Phase 2:** API rewrite — [Fact] → [Test], TheoryData adjustments, test method signature updates, AAA comment patterns (per charter rule #3)
+3. **Phase 3:** Verification — full test suite pass, performance baseline vs v2 (expect 5–15% improvement at 127-test scale)
+
+**Pattern References:**
+- Domain.Tests (Sprint 7): 42 tests, 8.7% improvement
+- Architecture.Tests (Sprint 8): 11 tests, 5–8% improvement
+- Unit-Test-Conventions SKILL.md: AAA patterns, file headers, NSubstitute gotchas
+
+**Next:** Complete Phase 1, open draft PR for early CI/CD validation with larger test count.

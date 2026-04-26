@@ -289,3 +289,20 @@ Completed documentation of the Architecture.Tests xUnit v3 migration (Wave 2), r
 - **Remaining projects (Sprint 13)**: AppHost.Tests, E2E.Tests, Web.Tests
 
 ---
+
+## 2026-04-26 — Sprint 9 Kickoff Documentation
+
+Documented Sprint 9 commencement (xUnit v3 Web.Tests migration) in session logs and decisions changelog.
+
+**Work Done:**
+- Created `.squad/log/2026-04-26T14-14-17Z-sprint-9-kickoff.md` — comprehensive session log with Aragorn readiness gate, Gimli phase timeline, team context, next steps
+- Updated Aragorn, Gimli, and Scribe history files with Sprint 9 entries
+- Verified no new decisions from inbox (inbox empty this round)
+
+**Key Facts Logged:**
+- Gate status: OPEN (Sprint 9 ready)
+- Pattern precedent: Domain.Tests (Sprint 7) + Architecture.Tests (Sprint 8) demonstrate xUnit v3 viability
+- Web.Tests scope: 127 tests (largest project to date); risk: moderate; pattern: well-established
+- Next follow-up: When Gimli completes Phase 2 (API migration) for comprehensive validation
+
+**Sprint Coordination:** Team spawned, readiness gated, work commenced.
