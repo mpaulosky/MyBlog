@@ -28,5 +28,6 @@ jobs:
       - name: Run unit tests
         run: |
           dotnet test tests/Architecture.Tests --configuration Release --no-build --verbosity normal
+          dotnet test tests/Domain.Tests --configuration Release --no-build --verbosity normal
           dotnet test tests/Web.Tests --configuration Release --no-build --verbosity normal
           dotnet test tests/Web.Tests.Integration --configuration Release --no-build --verbosity normal

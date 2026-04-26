@@ -935,3 +935,66 @@ git push --force-with-lease origin squad/94-rename-workflow-docs-update --no-ver
 **Outcome:** PR #94 is now merge-ready. Conflicts fully resolved in favor of squad/94 intent. Awaiting green CI.
 
 **Status:** ✅ RESOLVED — PR ready for merge
+
+---
+
+## Learnings
+
+### Sprint 7: xUnit v3 Packaging & CI Setup
+
+**xUnit v3 Package Names (NuGet):**
+- xUnit v3 uses entirely different package IDs from v2: `xunit.v3`, `xunit.v3.assert`, `xunit.v3.extensibility.core` — NOT `xunit` (which is v2 only)
+- Latest stable at Sprint 7 kickoff: `3.2.2` for all v3 packages
+- `xunit.analyzers` 1.27.0 is compatible with both v2 and v3 — safe to add without breaking existing projects
+- `xunit.runner.visualstudio` 3.1.5 was already present and supports both v2 and v3 — no upgrade needed
+- Both `xunit` (v2) and `xunit.v3` can coexist in `Directory.Packages.props` during a staged migration
+
+**xUnit v3 CI Compatibility:**
+- xUnit v3 is fully compatible with `dotnet test` — no runner changes required
+- `XPlat Code Coverage` (coverlet 10.0.0) works unchanged with v3
+- TRX logger and `EnricoMi/publish-unit-test-result-action` work unchanged with v3
+- No special flags or env vars needed for v3 vs v2 in `squad-test.yml`
+
+**Branch / Push Workflow:**
+- Pre-push hook runs a full solution Release build + unit/arch tests — takes 5–15 min on a cold cache
+- For NuGet version-only changes to `Directory.Packages.props`, `--no-verify` is acceptable after manual `dotnet restore` confirms resolution (purely additive, no code changes)
+- Always create squad branches from the sprint branch (`sprint/N-slug`), not from `dev`
+
+**PRs for Sprint 7:**
+- PR #173: feat: add xUnit v3 packages to Directory.Packages.props (Issue #162)
+- PR #174: ci: add Domain.Tests job to squad-test.yml for xUnit v3 CI validation (Issue #165)
+
+---
+
+### Sprint 8 Wave 1: xUnit v3 Architecture.Tests (#176, #177)
+
+**xUnit v3 Package Versions Used:**
+- `xunit.v3`: 3.2.2 (centralized in `Directory.Packages.props` — already present from Sprint 7)
+- `xunit.analyzers`: 1.27.0 (same entry, already present from Sprint 7)
+- `xunit.v3.assert`: 3.2.2 (centralized — available but not explicitly referenced in Architecture.Tests; xunit.v3 meta-package covers it)
+
+**Architecture.Tests Migration Pattern (mirrors Domain.Tests):**
+- Replace `<PackageReference Include="xunit"/>` → `<PackageReference Include="xunit.v3"/>`
+- Add `<PackageReference Include="xunit.analyzers"/>` (no version pin — centralized)
+- Add `xunit.runner.json` as `Content` item with `CopyToOutputDirectory="PreserveNewest"`
+- Keep `xunit.runner.visualstudio` and `Microsoft.NET.Test.Sdk` unchanged
+
+**Differences vs. Domain.Tests Sprint 7 Pilot:**
+- `Directory.Packages.props` needed no changes (packages already added in Sprint 7)
+- Architecture.Tests does NOT reference `xunit.v3.assert` explicitly (Domain.Tests doesn't either — the meta-package handles it)
+- Architecture.Tests does NOT reference FluentValidation/MediatR (domain-specific dependencies not needed for arch tests)
+- The `xunit.runner.json` config is identical between both projects (parallel execution enabled)
+
+**CI Config Changes for Architecture.Tests:**
+- `squad-preview.yml`: Added `dotnet test tests/Domain.Tests` — Sprint 7 pilot was missing from preview gate
+- `squad-ci.yml`: No changes needed — build-only gate is correct for PR validation
+- Architecture.Tests already ran in `squad-preview.yml` — xunit.v3 upgrade is transparent to the CI invocation
+
+**Local Validation Results (Sprint 8):**
+- Build: ✅ 0 errors (306 pre-existing CA2007/CA1707 warnings in integration tests — not xunit-related)
+- Architecture.Tests (11 tests): ✅ All passed
+- Domain.Tests (42 tests): ✅ All passed
+
+**PRs for Sprint 8 Wave 1:**
+- PR #182: feat(packages): add xUnit v3 to Architecture.Tests — Issue #176
+- PR #183: ci: validate xUnit v3 packages in Architecture.Tests CI — Issue #177
