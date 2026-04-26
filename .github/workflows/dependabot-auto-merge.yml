@@ -1,0 +1,153 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - dev
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  enable-auto-merge:
+    name: Enable auto-merge on Dependabot PRs
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.base.ref == 'dev' &&
+      github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enable auto-merge
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const pullRequestId = context.payload.pull_request.node_id;
+            const pullNumber = context.payload.pull_request.number;
+
+            try {
+              await github.graphql(
+                `
+                  mutation EnableAutoMerge($pullRequestId: ID!) {
+                    enablePullRequestAutoMerge(
+                      input: {
+                        pullRequestId: $pullRequestId
+                      }
+                    ) {
+                      pullRequest {
+                        number
+                      }
+                    }
+                  }
+                `,
+                { pullRequestId }
+              );
+
+              core.info(`Enabled auto-merge for PR #${pullNumber}.`);
+            } catch (error) {
+              const message = error.message ?? String(error);
+              if (message.includes('already enabled')) {
+                core.info(`Auto-merge is already enabled for PR #${pullNumber}.`);
+                return;
+              }
+
+              throw error;
+            }
+
+  refresh-open-prs:
+    name: Refresh open Dependabot PR branches
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update open Dependabot PRs
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const openPullRequests = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner,
+                repo,
+                state: 'open',
+                base: 'dev',
+                per_page: 100,
+              }
+            );
+
+            const dependabotPullRequests = openPullRequests.filter(
+              pullRequest =>
+                pullRequest.user?.login === 'dependabot[bot]' &&
+                pullRequest.draft === false
+            );
+
+            if (dependabotPullRequests.length === 0) {
+              core.info('No open Dependabot PRs target dev.');
+              return;
+            }
+
+            for (const pullRequest of dependabotPullRequests) {
+              try {
+                await github.rest.pulls.updateBranch({
+                  owner,
+                  repo,
+                  pull_number: pullRequest.number,
+                });
+
+                core.info(`Queued branch update for PR #${pullRequest.number}.`);
+              } catch (error) {
+                if (error.status === 409 || error.status === 422) {
+                  core.info(
+                    `No branch update queued for PR #${pullRequest.number}: ${error.message}`
+                  );
+                } else {
+                  throw error;
+                }
+              }
+
+              try {
+                await github.graphql(
+                  `
+                    mutation EnableAutoMerge($pullRequestId: ID!) {
+                      enablePullRequestAutoMerge(
+                        input: {
+                          pullRequestId: $pullRequestId
+                        }
+                      ) {
+                        pullRequest {
+                          number
+                        }
+                      }
+                    }
+                  `,
+                  { pullRequestId: pullRequest.node_id }
+                );
+
+                core.info(`Ensured auto-merge for PR #${pullRequest.number}.`);
+              } catch (error) {
+                const message = error.message ?? String(error);
+                if (message.includes('already enabled')) {
+                  core.info(`Auto-merge already enabled for PR #${pullRequest.number}.`);
+                } else {
+                  core.warning(`Could not enable auto-merge for PR #${pullRequest.number}: ${message}`);
+                }
+              }
+            }
