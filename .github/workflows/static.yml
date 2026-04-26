@@ -30,7 +30,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           # Upload docs/blog/ only — keeps SECRETS.md and other internal docs off the web
           path: 'docs/blog'
