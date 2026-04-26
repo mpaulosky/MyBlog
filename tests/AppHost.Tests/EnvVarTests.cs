@@ -27,7 +27,8 @@ public class EnvVarTests
 				configureBuilder: static (options, _) =>
 				{
 					options.DisableDashboard = true;
-				});
+				},
+				cancellationToken: TestContext.Current.CancellationToken);
 
 		var webResource = (IResourceWithEnvironment)appHost.Resources
 			.Single(static r => r.Name == "web");
@@ -52,7 +53,8 @@ public class EnvVarTests
 				configureBuilder: static (options, _) =>
 				{
 					options.DisableDashboard = true;
-				});
+				},
+				cancellationToken: TestContext.Current.CancellationToken);
 
 		var webResource = (IResourceWithEnvironment)appHost.Resources
 			.Single(static r => r.Name == "web");

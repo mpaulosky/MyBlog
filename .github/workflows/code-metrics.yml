@@ -45,7 +45,7 @@ jobs:
           dir: ${{ './' }}
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v8.1.0
+        uses: peter-evans/create-pull-request@v8.1.1
         if: ${{ steps.dotnet-code-metrics.outputs.updated-metrics }} == 'true'
         with:
           title: '${{ steps.dotnet-code-metrics.outputs.summary-title }}'

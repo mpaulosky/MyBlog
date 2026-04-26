@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using MediatR;
@@ -24,13 +24,16 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_NoValidators_CallsNext()
 	{
+		// Arrange
 		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
 		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<Guid>(Guid.NewGuid()));
 		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([]);
 
+		// Act
 		var result = await behavior.Handle(
 			new CreateBlogPostCommand("T", "C", "A"), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeTrue();
 		await next.Received(1)(Arg.Any<CancellationToken>());
 	}
@@ -38,14 +41,17 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_ValidRequest_CallsNext()
 	{
+		// Arrange
 		var validator = new CreateBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
 		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<Guid>(Guid.NewGuid()));
 		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new CreateBlogPostCommand("Title", "Content", "Author"), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeTrue();
 		await next.Received(1)(Arg.Any<CancellationToken>());
 	}
@@ -53,13 +59,16 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_InvalidRequest_ReturnsValidationFailWithoutCallingNext()
 	{
+		// Arrange
 		var validator = new CreateBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
 		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new CreateBlogPostCommand("", "", ""), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeFalse();
 		result.ErrorCode.Should().Be(ResultErrorCode.Validation);
 		await next.DidNotReceive()(Arg.Any<CancellationToken>());
@@ -68,28 +77,34 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_InvalidRequest_ErrorMessageContainsValidationDetails()
 	{
+		// Arrange
 		var validator = new CreateBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
 		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new CreateBlogPostCommand("", "Content", ""), next, CancellationToken.None);
 
+		// Assert
 		result.Error.Should().NotBeNullOrEmpty();
 	}
 
 	[Fact]
 	public async Task Handle_MultipleValidators_AllAreExecuted()
 	{
+		// Arrange
 		var validator1 = new CreateBlogPostCommandValidator();
 		var validator2 = new CreateBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
 		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<Guid>(Guid.NewGuid()));
 		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator1, validator2]);
 
+		// Act
 		var result = await behavior.Handle(
 			new CreateBlogPostCommand("Title", "Content", "Author"), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeTrue();
 		await next.Received(1)(Arg.Any<CancellationToken>());
 	}
@@ -97,14 +112,17 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_MultipleValidatorsOneInvalid_ReturnsFail()
 	{
+		// Arrange
 		var validator1 = new CreateBlogPostCommandValidator();
 		var validator2 = new CreateBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
 		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator1, validator2]);
 
+		// Act
 		var result = await behavior.Handle(
 			new CreateBlogPostCommand("", "", ""), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeFalse();
 		result.ErrorCode.Should().Be(ResultErrorCode.Validation);
 		await next.DidNotReceive()(Arg.Any<CancellationToken>());
@@ -115,13 +133,16 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_DeleteNoValidators_CallsNext()
 	{
+		// Arrange
 		var next = Substitute.For<RequestHandlerDelegate<Result>>();
 		next(Arg.Any<CancellationToken>()).Returns(Result.Ok());
 		var behavior = new ValidationBehavior<DeleteBlogPostCommand, Result>([]);
 
+		// Act
 		var result = await behavior.Handle(
 			new DeleteBlogPostCommand(Guid.NewGuid()), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeTrue();
 		await next.Received(1)(Arg.Any<CancellationToken>());
 	}
@@ -129,14 +150,17 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_DeleteValidRequest_CallsNext()
 	{
+		// Arrange
 		var validator = new DeleteBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result>>();
 		next(Arg.Any<CancellationToken>()).Returns(Result.Ok());
 		var behavior = new ValidationBehavior<DeleteBlogPostCommand, Result>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new DeleteBlogPostCommand(Guid.NewGuid()), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeTrue();
 		await next.Received(1)(Arg.Any<CancellationToken>());
 	}
@@ -144,13 +168,16 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_DeleteEmptyGuid_ReturnsValidationFailWithoutCallingNext()
 	{
+		// Arrange
 		var validator = new DeleteBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result>>();
 		var behavior = new ValidationBehavior<DeleteBlogPostCommand, Result>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new DeleteBlogPostCommand(Guid.Empty), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeFalse();
 		result.ErrorCode.Should().Be(ResultErrorCode.Validation);
 		await next.DidNotReceive()(Arg.Any<CancellationToken>());
@@ -161,14 +188,17 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_EditValidRequest_CallsNext()
 	{
+		// Arrange
 		var validator = new EditBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result>>();
 		next(Arg.Any<CancellationToken>()).Returns(Result.Ok());
 		var behavior = new ValidationBehavior<EditBlogPostCommand, Result>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new EditBlogPostCommand(Guid.NewGuid(), "Title", "Content"), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeTrue();
 		await next.Received(1)(Arg.Any<CancellationToken>());
 	}
@@ -176,13 +206,16 @@ public class ValidationBehaviorTests
 	[Fact]
 	public async Task Handle_EditInvalidRequest_ReturnsValidationFailWithoutCallingNext()
 	{
+		// Arrange
 		var validator = new EditBlogPostCommandValidator();
 		var next = Substitute.For<RequestHandlerDelegate<Result>>();
 		var behavior = new ValidationBehavior<EditBlogPostCommand, Result>([validator]);
 
+		// Act
 		var result = await behavior.Handle(
 			new EditBlogPostCommand(Guid.Empty, "", ""), next, CancellationToken.None);
 
+		// Assert
 		result.Success.Should().BeFalse();
 		result.ErrorCode.Should().Be(ResultErrorCode.Validation);
 		await next.DidNotReceive()(Arg.Any<CancellationToken>());
