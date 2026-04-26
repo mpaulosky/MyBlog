@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests.Bunit
 //=======================================================
 
 using Microsoft.JSInterop;
@@ -28,7 +28,7 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── Rendering ────────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProvider_RendersChildContent_WithoutError()
+	public void ThemeProviderRendersChildContentWithoutError()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -43,7 +43,7 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProvider_RendersWithoutError_WhenNoChildContent()
+	public void ThemeProviderRendersWithoutErrorWhenNoChildContent()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -59,7 +59,7 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── JS Interop on Init ───────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProvider_CallsGetColor_OnAfterFirstRender()
+	public void ThemeProviderCallsGetColorOnAfterFirstRender()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("green");
@@ -74,7 +74,7 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProvider_CallsGetBrightness_OnAfterFirstRender()
+	public void ThemeProviderCallsGetBrightnessOnAfterFirstRender()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -89,7 +89,7 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProvider_LoadsColorFromJs_AndExposesViaCascadingValue()
+	public void ThemeProviderLoadsColorFromJsAndExposesViaCascadingValue()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("red");
@@ -108,7 +108,7 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProvider_LoadsBrightnessFromJs_AndExposesViaCascadingValue()
+	public void ThemeProviderLoadsBrightnessFromJsAndExposesViaCascadingValue()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -125,7 +125,7 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── SetColor ─────────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProvider_SetColor_CallsSetColorJs_WithNewColor()
+	public void ThemeProviderSetColorCallsSetColorJsWithNewColor()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -147,7 +147,7 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── SetBrightness ────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProvider_SetBrightness_CallsSetBrightnessJs_WithNewBrightness()
+	public void ThemeProviderSetBrightnessCallsSetBrightnessJsWithNewBrightness()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -167,7 +167,7 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProvider_SetBrightness_UpdatesCurrentBrightness_AfterJsCall()
+	public void ThemeProviderSetBrightnessUpdatesCurrentBrightnessAfterJsCall()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -186,7 +186,7 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── Error Resilience ─────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProvider_WhenJsThrows_DoesNotPropagateException_AndUsesDefaults()
+	public void ThemeProviderWhenJsThrowsDoesNotPropagateExceptionAndUsesDefaults()
 	{
 		// Arrange — simulate localStorage unavailable (JS exception on getColor)
 		JSInterop.Setup<string>("themeManager.getColor")
@@ -203,7 +203,7 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProvider_WhenGetBrightnessThrows_DoesNotPropagateException_AndUsesDefault()
+	public void ThemeProviderWhenGetBrightnessThrowsDoesNotPropagateExceptionAndUsesDefault()
 	{
 		// Arrange — simulate localStorage unavailable (JS exception on getBrightness)
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");

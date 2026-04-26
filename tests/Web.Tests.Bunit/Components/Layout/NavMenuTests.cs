@@ -4,17 +4,8 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests.Bunit
 //=======================================================
-
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     NavMenuTests.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,7 +25,7 @@ public class NavMenuTests : BunitContext
 	}
 
 	[Fact]
-	public void UnauthenticatedUser_SeesLoginAndNoProtectedLinks()
+	public void UnauthenticatedUserSeesLoginAndNoProtectedLinks()
 	{
 		// Arrange (none)
 		// Act
@@ -47,7 +38,7 @@ public class NavMenuTests : BunitContext
 	}
 
 	[Fact]
-	public void AuthenticatedAdmin_UsesDisplayNameAsProfileLabel_AndShowsAdminLinks()
+	public void AuthenticatedAdminUsesDisplayNameAsProfileLabelAndShowsAdminLinks()
 	{
 		// Arrange (none)
 		// Act
@@ -61,7 +52,7 @@ public class NavMenuTests : BunitContext
 	}
 
 	[Fact]
-	public void AuthenticatedUser_WithoutName_FallsBackToProfileLabel()
+	public void AuthenticatedUserWithoutNameFallsBackToProfileLabel()
 	{
 		// Arrange (none)
 		// Act
@@ -73,7 +64,7 @@ public class NavMenuTests : BunitContext
 	}
 
 	[Fact]
-	public void NavMenu_LoadsThemeFromJs_AndAllowsThemeInteraction()
+	public void NavMenuLoadsThemeFromJsAndAllowsThemeInteraction()
 	{
 		// Arrange
 		JSInterop.Mode = JSRuntimeMode.Loose;
@@ -110,7 +101,7 @@ public class NavMenuTests : BunitContext
 	}
 
 	[Fact]
-	public void NavMenu_RendersInsideHeaderElement()
+	public void NavMenuRendersInsideHeaderElement()
 	{
 		// Arrange (none)
 		// Act
@@ -122,7 +113,7 @@ public class NavMenuTests : BunitContext
 	}
 
 	[Fact]
-	public void NavMenu_BrandNavLink_PointsToRoot()
+	public void NavMenuBrandNavLinkPointsToRoot()
 	{
 		// Arrange (none)
 		// Act
