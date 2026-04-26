@@ -323,3 +323,45 @@ Wave 1 (issues #182/#183) had already updated `Architecture.Tests.csproj` with t
 5. **`xunit.runner.json` parallelism is correctly scoped.** `parallelizeAssembly: true, parallelizeTestCollections: true` is safe for stateless architecture tests. No shared mutable state to cause race conditions.
 
 6. **Test count: 11 architecture tests** across 4 files. NetArchTest rules are fast (~72ms total) even with parallelism enabled.
+
+## 2026-04-26 — Sprint 9: Web.Tests xUnit v3 Migration COMPLETED
+
+**Issue #190 — Web.Tests xUnit v3 Migration (127 tests)**
+
+Completed full xUnit v2 → v3 migration for `tests/Web.Tests/`.
+
+### Work Done
+
+1. **Package migration** — `xunit` → `xunit.v3`, removed `coverlet.msbuild`, added `xunit.runner.json`
+2. **File headers** — Fixed `Unit.Tests` → `Web.Tests` in 11 of 17 files; removed duplicate old-format header from `ResultTests.cs`
+3. **AAA pattern** — Applied `// Arrange`, `// Act`, `// Assert` comments to all 77 test methods lacking them across 9 files
+4. **Indentation fix** — Fixed 4 handler test files where the entire class body (fields, constructor, all test methods) was at column 0; used a brace-counting script with correct leading-`}` depth tracking
+5. **UserManagementHandlerTests duplicate removal** — After the AAA edit produced a duplicate class body, removed the old duplicate (lines 298–530)
+
+**Result:** All 127 tests pass in 122 ms.
+
+### Key Learnings
+
+1. **xUnit v3 is backward-compatible for `[Fact]`, `[Theory]`, `[InlineData]`** — no attribute changes needed. The migration is purely a package swap + parallelism configuration.
+
+2. **Indentation fix via brace-counter: leading `}` handling is the hard part.** When a line starts with `}`, the depth must be decremented BEFORE printing (so the `}` itself is one level less indented), and the net brace change for the rest of the line must exclude that leading close. The bug to avoid: counting the leading `}` twice — once when adjusting depth and again in the opens-minus-closes calculation.
+
+3. **`edit` tool replaces a matched substring, not just the header.** When using `edit` to replace a header pattern, if the new content includes the full file body, the result is the new full content prepended to the surviving old body — producing a duplicate class. Always verify line count post-edit when replacing large blocks.
+
+4. **17 CS files in Web.Tests, not 23 as stated in issue #190.** Issue description overestimates scope; actual file audit is authoritative.
+
+5. **`coverlet.msbuild` is incompatible with xUnit v3.** Only `coverlet.collector` is needed. Domain.Tests (Sprint 7) sets this precedent.
+
+6. **AAA edge cases in this project:**
+   - Exception-throwing tests: `var act = () => ...; act.Should().Throw<T>()` → use `// Act & Assert` combined block
+   - "Arrange none" tests: `// Arrange (none)` is idiomatic when there's no setup before the action
+   - Handler test helpers (`BuildHandlerX()`) count as Arrange when called at the top of a test
+
+### File Count Summary
+
+- 17 CS files total in Web.Tests
+- 9 files needed header fix (wrong Project Name)
+- 1 file had duplicate header (ResultTests.cs)
+- 9 files needed AAA comments applied
+- 4 files needed indentation fix (entire class body at col 0)
+- 2 files were already correct on all counts (Data/BlogPostMappingsTests.cs, Security/RoleClaimsHelperTests.cs)

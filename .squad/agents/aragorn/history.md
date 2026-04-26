@@ -524,3 +524,16 @@ records, not planning templates left for "later."
 
 **Decision:** `.squad/decisions/inbox/aragorn-xunit-v3-rollout-strategy.md`
 **PR:** https://github.com/mpaulosky/MyBlog/pull/184 (pending)
+
+## 2026-04-26 — Sprint 9 Readiness Gate (xUnit v3 Web.Tests Migration)
+
+Gated Sprint 9 readiness assessment for Web.Tests xUnit v3 migration (Issue #190, 127 tests).
+
+**Gate Status:** ✅ OPEN — Readiness validated
+
+- Pattern maturity: Two successful migrations (Domain.Tests Sprint 7, Architecture.Tests Sprint 8) establish confidence
+- Performance trajectory: Domain +8.7% improvement, Architecture 5–8% improvement; Web.Tests projected 5–15% at scale (127 tests)
+- Team capacity: Gimli ready to begin; Gimli estimates 2–3 sprint phases (package swap → API rewrite → verification)
+- Risk posture: Moderate (scale increase to 127 tests), but pattern well-understood and tooling stable
+
+**Next:** Review Gimli's Phase 1 PR (package swap) once ready.
