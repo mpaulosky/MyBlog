@@ -44,7 +44,6 @@ jobs:
           {
             echo "milestone_title=$MILESTONE_TITLE"
             echo "bump=$BUMP"
-            echo "issue_number=${{ github.event.issue.number }}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Trigger release workflow
@@ -54,8 +53,7 @@ jobs:
         run: |
           gh workflow run squad-milestone-release.yml \
             --repo "${{ github.repository }}" \
-            --field bump="${BUMP}" \
-            --field milestone_number="${{ github.event.issue.number }}"
+            --field bump="${BUMP}"
           echo "✅ Triggered squad-milestone-release.yml (bump: ${BUMP})"
 
       - name: Add release-triggered comment and close review issue
