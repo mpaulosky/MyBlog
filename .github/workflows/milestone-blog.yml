@@ -50,7 +50,34 @@ jobs:
             echo "last_tag=$LAST_TAG"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Check for existing Ralph review issue
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MILESTONE_TITLE: ${{ github.event.milestone.title }}
+        run: |
+          REVIEW_TITLE="📋 Milestone Review: ${MILESTONE_TITLE} — release or blog?"
+          EXISTING_JSON=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --state all \
+            --search "\"${REVIEW_TITLE}\" in:title" \
+            --json number,title,state,url)
+
+          EXISTING_NUMBER=$(echo "$EXISTING_JSON" | jq -r --arg title "$REVIEW_TITLE" 'map(select(.title == $title)) | first.number // ""')
+          EXISTING_URL=$(echo "$EXISTING_JSON" | jq -r --arg title "$REVIEW_TITLE" 'map(select(.title == $title)) | first.url // ""')
+
+          {
+            echo "review_title=$REVIEW_TITLE"
+            echo "existing_number=$EXISTING_NUMBER"
+            echo "existing_url=$EXISTING_URL"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ -n "$EXISTING_NUMBER" ]; then
+            echo "Review issue already exists: #${EXISTING_NUMBER} (${EXISTING_URL})"
+          fi
+
       - name: Create Ralph review issue
+        if: steps.existing.outputs.existing_number == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MILESTONE_TITLE: ${{ github.event.milestone.title }}
@@ -109,3 +136,8 @@ jobs:
             --title "📋 Milestone Review: ${MILESTONE_TITLE} — release or blog?" \
             --body "$BODY" \
             --label "squad:ralph,pending-review"
+
+      - name: Skip duplicate Ralph review issue
+        if: steps.existing.outputs.existing_number != ''
+        run: |
+          echo "Skipping issue creation because review issue #${{ steps.existing.outputs.existing_number }} already exists."
