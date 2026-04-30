@@ -286,3 +286,109 @@ Review the scoped `ConfigureAwait(false)` change for `src/Domain/Behaviors/Valid
 ### Learnings
 1. For MyBlog test coverage, a `ConfigureAwait(false)` cleanup in a MediatR pipeline behavior is non-observable unless tests explicitly assert synchronization-context behavior.
 2. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.
+## 2025 — Sprint 8 Wave 2: Architecture.Tests xUnit v3 Migration (#178 / #179)
+
+### Task
+Migrate `tests/Architecture.Tests/` to xUnit v3 API conventions (issue #178), then validate and fix any post-migration failures (issue #179).
+
+### Context
+Wave 1 (issues #182/#183) had already updated `Architecture.Tests.csproj` with the `xunit.v3` meta-package, `xunit.analyzers`, `xunit.runner.json`, and `<Using Include="Xunit"/>` global using before this session started. Wave 2 (this session) is the code-level migration.
+
+### Work Done
+
+**Issue #178 — Migration:**
+- Reviewed all 4 Architecture.Tests files: `DomainLayerTests.cs`, `VsaLayerTests.cs`, `ThemeLayerTests.cs`, `CachingLayerTests.cs`
+- Confirmed xUnit v3 is backward-compatible for `[Fact]` — no attribute changes required
+- Applied AAA (Arrange/Act/Assert) comments to all 11 test methods (Gimli Rule #3)
+- Extracted `assembly` local variable in `DomainLayerTests.cs` for clean Arrange/Act split
+- Extracted `domainAssembly` local variable in `VsaLayerTests.Data_Layer_Should_Not_Be_Referenced_Outside_Web`
+- All 11 architecture tests + 42 Domain.Tests passed after migration
+- PR #184 opened → target `sprint/8-xunit-v3-pilot`
+
+**Issue #179 — Failures check:**
+- Ran full test suite post-migration: 0 failures
+- No xUnit v3 API failures to fix in Architecture.Tests
+- Documented findings in PR #185
+
+### Key Learnings — xUnit v3 + NetArchTest AAA Pattern
+
+1. **xUnit v3 is backward-compatible for the full Architecture.Tests test surface.** `[Fact]`, `[Theory]`, `[InlineData]` are identical in v2 and v3. No attribute changes needed when migrating pure architecture tests.
+
+2. **NetArchTest builder = natural combined Arrange/Act.** The fluent chain `Types.InAssembly(asm).That()...GetResult()` cannot be cleanly split into separate Arrange and Act phases without a temp variable. Use `// Arrange / Act` as a combined block comment (same pattern used in Sprint 7 Domain.Tests pilot).
+
+3. **Extract assembly to local variable for full 3-part AAA.** When a test references `typeof(T).Assembly` inline in the fluent chain, extracting it into `var assembly = ...` enables a genuine 3-part Arrange/Act/Assert split.
+
+4. **Architecture.Tests vs Domain.Tests — key migration difference.** Domain.Tests uses async `[Fact]`; Architecture.Tests are synchronous. Both migrate identically for xUnit v3 because the async/await difference is irrelevant to the package migration.
+
+5. **`xunit.runner.json` parallelism is correctly scoped.** `parallelizeAssembly: true, parallelizeTestCollections: true` is safe for stateless architecture tests. No shared mutable state to cause race conditions.
+
+6. **Test count: 11 architecture tests** across 4 files. NetArchTest rules are fast (~72ms total) even with parallelism enabled.
+
+## 2026-04-26 — Sprint 9: Web.Tests xUnit v3 Migration COMPLETED
+
+**Issue #190 — Web.Tests xUnit v3 Migration (127 tests)**
+
+Completed full xUnit v2 → v3 migration for `tests/Web.Tests/`.
+
+### Work Done
+
+1. **Package migration** — `xunit` → `xunit.v3`, removed `coverlet.msbuild`, added `xunit.runner.json`
+2. **File headers** — Fixed `Unit.Tests` → `Web.Tests` in 11 of 17 files; removed duplicate old-format header from `ResultTests.cs`
+3. **AAA pattern** — Applied `// Arrange`, `// Act`, `// Assert` comments to all 77 test methods lacking them across 9 files
+4. **Indentation fix** — Fixed 4 handler test files where the entire class body (fields, constructor, all test methods) was at column 0; used a brace-counting script with correct leading-`}` depth tracking
+5. **UserManagementHandlerTests duplicate removal** — After the AAA edit produced a duplicate class body, removed the old duplicate (lines 298–530)
+
+**Result:** All 127 tests pass in 122 ms.
+
+### Key Learnings
+
+1. **xUnit v3 is backward-compatible for `[Fact]`, `[Theory]`, `[InlineData]`** — no attribute changes needed. The migration is purely a package swap + parallelism configuration.
+
+2. **Indentation fix via brace-counter: leading `}` handling is the hard part.** When a line starts with `}`, the depth must be decremented BEFORE printing (so the `}` itself is one level less indented), and the net brace change for the rest of the line must exclude that leading close. The bug to avoid: counting the leading `}` twice — once when adjusting depth and again in the opens-minus-closes calculation.
+
+3. **`edit` tool replaces a matched substring, not just the header.** When using `edit` to replace a header pattern, if the new content includes the full file body, the result is the new full content prepended to the surviving old body — producing a duplicate class. Always verify line count post-edit when replacing large blocks.
+
+4. **17 CS files in Web.Tests, not 23 as stated in issue #190.** Issue description overestimates scope; actual file audit is authoritative.
+
+5. **`coverlet.msbuild` is incompatible with xUnit v3.** Only `coverlet.collector` is needed. Domain.Tests (Sprint 7) sets this precedent.
+
+6. **AAA edge cases in this project:**
+   - Exception-throwing tests: `var act = () => ...; act.Should().Throw<T>()` → use `// Act & Assert` combined block
+   - "Arrange none" tests: `// Arrange (none)` is idiomatic when there's no setup before the action
+   - Handler test helpers (`BuildHandlerX()`) count as Arrange when called at the top of a test
+
+### File Count Summary
+
+- 17 CS files total in Web.Tests
+- 9 files needed header fix (wrong Project Name)
+- 1 file had duplicate header (ResultTests.cs)
+- 9 files needed AAA comments applied
+- 4 files needed indentation fix (entire class body at col 0)
+- 2 files were already correct on all counts (Data/BlogPostMappingsTests.cs, Security/RoleClaimsHelperTests.cs)
+
+## Session: Issue #199 — Web.Tests.Integration xUnit v3 Migration (Sprint 11)
+
+### Task
+Migrate `tests/Web.Tests.Integration` from xUnit v2 to xUnit v3 (3.2.2), matching the established pattern in `Web.Tests` and `Web.Tests.Bunit`.
+
+### Work Done
+- **Csproj**: Swapped `xunit` → `xunit.v3`; changed runner JSON item from `<None Update>` to `<Content Include CopyToOutputDirectory="PreserveNewest"/>`.
+- **IntegrationTest1.cs**: Deleted — stale Aspire starter template with all methods commented out.
+- **File headers**: Fixed `Project Name: Integration.Tests` → `Web.Tests.Integration` in all 6 source files.
+- **IAsyncLifetime**: Updated `MongoDbFixture` and `RedisFixture` from `async Task` to `async ValueTask` for both `InitializeAsync` and `DisposeAsync` (xUnit v3 requirement).
+- **xUnit1051**: Threaded `TestContext.Current.CancellationToken` through all async repository and cache service calls in both test classes. All methods already had `CancellationToken ct = default` params — no production code changes needed.
+- **Verification**: All 12 integration tests pass (MongoDB + Redis via Testcontainers).
+- **PR**: [#200](https://github.com/mpaulosky/MyBlog/pull/200)
+
+### Key Learnings — xUnit v3 Integration Test Migration
+
+1. **`IAsyncLifetime` uses `ValueTask` in xUnit v3** — Both `InitializeAsync()` and `DisposeAsync()` must return `ValueTask`, not `Task`. The compiler handles the state machine naturally; existing `await Task`-returning calls inside work without any other changes.
+
+2. **`xUnit1051` fires on all async calls with CT overloads** — The rule is error-level by default in xUnit v3. The correct fix is to thread `TestContext.Current.CancellationToken` through the calls. Only use `<NoWarn>xUnit1051</NoWarn>` as a last resort when production methods genuinely lack CT parameters.
+
+3. **`TestContext.Current.CancellationToken` in lambdas** — Safe to capture inside `async () =>` lambdas used with `FluentAssertions.Should().ThrowAsync()` / `NotThrowAsync()`. The lambda closes over `ct` from the outer scope which is valid for the test lifetime.
+
+4. **Runner JSON settings for integration tests** — Keep `parallelizeAssembly: false` for integration tests that share Docker containers. This prevents container port conflicts that would cause flaky tests.
+
+5. **Pre-push gate runs integration tests** — The repo's pre-push hook runs `tests/Web.Tests.Integration` automatically. All 12 tests passed including the Testcontainers-based MongoDB and Redis tests.
+6. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.

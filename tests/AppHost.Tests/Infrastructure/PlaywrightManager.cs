@@ -24,7 +24,7 @@ public class PlaywrightManager : IAsyncLifetime
 
 	internal IBrowser Browser { get; set; } = null!;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		Assertions.SetDefaultExpectTimeout(10_000);
 
@@ -38,10 +38,11 @@ public class PlaywrightManager : IAsyncLifetime
 		Browser = await _playwright.Chromium.LaunchAsync(options).ConfigureAwait(false);
 	}
 
-	public async Task DisposeAsync()
+	public async ValueTask DisposeAsync()
 	{
 		await Browser.CloseAsync();
 
 		_playwright?.Dispose();
+		GC.SuppressFinalize(this);
 	}
 }

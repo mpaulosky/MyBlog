@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using Microsoft.Extensions.Configuration;

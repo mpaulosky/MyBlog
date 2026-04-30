@@ -6,15 +6,6 @@
 //Solution Name : MyBlog
 //Project Name :  Web.Tests.Bunit
 //=======================================================
-
-// ============================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     TestAuthorizationService.cs
-// Company :       mpaulosky
-// Author :        mpaulosky
-// Solution Name : MyBlog
-// Project Name :  Unit.Tests
-// =============================================
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace Web.Testing;

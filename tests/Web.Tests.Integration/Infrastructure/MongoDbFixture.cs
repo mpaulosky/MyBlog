@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Integration.Tests
+//Project Name :  Web.Tests.Integration
 //=======================================================
 
 using Testcontainers.MongoDb;
@@ -20,13 +20,13 @@ public sealed class MongoDbFixture : IAsyncLifetime
 
 	public string ConnectionString { get; private set; } = string.Empty;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		await _container.StartAsync();
 		ConnectionString = _container.GetConnectionString();
 	}
 
-	public async Task DisposeAsync()
+	public async ValueTask DisposeAsync()
 	{
 		await _container.DisposeAsync();
 	}

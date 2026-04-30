@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests.Bunit
 //=======================================================
 
 using Microsoft.AspNetCore.Components;
@@ -28,7 +28,7 @@ public sealed class ThemeSelectorTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeSelector_Renders_WithoutError()
+	public void ThemeSelectorRendersWithoutError()
 	{
 		// Arrange (none — use defaults from loose JS mock)
 		// Act
@@ -41,7 +41,7 @@ public sealed class ThemeSelectorTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeSelector_ContainsBrightnessToggle_AndColorDropdown()
+	public void ThemeSelectorContainsBrightnessToggleAndColorDropdown()
 	{
 		// Arrange (none)
 		// Act
@@ -49,7 +49,7 @@ public sealed class ThemeSelectorTests : BunitContext
 				.AddCascadingValue("CurrentColor", "blue")
 				.AddCascadingValue("CurrentBrightness", "light"));
 
-		// Assert — both sub-components are rendered
+		// Assert — both subcomponents are rendered
 		cut.FindComponent<ThemeBrightnessToggleComponent>().Should().NotBeNull();
 		cut.FindComponent<ThemeColorDropdownComponent>().Should().NotBeNull();
 	}
@@ -65,7 +65,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_Renders_WithoutError()
+	public void BrightnessToggleRendersWithoutError()
 	{
 		// Arrange (none)
 		// Act
@@ -77,7 +77,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_ShowsSunIcon_WhenBrightnessIsDark()
+	public void BrightnessToggleShowsSunIconWhenBrightnessIsDark()
 	{
 		// Arrange (none)
 		// Act
@@ -90,7 +90,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_ShowsMoonIcon_WhenBrightnessIsLight()
+	public void BrightnessToggleShowsMoonIconWhenBrightnessIsLight()
 	{
 		// Arrange (none)
 		// Act
@@ -102,7 +102,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_WhenClicked_InvokesSetBrightness_WithDark_WhenCurrentlyLight()
+	public void BrightnessToggleWhenClickedInvokesSetBrightnessWithDarkWhenCurrentlyLight()
 	{
 		// Arrange
 		var setColorCalled = false;
@@ -125,7 +125,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_WhenClicked_InvokesSetBrightness_WithLight_WhenCurrentlyDark()
+	public void BrightnessToggleWhenClickedInvokesSetBrightnessWithLightWhenCurrentlyDark()
 	{
 		// Arrange
 		var capturedBrightness = string.Empty;
@@ -145,7 +145,7 @@ public sealed class ThemeBrightnessToggleTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_HasAriaLabel_ForAccessibility()
+	public void BrightnessToggleHasAriaLabelForAccessibility()
 	{
 		// Arrange (none)
 		// Act
@@ -168,7 +168,7 @@ public sealed class ThemeColorDropdownTests : BunitContext
 	}
 
 	[Fact]
-	public void ColorDropdown_Renders_WithoutError()
+	public void ColorDropdownRendersWithoutError()
 	{
 		// Arrange (none)
 		// Act
@@ -180,7 +180,7 @@ public sealed class ThemeColorDropdownTests : BunitContext
 	}
 
 	[Fact]
-	public void ColorDropdown_RendersAllFourColorOptions()
+	public void ColorDropdownRendersAllFourColorOptions()
 	{
 		// Arrange (none)
 		// Act
@@ -199,7 +199,7 @@ public sealed class ThemeColorDropdownTests : BunitContext
 	}
 
 	[Fact]
-	public void ColorDropdown_ShowsCurrentColorAsSelected()
+	public void ColorDropdownShowsCurrentColorAsSelected()
 	{
 		// Arrange (none)
 		// Act
@@ -212,7 +212,7 @@ public sealed class ThemeColorDropdownTests : BunitContext
 	}
 
 	[Fact]
-	public void ColorDropdown_WhenChanged_InvokesOnColorChanged_WithNewColor()
+	public void ColorDropdownWhenChangedInvokesOnColorChangedWithNewColor()
 	{
 		// Arrange
 		var capturedColor = string.Empty;
@@ -236,7 +236,7 @@ public sealed class ThemeColorDropdownTests : BunitContext
 	[InlineData("blue")]
 	[InlineData("green")]
 	[InlineData("yellow")]
-	public void ColorDropdown_WhenChanged_PropagatesAllSupportedColors(string color)
+	public void ColorDropdownWhenChangedPropagatesAllSupportedColors(string color)
 	{
 		// Arrange
 		var capturedColor = string.Empty;
@@ -256,7 +256,7 @@ public sealed class ThemeColorDropdownTests : BunitContext
 	}
 
 	[Fact]
-	public void ColorDropdown_HasAriaLabel_ForAccessibility()
+	public void ColorDropdownHasAriaLabelForAccessibility()
 	{
 		// Arrange (none)
 		// Act
@@ -283,7 +283,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeSelector_InsideThemeProvider_ReceivesCurrentColor_ViaCascade()
+	public void ThemeSelectorInsideThemeProviderReceivesCurrentColorViaCascade()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("red");
@@ -301,7 +301,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeSelector_InsideThemeProvider_ReceivesCurrentBrightness_ViaCascade()
+	public void ThemeSelectorInsideThemeProviderReceivesCurrentBrightnessViaCascade()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("dark");
@@ -319,7 +319,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	}
 
 	[Fact]
-	public void ColorDropdown_Change_InsideThemeProvider_CallsSetColorJs()
+	public void ColorDropdownChangeInsideThemeProviderCallsSetColorJs()
 	{
 		// Arrange
 		JSInterop.SetupVoid("themeManager.setColor", "yellow");
@@ -339,7 +339,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	}
 
 	[Fact]
-	public void BrightnessToggle_Click_InsideThemeProvider_CallsSetBrightnessJs()
+	public void BrightnessToggleClickInsideThemeProviderCallsSetBrightnessJs()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");

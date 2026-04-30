@@ -13,59 +13,59 @@ namespace Web.Handlers;
 
 public class CreateBlogPostHandlerTests
 {
-private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
-private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
-private readonly CreateBlogPostHandler _handler;
+	private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
+	private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
+	private readonly CreateBlogPostHandler _handler;
 
-public CreateBlogPostHandlerTests()
-{
-_handler = new CreateBlogPostHandler(_repo, _cache);
-}
+	public CreateBlogPostHandlerTests()
+	{
+		_handler = new CreateBlogPostHandler(_repo, _cache);
+	}
 
-[Fact]
-public async Task Handle_Success_CreatesPostInvalidatesCacheAndReturnsGuid()
-{
-// Arrange
-var command = new CreateBlogPostCommand("Title", "Content", "Author");
+	[Fact]
+	public async Task Handle_Success_CreatesPostInvalidatesCacheAndReturnsGuid()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "Content", "Author");
 
-// Act
-var result = await _handler.Handle(command, CancellationToken.None);
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
 
-// Assert
-result.Success.Should().BeTrue();
-result.Value.Should().NotBeEmpty();
-await _repo.Received(1).AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>());
-await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
-}
+		// Assert
+		result.Success.Should().BeTrue();
+		result.Value.Should().NotBeEmpty();
+		await _repo.Received(1).AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>());
+		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
+	}
 
-[Fact]
-public async Task Handle_RepoThrows_ReturnsFailResult()
-{
-// Arrange
-var command = new CreateBlogPostCommand("Title", "Content", "Author");
-_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
-.ThrowsAsync(new InvalidOperationException("insert failed"));
+	[Fact]
+	public async Task Handle_RepoThrows_ReturnsFailResult()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
+		.ThrowsAsync(new InvalidOperationException("insert failed"));
 
-// Act
-var result = await _handler.Handle(command, CancellationToken.None);
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
 
-// Assert
-result.Failure.Should().BeTrue();
-result.Error.Should().Contain("insert failed");
-}
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Contain("insert failed");
+	}
 
-[Fact]
-public async Task Handle_Success_DoesNotCallInvalidateById()
-{
-// Arrange — create should only bust the "all" list, not a specific post key
-var command = new CreateBlogPostCommand("Title", "Content", "Author");
+	[Fact]
+	public async Task Handle_Success_DoesNotCallInvalidateById()
+	{
+		// Arrange — create should only bust the "all" list, not a specific post key
+		var command = new CreateBlogPostCommand("Title", "Content", "Author");
 
-// Act
-var result = await _handler.Handle(command, CancellationToken.None);
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
 
-// Assert
-result.Success.Should().BeTrue();
-await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
-await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
-}
+		// Assert
+		result.Success.Should().BeTrue();
+		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
+		await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+	}
 }

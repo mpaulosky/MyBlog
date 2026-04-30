@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Integration.Tests
+//Project Name :  Web.Tests.Integration
 //=======================================================
 
 using Web.Infrastructure;
@@ -25,7 +25,8 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 	public async Task GetOrFetchAllAsync_populates_Redis_on_cache_miss()
 	{
 		// Arrange — ensure clean Redis state (shared container; previous tests may have populated blog:all)
-		await fixture.CreateCacheService().InvalidateAllAsync();
+		var ct = TestContext.Current.CancellationToken;
+		await fixture.CreateCacheService().InvalidateAllAsync(ct);
 
 		var svc1 = fixture.CreateCacheService();
 		var dto = MakeDto("Redis Test Post");
@@ -35,7 +36,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		fetch1().Returns(Task.FromResult(dbResult));
 
 		// Act — L1 miss → Redis miss → delegate fired → writes to Redis
-		var result1 = await svc1.GetOrFetchAllAsync(fetch1);
+		var result1 = await svc1.GetOrFetchAllAsync(fetch1, ct);
 
 		// Assert
 		result1.Should().HaveCount(1);
@@ -49,7 +50,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		fetch2().Returns(Task.FromResult(dbResult));
 
 		// Act — L1 miss → Redis HIT → delegate NOT fired
-		var result2 = await svc2.GetOrFetchAllAsync(fetch2);
+		var result2 = await svc2.GetOrFetchAllAsync(fetch2, ct);
 
 		// Assert — Redis served the data without calling the DB delegate
 		result2.Should().HaveCount(1);
@@ -61,6 +62,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 	public async Task GetOrFetchByIdAsync_populates_Redis_on_cache_miss()
 	{
 		// Arrange — service #1 with cold L1
+		var ct = TestContext.Current.CancellationToken;
 		var svc1 = fixture.CreateCacheService();
 		var dto = MakeDto("By-Id Post");
 		var id = dto.Id;
@@ -69,7 +71,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		fetch1().Returns(Task.FromResult<BlogPostDto?>(dto));
 
 		// Act — L1 miss → Redis miss → delegate fired → writes to Redis
-		var result1 = await svc1.GetOrFetchByIdAsync(id, fetch1);
+		var result1 = await svc1.GetOrFetchByIdAsync(id, fetch1, ct);
 
 		// Assert
 		result1.Should().NotBeNull();
@@ -83,7 +85,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		fetch2().Returns(Task.FromResult<BlogPostDto?>(dto));
 
 		// Act — L1 miss → Redis HIT → delegate NOT fired
-		var result2 = await svc2.GetOrFetchByIdAsync(id, fetch2);
+		var result2 = await svc2.GetOrFetchByIdAsync(id, fetch2, ct);
 
 		// Assert
 		result2.Should().NotBeNull();
@@ -95,7 +97,8 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 	public async Task InvalidateAllAsync_removes_all_entries_from_Redis()
 	{
 		// Arrange — ensure clean state then populate Redis via service #1
-		await fixture.CreateCacheService().InvalidateAllAsync();
+		var ct = TestContext.Current.CancellationToken;
+		await fixture.CreateCacheService().InvalidateAllAsync(ct);
 
 		var svc1 = fixture.CreateCacheService();
 		var dto = MakeDto("Post To Invalidate");
@@ -104,11 +107,11 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		var populate = Substitute.For<Func<Task<IReadOnlyList<BlogPostDto>>>>();
 		populate().Returns(Task.FromResult(dbResult));
 
-		await svc1.GetOrFetchAllAsync(populate);
+		await svc1.GetOrFetchAllAsync(populate, ct);
 		populate.ReceivedCalls().Should().HaveCount(1); // confirm it went to DB
 
 		// Act — invalidate through svc1 (removes from L1 and Redis)
-		await svc1.InvalidateAllAsync();
+		await svc1.InvalidateAllAsync(ct);
 
 		// Arrange — service #2: fresh L1 + Redis now evicted
 		var svc2 = fixture.CreateCacheService();
@@ -117,7 +120,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		fetchAfterEviction().Returns(Task.FromResult(dbResult));
 
 		// Act — L1 miss → Redis miss (evicted) → delegate MUST fire
-		var resultAfter = await svc2.GetOrFetchAllAsync(fetchAfterEviction);
+		var resultAfter = await svc2.GetOrFetchAllAsync(fetchAfterEviction, ct);
 
 		// Assert — delegate was called because Redis was truly evicted
 		resultAfter.Should().HaveCount(1);

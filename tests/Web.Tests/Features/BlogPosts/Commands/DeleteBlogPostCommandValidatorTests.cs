@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using MyBlog.Web.Features.BlogPosts.Delete;
@@ -18,16 +18,26 @@ public class DeleteBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_ValidId_ReturnsNoErrors()
 	{
+		// Arrange
 		var command = new DeleteBlogPostCommand(Guid.NewGuid());
+
+		// Act
 		var result = _sut.Validate(command);
+
+		// Assert
 		result.IsValid.Should().BeTrue();
 	}
 
 	[Fact]
 	public void Validate_EmptyGuid_ReturnsError()
 	{
+		// Arrange
 		var command = new DeleteBlogPostCommand(Guid.Empty);
+
+		// Act
 		var result = _sut.Validate(command);
+
+		// Assert
 		result.IsValid.Should().BeFalse();
 		result.Errors.Should().ContainSingle(e => e.PropertyName == "Id");
 	}
@@ -35,8 +45,13 @@ public class DeleteBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_EmptyGuid_ReturnsRequiredMessage()
 	{
+		// Arrange
 		var command = new DeleteBlogPostCommand(Guid.Empty);
+
+		// Act
 		var result = _sut.Validate(command);
+
+		// Assert
 		result.Errors.Should().ContainSingle(e =>
 			e.PropertyName == "Id" && e.ErrorMessage == "Id is required.");
 	}

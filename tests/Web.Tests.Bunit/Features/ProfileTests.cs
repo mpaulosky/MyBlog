@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests.Bunit
 //=======================================================
 
 using MyBlog.Web.Features.UserManagement;
@@ -14,7 +14,7 @@ namespace Web.Features;
 public class ProfileTests : BunitContext
 {
 	[Fact]
-	public void Profile_RendersIdentityDetailsRolesPictureAndClaims()
+	public void ProfileRendersIdentityDetailsRolesPictureAndClaims()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -40,7 +40,7 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
-	public void Profile_UsesFallbackValues_WhenOptionalClaimsAreMissing()
+	public void ProfileUsesFallbackValuesWhenOptionalClaimsAreMissing()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -62,7 +62,7 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
-	public void Profile_AdminRoleBadge_HasRedColorClasses()
+	public void ProfileAdminRoleBadgeHasRedColorClasses()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -88,7 +88,7 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
-	public void Profile_NonAdminRoleBadge_HasGreenColorClasses()
+	public void ProfileNonAdminRoleBadgeHasGreenColorClasses()
 	{
 		// Arrange
 		var principal = CreatePrincipal(
@@ -114,7 +114,7 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
-	public void Profile_AdminHeaderBadge_HasRedBackgroundClass()
+	public void ProfileAdminHeaderBadgeHasRedBackgroundClass()
 	{
 		// Arrange
 		var principal = CreatePrincipal(

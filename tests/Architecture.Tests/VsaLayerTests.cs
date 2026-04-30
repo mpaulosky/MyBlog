@@ -18,21 +18,22 @@ public class VsaLayerTests
 	[Fact]
 	public void Features_Should_Not_Reference_Each_Other()
 	{
-		// BlogPosts slice should not reference UserManagement and vice versa
-		var blogPostsResult = Types.InAssembly(WebAssembly)
+		// Arrange / Act — BlogPosts slice should not reference UserManagement and vice versa
+		var result = Types.InAssembly(WebAssembly)
 				.That()
 				.ResideInNamespace("MyBlog.Web.Features.BlogPosts")
 				.ShouldNot()
 				.HaveDependencyOnAny("MyBlog.Web.Features.UserManagement")
 				.GetResult();
 
-		blogPostsResult.IsSuccessful.Should().BeTrue();
+		// Assert
+		result.IsSuccessful.Should().BeTrue();
 	}
 
 	[Fact]
 	public void Handlers_Should_HaveNameEndingWithHandler_And_BeSealed()
 	{
-		// All types named *Handler in Web assembly should be sealed classes
+		// Arrange / Act — All types named *Handler in Web assembly should be sealed classes
 		var result = Types.InAssembly(WebAssembly)
 				.That()
 				.HaveNameEndingWith("Handler")
@@ -40,18 +41,23 @@ public class VsaLayerTests
 				.BeSealed()
 				.GetResult();
 
+		// Assert
 		result.IsSuccessful.Should().BeTrue();
 	}
 
 	[Fact]
 	public void Data_Layer_Should_Not_Be_Referenced_Outside_Web()
 	{
-		// Domain assembly must NOT depend on MyBlog.Web.Data
-		var result = Types.InAssembly(typeof(BlogPost).Assembly)
+		// Arrange
+		var domainAssembly = typeof(BlogPost).Assembly;
+
+		// Act — Domain assembly must NOT depend on MyBlog.Web.Data
+		var result = Types.InAssembly(domainAssembly)
 				.ShouldNot()
 				.HaveDependencyOnAny("MyBlog.Web.Data")
 				.GetResult();
 
+		// Assert
 		result.IsSuccessful.Should().BeTrue();
 	}
 }

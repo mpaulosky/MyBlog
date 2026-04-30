@@ -4,7 +4,7 @@
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
-//Project Name :  Integration.Tests
+//Project Name :  Web.Tests.Integration
 //=======================================================
 
 namespace Web.Infrastructure;

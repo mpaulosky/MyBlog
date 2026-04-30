@@ -16,63 +16,63 @@ namespace Web.Handlers;
 
 public class DeleteBlogPostHandlerTests
 {
-private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
-private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
-private readonly DeleteBlogPostHandler _handler;
+	private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
+	private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
+	private readonly DeleteBlogPostHandler _handler;
 
-public DeleteBlogPostHandlerTests()
-{
-_handler = new DeleteBlogPostHandler(_repo, _cache);
-}
+	public DeleteBlogPostHandlerTests()
+	{
+		_handler = new DeleteBlogPostHandler(_repo, _cache);
+	}
 
-[Fact]
-public async Task Handle_Success_DeletesAndInvalidatesBothCaches()
-{
-// Arrange
-var id = Guid.NewGuid();
-var command = new DeleteBlogPostCommand(id);
+	[Fact]
+	public async Task Handle_Success_DeletesAndInvalidatesBothCaches()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		var command = new DeleteBlogPostCommand(id);
 
-// Act
-var result = await _handler.Handle(command, CancellationToken.None);
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
 
-// Assert
-result.Success.Should().BeTrue();
-await _repo.Received(1).DeleteAsync(id, Arg.Any<CancellationToken>());
-await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
-await _cache.Received(1).InvalidateByIdAsync(id, Arg.Any<CancellationToken>());
-}
+		// Assert
+		result.Success.Should().BeTrue();
+		await _repo.Received(1).DeleteAsync(id, Arg.Any<CancellationToken>());
+		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
+		await _cache.Received(1).InvalidateByIdAsync(id, Arg.Any<CancellationToken>());
+	}
 
-[Fact]
-public async Task Handle_RepoThrows_ReturnsFailResult()
-{
-// Arrange
-var id = Guid.NewGuid();
-var command = new DeleteBlogPostCommand(id);
-_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
-.ThrowsAsync(new InvalidOperationException("delete failed"));
+	[Fact]
+	public async Task Handle_RepoThrows_ReturnsFailResult()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		var command = new DeleteBlogPostCommand(id);
+		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
+		.ThrowsAsync(new InvalidOperationException("delete failed"));
 
-// Act
-var result = await _handler.Handle(command, CancellationToken.None);
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
 
-// Assert
-result.Failure.Should().BeTrue();
-result.Error.Should().Contain("delete failed");
-}
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Contain("delete failed");
+	}
 
-[Fact]
-public async Task Handle_ConcurrentDelete_ReturnsConcurrencyErrorCode()
-{
-// Arrange
-var id = Guid.NewGuid();
-var command = new DeleteBlogPostCommand(id);
-_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
-.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new Exception()));
+	[Fact]
+	public async Task Handle_ConcurrentDelete_ReturnsConcurrencyErrorCode()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		var command = new DeleteBlogPostCommand(id);
+		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
+		.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new Exception()));
 
-// Act
-var result = await _handler.Handle(command, CancellationToken.None);
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
 
-// Assert
-result.Failure.Should().BeTrue();
-result.ErrorCode.Should().Be(ResultErrorCode.Concurrency);
-}
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.ErrorCode.Should().Be(ResultErrorCode.Concurrency);
+	}
 }

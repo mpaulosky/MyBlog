@@ -18,6 +18,7 @@ public class ThemeLayerTests
 	[Fact]
 	public void ThemeComponents_ShouldResideIn_ThemeNamespace()
 	{
+		// Arrange / Act
 		var result = Types.InAssembly(WebAssembly)
 				.That()
 				.ResideInNamespace("MyBlog.Web.Components.Theme")
@@ -25,12 +26,14 @@ public class ThemeLayerTests
 				.ResideInNamespace("MyBlog.Web.Components.Theme")
 				.GetResult();
 
+		// Assert
 		result.IsSuccessful.Should().BeTrue();
 	}
 
 	[Fact]
 	public void ThemeComponents_ShouldHaveNoDependencyOn_DomainOrMongoDB()
 	{
+		// Arrange / Act
 		var result = Types.InAssembly(WebAssembly)
 				.That()
 				.ResideInNamespace("MyBlog.Web.Components.Theme")
@@ -38,6 +41,7 @@ public class ThemeLayerTests
 				.HaveDependencyOnAny("MyBlog.Domain", "MongoDB")
 				.GetResult();
 
+		// Assert
 		result.IsSuccessful.Should().BeTrue();
 	}
 }

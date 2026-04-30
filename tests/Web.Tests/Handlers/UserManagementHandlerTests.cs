@@ -1,10 +1,4 @@
-//=======================================================
-//Copyright (c) 2026. All rights reserved.
-//File Name :     UserManagementHandlerTests.cs
-//Company :       mpaulosky
-//Author :        Matthew Paulosky
-//Solution Name : MyBlog
-//Project Name :  Unit.Tests
+//Project Name :  Web.Tests
 //=======================================================
 
 using System.Net;
@@ -32,8 +26,12 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetUsersWithRoles_DomainMissing_ReturnsFailResult()
 	{
+		// Arrange (none)
+
+		// Act
 		var result = await _handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
 	}
@@ -41,9 +39,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_AssignRole_DomainMissing_ReturnsFailResult()
 	{
+		// Arrange (none)
+
+		// Act
 		var result = await _handler.Handle(
 			new AssignRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
 	}
@@ -51,9 +53,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_RemoveRole_DomainMissing_ReturnsFailResult()
 	{
+		// Arrange (none)
+
+		// Act
 		var result = await _handler.Handle(
 			new RemoveRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
 	}
@@ -61,8 +67,12 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetAvailableRoles_DomainMissing_ReturnsFailResult()
 	{
+		// Arrange (none)
+
+		// Act
 		var result = await _handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
 	}
@@ -72,10 +82,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetUsersWithRoles_ClientIdMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientIdMissing();
 
+		// Act
 		var result = await handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientId not configured");
 	}
@@ -83,11 +96,14 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_AssignRole_ClientIdMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientIdMissing();
 
+		// Act
 		var result = await handler.Handle(
 			new AssignRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientId not configured");
 	}
@@ -95,11 +111,14 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_RemoveRole_ClientIdMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientIdMissing();
 
+		// Act
 		var result = await handler.Handle(
 			new RemoveRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientId not configured");
 	}
@@ -107,10 +126,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetAvailableRoles_ClientIdMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientIdMissing();
 
+		// Act
 		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientId not configured");
 	}
@@ -120,10 +142,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetUsersWithRoles_ClientSecretMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
 
+		// Act
 		var result = await handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientSecret not configured");
 	}
@@ -131,11 +156,14 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_AssignRole_ClientSecretMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
 
+		// Act
 		var result = await handler.Handle(
 			new AssignRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientSecret not configured");
 	}
@@ -143,11 +171,14 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_RemoveRole_ClientSecretMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
 
+		// Act
 		var result = await handler.Handle(
 			new RemoveRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientSecret not configured");
 	}
@@ -155,10 +186,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetAvailableRoles_ClientSecretMissing_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
 
+		// Act
 		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiClientSecret not configured");
 	}
@@ -168,10 +202,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetUsersWithRoles_TokenEndpointFails_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
 
+		// Act
 		var result = await handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("500");
 	}
@@ -179,11 +216,14 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_AssignRole_TokenEndpointFails_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
 
+		// Act
 		var result = await handler.Handle(
 			new AssignRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("500");
 	}
@@ -191,11 +231,14 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_RemoveRole_TokenEndpointFails_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
 
+		// Act
 		var result = await handler.Handle(
 			new RemoveRoleCommand("user-1", "role-1"), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("500");
 	}
@@ -203,10 +246,13 @@ public class UserManagementHandlerTests
 	[Fact]
 	public async Task Handle_GetAvailableRoles_TokenEndpointFails_ReturnsFailResult()
 	{
+		// Arrange
 		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
 
+		// Act
 		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
 
+		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("500");
 	}
@@ -248,3 +294,4 @@ public class UserManagementHandlerTests
 			Task.FromResult(new HttpResponseMessage(statusCode));
 	}
 }
+
