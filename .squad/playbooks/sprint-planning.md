@@ -119,15 +119,12 @@ After creating each issue, **Aragorn immediately triages** it:
 
 Add each new issue to the **MyBlog** GitHub Project:
 
-```bash
-# Find the project number
-gh project list --owner mpaulosky
+Sprint-stamped delivery issues are added to Project 4 automatically. Ceremony
+or meta issues are intentionally excluded from the delivery board.
 
-# Add issue to project (use the URL returned by `gh issue create`)
-gh project item-add 4 --owner mpaulosky --url {issue-url}
-```
-
-New items land in **Backlog** automatically. Move each item to **In Sprint** when the sprint begins — this is a **manual action** performed at sprint kickoff:
+New sprint work items land in **Backlog** automatically. Move each item to
+**In Sprint** when the sprint begins — this is a **manual action** performed at
+sprint kickoff:
 
 ```bash
 # Update item status to "In Sprint"
@@ -139,8 +136,9 @@ gh project item-edit \
   --single-select-option-id {IN_SPRINT_OPTION_ID}
 ```
 
-> **Note:** "In Review" and "Done" transitions are **automated** by
-> `.github/workflows/project-board-automation.yml` — see Step 6.
+> **Note:** `.github/workflows/project-board-automation.yml` handles the issue
+> transitions after sprint kickoff. PR cards are not added to the main delivery
+> board.
 
 ---
 
@@ -204,9 +202,14 @@ gh pr create \
 The standard **PR merge process** (`pr-merge-process.md`) applies normally,
 but the base branch is `sprint/{N}-{slug}` instead of `dev`.
 
-**Project board transitions are automated** by `.github/workflows/project-board-automation.yml`:
-- PR opened → issue moves to **In Review** automatically
-- PR merged → issue moves to **Done** automatically
+**Project board transitions are automated** by
+`.github/workflows/project-board-automation.yml`:
+- non-draft PR opened / reopened / ready-for-review → issue moves to
+  **In Review** automatically
+- draft PR opened or converted back to draft → issue returns to
+  **In Sprint**
+- PR closed without merge → issue returns to **In Sprint**
+- PR merged into a sprint branch or `dev` → issue moves to **Done**
 
 The PR body must include `Closes #{issue-number}` (or `Fixes`/`Resolves`) for the
 automation to find and update the linked issue. No manual board moves are needed.
@@ -273,7 +276,8 @@ When **all** sprint milestones are closed:
 1. **Aragorn** reviews the project board — all issues in `Done` column
 2. **Aragorn** initiates the release playbook: `.squad/playbooks/release-myblog.md`
 3. **Release PR:** `dev` → `main` (standard release flow)
-4. After merge, move all project board items to `Released`
+4. After the `dev` → `main` release PR merges, board automation moves `Done`
+   items to `Released`
 
 ---
 
@@ -281,11 +285,11 @@ When **all** sprint milestones are closed:
 
 | Column | Meaning |
 |--------|---------|
-| `Backlog` | Created, not yet in an active sprint |
-| `In Sprint` | Assigned to the current active sprint |
-| `In Review` | PR open, CI running |
-| `Done` | Merged into sprint branch or dev |
-| `Released` | Merged into main |
+| `Backlog` | Sprint-stamped delivery issue created, not yet in an active sprint |
+| `In Sprint` | Assigned to the current active sprint or parked while a PR is still draft / closed without merge |
+| `In Review` | Non-draft PR is open and the issue is under review / CI |
+| `Done` | Merged into a sprint branch or `dev`, but not yet promoted to `main` |
+| `Released` | Included in a completed `dev` → `main` release |
 
 ---
 
