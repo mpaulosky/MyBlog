@@ -13,7 +13,7 @@
 
 		<!-- Auth0 Packages -->
 		<PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
-		<PackageVersion Include="Auth0.ManagementApi" Version="8.1.0" />
+		<PackageVersion Include="Auth0.ManagementApi" Version="8.2.0" />
 
 		<!-- Validation -->
 		<PackageVersion Include="FluentValidation" Version="12.1.1" />
@@ -30,7 +30,7 @@
 		<PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.7" />
 		<PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
 		<PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.5.0" />
-		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.0" />
+		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
 		<PackageVersion Include="Microsoft.Playwright" Version="1.59.0" />
 
 		<!-- OpenTelemetry -->
