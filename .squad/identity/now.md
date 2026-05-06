@@ -1,6 +1,6 @@
 ---
-updated_at: 2026-05-06T23:00:00Z
-focus_area: Board clear — ready for next sprint planning
+updated_at: 2026-05-06T13:30:00Z
+focus_area: Board clear — remote branches pruned, ready for Sprint 16 planning
 active_issues: []
 ---
 
@@ -8,7 +8,7 @@ active_issues: []
 
 ## What We're Focused On
 
-**Sprint 14 squad-maintenance wave complete.** Issues #222–228 and #232–233 (charter audit, markdown lint, identity cleanup, pre-commit gate) have all been merged. Board is now clear.
+**Sprint 15 maintenance wave complete.** PR #235 merged, issue #234 closed. Six stale remote branches from Sprint 6–8 (orphaned from closed-without-merge PRs) pruned from origin. Remote state is now clean: `origin/dev` and `origin/main` only.
 
 **Key milestones achieved:**
 
@@ -21,5 +21,6 @@ active_issues: []
 - All agent charters updated with Identity / Expertise / Responsibilities / Boundaries / Critical Rules
 - Markdown lint violations eliminated repo-wide; pre-commit hook enforces the standard
 - `identity/now.md` consolidated to YAML front-matter only; decisions.md renumbered
+- Remote branch hygiene restored: no orphaned sprint or squad branches remain on origin
 
-**Next:** Sprint 15 product backlog — define next feature sprint with Aragorn.
+**Next:** Sprint 16 product backlog — define next feature sprint with Aragorn.
