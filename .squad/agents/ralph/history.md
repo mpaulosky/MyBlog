@@ -41,12 +41,14 @@ Initial setup complete.
 ### 2026-04-19 — Board Scan: Issue #18 + Draft PR #19
 
 **Scan Results:**
+
 - **Issue #18** ("Branch clean-up"): Labeled with `squad` + `squad:aragorn` + `go:needs-research`. Assigned to both mpaulosky and Copilot. 2 comments, 1 reaction (👀). Created 2026-04-19T14:50:53Z.
 - **PR #19** ("chore: remove orphan root diff artifact"): DRAFT state. 1 file change (deletes `pr2-diff.txt`). Deletions: 1698 (likely artifact), Changes: 1. Mergeable state: "blocked" (checks not passing or other blocker). Requested reviewers: mpaulosky. 2 commits on `copilot/clean-orphan-changes` branch from dev.
 - No other squad issues or assigned items found.
 - No check runs reported; unclear if CI ran or if artifact blocker is blocking the gate.
 
 **Categorization:**
+
 1. **Assigned but unstarted:** Issue #18 is labeled `squad:aragorn` (assigned to Aragorn/Lead).
 2. **Draft PR with blockers:** PR #19 is draft status with mergeable_state="blocked" — firewall warning visible but no CI checks completed.
 3. **Clear downstream:** Once #18 is investigated, #19 is ready for review and merge (hygiene-only).
@@ -58,12 +60,14 @@ Initial setup complete.
 ### 2026-04-19 — Board Scan Complete & Cleared
 
 **Summary:**
+
 - Board scan identified Issue #18 + PR #19 as final open items
 - PR #19 was blocked due to CI firewall issue (compass.mongodb.com)
 - Routed triage to Aragorn (Lead) for scope clarification
 - Documented findings in orchestration logs and decision inbox
 
 **Final Outcome:**
+
 - ✅ Aragorn clarified scope and approved PR #19
 - ✅ Boromir diagnosed CI firewall block, reran workflow, merged PR
 - ✅ Issue #18 auto-closed by PR merge
@@ -74,6 +78,7 @@ Initial setup complete.
 ### 2026-04-19 — Board Scan #2: Clear Verification
 
 **Scan Results:**
+
 - ✅ GitHub Issues: 0 open issues found (was #18, now closed by PR #19 merge)
 - ✅ Pull Requests: 18 total PRs in repository, ALL CLOSED (no open or draft PRs)
 - ✅ Workflow Status: All recent CI runs (Squad Heartbeat, CI, Squad Issue Assign, Squad Triage) completed successfully
@@ -81,6 +86,7 @@ Initial setup complete.
 - ✅ Branch State: Active branches confirm Milestone 2 complete; Sprint 2 backlog phases ready
 
 **Categorization:**
+
 - No untriaged squad issues
 - No assigned but unstarted items
 - No CI failures
@@ -89,4 +95,3 @@ Initial setup complete.
 - Board completely clear
 
 **Board Status:** ✅ **CLEAR**
-

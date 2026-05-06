@@ -26,6 +26,7 @@ Planning is **mandatory for ALL plans** — see `.squad/ceremonies.md` (Sprint
 Planning ceremony) for the trigger and participants.
 
 **Agents involved:**
+
 - **Ralph** — decomposes `plan.md` into logical sprints
 - **Aragorn** — creates GH milestones, issues, and project assignments
 - **Boromir** — creates sprint branches and worktrees

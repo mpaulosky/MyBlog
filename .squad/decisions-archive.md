@@ -18,12 +18,14 @@ Consolidate common `@using` directives into the appropriate `_Imports.razor` fil
 #### Implementation Details
 
 **Features/_Imports.razor** — Added:
+
 - `@using Microsoft.AspNetCore.Authorization`
 - `@using MediatR`
 
 **Removed from 9 files:** 14 redundant @using directives
 
 **Criteria for centralization:**
+
 - Appears in 2+ files under same `_Imports.razor` scope
 - Represents common framework dependency
 - Not tied to specific feature implementation

@@ -36,7 +36,7 @@ Always follow that prompt. This skill provides supplementary context.
 ### Common Failures and Fixes
 
 | Symptom | Root Cause | Fix |
-|---------|-----------|-----|
+| --------- | ----------- | ----- |
 | `MSB4019` on Linux CI | `%USERPROFILE%` path in NuGet.config | Remove `<config>` block from NuGet.config |
 | Port conflict in integration tests | Missing `[Collection("Integration")]` | Add attribute to all integration test classes |
 | `IssueDto.Empty` equality failure | `Empty` calls `DateTime.UtcNow` each time | Assert individual fields, not whole record |

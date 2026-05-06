@@ -43,6 +43,7 @@ description: >
    - Assertions use `cut.Markup.Should()` to verify rendered HTML output
 
    **Real example from `NavMenuTests.cs`:**
+
    ```csharp
    public class NavMenuTests : BunitContext
    {
@@ -125,11 +126,13 @@ description: >
 **Scenario:** NavMenu theme toggle button is not updating the CSS class in production.
 
 **Steps:**
+
 1. ✅ bUnit test passes: `NavMenu_TogglesThemeClass_WhenButtonClicked()`
 2. ✅ Component renders correctly in bUnit
 3. ❌ Local browser test fails: CSS class not applied after button click
 
 **Next steps:**
+
 - Investigate: Is `theme.js` actually being loaded?
 - Are there console errors blocking the script?
 - Open a browser test to capture the issue, then fix the bug
@@ -138,6 +141,7 @@ description: >
 ### Real MyBlog Test Structure
 
 **bUnit Component Test** (`tests/Unit.Tests/Components/Layout/NavMenuTests.cs`):
+
 ```csharp
 public class NavMenuTests : BunitContext
 {
@@ -178,6 +182,7 @@ public class NavMenuTests : BunitContext
 ```
 
 **Pattern notes:**
+
 - Tests inherit from `BunitContext` and set up auth via `Services.AddSingleton<IAuthorizationService, TestAuthorizationService>()`
 - `RenderForUser()` and `CreatePrincipal()` are helper methods that the test class defines (or inherits)
 - Assertions use `cut.Markup.Should()` to verify rendered HTML output directly

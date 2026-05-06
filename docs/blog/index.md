@@ -16,18 +16,23 @@ Welcome to the MyBlog technical blog! Here we document the project's evolution�
 ## By Sprint
 
 ### Sprint 1: Foundation
+
 - [MyBlog Project Kickoff: Building with .NET 10 and Clean Architecture](./2026-04-18-myblog-project-kickoff.md)
 
 ### Sprint 2: CQRS & MediatR
+
 - [Sprint 2: CQRS and MediatR Deep Dive](./2026-04-20-sprint-2-cqrs-mediatr.md)
 
 ### Sprint 3: Testing & CI
+
 - [Sprint 3: E2E Testing and CI Hardening](./2026-04-20-sprint-3-e2e-tests-ci-hardening.md)
 
 ### Sprint 4: Theme System
+
 - [Release: v1.1.0 — Blazor Theme System with TailwindCSS v4](./2026-04-24-release-v1-1-0.md)
 
 ### Sprint 5: Caching
+
 - [Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy](./2026-04-24-release-v1-2-0.md)
 
 ## Release Timeline

@@ -35,12 +35,14 @@ Closes #<!-- issue number -->
 <!-- Complete before requesting review — incomplete PRs will be returned -->
 
 ### Code Quality
+
 - [ ] I ran `dotnet build MyBlog.slnx --configuration Release` — 0 errors, 0 warnings
 - [ ] I ran `dotnet test MyBlog.slnx --configuration Release --no-build` — all pass
 - [ ] No TODO/FIXME left unless tracked in a follow-up issue (link it)
 - [ ] No secrets, API keys, or credentials committed
 
 ### Architecture
+
 - [ ] New handlers follow the `Command`/`Query`/`Handler`/`Validator` naming conventions
 - [ ] New handlers are `sealed`
 - [ ] Domain layer has no references to `Web` or `Persistence.*` projects
@@ -49,16 +51,19 @@ Closes #<!-- issue number -->
 - [ ] No DTO types embedded in Model classes
 
 ### Tests
+
 - [ ] New code has corresponding unit tests
 - [ ] Integration tests use domain-specific collections (`[Collection("XxxIntegration")]`)
 - [ ] No test compares two `IssueDto.Empty` / `CommentDto.Empty` instances directly
 
 ### Security (check if security-relevant)
+
 - [ ] New endpoints have appropriate `RequireAuthorization` / policy applied
 - [ ] No `MarkupString` used with user-supplied content
 - [ ] No user input reflected in MongoDB queries without sanitization
 
 ### Merge Readiness
+
 - [ ] Branch is up to date with `main` (no merge conflicts)
 - [ ] CI checks are green (do not request review while checks are pending/failing)
 - [ ] PR description is complete — reviewers should not have to ask what this does

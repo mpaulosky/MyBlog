@@ -41,7 +41,7 @@ When in VS Code mode, the coordinator changes behavior in these ways:
 ### Feature Degradation Table
 
 | Feature | CLI | VS Code | Degradation |
-|---------|-----|---------|-------------|
+| --------- | ----- | --------- | ------------- |
 | Parallel fan-out | `mode: "background"` + `read_agent` | Multiple subagents in one turn | None — equivalent concurrency |
 | Model selection | Per-spawn `model` param (4-layer hierarchy) | Session model only (Phase 1) | Accept session model, log intent |
 | Scribe fire-and-forget | Background, never read | Sync, must wait | Batch with last parallel group |
@@ -56,6 +56,7 @@ The `sql` tool is **CLI-only**. It does not exist on VS Code, JetBrains, or GitH
 ## Examples
 
 **Example 1: CLI parallel spawn**
+
 ```typescript
 // Coordinator detects task tool available → CLI mode
 task({ agent_type: "general-purpose", mode: "background", model: "claude-sonnet-4.6", ... })
@@ -64,6 +65,7 @@ task({ agent_type: "general-purpose", mode: "background", model: "claude-haiku-4
 ```
 
 **Example 2: VS Code parallel spawn**
+
 ```typescript
 // Coordinator detects runSubagent available → VS Code mode
 runSubagent({ prompt: "...Fenster charter + task..." })
@@ -73,6 +75,7 @@ runSubagent({ prompt: "...Scribe charter + task..." }) // Last in group
 ```
 
 **Example 3: Fallback mode**
+
 ```typescript
 // Neither task nor runSubagent available → work inline
 // Coordinator executes the task directly without spawning

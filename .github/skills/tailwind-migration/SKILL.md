@@ -136,7 +136,7 @@ Replace with layout from [./references/MainLayout.razor](./references/MainLayout
 
 Structure:
 
-```
+```html
 <div class="min-h-screen bg-base text-base-content {theme-class}">
   <TopNav />          ← new top navigation
   <main class="mx-auto max-w-7xl px-4 py-8">

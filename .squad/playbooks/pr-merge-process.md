@@ -55,7 +55,7 @@ Ralph MUST verify ALL of the following before spawning reviewers. Any failing ga
 
 | Gate                      | Command                                                          | Expected                        |
 | ------------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| GitHub issue exists       | `gh pr view <N> --json body -q .body \| grep -E "Closes #[0-9]+"` | Contains `Closes #N`            |
+| GitHub issue exists       | `gh pr view <N> --json body -q .body \ | grep -E "Closes #[0-9]+"` | Contains `Closes #N`            |
 | CI fully green            | `gh pr checks <N> --watch --interval 5`                          | All checks passing (including coverage gate) |
 | Coverage gate passing     | Check CI run logs for `The total line coverage is below`         | No coverage error in logs        |
 | No conflicts              | `gh pr view <N> --json mergeable -q .mergeable`                  | `MERGEABLE`                     |

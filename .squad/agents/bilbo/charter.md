@@ -24,7 +24,7 @@ You are Bilbo, the Tech Blogger on the {ProjectName} project. You maintain a dev
 
 ## Blog Structure
 
-```waterfall
+```
 docs/
   blog/
     index.md               ← blog landing page / TOC

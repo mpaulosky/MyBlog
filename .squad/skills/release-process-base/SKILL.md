@@ -15,12 +15,14 @@ tools:
 Release workflows vary by ecosystem, branching model, and deployment targets. This skill abstracts the **universal patterns** (versioning, merge strategies, CI/CD triggers) and separates them from **project-specific bindings** (branch names, package IDs, registries).
 
 **When to use:**
+
 - Preparing a release in any Git + CI/CD environment
 - Designing a release process for a new project
 - Troubleshooting version, merge, or CI/CD issues during release
 - Migrating a release workflow between projects
 
 **When NOT to use:**
+
 - Deploying code between environments (use DevOps/deployment skills)
 - Managing secrets or authentication (use security skills)
 - Troubleshooting CI/CD platform issues (use CI/CD skills)
@@ -30,6 +32,7 @@ Release workflows vary by ecosystem, branching model, and deployment targets. Th
 ### Prerequisites (Project-Agnostic)
 
 Before any release, verify:
+
 - ✅ All feature PRs for this release are merged into the **development branch**
 - ✅ CI pipeline passes on **development branch** (unit tests, integration tests, linting)
 - ✅ No unmerged feature branches lingering in the development branch
@@ -125,11 +128,13 @@ gh release create {TAG_PREFIX}{VERSION} \
 ```
 
 **Tag Format:**
+
 - Use semantic versioning: `v1.2.3`, `v0.19.0-beta.1`
 - Prefix with `{TAG_PREFIX}` (usually `v`)
 - Annotated tags preserve tagger info; lightweight tags are faster but less informative
 
 **GitHub Release:**
+
 - Triggered by `gh release create` or the GitHub UI
 - Publishing a release typically **triggers CI/CD workflows** (via `published` event)
 - Release notes are searchable and visible to end users
@@ -141,7 +146,7 @@ gh release create {TAG_PREFIX}{VERSION} \
 Depending on your `.github/workflows/` configuration, the `published` release event may trigger:
 
 | Capability | Typical Workflow | Role |
-|------------|------------------|------|
+| ------------ | ------------------ | ------ |
 | Build Verification | `release.yml` or `build.yml` | Verify build succeeds on release tag |
 | Package Publishing | `publish-nuget.yml`, `publish-npm.yml` | Publish to NuGet, npm, PyPI, etc. |
 | Container Publishing | `publish-container.yml` | Build and push Docker/OCI image to registry |
@@ -153,6 +158,7 @@ Depending on your `.github/workflows/` configuration, the `published` release ev
 **Your playbook must specify:** Which workflows are configured for your project.
 
 **Verification:** Visit your release on GitHub and confirm:
+
 - ✅ Build job passed
 - ✅ All artifacts (packages, Docker images, docs) attached or deployed
 - ✅ No workflow failures in Actions tab
@@ -172,6 +178,7 @@ git reset --hard origin/{RELEASE_BRANCH}
 ```
 
 **Optional (depending on project):**
+
 - Merge release branch back into dev (if using long-lived release branches)
 - Create a follow-up issue for the next release
 - Notify stakeholders (Slack, email, GitHub Discussions)
@@ -196,6 +203,7 @@ git reset --hard origin/{RELEASE_BRANCH}
 ```
 
 **Why:**
+
 - Dev branch accumulates feature branches; keeps history rich
 - Release branch is pristine: only merge commits and tags
 - Tags always point to release commits, making history auditable
@@ -216,6 +224,7 @@ main (all history)
 ```
 
 **When to use:**
+
 - Small projects with infrequent releases
 - Teams that prefer minimal branching
 - Continuous delivery models (releases every PR)
@@ -227,11 +236,13 @@ main (all history)
 ### Pattern: Static File Versioning
 
 **Example: version.json**
+
 ```json
 {
   "version": "1.2.3"
 }
 ```
+
 - ✅ Simple, language-agnostic
 - ✅ Easy to bump via CI scripts
 - ❌ Must remember to commit before release
@@ -240,12 +251,14 @@ main (all history)
 ### Pattern: Tool-Computed Versioning (NBGV)
 
 **Example: Nerdbank.GitVersioning (NBGV, .NET)**
+
 ```json
 {
   "version": "1.2.0",
   "publicReleaseRefSpec": ["^refs/heads/main$", "^refs/tags/v.*"]
 }
 ```
+
 - ✅ Auto-increments on git height
 - ✅ Prevents manual version bumps
 - ✅ Integrates with build system
@@ -255,10 +268,12 @@ main (all history)
 ### Pattern: Tag-Only Versioning
 
 **Example: Inferred from git tag**
+
 ```bash
 # Version is v1.2.3 if tag is v1.2.3
 # Prevents double-versioning (no version.json, no tool)
 ```
+
 - ✅ Minimal dependencies
 - ✅ Single source of truth (the tag)
 - ❌ CI must parse tag to extract version
@@ -275,6 +290,7 @@ main (all history)
 **Root Cause:** Version file bumped after tag, or tag created before version bump
 
 **Fix:**
+
 ```bash
 # Audit: Check tag vs. version file
 git show v1.2.3:version.json | grep '"version"'
@@ -293,6 +309,7 @@ git push origin :v1.2.3  # Delete remote tag
 **Root Cause:** Release branch has diverged (e.g., hot-fix commits) or version file conflicts
 
 **Fix:**
+
 ```bash
 # Option A: Sync release branch from dev (if safe)
 git checkout {RELEASE_BRANCH}
@@ -310,11 +327,13 @@ git commit -m "Resolve release merge conflicts"
 **Symptom:** Tag created, release published, but no workflows ran
 
 **Root Causes:**
+
 1. Workflows not configured to trigger on `published` event
 2. Tag does not match `on.push.tags` filter in workflow
 3. Branch protection blocks tag-based workflows
 
 **Fix:**
+
 ```bash
 # Check workflow configuration
 grep -A5 "on:" .github/workflows/release.yml | grep -A2 "release"
@@ -333,6 +352,7 @@ git push origin --tags  # Explicitly push all tags
 **Root Cause:** API key expired, secret misconfigured, or package name mismatch
 
 **Fix:**
+
 ```bash
 # List available secrets (names only; never values)
 gh secret list --json name
@@ -349,22 +369,27 @@ gh secret set {SECRET_NAME}  # Prompts for value
 ## Anti-Patterns (What NOT to Do)
 
 ❌ **Bump version on release branch**
+
 - Version changes should be on dev; release branch is immutable
 - Forces cherry-picks and merge conflicts
 
 ❌ **Manual package publishing after release**
+
 - Rely on CI/CD; manual steps introduce inconsistency
 - Document in workflows instead
 
 ❌ **Tag-and-release without CI verification**
+
 - Always wait for CI to pass before releasing to users
 - If CI fails, delete tag and fix
 
 ❌ **Squash merge on long-lived release branches**
+
 - Loses historical context; makes debugging harder
 - Use merge commits for release history
 
 ❌ **Mixing version systems (version.json + NBGV + tags)**
+
 - Pick one; multiple sources cause conflicts
 - Document choice in playbook
 
@@ -380,6 +405,7 @@ gh secret set {SECRET_NAME}  # Prompts for value
 ## Next Steps: Binding to Your Project
 
 1. **Create `.release-config.json` at repo root** (or document in playbook):
+
    ```json
    {
      "devBranch": "dev",

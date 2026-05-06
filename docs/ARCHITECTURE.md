@@ -24,7 +24,7 @@ This document describes the solution structure, layer dependencies, and key desi
 
 ## Solution Structure
 
-```
+```text
 MyBlog/
 ├── src/
 │   ├── AppHost/              # .NET Aspire orchestration entry point (wires MongoDB, Redis, Web)
@@ -79,7 +79,8 @@ MyBlog/
 - **Responsibility**: Feature slices (VSA), Blazor components/pages, Auth0 integration, caching, DTOs
 - **Dependencies**: Domain; resolves MongoDB + Redis via Aspire
 - **Structure**:
-  ```
+
+  ```text
   Web/
   ├── Features/
   │   └── BlogPosts/
@@ -107,20 +108,23 @@ MyBlog/
 #### Test Projects
 
 **Unit.Tests/**
+
 - BlogPost entity tests; MediatR handler unit tests using NSubstitute mocks of `IDbContextFactory`
 - Framework: xUnit · FluentAssertions · NSubstitute
 
 **Architecture.Tests/**
+
 - Enforces layer dependency rules (Domain has no Web reference)
 - Framework: NetArchTest.Rules
 
 **Integration.Tests/**
+
 - Aspire test host + MongoDB Testcontainer for realistic end-to-end handler tests
 - Validates MediatR pipelines, caching behavior, and Auth0 claim mapping
 
 ## Layer Diagram
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │         Web (Blazor UI + VSA Feature Slices)           │
 │   Pages → MediatR → Handlers → BlogDbContext (EF Core) │
@@ -161,6 +165,7 @@ public class BlogPost
 ```
 
 **Design Notes**:
+
 - Private setters enforce immutability outside factory/methods
 - `CreatedAt` is set once; `UpdatedAt` tracks mutations
 - `IsPublished` defaults to `false` (drafts by default)
@@ -191,22 +196,26 @@ The factory pattern is required for Blazor Server because `DbContext` is not thr
 ### Blazor Components & Pages
 
 **Index.razor (BlogPosts/)**
+
 - Lists all blog posts
 - Shows title, author, creation date, publication status
 - Links to Create, Edit, and Delete actions
 
 **Create.razor (BlogPosts/)**
+
 - Form to create a new blog post
 - Fields: Title, Content, Author
 - Defaults to draft status (IsPublished = false)
 
 **Edit.razor (BlogPosts/)**
+
 - Form to edit an existing post
 - Pre-populates form with current values
 - Publish/Unpublish toggle
 - Delete button (with confirmation)
 
 **ConfirmDeleteDialog.razor (Shared/)**
+
 - Reusable modal component for delete confirmation
 - Used by Edit and potentially other deletable entities
 - Prevents accidental data loss
@@ -214,14 +223,17 @@ The factory pattern is required for Blazor Server because `DbContext` is not thr
 ### Layout Components
 
 **MainLayout.razor**
+
 - Root container for all pages
 - Includes NavMenu and page content area
 
 **NavMenu.razor**
+
 - Navigation links (Home, Blog Posts, etc.)
 - Optional theme toggle for future enhancements
 
 **ReconnectModal.razor**
+
 - Aspire's built-in reconnection UI
 - Handles transient disconnections gracefully
 
@@ -262,6 +274,7 @@ await builder.Build().RunAsync();
 ### Local Dashboard
 
 Running `dotnet run` from AppHost launches the Aspire dashboard:
+
 - View running services and their health
 - Check logs and metrics
 - Monitor resource usage
@@ -273,6 +286,7 @@ Running `dotnet run` from AppHost launches the Aspire dashboard:
 **Scope**: Entity logic, repository behavior
 
 **Example Tests**:
+
 - `BlogPost.Create()` — Factory method creates correct entity
 - `BlogPost.Publish()` — Marks post as published
 - `InMemoryBlogPostRepository.AddAsync()` — Stores post and returns it on retrieval
@@ -284,6 +298,7 @@ Running `dotnet run` from AppHost launches the Aspire dashboard:
 **Scope**: Layer dependency rules
 
 **Tests**:
+
 1. Domain project must not reference Web
 2. Web project must not reference AppHost
 

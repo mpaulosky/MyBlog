@@ -22,7 +22,7 @@ This skill defines the filter pattern that actually fits MyBlog.
 ### Current list-query path
 
 | Layer | Canonical file | Owner | Current behavior |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Query contract | `src/Web/Features/BlogPosts/List/GetBlogPostsQuery.cs` | Sam | Query has no filter properties yet. |
 | Handler | `src/Web/Features/BlogPosts/List/GetBlogPostsHandler.cs` | Sam | Uses a fixed cache key `blog:all`; maps domain entities to DTOs. |
 | Repository contract | `src/Domain/Interfaces/IBlogPostRepository.cs` | Sam | `GetAllAsync(CancellationToken)` returns domain entities directly. |

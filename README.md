@@ -50,7 +50,7 @@ MyBlog is a Blazor Server blog application demonstrating modern .NET patterns: A
 
 ## Project Structure
 
-```
+```text
 MyBlog/
 ├── src/
 │   ├── AppHost/              # .NET Aspire orchestration (MongoDB + Redis resources)
@@ -167,7 +167,7 @@ dotnet test
 
 <!-- BLOG_START -->
 | Date | Title | Tags |
-|------|-------|------|
+| ------ | ------- | ------ |
 | 2026-04-24 | [Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy](docs/blog/2026-04-24-release-v1-2-0.md) | release, v1.2.0, redis, caching, aspire, sprint-5 |
 | 2026-04-24 | [Release: v1.1.0 — Blazor Theme System with TailwindCSS v4](docs/blog/2026-04-24-release-v1-1-0.md) | release, v1.1.0, blazor, tailwind, theme, testing, sprint-4 |
 | 2026-04-20 | [Release: v1.0.0 — Semantic Versioning and Production Readiness](docs/blog/2026-04-20-release-v1-0-0.md) | release, semver, ci, devops |
@@ -178,7 +178,7 @@ dotnet test
 ## Release History
 
 | Version | Date | Highlights |
-|---------|------|------------|
+| --------- | ------ | ------------ |
 | [v1.2.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0) | 2026-04-24 | **Redis & Caching** — IBlogPostCacheService L1+L2, handler cache integration |
 | [v1.1.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.1.0) | 2026-04-24 | **Themes & Testing** — TailwindCSS v4 themes, test project reorganization, E2E fixes |
 | [v1.0.1](https://github.com/mpaulosky/MyBlog/releases/tag/v1.0.1) | 2026-04-20 | Automatic semver versioning enabled |

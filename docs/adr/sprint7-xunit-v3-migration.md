@@ -23,6 +23,7 @@ The MyBlog test suite currently uses xUnit 2.9.3 across multiple projects (`Doma
 - **Reduced dependency drift**: MTP is the standard for modern test frameworks; staying on v2 creates long-term maintenance burden
 
 **Drivers for migration:**
+
 - Sprint 7–13 roadmap: Plan a controlled, phased migration to validate process before full rollout
 - Ecosystem alignment: .NET 10 ecosystem is moving toward MTP; xUnit v2 will eventually be deprecated
 - Quality investment: Improved test tooling (output capture, parallelization) supports higher test quality
@@ -62,15 +63,18 @@ Each project's `.csproj` declares which version it uses. This allows coexistence
 ## Rationale
 
 **Why a pilot?**
+
 - xUnit v3 is a major version with new APIs (e.g., `[Fact]` becomes `[Test]`, `TheoryData<T>` changes). Broad, fast migration risks introducing bugs.
 - A focused pilot on the simplest project (Domain.Tests) identifies tooling gaps, documentation needs, and performance impact before rolling out to larger suites.
 - Pilot experience informs migration strategy for other projects (some may benefit from v3 earlier; others may require custom adapters).
 
 **Why now?**
+
 - Sprint 7 roadmap (Gimli's xUnit work) already plans Domain.Tests migration; this ADR formalizes rationale and rollout strategy.
 - Waiting further increases technical debt; v2 will be unsupported within 2–3 years.
 
 **Why incremental adoption?**
+
 - Minimizes risk: if pilot uncovers critical issues, only one small project is affected.
 - Allows team learning: developers get hands-on experience with v3 API before tackling larger projects.
 - Enables data-driven decisions: performance data from Domain.Tests informs prioritization for remaining projects.
@@ -109,15 +113,18 @@ Each project's `.csproj` declares which version it uses. This allows coexistence
 ### Baseline (xUnit v2.9.3)
 
 **Test execution (Domain.Tests):**
+
 - Observed duration: **104 ms** (42 tests total)
 - Per-test average: ~2.5 ms
 - Platform: net10.0, Debug configuration
 
 **Build time (Domain.Tests):**
+
 - Observed: ~2–3 seconds (full rebuild, Debug)
 - Incremental rebuild: <500 ms
 
 **CI impact (current):**
+
 - Total CI time for all test projects: ~45–60 seconds
 - Domain.Tests contribution: ~5–8%
 
@@ -126,26 +133,31 @@ Each project's `.csproj` declares which version it uses. This allows coexistence
 Based on xUnit v3 public benchmarks and ecosystem reports:
 
 **Test execution (v3 estimated):**
+
 - Expected: 88–99 ms (5–15% improvement)
 - MTP overhead offset by improved test discovery and parallelization
 - Per-test average: ~2.1–2.4 ms
 
 **Build time (v3):**
+
 - Expected: ~2–3 seconds (comparable to v2; no major change)
 - OutputType=Exe adds ~100–200 ms to standalone executables
 
 **CI impact (projected):**
+
 - Estimated total: ~42–55 seconds (5–10% improvement)
 - Cumulative savings across all projects (when fully migrated): ~3–6 seconds
 
 ### Measurement plan
 
 **Sprint 7 (pilot validation):**
+
 - Run Domain.Tests before and after v3 upgrade; capture `dotnet test --logger "console;verbosity=detailed"` output
 - Record build time via `time dotnet build Domain.Tests.csproj`
 - Run CI workflow and capture total duration from logs
 
 **Sprints 8–13:**
+
 - Track performance metrics for each subsequent project migration
 - Aggregate data to validate ecosystem benchmarks
 - Inform rollout priority: projects with slower test execution may benefit from earlier migration
@@ -166,12 +178,15 @@ Based on xUnit v3 public benchmarks and ecosystem reports:
 ## Alternatives considered
 
 ### 1. Migrate all projects at once
+
 **Rejected** — High risk; if v3 has unexpected issues (CI failure, IDE incompatibility, performance regression), entire test suite is blocked. Pilot validates risk first.
 
 ### 2. Stay on xUnit v2 indefinitely
+
 **Rejected** — Long-term maintenance burden; v2 will reach end-of-support within 2–3 years. Technical debt compounds; late migration is harder than early, controlled migration.
 
 ### 3. Upgrade only after third-party tools (IDE, CI, coverage) officially support v3
+
 **Rejected** — MTP is the new standard; tools are already adopting. Waiting creates artificial blocker; pilot validates that current tools work.
 
 ## References
@@ -245,7 +260,7 @@ public void Create_NullOrEmptyTitle_ThrowsArgumentException(string? title)
 ```
 
 **Key changes:**
+
 - `[Fact]` → `[Test]`
 - `[Theory]` and data annotations remain compatible (no change in this example)
 - Most assertion code is unchanged if using FluentAssertions
-

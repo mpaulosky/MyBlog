@@ -74,6 +74,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 ```
 
 **Why this works:**
+
 - The Testing environment now has the same health endpoint infrastructure as Development
 - AspireManager can successfully poll `/alive` to verify app readiness
 - The "live" health check (just "self" liveness) completes quickly without waiting for external services
@@ -93,6 +94,7 @@ else if (string.IsNullOrWhiteSpace(auth0Domain) || string.IsNullOrWhiteSpace(aut
 ```
 
 **Changes:**
+
 - `string.IsNullOrEmpty()` → `string.IsNullOrWhiteSpace()` (also catches empty strings)
 - `??=` (null coalescing) → Direct assignment (ensures override of empty strings)
 
@@ -101,6 +103,7 @@ else if (string.IsNullOrWhiteSpace(auth0Domain) || string.IsNullOrWhiteSpace(aut
 **File:** `tests/AppHost.Tests/Infrastructure/AspireManager.cs`
 
 Added detailed logging at key stages:
+
 - Aspire app creation and configuration
 - Web endpoint discovery
 - Polling attempts with elapsed time and attempt count
@@ -135,6 +138,7 @@ Web app is healthy and ready for tests
 After applying the fixes:
 
 ✅ **Infrastructure tests now execute successfully:**
+
 - Aspire app starts without timeout
 - Web app becomes healthy and accessible
 - Playwright browser initializes correctly
@@ -152,6 +156,7 @@ Remaining test failures are application-specific (missing UI elements, page cont
 ## Security Considerations
 
 **Testing Environment Health Endpoints:**
+
 - Only enabled in Development and Testing environments
 - Not exposed in Production
 - `/health` and `/alive` provide minimal information (no sensitive data)

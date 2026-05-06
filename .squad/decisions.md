@@ -179,6 +179,8 @@ Infer role claim types from the authenticated user's claims when a claim type en
 
 ---
 
+### 6. Squad Skills & Playbooks Adoption Review
+
 ### 5. Squad Skills & Playbooks Adoption Review
 
 **Lead:** Aragorn (Lead / Architect)  
@@ -218,6 +220,12 @@ The imported skill library is **high-quality and broadly relevant**. Of 19 skill
 | Validate build-repair prompt | `build-repair`                                | Aragorn        | 30min  | Ensure zero-warning enforcement      |
 | Document in CONTRIBUTING.md  | `pre-push-process.md` + `pr-merge-process.md` | Frodo + Pippin | 1hr    | Team alignment on gates              |
 | Create MongoDB runbook       | `mongodb-dba-patterns`                        | Sam + Gimli    | 2hr    | Formalize DBA ops; backup recovery   |
+| Task | Skill/Playbook | Owner | Effort | Benefit |
+| ------ | --- | --- | --- | --- |
+| Audit pre-push hook | `pre-push-test-gate` | Aragorn | 30min | Confirm 4 gates active; zero escapes |
+| Validate build-repair prompt | `build-repair` | Aragorn | 30min | Ensure zero-warning enforcement |
+| Document in CONTRIBUTING.md | `pre-push-process.md` + `pr-merge-process.md` | Frodo + Pippin | 1hr | Team alignment on gates |
+| Create MongoDB runbook | `mongodb-dba-patterns` | Sam + Gimli | 2hr | Formalize DBA ops; backup recovery |
 
 ---
 
@@ -283,6 +291,13 @@ MyBlog has **strong process documentation** through playbooks and skills. Howeve
 | Non-squad branch pushes        | Violates reviewer routing                | Tighten Gate 0 regex      | Enforces conventions     |
 | Review process inconsistency   | Ralph's 4 gates manual; errors slip      | GitHub Actions automation | 100% consistency         |
 | Merged-branch orphaned commits | Agents commit to merged branches         | Pre-commit hook guard     | Detects early            |
+| Gap | Problem | Solution | Impact |
+| --- | --- | --- | --- |
+| Broken code reaching CI | Tests pushed before validation | Pre-push hook (Gate 2–4) | Catch 90% locally |
+| Wrong files in PRs | Untracked `.cs`/`.razor` invisible to CI | Pre-push Gate 1 warning | Forces developer staging |
+| Non-squad branch pushes | Violates reviewer routing | Tighten Gate 0 regex | Enforces conventions |
+| Review process inconsistency | Ralph's 4 gates manual; errors slip | GitHub Actions automation | 100% consistency |
+| Merged-branch orphaned commits | Agents commit to merged branches | Pre-commit hook guard | Detects early |
 
 ---
 
@@ -573,6 +588,12 @@ Keeping `building-protection` in the routing table as a do-not-inject asset is i
 | Build/test gate failures                  | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md`  | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push gates run. Aragorn owns this route.        |
 | PR review, approval, merge                | `.squad/playbooks/pr-merge-process.md`                                               | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, merge, and cleanup.                       |
 | Resumed work on existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md`                                             | Any agent about to `git commit` on a branch with prior PR activity or uncertain session state. Check for already-merged PR before committing. |
+| Domain | Asset | When to Inject |
+| -------- | ------- | ---------------- |
+| Push-capable squad work | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. Default for normal `squad/{issue}-{slug}` delivery. |
+| Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push gates run. Aragorn owns this route. |
+| PR review, approval, merge | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, merge, and cleanup. |
+| Resumed work on existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md` | Any agent about to `git commit` on a branch with prior PR activity or uncertain session state. Check for already-merged PR before committing. |
 
 **Updated `.squad/routing.md` — Workflow Guardrails section:**
 
@@ -718,6 +739,11 @@ The Auth0 Management API and Security skills have been mined from imported reusa
 | `auth0-management-api`      | Frodo (Tech Writer) | All squad; particularly Legolas (Frontend) | Role operations, API integration review                   |
 | `auth0-management-security` | Frodo (Tech Writer) | All squad                                  | Security audit, secrets review, auth configuration change |
 | `docs/AUTH0_SETUP.md`       | Frodo (Tech Writer) | Onboarding, new developers                 | Initial repo setup                                        |
+| Asset | Owner | Primary Audience | Trigger |
+| --- | --- | --- | --- |
+| `auth0-management-api` | Frodo (Tech Writer) | All squad; particularly Legolas (Frontend) | Role operations, API integration review |
+| `auth0-management-security` | Frodo (Tech Writer) | All squad | Security audit, secrets review, auth configuration change |
+| `docs/AUTH0_SETUP.md` | Frodo (Tech Writer) | Onboarding, new developers | Initial repo setup |
 
 #### Next Steps
 
@@ -852,6 +878,11 @@ Three secondary imported skills assessed against MyBlog's repository structure, 
 | **post-build-validation**    | ❌ Poor     | **DELETE**           | Pattern designed for external game-world state validation (RCON block verification after structure placement). MyBlog has no remote operations, RCON commands, or external API validation. No scenario for graceful degradation on validation failure. Test failures **should** block build. |
 | **static-config-pattern**    | 🟡 Marginal | **DELETE**           | Backwards-compatible const→static property refactor. MyBlog already uses ASP.NET Core `IConfiguration` + Options pattern. Const fields (`health path`, `cache key`) are infrastructure internals, not legacy config debt. No current business case.                                          |
 | **microsoft-code-reference** | ✅ Good     | **RETAIN & CLARIFY** | Reference skill (tools + query patterns), not code pattern. Applicable during CI/CD troubleshooting, NuGet verification, Azure SDK method lookup, GitHub Actions pattern discovery. Needs rewrite to clarify scope for DevOps/NuGet/GitHub Actions scenarios.                                |
+| Skill | Fit | Decision | Reason |
+| ------- | ----- | ---------- | -------- |
+| **post-build-validation** | ❌ Poor | **DELETE** | Pattern designed for external game-world state validation (RCON block verification after structure placement). MyBlog has no remote operations, RCON commands, or external API validation. No scenario for graceful degradation on validation failure. Test failures **should** block build. |
+| **static-config-pattern** | 🟡 Marginal | **DELETE** | Backwards-compatible const→static property refactor. MyBlog already uses ASP.NET Core `IConfiguration` + Options pattern. Const fields (`health path`, `cache key`) are infrastructure internals, not legacy config debt. No current business case. |
+| **microsoft-code-reference** | ✅ Good | **RETAIN & CLARIFY** | Reference skill (tools + query patterns), not code pattern. Applicable during CI/CD troubleshooting, NuGet verification, Azure SDK method lookup, GitHub Actions pattern discovery. Needs rewrite to clarify scope for DevOps/NuGet/GitHub Actions scenarios. |
 
 #### MyBlog Context
 
@@ -871,6 +902,10 @@ Three secondary imported skills assessed against MyBlog's repository structure, 
 | ------------------------ | ----------------------------------------------- | ------- | ------ | ------------------ |
 | post-build-validation    | Delete from `.squad/skills/`                    | Boromir | 5 min  | Sprint 3           |
 | static-config-pattern    | Delete from `.squad/skills/`                    | Boromir | 5 min  | Sprint 3           |
+| Item | Action | Owner | Effort | Sprint |
+| ------ | -------- | ------- | -------- | -------- |
+| post-build-validation | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
+| static-config-pattern | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
 | microsoft-code-reference | Rewrite for DevOps/NuGet/GitHub Actions, retain | Boromir | 30 min | Sprint 2 (backlog) |
 
 #### Implementation Notes
@@ -1205,6 +1240,13 @@ bypass_actors: [
 | **Permanence**        | ✅ Persistent configuration change; one-time setup                                               |
 | **Effort**            | ✅ Minimal — single API call or UI toggle                                                        |
 | **Alternative Risks** | ❌ Disabling thread resolution entirely weakens review rigor; audit mode defeats protection      |
+| Aspect | Justification |
+| -------- | --------------- |
+| **Effectiveness** | ✅ Allows repo owner to override merge block if needed; keeps rule enforced for all team members |
+| **Risk** | ✅ Low — only repo owner gains override; team workflows unchanged |
+| **Permanence** | ✅ Persistent configuration change; one-time setup |
+| **Effort** | ✅ Minimal — single API call or UI toggle |
+| **Alternative Risks** | ❌ Disabling thread resolution entirely weakens review rigor; audit mode defeats protection |
 
 #### Implementation Steps
 

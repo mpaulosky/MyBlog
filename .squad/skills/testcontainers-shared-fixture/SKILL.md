@@ -24,16 +24,20 @@ description: >
 
 1. **One shared Mongo fixture per xUnit domain collection**
    - Define collection definitions once:
+
      ```csharp
      [CollectionDefinition("BlogPostIntegration")]
      public sealed class BlogPostIntegrationCollection
          : ICollectionFixture<MongoDbFixture> { }
      ```
+
    - Apply the collection attribute to each test class:
+
      ```csharp
      [Collection("BlogPostIntegration")]
      public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture) { }
      ```
+
    - Collection names are domain-scoped: `BlogPostIntegration`, `AuthorIntegration`,
      `CommentIntegration` (for future).
    - Do NOT reuse generic collection names like `"MongoDb"` or `"Integration"`.
@@ -42,10 +46,12 @@ description: >
    - Every test must write to its own isolated database.
    - Generate unique names with: `$"T{Guid.NewGuid():N}"` (produces `T` prefix + 32-char GUID).
    - Pattern in `CreateRepo()` helper:
+
      ```csharp
      private MongoDbBlogPostRepository CreateRepo(string? dbName = null) =>
          new(fixture.CreateFactory(dbName ?? $"T{Guid.NewGuid():N}"));
      ```
+
    - xUnit creates a fresh test-class instance per test method, so constructor or
      method-level database creation ensures isolation.
 
@@ -63,12 +69,14 @@ description: >
 4. **xUnit configuration for collection-level parallelism**
    - File: `tests/Integration.Tests/xunit.runner.json`
    - Current configuration (✅ correct):
+
      ```json
      {
        "parallelizeAssembly": false,
        "parallelizeTestCollections": true
      }
      ```
+
    - Rationale: No tests run in parallel within a single collection (one fixture per
      collection). Different collections CAN run in parallel (different containers).
    - Future scale: If 3–5 domain collections exist, parallelization will become
@@ -77,6 +85,7 @@ description: >
 ### Real MyBlog Examples
 
 **Collection Definition** (`tests/Integration.Tests/Infrastructure/BlogPostIntegrationCollection.cs`):
+
 ```csharp
 [CollectionDefinition("BlogPostIntegration")]
 public sealed class BlogPostIntegrationCollection
@@ -84,6 +93,7 @@ public sealed class BlogPostIntegrationCollection
 ```
 
 **Test Class** (`tests/Integration.Tests/BlogPosts/MongoDbBlogPostRepositoryTests.cs`):
+
 ```csharp
 [Collection("BlogPostIntegration")]
 public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
@@ -110,6 +120,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 ```
 
 **Fixture Implementation** (`tests/Integration.Tests/Infrastructure/MongoDbFixture.cs`):
+
 ```csharp
 public sealed class MongoDbFixture : IAsyncLifetime
 {
@@ -146,14 +157,17 @@ public sealed class MongoDbFixture : IAsyncLifetime
 ### Next-step guidance for new domains
 
 1. Create a new collection definition file:
+
    ```csharp
    [CollectionDefinition("{Entity}Integration")]
    public sealed class {Entity}IntegrationCollection
        : ICollectionFixture<MongoDbFixture> { }
    ```
+
    Example: `AuthorIntegrationCollection` for Author domain tests.
 
 2. Create a new test class directory:
+
    ```
    tests/Integration.Tests/{Entity}/Mongo{Entity}RepositoryTests.cs
    ```
