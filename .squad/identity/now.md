@@ -1,11 +1,11 @@
 ---
-updated_at: 2026-04-19T03:35:00Z
+updated_at: 2026-05-05T00:00:00Z
 ---
 
 # Focus Area
 
-focus_area: Milestone 2 complete; Sprint 2 backlog: Auth0 security docs, testing patterns extraction, microsoft-code-reference rewrite
-active_issues: []
+focus_area: Squad maintenance pass completed — issue #222
+active_issues: [222]
 
 ## What We're Focused On
 

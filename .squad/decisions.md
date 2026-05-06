@@ -1376,3 +1376,33 @@ $ gh pr merge 19 --squash --delete-branch
 **Boromir Decision:** PR #19 investigation complete. Workflow rerun succeeded, all checks passed, PR merged to dev. Artifact cleanup integrated.
 
 **Status:** ✅ COMPLETE
+
+### 15. Squad Maintenance Review — Issue #222
+
+**Status:** ✅ Reviewed & Integrated  
+**Date:** 2026-05-05  
+**Reviewed by:** Aragorn (Lead Developer)  
+**Branch:** `squad/222-squad-maintenance`
+
+Complete squad infrastructure maintenance pass covering all 7 `.squad/` files: team roster, routing rules, agent charters, decision formatting, identity state, and skill catalog.
+
+**Fixes Applied:**
+
+1. **`identity/now.md` YAML timestamp** — Fixed malformed UTC timestamp from `2026-04-19T03:35:` (truncated) to `2026-04-19T03:35:00Z` (valid ISO 8601)
+2. **`decisions.md` duplicate heading** — Removed erroneous `### 6.` heading that duplicated the section title; section numbering corrected
+
+**Validated as Correct:**
+
+- `team.md` — table alignment improved; member roster and capability matrix accurate
+- `routing.md` — routing guardrails and skills injection rules intact after formatting cleanup
+- Agent charters (Aragorn, Bilbo) — structure and content validated; Bilbo charter expanded with blog-specific guidance
+- `decisions.md` — decision history, PR references, and metadata all preserved
+- `.squad/skills/` catalog — all 20+ skill definitions intact
+
+**Identified for Follow-Up:**
+
+1. `identity/now.md` field structure — YAML front-matter fields (`focus_area`, `active_issues`) duplicate Markdown body content; recommend consolidation to YAML-only for single source of truth
+2. `decisions.md` numbering — Pre-existing issue: decisions 2a and 2b both use `### 2.`; requires renumbering (2 → 3 → ... 14) in a dedicated pass
+3. Member charter audit — Several members lack fully populated charters; recommend comprehensive audit for Identity, Expertise, Responsibilities, Boundaries, Critical Rules, Model sections
+
+**PR Status:** Merged to `dev` with Closes #222
