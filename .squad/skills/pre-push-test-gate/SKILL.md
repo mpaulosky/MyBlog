@@ -23,6 +23,7 @@ Before any `git push`, an agent MUST run the **Build Repair Skill**:
 > **`.github/prompts/build-repair.prompt.md`**
 
 That prompt already defines the full gate:
+
 1. Restore dependencies (`dotnet restore`)
 2. Build the solution (`dotnet build --no-restore`) — zero errors, zero warnings
 3. Fix any build errors before continuing
@@ -62,6 +63,7 @@ chmod +x .git/hooks/pre-push
 ```
 
 **Gate summary (current hook):**
+
 - Gate 0: Block direct push to `main`
 - Gate 1: Warn on untracked `.razor`/`.cs` files
 - Gate 2: Release build (0 warnings, 0 errors)
@@ -69,6 +71,7 @@ chmod +x .git/hooks/pre-push
 - Gate 4: Integration + Playwright E2E — **AppHost.Tests included** (Docker required)
 
 **PowerShell (Windows):**
+
 ```powershell
 @'
 #!/usr/bin/env bash
@@ -89,7 +92,7 @@ fi
 ### Failure Taxonomy (known patterns)
 
 | Symptom | Root Cause | Fix |
-|---------|-----------|-----|
+| --------- | ----------- | ----- |
 | `DateTime` equality failure in `*.Empty` tests | `Empty` property calls `DateTime.UtcNow` each time — two calls produce different values | Assert individual fields, not whole-record equality |
 | Unexpected trailing `_` in slug tests | `GenerateSlug` appends `_` when string ends with punctuation AND has internal punctuation | Verify actual output against implementation before asserting |
 | Record equality fails on nested DTO | Nested DTO `Empty` also uses `UtcNow` — same root cause | Flatten assertions to field-level |

@@ -6,7 +6,6 @@ Persistent memory agent that maintains context across sessions.
 
 **Project:** MyBlog
 
-
 ## Responsibilities
 
 - Collaborate with team members on assigned work

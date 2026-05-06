@@ -16,7 +16,7 @@ Verify Microsoft APIs, NuGet packages, Aspire resource naming, and GitHub Action
 ## Common DevOps Use Cases
 
 | Scenario | Root Problem | Query | Expected Outcome |
-|----------|--------------|-------|------------------|
+| ---------- | -------------- | ------- | ------------------ |
 | AppHost resource won't start | Wrong method name or parameter | `"Aspire.Hosting MongoDB AddMongoDB"` | Confirm `AddMongoDB(name)` signature |
 | NuGet version conflict | Version mismatch or package targeting wrong framework | `"NuGet Aspire.Hosting.MongoDB version"` | Verify latest stable version and confirm package targets .NET 10 per global.json |
 | GitHub Actions checkout fails | Outdated action or incorrect parameters | `"GitHub Actions checkout v4 fetch-depth"` | Confirm v4 supports `fetch-depth: 0` |
@@ -26,7 +26,7 @@ Verify Microsoft APIs, NuGet packages, Aspire resource naming, and GitHub Action
 ## Tools
 
 | Need | Tool | Example |
-|------|------|---------|
+| ------ | ------ | --------- |
 | Aspire SDK method/resource lookup | `microsoft_docs_search` | `"Aspire.Hosting AddMongoDB resource name"` |
 | NuGet package version & compatibility | `microsoft_code_sample_search` | `query: "Aspire.Hosting.MongoDB net10", language: "csharp"` |
 | Full API reference (overloads, parameters) | `microsoft_docs_fetch` | Fetch URL from `microsoft_docs_search` |
@@ -47,6 +47,7 @@ microsoft_docs_search("Aspire 13 breaking changes from 12")
 ```
 
 **Key packages MyBlog uses:**
+
 - `Aspire.AppHost.Sdk` (13.2.2) — AppHost runtime
 - `Aspire.Hosting.MongoDB` (13.2.2) — MongoDB orchestration
 - `Aspire.Hosting.Redis` (13.2.2) — Redis orchestration
@@ -70,6 +71,7 @@ AppHost wiring uses resource names (e.g., `builder.AddMongoDB("mongodb")`) that 
 ```
 
 **MyBlog Aspire pattern:**
+
 ```csharp
 var mongo = builder.AddMongoDB("mongodb");        // Resource named "mongodb"
 var mongoDb = mongo.AddDatabase("myblog");         // Database named "myblog"
@@ -83,6 +85,7 @@ builder.AddProject<Projects.Web>("web")
 ```
 
 When updating AppHost, verify:
+
 - Resource names are consistent across `AddMongoDB()` and client service wiring
 - `AddDatabase()` returns correct database reference type
 - `WithReference()` accepts the resource type
@@ -104,6 +107,7 @@ MyBlog CI runs on GitHub Actions with dotnet restore, build, and test stages. Wh
 ```
 
 **MyBlog CI workflow uses:**
+
 - `actions/setup-dotnet@v4` with `global-json-file: global.json`
 - `actions/cache@v4` with key: `${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}`
 - `gittools/actions/gitversion` for semantic versioning
@@ -131,7 +135,7 @@ Use `global.json` (currently `sdk.version: 10.0.100`) as source of truth for .NE
 ## Error Troubleshooting
 
 | Error | Query |
-|-------|-------|
+| ------- | ------- |
 | `Resource not found in distributed application` | `"Aspire.Hosting resource naming lifecycle"` |
 | `Cannot convert resource to reference type` | `"Aspire WithReference type compatibility"` |
 | NuGet restore fails with version conflict | `"NuGet [PackageName] conflicts v[X] vs v[Y]"` |

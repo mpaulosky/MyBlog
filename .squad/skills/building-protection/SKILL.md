@@ -45,6 +45,7 @@ foreach (var (bMinX, bMinY, bMinZ, bMaxX, bMaxY, bMaxZ) in subBoxes)
 ### 3. Axis-aligned box subtraction
 
 `SubtractBox` yields up to 6 non-overlapping remainder sub-boxes when removing a protected region from a fill volume:
+
 - X left / X right (full Y and Z range of overlap)
 - Y below / Y above (clamped to X overlap range)
 - Z front / Z back (clamped to X+Y overlap range)

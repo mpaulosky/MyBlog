@@ -1,9 +1,11 @@
 ## Session: VSA Handler Test Coverage (2025)
 
 ### Task
+
 Write comprehensive handler unit tests for MyBlog after upgrade to Vertical Slice Architecture with MediatR, MongoDB, Redis/IMemoryCache, and Auth0.
 
 ### Work Done
+
 - **Task 1**: InMemoryBlogPostRepository was already deleted; no action needed.
 - **Task 2**: Updated `Unit.Tests.csproj` — added `<ProjectReference>` to `src/Web/Web.csproj`; removed explicit `Microsoft.Extensions.Caching.*` package refs that caused NU1605 downgrade conflicts (types come transitively).
 - **Task 3**: Preserved `BlogPostTests.cs` unchanged.
@@ -18,6 +20,7 @@ Write comprehensive handler unit tests for MyBlog after upgrade to Vertical Slic
 ### Key Learnings — NSubstitute + IMemoryCache
 
 1. **`IMemoryCache.Set<T>` is an extension method** — NSubstitute cannot intercept it. `Set<T>` internally calls `cache.CreateEntry(key)` which IS a real interface method. Mock and verify `CreateEntry` instead.
+
    ```csharp
    var cacheEntry = Substitute.For<ICacheEntry>();
    _localCache.CreateEntry(Arg.Any<object>()).Returns(cacheEntry);
@@ -25,11 +28,13 @@ Write comprehensive handler unit tests for MyBlog after upgrade to Vertical Slic
    ```
 
 2. **`IMemoryCache.TryGetValue` out-param mock** — Must use `Returns(callback)` pattern with `x[1] = value` to set the out parameter:
+
    ```csharp
    object? outVal = null;
    _localCache.TryGetValue(Arg.Any<object>(), out outVal)
        .Returns(x => { x[1] = (object)cachedValue; return true; });
    ```
+
    Using `Arg.Any<object>()` for key is more permissive and avoids match failures.
 
 3. **`IMemoryCache.Remove` IS a real interface method** — `Received()` verification works fine.
@@ -43,11 +48,13 @@ Write comprehensive handler unit tests for MyBlog after upgrade to Vertical Slic
 ## Session: PR #2 Test Review (2025-04)
 
 ### Task
+
 Review PR #2 test files for compliance with Gimli's Critical Rules and team conventions.
 
 ### Findings
 
 **Files reviewed:**
+
 - tests/Unit.Tests/Components/Layout/NavMenuTests.cs
 - tests/Unit.Tests/Components/RazorSmokeTests.cs
 - tests/Unit.Tests/Features/UserManagement/ProfileTests.cs
@@ -57,7 +64,9 @@ Review PR #2 test files for compliance with Gimli's Critical Rules and team conv
 - tests/Unit.Tests/Unit.Tests.csproj
 
 **Critical Rules Violations:**
+
 1. **MISSING FILE HEADERS** — ALL 6 test files lack the required block-format copyright header. Production code in `src/Domain/Abstractions/Result.cs` shows the expected format:
+
    ```csharp
    // =======================================================
    // Copyright (c) 2025. All rights reserved.
@@ -72,6 +81,7 @@ Review PR #2 test files for compliance with Gimli's Critical Rules and team conv
 2. **MISSING AAA COMMENTS** — None of the new test files use `// Arrange`, `// Act`, `// Assert` comments. Existing handler tests in `tests/Unit.Tests/Handlers/` consistently use AAA comments per charter requirement.
 
 **Passes:**
+
 - ✅ FluentAssertions `.Should()` used throughout
 - ✅ NSubstitute used for mocking in `TestAuthorizationService`
 - ✅ File-scoped namespaces used
@@ -81,6 +91,7 @@ Review PR #2 test files for compliance with Gimli's Critical Rules and team conv
 - ✅ No `{Entity}Dto.Empty` comparisons
 
 **Coverage Strengths:**
+
 - NavMenu: Excellent coverage of auth states (unauthenticated, admin, author, theme interaction)
 - Profile: Good coverage of claim presence/absence scenarios
 - RoleClaimsHelper: Comprehensive theory tests for role expansion formats
@@ -103,17 +114,21 @@ Review PR #2 test files for compliance with Gimli's Critical Rules and team conv
 ## Session: Remove Weather and Counter Tests (2026-04)
 
 ### Task
+
 Remove ALL test code related to Weather and Counter from the test projects. These are Blazor default template leftovers.
 
 ### Work Done
+
 **Coordination:** Worked on shared branch `squad/remove-weather-counter` created by Legolas.
 
 **Discovery:** Legolas had already completed ALL test cleanup in commit `4dc0b08`:
+
 - Removed 2 test methods from `tests/Unit.Tests/Components/RazorSmokeTests.cs`:
   - `Counter_Increments_WhenButtonClicked()` — tested the Counter component increment behavior
   - `Weather_LoadsForecasts()` — tested Weather component forecast loading
 
 **Verification:**
+
 - Searched entire `tests/` directory — NO remaining Weather or Counter references found
 - Architecture tests (`tests/Architecture.Tests/`) — clean
 - Integration tests (`tests/Integration.Tests/`) — clean
@@ -122,6 +137,7 @@ Remove ALL test code related to Weather and Counter from the test projects. Thes
 **Build & Test Results:**
 ✅ Build: SUCCESS (0 warnings, 0 errors)
 ✅ Tests: ALL PASSING
+
 - Architecture.Tests: 6 tests passed
 - Unit.Tests: 59 tests passed (down from 61 after removing 2 Weather/Counter tests)
 - Integration.Tests: 9 tests passed
@@ -161,6 +177,7 @@ As part of squad skills/playbooks review, testcontainers-shared-fixture pattern 
 ## 2026-04-20 — Sprint 2: Testing Patterns Extraction
 
 ### Task
+
 Extract and refine testing patterns from current MyBlog assets into cohesive,
 reusable squad guidance. Improve existing skills to reflect real repo patterns
 and conventions.
@@ -248,17 +265,20 @@ and conventions.
 ### Outcomes
 
 **Skills improved:**
+
 1. `testcontainers-shared-fixture/SKILL.md` — +50% more detailed, with real code + next-step guidance
 2. `webapp-testing/SKILL.md` — +40% more detailed, with real code + examples
 3. `unit-test-conventions/SKILL.md` — NEW, 14KB comprehensive guide
 
 **Documentation impact:**
+
 - Testcontainers patterns now crystal clear (collection definition, fixture, factory, per-test isolation)
 - Unit test conventions documented (headers, AAA, mocking, assertions) for future contributors
 - Component testing patterns visible (BunitContext, CreatePrincipal, RenderForUser)
 - Real working code examples in all three skills
 
 **Team velocity:**
+
 - Future test authors can now reference SKILL files instead of copying patterns
 - New domain collections (Author, Comment, Tag) have clear guidance
 - PR reviews can cite these skills for test quality gates
@@ -274,9 +294,11 @@ and conventions.
 ## 2026-04-24 — ValidationBehavior ConfigureAwait Review
 
 ### Task
+
 Review the scoped `ConfigureAwait(false)` change for `src/Domain/Behaviors/ValidationBehavior.cs` and decide whether either existing ValidationBehavior test file requires updates.
 
 ### Outcome
+
 - `ConfigureAwait(false)` on the awaited `next(cancellationToken)` call is behavior-preserving for the current unit tests.
 - The existing assertions cover success/failure flow, error aggregation, and whether `next` is invoked; none of those expectations change with continuation-context configuration.
 - No updates are required in:
@@ -284,19 +306,24 @@ Review the scoped `ConfigureAwait(false)` change for `src/Domain/Behaviors/Valid
   - `tests/Web.Tests/Behaviors/ValidationBehaviorTests.cs`
 
 ### Learnings
+
 1. For MyBlog test coverage, a `ConfigureAwait(false)` cleanup in a MediatR pipeline behavior is non-observable unless tests explicitly assert synchronization-context behavior.
 2. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.
+
 ## 2025 — Sprint 8 Wave 2: Architecture.Tests xUnit v3 Migration (#178 / #179)
 
 ### Task
+
 Migrate `tests/Architecture.Tests/` to xUnit v3 API conventions (issue #178), then validate and fix any post-migration failures (issue #179).
 
 ### Context
+
 Wave 1 (issues #182/#183) had already updated `Architecture.Tests.csproj` with the `xunit.v3` meta-package, `xunit.analyzers`, `xunit.runner.json`, and `<Using Include="Xunit"/>` global using before this session started. Wave 2 (this session) is the code-level migration.
 
 ### Work Done
 
 **Issue #178 — Migration:**
+
 - Reviewed all 4 Architecture.Tests files: `DomainLayerTests.cs`, `VsaLayerTests.cs`, `ThemeLayerTests.cs`, `CachingLayerTests.cs`
 - Confirmed xUnit v3 is backward-compatible for `[Fact]` — no attribute changes required
 - Applied AAA (Arrange/Act/Assert) comments to all 11 test methods (Gimli Rule #3)
@@ -306,6 +333,7 @@ Wave 1 (issues #182/#183) had already updated `Architecture.Tests.csproj` with t
 - PR #184 opened → target `sprint/8-xunit-v3-pilot`
 
 **Issue #179 — Failures check:**
+
 - Ran full test suite post-migration: 0 failures
 - No xUnit v3 API failures to fix in Architecture.Tests
 - Documented findings in PR #185
@@ -369,9 +397,11 @@ Completed full xUnit v2 → v3 migration for `tests/Web.Tests/`.
 ## Session: Issue #199 — Web.Tests.Integration xUnit v3 Migration (Sprint 11)
 
 ### Task
+
 Migrate `tests/Web.Tests.Integration` from xUnit v2 to xUnit v3 (3.2.2), matching the established pattern in `Web.Tests` and `Web.Tests.Bunit`.
 
 ### Work Done
+
 - **Csproj**: Swapped `xunit` → `xunit.v3`; changed runner JSON item from `<None Update>` to `<Content Include CopyToOutputDirectory="PreserveNewest"/>`.
 - **IntegrationTest1.cs**: Deleted — stale Aspire starter template with all methods commented out.
 - **File headers**: Fixed `Project Name: Integration.Tests` → `Web.Tests.Integration` in all 6 source files.

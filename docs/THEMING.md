@@ -27,7 +27,7 @@ Select from four built-in color schemes:
 
 ### Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    ThemeProvider.razor                       │
 │  ┌─────────────────────────────────────────────────────────┐ │
@@ -267,7 +267,7 @@ npm run css:build
 
 IssueTrackerApp uses [OKLCH](https://oklch.com/) color format for perceptually uniform color scales:
 
-```
+```css
 oklch(L% C H)
 ```
 

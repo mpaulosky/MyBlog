@@ -5,12 +5,14 @@
 ### MyBlog Project Context (2025)
 
 **Files Updated/Created:**
+
 - `/README.md` — Complete rewrite: Changed from NewProject (issue tracker) to MyBlog (training blog)
 - `/docs/CONTRIBUTING.md` — Updated all placeholders with MyBlog-specific URLs, tech stack, design principles
 - `/docs/ARCHITECTURE.md` — Created new: 800+ lines covering solution structure, layers, entity design, testing strategy
 - `/.squad/agents/pippin/charter.md` — Fixed: Changed role from "Tester (E2E)" to "Docs"
 
 **Key Facts About MyBlog:**
+
 - Training/learning project, not production. Stack: .NET 10, Aspire 13.2.2, Blazor Server (ISR)
 - No database/auth/cache by design — InMemoryBlogPostRepository only
 - 9 tests total: 7 unit tests (BlogPost, repository), 2 architecture tests (NetArchTest.Rules)
@@ -21,6 +23,7 @@
 - Blazor Server components: Index, Create, Edit pages + ConfirmDeleteDialog
 
 **Documentation Principle:**
+
 - Keep docs accurate and scoped to what project actually is
 - Never add features/tech that don't exist in codebase
 - Links point to real repo (mpaulosky/MyBlog), not template repos
@@ -34,6 +37,7 @@ As part of DevOps skills/playbooks review, Pippin assigned to update CONTRIBUTIN
 **Collaboration:** Pippin + Frodo (CONTRIBUTING.md co-owners).
 
 **Timeline:** Week 1 (1h estimated).
+
 ## 2026-04-19 — Sprint 1.2 Completion — Governance & Documentation Alignment
 
 Completed Milestone 1b (Sprint 1.2) by aligning governance and documentation to reflect Sprint 1.1 hardened workflow.
@@ -43,6 +47,7 @@ Completed Milestone 1b (Sprint 1.2) by aligning governance and documentation to 
 ### Decision 10: Document Guardrails Update
 
 Updated `docs/CONTRIBUTING.md` to accurately reflect post-Sprint 1.1 enforced workflow:
+
 - Branch naming enforcement: `squad/{issue}-{slug}` (not optional)
 - Automatic hook installation on clone via post-checkout
 - 5 sequential pre-push gates (clear descriptions, retry behavior)
@@ -54,6 +59,7 @@ Updated `docs/CONTRIBUTING.md` to accurately reflect post-Sprint 1.1 enforced wo
 ### Decision 11: Merged-Branch Awareness Guidance
 
 Added lightweight guidance section to CONTRIBUTING.md warning about committed on merged branches:
+
 - Voluntary (not enforced yet)
 - Safe recovery path: `git checkout main && git pull && squad/{new-issue}-{slug}`
 - Defers automation (pre-commit guard) to Sprint 2 frequency review
@@ -61,6 +67,7 @@ Added lightweight guidance section to CONTRIBUTING.md warning about committed on
 **Impact:** Contributors have clear path if they accidentally work on merged branch; team can measure frequency before automating.
 
 **Files Modified:**
+
 - `docs/CONTRIBUTING.md` — +3 new sections (branch naming, auto-install, merged-branch awareness)
 
 **Timeline:** Completed as part of coordinated M1.2 effort with Aragorn.
@@ -110,6 +117,7 @@ Published comprehensive deleted-assets manifest and coordinated final roadmap co
 - Follows Milestone 2 skill mining finalization
 
 **Constraints Satisfied:**
+
 - ✅ Manifest format matches squad decision conventions  
 - ✅ Asset disposition table provides at-a-glance triage  
 - ✅ No contradictory reasoning across decisions  
@@ -295,11 +303,13 @@ Completed documentation of the Architecture.Tests xUnit v3 migration (Wave 2), r
 Documented Sprint 9 commencement (xUnit v3 Web.Tests migration) in session logs and decisions changelog.
 
 **Work Done:**
+
 - Created `.squad/log/2026-04-26T14-14-17Z-sprint-9-kickoff.md` — comprehensive session log with Aragorn readiness gate, Gimli phase timeline, team context, next steps
 - Updated Aragorn, Gimli, and Scribe history files with Sprint 9 entries
 - Verified no new decisions from inbox (inbox empty this round)
 
 **Key Facts Logged:**
+
 - Gate status: OPEN (Sprint 9 ready)
 - Pattern precedent: Domain.Tests (Sprint 7) + Architecture.Tests (Sprint 8) demonstrate xUnit v3 viability
 - Web.Tests scope: 127 tests (largest project to date); risk: moderate; pattern: well-established

@@ -13,17 +13,20 @@ When build or deployment operations rely on external systems (APIs, remote comma
 ## Patterns
 
 **Validate After Build, Not During:**
+
 - Separate validation logic from build logic
 - Call validation methods after primary build operations complete
 - Keeps build methods focused on construction, validation methods on verification
 
 **Graceful Degradation:**
+
 - Log warnings instead of throwing exceptions
 - Return boolean success/failure instead of throwing
 - Catch and handle exceptions in validation code to prevent cascading failures
 - Use `LogWarning()` with structured logging (include coordinates, expected values)
 
 **Verification Helper Pattern:**
+
 ```csharp
 private async Task<bool> VerifyBlockAsync(int x, int y, int z, string expectedBlock, CancellationToken ct)
 {
@@ -40,6 +43,7 @@ private async Task<bool> VerifyBlockAsync(int x, int y, int z, string expectedBl
 ```
 
 **Structure-Specific Validation:**
+
 ```csharp
 private async Task BuildWatchtowerAsync(int x, int y, int z, CancellationToken ct)
 {
@@ -57,6 +61,7 @@ private async Task ValidateWatchtowerAsync(int x, int y, int z, CancellationToke
 ## Examples
 
 **StructureBuilder.cs:**
+
 - Each `Build*Async()` method calls corresponding `Validate*Async()` method
 - Validates critical blocks (doors, windows) that indicate successful placement
 - Uses `VerifyBlockAsync()` helper for consistent validation logic
@@ -65,13 +70,16 @@ private async Task ValidateWatchtowerAsync(int x, int y, int z, CancellationToke
 ## Anti-Patterns
 
 **Don't throw exceptions from validation:**
+
 - Bad: `throw new ValidationException("Block mismatch")`
 - Good: `logger.LogWarning("Block mismatch at {X},{Y},{Z}", x, y, z)`
 
 **Don't validate everything:**
+
 - Focus on critical indicators (doors, windows) not every single block
 - Full validation would add significant overhead
 
 **Don't block the build process:**
+
 - Validation failures should not prevent other structures from building
 - Use warnings for observability, not errors for blocking

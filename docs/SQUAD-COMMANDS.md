@@ -27,7 +27,7 @@ Call a member by name to assign them a task. Combine with a description for a di
 
 **Examples:**
 
-```
+```text
 Ralph, go
 Boromir review the CI workflow
 Gimli write tests for the new ICacheService
@@ -50,7 +50,7 @@ Bilbo write a release blog post for v1.2.0
 
 **Examples:**
 
-```
+```text
 Review PR #131
 Aragorn review PR #128
 Aragorn wait for the gh review on PR #126 the review
@@ -67,7 +67,7 @@ Aragorn wait for the gh review on PR #126 the review
 
 **Example:**
 
-```
+```text
 squad fan out we need to update all our documentation README.md, Add missing Blogs,
 Add Release summaries, Update the docs/index.html with the new README.md info
 along with Release notes and a list of linked Blogs.
@@ -84,7 +84,7 @@ along with Release notes and a list of linked Blogs.
 
 **Example flow:**
 
-```
+```text
 Is Sprint 5 a release candidate?
 → Ralph confirms yes
 → PR from dev → main opens
@@ -128,19 +128,22 @@ These rules are enforced automatically — know them to avoid blocked work:
 ## Common Sequences
 
 ### Start a sprint
-```
+
+```text
 squad start Sprint N
 fan squad begin work
 ```
 
 ### Ship a feature PR
-```
+
+```text
 Review PR #{N}                   ← CI check + Copilot review + verdict + merge
 clean up                         ← remove merged branches, sync repos
 ```
 
 ### Release a sprint to main
-```
+
+```text
 Is Sprint N a release candidate?
 → yes
 → PR opens dev → main
@@ -149,7 +152,8 @@ Review PR #{N}
 ```
 
 ### Manual board fix (Done → Released)
-```
+
+```text
 Go to Actions → Squad Mark Released → Run workflow
 ```
 

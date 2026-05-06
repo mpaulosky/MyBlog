@@ -35,6 +35,7 @@ Every `.cs` test file should have a 7-line copyright block at the top:
 ```
 
 **Notes:**
+
 - Year: Current year
 - Project Name: Always `Unit.Tests` for test files in `tests/Unit.Tests/`
 - Format: Single-line comments (`//`), no blank lines within block
@@ -43,6 +44,7 @@ Every `.cs` test file should have a 7-line copyright block at the top:
   Add headers when creating new files or significantly refactoring existing tests.
 
 **Example from repo** (MongoDbBlogPostRepositoryTests.cs):
+
 ```csharp
 //=======================================================
 //Copyright (c) 2026. All rights reserved.
@@ -61,6 +63,7 @@ MyBlog.Unit.Tests.{Folder}
 ```
 
 Examples:
+
 - `MyBlog.Unit.Tests.Handlers` — `GetBlogPostsHandlerTests.cs`
 - `MyBlog.Unit.Tests.Components.Layout` — `NavMenuTests.cs`
 - `MyBlog.Unit.Tests.Features.UserManagement` — `ProfileTests.cs`
@@ -93,11 +96,13 @@ public void Create_WithValidArgs_ReturnsBlogPost()
 When writing new tests or modifying existing ones, adopt AAA comments to improve clarity.
 
 **Why comments matter:**
+
 - Forces deliberate test design (Arrange step often catches unclear test intent)
 - Makes test expectations obvious at a glance
 - Establishes a consistent pattern across the test suite
 
 **Async variant:**
+
 ```csharp
 [Fact]
 public async Task Handle_Success_CreatesPost()
@@ -120,6 +125,7 @@ MyBlog uses **FluentAssertions** exclusively. All assertions must use the
 `.Should()` fluent chain.
 
 **✅ Correct:**
+
 ```csharp
 post.Title.Should().Be("Expected Title");
 result.Success.Should().BeTrue();
@@ -127,12 +133,14 @@ list.Should().HaveCount(3);
 ```
 
 **❌ Wrong:**
+
 ```csharp
 Assert.Equal("Expected Title", post.Title);
 post.Title == "Expected Title" || throw...
 ```
 
 **Common assertions for MyBlog:**
+
 ```csharp
 // Collections
 list.Should().BeEmpty();
@@ -165,6 +173,7 @@ MyBlog uses **NSubstitute** for all mocking. Test classes typically create
 substitutes in the constructor or as fields.
 
 **Pattern for handler tests:**
+
 ```csharp
 public class GetBlogPostsHandlerTests
 {
@@ -195,8 +204,10 @@ public class GetBlogPostsHandlerTests
 ```
 
 **IMemoryCache mocking gotcha:**
+
 - `IMemoryCache.Set<T>` is an **extension method** — NSubstitute cannot intercept it.
 - `Set<T>` calls `CreateEntry()` internally — **mock `CreateEntry()` instead**:
+
   ```csharp
   var cacheEntry = Substitute.For<ICacheEntry>();
   _cache.CreateEntry(Arg.Any<object>()).Returns(cacheEntry);
@@ -205,6 +216,7 @@ public class GetBlogPostsHandlerTests
   ```
 
 **IMemoryCache.TryGetValue out-param pattern:**
+
 ```csharp
 object? outVal = null;
 _cache.TryGetValue(Arg.Any<object>(), out outVal)
@@ -217,6 +229,7 @@ Domain entities like `BlogPost` are tested directly without mocking. Test the `C
 lifecycle methods (`Update()`, `Publish()`, `Unpublish()`).
 
 **Real example from repo** (`tests/Unit.Tests/BlogPostTests.cs`):
+
 ```csharp
 public class BlogPostTests
 {
@@ -261,6 +274,7 @@ Note: These tests do not follow AAA comments (current repo state). When adding n
 consider adopting the AAA pattern above.
 
 **Guidelines:**
+
 - Use `[Fact]` for single-case tests
 - Use `[Theory]` + `[InlineData]` for parameterized tests
 - Test happy path + all failure paths
@@ -272,6 +286,7 @@ Handler tests mock ALL external dependencies (repo, cache, etc.) and verify
 handler logic in isolation.
 
 **Pattern for query handlers:**
+
 ```csharp
 public class EditBlogPostHandlerTests
 {
@@ -346,6 +361,7 @@ Component tests in MyBlog use bUnit's `TestContext` base class. Tests render com
 by calling a `RenderForUser(ClaimsPrincipal)` method and assert rendered markup.
 
 **Real example from repo** (`tests/Unit.Tests/Features/UserManagement/ProfileTests.cs`):
+
 ```csharp
 public class ProfileTests : BunitContext
 {
@@ -372,6 +388,7 @@ public class ProfileTests : BunitContext
 ```
 
 **How it works:**
+
 - Inherit from `BunitContext` (bUnit's `TestContext` base; made available via `global using Bunit;`)
 - Call `RenderForUser(principal)` to render the component with authenticated context
 - Use `cut.Markup.Should()` to assert the rendered HTML output
@@ -380,6 +397,7 @@ public class ProfileTests : BunitContext
 ### Critical Gotchas
 
 **❌ NEVER compare two `{Entity}Dto.Empty` calls**
+
 ```csharp
 // WRONG:
 var dto1 = BlogPostDto.Empty;
@@ -388,6 +406,7 @@ dto1.Should().Be(dto2); // FAILS — Empty calls DateTime.UtcNow each time
 ```
 
 **✅ CORRECT — Assert individual fields:**
+
 ```csharp
 var dto = BlogPostDto.Empty;
 dto.Id.Should().BeEmpty();
@@ -396,6 +415,7 @@ dto.Content.Should().Be("");
 ```
 
 **`GenerateSlug` trailing underscore is correct**
+
 ```csharp
 "C# Is Great!".GenerateSlug().Should().Be("c_is_great_");
 // Trailing underscore is EXPECTED, not a bug
@@ -428,6 +448,7 @@ tests/Unit.Tests/
 ### Running Tests Locally
 
 Before pushing, run the full unit test suite:
+
 ```bash
 dotnet test tests/Unit.Tests --logger "console;verbosity=detailed"
 ```

@@ -67,7 +67,7 @@ Determine the response type before drafting.
 ### Template Selection Guide
 
 | Signal in Issue/Discussion | → Response Type | Template |
-|---------------------------|-----------------|----------|
+| --------------------------- | ----------------- | ---------- |
 | New contributor (0 prior issues) | Welcome | T1 |
 | Error message, stack trace, "doesn't work" | Troubleshooting | T2 |
 | "How do I...?", "Can Squad...?", "Is there a way to...?" | Feature Guidance | T3 |
@@ -83,12 +83,13 @@ Use exactly one template as the base draft. Replace placeholders with issue-spec
 ### Confidence Classification
 
 | Confidence | Criteria | Example |
-|-----------|----------|---------|
+| ----------- | ---------- | --------- |
 | 🟢 High | Answer exists in Squad docs or FAQ, similar question answered before, no technical ambiguity | "How do I install Squad?" |
 | 🟡 Medium | Technical answer is sound but involves judgment calls, OR docs exist but don't perfectly match the question, OR tone is tricky | "Can Squad work with Azure DevOps?" (yes, but setup is nuanced) |
 | 🔴 Needs Review | Technical uncertainty, policy/roadmap question, potential reputational risk, author is frustrated/angry, question about unreleased features | "When will Squad support Claude?" |
 
 **Auto-escalation rules:**
+
 - Any mention of competitors → 🔴
 - Any mention of pricing/licensing → 🔴
 - Author has >3 follow-up comments without resolution → 🔴
@@ -156,6 +157,7 @@ If a posted response turns out to be wrong, inappropriate, or needs correction:
 4. **Postmortem:** If the error reveals a pattern gap, update humanizer anti-patterns or add a new test case
 
 **Safe word — `banana`:**
+
 - Immediately freezes all pending drafts in the review queue
 - No new scans or drafts until `pao resume` is issued
 - Audit entry logged with halter identity and reason

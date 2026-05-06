@@ -183,7 +183,7 @@ dotnet user-secrets list
 
 Expected output (values will differ):
 
-```
+```text
 Auth0:ClientSecret = ***
 Auth0:ManagementApiDomain = your-tenant.us.auth0.com
 Auth0:ManagementApiClientId = ***
@@ -262,6 +262,7 @@ The Aspire dashboard URL will appear in the console. The Blazor app runs at `htt
 **Cause**: The M2M Client ID or Client Secret is wrong, or the M2M app has not been authorized against the Management API.
 
 **Fix**:
+
 1. Re-check `dotnet user-secrets list` to confirm the secrets are set.
 2. In the Auth0 Dashboard, open the M2M application → **APIs** tab and confirm the Management API is listed as authorized with the required scopes.
 

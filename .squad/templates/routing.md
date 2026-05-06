@@ -5,7 +5,7 @@ How to decide who handles what.
 ## Routing Table
 
 | Work Type | Route To | Examples |
-|-----------|----------|----------|
+| ----------- | ---------- | ---------- |
 | {domain 1} | {Name} | {example tasks} |
 | {domain 2} | {Name} | {example tasks} |
 | {domain 3} | {Name} | {example tasks} |
@@ -17,7 +17,7 @@ How to decide who handles what.
 ## Issue Routing
 
 | Label | Action | Who |
-|-------|--------|-----|
+| ------- | -------- | ----- |
 | `squad` | Triage: analyze issue, assign `squad:{member}` label | Lead |
 | `squad:{name}` | Pick up issue and complete the work | Named member |
 

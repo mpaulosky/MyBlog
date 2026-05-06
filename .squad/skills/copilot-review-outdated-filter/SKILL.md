@@ -40,11 +40,13 @@ github-github-mcp-server-pull_request_read(
 ### Step 2 — Parse and Filter
 
 Review threads have three key fields:
+
 - `is_outdated`: Boolean — `true` if file/line changed since review
 - `is_resolved`: Boolean — `true` if author resolved the thread
 - `is_collapsed`: Boolean — UI hint (not actionable)
 
 **Filter logic:**
+
 ```javascript
 // Keep only non-outdated, unresolved threads
 const actionable = review_threads.filter(t => 
@@ -59,6 +61,7 @@ console.log(`Skipped ${outdated} outdated suggestions`);
 ### Step 3 — Address Still-Applicable Suggestions
 
 For each actionable thread:
+
 1. Read the current file state (not the diff view)
 2. Verify the suggestion still makes sense
 3. Apply the fix if valid
@@ -67,6 +70,7 @@ For each actionable thread:
 ### Step 4 — Document Outcomes
 
 In PR comment or commit message:
+
 ```markdown
 ## Copilot Suggestions Resolved
 
@@ -88,6 +92,7 @@ In PR comment or commit message:
 **Scenario:** Gandalf resolved merge conflicts on PR #17 with commit 89bcf1c. Many Copilot suggestions became outdated.
 
 **Action:**
+
 ```javascript
 // Fetch reviews
 const threads = pullRequest.getReviewComments();
@@ -111,16 +116,19 @@ current.forEach(thread => {
 ## Key Considerations
 
 **When to skip outdated suggestions:**
+
 - ✅ File content changed significantly (conflict resolution, rebase)
 - ✅ Line numbers shifted due to insertions/deletions
 - ✅ Copilot marked `is_outdated: true` automatically
 
 **When to still address outdated suggestions:**
+
 - ⚠️ Suggestion highlights conceptual issue (e.g., "missing validation") even if line changed
 - ⚠️ Same issue exists in new code (e.g., "no error handling" still true after rebase)
 - Use judgment: outdated ≠ automatically invalid
 
 **Fresh re-review cycle:**
+
 - After addressing current suggestions, push commit
 - CI runs + Copilot re-reviews on new commit SHA
 - New review catches any issues missed by filtering

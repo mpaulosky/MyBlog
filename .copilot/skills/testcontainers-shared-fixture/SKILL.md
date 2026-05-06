@@ -125,7 +125,7 @@ public class CreateCategoryHandlerIntegrationTests
 ### Domain Mapping (IssueManager)
 
 | Collection | Test Classes |
-|---|---|
+| --- | --- |
 | `CategoryIntegration` | CreateCategory, GetCategory, ListCategories, UpdateCategory, CategoryRepository |
 | `IssueIntegration` | CreateIssue, DeleteIssue (×2), GetIssue, ListIssues, UpdateIssue, UpdateIssueStatus, IssueRepositorySearch, IssueRepository |
 | `CommentIntegration` | CreateComment, DeleteComment, GetComment, ListComments, UpdateComment |

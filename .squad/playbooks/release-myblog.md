@@ -15,7 +15,7 @@ Use this playbook when MyBlog is ready to move validated work from `dev` to
 ## Current MyBlog release model
 
 | Parameter | Value | Notes |
-|-----------|-------|-------|
+| ----------- | ------- | ------- |
 | **Owner / Repo** | `mpaulosky/MyBlog` | GitHub repository |
 | **Integration Branch** | `dev` | All `squad/*` PRs target `dev` |
 | **Release Branch** | `main` | Release-only branch |
@@ -132,10 +132,10 @@ git pull origin main
 git checkout -b hotfix/<slug>
 ```
 
-2. Open a PR from `hotfix/<slug>` to `main`
-3. Wait for CI and required review
-4. Merge to `main`
-5. Wait for `hotfix-backport-reminder.yml` to comment, or backport manually right
+1. Open a PR from `hotfix/<slug>` to `main`
+2. Wait for CI and required review
+3. Merge to `main`
+4. Wait for `hotfix-backport-reminder.yml` to comment, or backport manually right
    away:
 
 ```bash
@@ -145,7 +145,7 @@ git cherry-pick <hotfix-merge-commit>
 git push origin dev
 ```
 
-6. Tag the updated `main` commit only after `main` CI is green
+1. Tag the updated `main` commit only after `main` CI is green
 
 ## Out of scope for this playbook
 

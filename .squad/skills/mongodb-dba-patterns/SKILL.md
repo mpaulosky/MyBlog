@@ -19,7 +19,7 @@ live conventions versus future-only operator notes.
 ### Current MyBlog MongoDB map
 
 | Area | Canonical files | Owner | Current rule |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Local runtime wiring | `src/AppHost/AppHost.cs`, `src/Web/Program.cs` | Boromir + Sam | AppHost defines `mongodb` and database `myblog`; Web consumes it through `AddMongoDBClient("myblog")`. |
 | EF Core mapping | `src/Web/Data/BlogDbContext.cs` | Sam | `BlogPost` maps to collection `blogposts`; `Version` is the optimistic concurrency token. |
 | Repository layer | `src/Domain/Interfaces/IBlogPostRepository.cs`, `src/Web/Data/MongoDbBlogPostRepository.cs` | Sam | Repositories return domain entities; handlers wrap results in `Result` / `Result<T>`. |

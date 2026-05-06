@@ -5,7 +5,7 @@ On-demand reference for Squad's casting system. Loaded during Init Mode or when 
 ## Universe Table
 
 | Universe | Capacity | Shape Tags | Resonance Signals |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | The Usual Suspects | 6 | small, noir, ensemble | crime, heist, mystery, deception |
 | Reservoir Dogs | 8 | small, noir, ensemble | crime, heist, tension, loyalty |
 | Alien | 8 | small, sci-fi, survival | space, isolation, threat, engineering |
@@ -33,7 +33,7 @@ score = size_fit + shape_fit + resonance_fit + LRU
 ```
 
 | Factor | Description |
-|---|---|
+| --- | --- |
 | `size_fit` | How well the universe capacity matches the team size. Prefer universes where capacity ≥ agent_count with minimal waste. |
 | `shape_fit` | Match universe shape tags against the assignment shape derived from the project description. |
 | `resonance_fit` | Match universe resonance signals against session and repo context signals. |
