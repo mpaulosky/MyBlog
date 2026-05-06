@@ -1,5 +1,5 @@
 
-## 2026-04-19 — Admin Role Claim Namespace Fix (Cross-Agent with Legolas)
+## 2026-04-18 — Admin Role Claim Namespace Fix (Cross-Agent with Legolas)
 
 **Work:** Diagnosed and fixed admin role claim mismatch between Auth0 and app configuration.
 
@@ -64,3 +64,36 @@ As part of DevOps skills/playbooks review, Frodo assigned to update CONTRIBUTING
 ✅ Sprint 2 backlog item complete and accurate
 
 **Status:** ✅ Final - Sprint 2 backlog closed; ready for Scribe merge.
+
+## 2026-04-25 — Markdown Lint Fixes: Issue #227 (Full Repo MD Sweep)
+
+**Work:** Fixed all markdownlint violations across the entire repository.
+
+**Key learnings:**
+
+1. **`.markdownlint.json` was pre-existing** — the worktree already had a comprehensive 24-line config
+   when the task started. Don't assume blank slate; always check first with `view`.
+
+2. **MD060 "consistent" + aligned tables = trap** — Tables with column-width padding (trailing spaces
+   before `|`) trigger MD060 violations. Fixing separator rows *increased* violations because the
+   content cells' trailing spaces then became mismatched. Safe fix: either disable MD060 or reformat
+   ALL tables in a file to use consistent spacing. Do NOT patch separator rows alone.
+
+3. **MD040 language conventions:**
+   - Directory trees, ASCII diagrams, CLI output, flow text → `` ```text ``
+   - YAML content → `` ```yaml ``
+   - CSS values/declarations → `` ```css ``
+   - HTML snippets → `` ```html ``
+   - Command examples / parameter lists → `` ```text ``
+
+4. **Auto-fix scope:** `markdownlint-cli --fix` handles MD032/MD022/MD031/MD029/MD012 but NOT
+   MD040 (no language), MD013 (line length), MD001 (heading increment). Always plan for a manual pass.
+
+5. **Broken link found:** `docs/SECRETS.md` linked to `../src/Web/Auth/README.md` (non-existent).
+   Corrected to `./AUTH0_SETUP.md` as part of this sweep.
+
+**Files touched:** 176 files (auto-fix + manual). Zero violations on final lint run.
+
+**PR:** https://github.com/mpaulosky/MyBlog/pull/229
+
+**Status:** ✅ Completed — PR #229 draft opened, Closes #227.
