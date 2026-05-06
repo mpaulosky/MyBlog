@@ -1,11 +1,10 @@
 ---
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-05-06T00:00:00Z
+focus_area: Squad maintenance — charter audit, markdown lint, and identity cleanup
+active_issues: [224, 226, 227]
 ---
 
 # Focus Area
-
-focus_area: Squad maintenance pass completed — issue #222
-active_issues: [222]
 
 ## What We're Focused On
 
