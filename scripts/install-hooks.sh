@@ -39,6 +39,25 @@ else
   echo "✅  Pre-push hook installed at $PRE_PUSH_DEST"
 fi
 
+# Install pre-commit hook (markdownlint gate)
+PRE_COMMIT_SOURCE="$REPO_ROOT/.github/hooks/pre-commit"
+PRE_COMMIT_DEST="$HOOKS_DIR/pre-commit"
+
+if [[ -f "$PRE_COMMIT_SOURCE" ]]; then
+  if [[ -f "$PRE_COMMIT_DEST" ]] && cmp -s "$PRE_COMMIT_SOURCE" "$PRE_COMMIT_DEST"; then
+    echo "✅  Pre-commit hook is already up-to-date."
+  else
+    if [[ -f "$PRE_COMMIT_DEST" ]]; then
+      BACKUP="$PRE_COMMIT_DEST.bak.$(date +%Y%m%d%H%M%S)"
+      echo "⚠️   Existing pre-commit hook differs — backing up to: $BACKUP"
+      cp "$PRE_COMMIT_DEST" "$BACKUP"
+    fi
+    cp "$PRE_COMMIT_SOURCE" "$PRE_COMMIT_DEST"
+    chmod +x "$PRE_COMMIT_DEST"
+    echo "✅  Pre-commit hook installed at $PRE_COMMIT_DEST"
+  fi
+fi
+
 # Install post-checkout hook (auto-bootstraps pre-push on clone/checkout)
 POST_CHECKOUT_SOURCE="$REPO_ROOT/.github/hooks/post-checkout"
 POST_CHECKOUT_DEST="$HOOKS_DIR/post-checkout"
@@ -59,7 +78,10 @@ if [[ -f "$POST_CHECKOUT_SOURCE" ]]; then
 fi
 
 echo ""
-echo "The hook enforces 5 gates on every 'git push':"
+echo "Pre-commit hook gates on every 'git commit':"
+echo "  • Runs markdownlint on staged .md files (degrades gracefully if not installed)"
+echo ""
+echo "Pre-push hook enforces 5 gates on every 'git push':"
 echo "  0. Enforces branch naming — squad/{issue}-{slug} runs all gates;"
 echo "       sprint/{N}-{slug} passes Gate 0 and exits (skips feature gates)"
 echo "  1. Warns about untracked .razor/.cs source files"
@@ -67,4 +89,4 @@ echo "  2. Release build  (dotnet build MyBlog.slnx --configuration Release)"
 echo "  3. Unit/arch tests (tests/Architecture.Tests, tests/Unit.Tests)"
 echo "  4. Integration tests (tests/Integration.Tests — Docker required)"
 echo ""
-echo "To skip in an emergency: git push --no-verify"
+echo "To skip in an emergency: git commit --no-verify / git push --no-verify"
