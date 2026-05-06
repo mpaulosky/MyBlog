@@ -11,6 +11,7 @@
 Switch from sprint-based release tags (`v1.0.0-sprint3`) to pure semantic versioning (`v1.0.1`, `v1.0.2`, ...) with GitVersion automation in CI/CD.
 
 **Rationale:**
+
 - GitVersion is already running in `.github/workflows/ci.yml` (active since Sprint 3 setup)
 - Sprint tags impose manual friction (guessing next tag, remembering conventions)
 - Pure semver decouples version from scope — cleaner for production releases
@@ -18,12 +19,14 @@ Switch from sprint-based release tags (`v1.0.0-sprint3`) to pure semantic versio
 - Backward compatible: `v1.0.0-sprint3` remains the final sprint tag; subsequent releases start at `v1.0.1`
 
 **Implementation:**
+
 - No code changes needed — GitVersion config already correct
 - Release workflow: merge PR → CI auto-tags with semver → Aragorn creates GitHub release from tag
 - Discipline: Aragorn ceases manual `-sprint#` tagging; CI handles versioning deterministically
 - First post-sprint release: v1.0.1 (marks sprint-to-semver cutover)
 
 **Decisions Impacted:**
+
 - Release process documentation updated
 - Team no longer manually tracks `-sprint#` suffixes
 - Version bumping fully automated via GitVersion
@@ -31,17 +34,19 @@ Switch from sprint-based release tags (`v1.0.0-sprint3`) to pure semantic versio
 ### 2. Remove Blazor Template Demo Pages (Weather & Counter)
 
 **Status:** ✅ Implemented  
-**PR:** https://github.com/mpaulosky/MyBlog/pull/6  
+**PR:** <https://github.com/mpaulosky/MyBlog/pull/6>  
 **Date:** 2026-04-18
 
 The MyBlog project was initialized from the Blazor Server template, which includes demo pages (Counter and Weather) for learning Blazor. These pages are not relevant to the blog application and have been removed to keep the codebase clean.
 
 **Changes:**
+
 - Deleted `src/Web/Components/Pages/Counter.razor`
 - Deleted `src/Web/Components/Pages/Weather.razor`
 - Removed 2 template test methods from `tests/Unit.Tests/Components/RazorSmokeTests.cs`
 
 **Impact:**
+
 - 113 lines removed from codebase
 - All 74 tests passing (Architecture 6, Unit 59, Integration 9)
 - Code coverage: 91.64%
@@ -50,12 +55,13 @@ The MyBlog project was initialized from the Blazor Server template, which includ
 ### 2. Standardized Copyright Headers for C# Files
 
 **Status:** ✅ Implemented  
-**PR:** https://github.com/mpaulosky/MyBlog/pull/7  
+**PR:** <https://github.com/mpaulosky/MyBlog/pull/7>  
 **Date:** 2026-04-18
 
 Adopted standardized 7-line copyright header format for all C# (`.cs`) files in the MyBlog solution.
 
 **Header Format:**
+
 ```csharp
 //=======================================================
 //Copyright (c) {year}. All rights reserved.
@@ -68,12 +74,14 @@ Adopted standardized 7-line copyright header format for all C# (`.cs`) files in 
 ```
 
 **Scope:**
+
 - All 46 `.cs` files across 7 projects (AppHost, Domain, ServiceDefaults, Web, Architecture.Tests, Integration.Tests, Unit.Tests)
 - Year derived from git log (file creation date)
 - Project name auto-detected from directory structure
 - Excluded: Razor files, build artifacts
 
 **Rationale:**
+
 1. Legal clarity on copyright ownership and date
 2. Professional appearance for code reviews and portfolio
 3. Attribution to Matthew Paulosky on every file
@@ -81,11 +89,13 @@ Adopted standardized 7-line copyright header format for all C# (`.cs`) files in 
 5. Compliant with charter rule #6
 
 **Implementation:**
+
 - Python script for batch processing (not committed)
 - Git log command: `git log --follow --format=%ad --date=format:%Y --diff-filter=A -- {file}`
 - All projects build successfully with zero errors and warnings
 
 **Impact:**
+
 - Clear copyright and ownership on every file
 - 9 additional lines per file (header + blank line separator)
 - Requires maintenance for new files (can be automated)
@@ -102,11 +112,13 @@ PR #9 introduced GitVersion integration and parallel test workflows. Copilot rev
 #### 4.1 Always use `global-json-file: global.json` in setup-dotnet
 
 When `global.json` is present, use:
+
 ```yaml
 - uses: actions/setup-dotnet@v4
   with:
     global-json-file: global.json
 ```
+
 **Never use** `dotnet-version` + `dotnet-quality: 'preview'` when `global.json` exists. The two conflict when `allowPrerelease: false` is set.
 
 #### 4.2 Use `nuGetVersion` for `/p:Version` in dotnet build
@@ -114,6 +126,7 @@ When `global.json` is present, use:
 ```yaml
 dotnet build ... /p:Version=${{ steps.gitversion.outputs.nuGetVersion }} /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
 ```
+
 `assemblySemVer` strips prerelease labels. `nuGetVersion` preserves them. Always stamp `InformationalVersion` for full git metadata.
 
 #### 4.3 `squad-test.yml` is PR-only
@@ -123,6 +136,7 @@ dotnet build ... /p:Version=${{ steps.gitversion.outputs.nuGetVersion }} /p:Info
 #### 4.4 `continue-on-error: true` must be surgical
 
 Only use `continue-on-error: true` on steps that are genuinely optional:
+
 - ✅ PR comment posting (may lack permission in forks)
 - ✅ Notification/badge steps
 - ❌ Artifact download (if download fails, report is wrong)
@@ -165,7 +179,6 @@ Infer role claim types from the authenticated user's claims when a claim type en
 
 ---
 
-### 6. Squad Skills & Playbooks Adoption Review
 ### 5. Squad Skills & Playbooks Adoption Review
 
 **Lead:** Aragorn (Lead / Architect)  
@@ -176,6 +189,7 @@ Infer role claim types from the authenticated user's claims when a claim type en
 #### Executive Summary
 
 The imported skill library is **high-quality and broadly relevant**. Of 19 skills and 3 playbooks reviewed:
+
 - **9 skills are directly useful as-is** — pre-push testing, build repair, MongoDB patterns, CQRS/filtering, Auth0 integration
 - **5 skills need light adaptation** — release process (MyBlog-specific binding), Blazor theming (deprecated), testcontainers (test suite alignment)
 - **3 skills are inapplicable** — Minecraft world-building, Squad CLI meta (zero-deps), legacy platform-specific tools
@@ -198,16 +212,17 @@ The imported skill library is **high-quality and broadly relevant**. Of 19 skill
 
 #### Implementation Roadmap — Phase 1 (Immediate)
 
-| Task | Skill/Playbook | Owner | Effort | Benefit |
-|------|---|---|---|---|
-| Audit pre-push hook | `pre-push-test-gate` | Aragorn | 30min | Confirm 4 gates active; zero escapes |
-| Validate build-repair prompt | `build-repair` | Aragorn | 30min | Ensure zero-warning enforcement |
-| Document in CONTRIBUTING.md | `pre-push-process.md` + `pr-merge-process.md` | Frodo + Pippin | 1hr | Team alignment on gates |
-| Create MongoDB runbook | `mongodb-dba-patterns` | Sam + Gimli | 2hr | Formalize DBA ops; backup recovery |
+| Task                         | Skill/Playbook                                | Owner          | Effort | Benefit                              |
+| ---------------------------- | --------------------------------------------- | -------------- | ------ | ------------------------------------ |
+| Audit pre-push hook          | `pre-push-test-gate`                          | Aragorn        | 30min  | Confirm 4 gates active; zero escapes |
+| Validate build-repair prompt | `build-repair`                                | Aragorn        | 30min  | Ensure zero-warning enforcement      |
+| Document in CONTRIBUTING.md  | `pre-push-process.md` + `pr-merge-process.md` | Frodo + Pippin | 1hr    | Team alignment on gates              |
+| Create MongoDB runbook       | `mongodb-dba-patterns`                        | Sam + Gimli    | 2hr    | Formalize DBA ops; backup recovery   |
 
 ---
 
 ### 7. DevOps Skills & Playbooks Review for MyBlog
+
 ### 6. DevOps Skills & Playbooks Review for MyBlog
 
 **Author:** Boromir (DevOps)  
@@ -215,7 +230,7 @@ The imported skill library is **high-quality and broadly relevant**. Of 19 skill
 **Status:** High-Priority Roadmap Ready  
 **Tags:** devops, process, automation, quality-gates, ci-cd
 
-#### Executive Summary
+#### Executive Summary 1
 
 MyBlog has **strong process documentation** through playbooks and skills. However, several gaps exist in **local validation automation**, **hook installation enforcement**, and **multi-workspace consistency**.
 
@@ -261,17 +276,18 @@ MyBlog has **strong process documentation** through playbooks and skills. Howeve
 
 #### Top Operational Gaps Closed
 
-| Gap | Problem | Solution | Impact |
-|---|---|---|---|
-| Broken code reaching CI | Tests pushed before validation | Pre-push hook (Gate 2–4) | Catch 90% locally |
-| Wrong files in PRs | Untracked `.cs`/`.razor` invisible to CI | Pre-push Gate 1 warning | Forces developer staging |
-| Non-squad branch pushes | Violates reviewer routing | Tighten Gate 0 regex | Enforces conventions |
-| Review process inconsistency | Ralph's 4 gates manual; errors slip | GitHub Actions automation | 100% consistency |
-| Merged-branch orphaned commits | Agents commit to merged branches | Pre-commit hook guard | Detects early |
+| Gap                            | Problem                                  | Solution                  | Impact                   |
+| ------------------------------ | ---------------------------------------- | ------------------------- | ------------------------ |
+| Broken code reaching CI        | Tests pushed before validation           | Pre-push hook (Gate 2–4)  | Catch 90% locally        |
+| Wrong files in PRs             | Untracked `.cs`/`.razor` invisible to CI | Pre-push Gate 1 warning   | Forces developer staging |
+| Non-squad branch pushes        | Violates reviewer routing                | Tighten Gate 0 regex      | Enforces conventions     |
+| Review process inconsistency   | Ralph's 4 gates manual; errors slip      | GitHub Actions automation | 100% consistency         |
+| Merged-branch orphaned commits | Agents commit to merged branches         | Pre-commit hook guard     | Detects early            |
 
 ---
 
 ### 7.1. PR #12 Follow-ups — Pre-Push Gate References
+
 ### 6.1. PR #12 Follow-ups — Pre-Push Gate References
 
 **Date:** 2026-04-19  
@@ -292,6 +308,7 @@ The pre-push skill should point contributors to `docs/CONTRIBUTING.md` as the au
 ---
 
 ### 8. Roadmap Rubber-Duck Review — Sprint 0 Complete
+
 ### 7. Roadmap Rubber-Duck Review — Sprint 0 Complete
 
 **Date:** 2026-04-19  
@@ -306,6 +323,7 @@ The 4-milestone Skills & Playbooks adoption roadmap has been validated against l
 #### Validation Summary
 
 **Architecture Review (Aragorn):**
+
 - ✅ Milestone 0–3 sequence correct; high-leverage wins owned
 - ✅ Owner assignments match available capacity and domain expertise
 - ✅ Repo fit confirmed for all 9 skills and 2 playbooks
@@ -313,6 +331,7 @@ The 4-milestone Skills & Playbooks adoption roadmap has been validated against l
 - ⚠️ 3 execution constraints established: Review sign-off gate, pre-push audit, routing PR isolation
 
 **Operational Review (Boromir):**
+
 - ✅ 4 of 5 Milestone 1 items already partly implemented
 - ✅ Pre-push hook exists with 5 gates; hook installer exists
 - ✅ Contributor docs complete
@@ -368,7 +387,7 @@ Sprint 1.1 implements the two planned low-risk guardrail changes to harden the p
 
 2. **Auto-Install Hooks on Clone** (`.github/hooks/post-checkout` + `scripts/install-hooks.sh`)
    - Before: Hooks installed only when developers manually ran `./scripts/install-hooks.sh`; new clones silently skipped the pre-push gate
-   - After: 
+   - After:
      - New `.github/hooks/post-checkout` hook auto-triggers after every `git clone` and `git checkout`
      - `install-hooks.sh` upgraded to install both pre-push and post-checkout hooks with safe backups
    - Rationale: Human-dependent installation creates reliable bypass; post-checkout automation ensures all developers and CI/CD runners inherit protection
@@ -377,6 +396,7 @@ Sprint 1.1 implements the two planned low-risk guardrail changes to harden the p
 #### Pre & Post-Implementation Testing
 
 **Baseline (before changes):** All 5 gates pass cleanly
+
 - Gate 0: Blocks main/dev pushes ✅
 - Gate 1: Warns untracked .razor/.cs files ✅
 - Gate 2: Release build (0 warnings, 0 errors) ✅
@@ -384,6 +404,7 @@ Sprint 1.1 implements the two planned low-risk guardrail changes to harden the p
 - Gate 4: Integration tests with Docker (9 passing) ✅
 
 **Post-implementation (with new squad-only enforcement):**
+
 - Gate 0: Branch validation ✅ (squad pattern enforced)
 - Gate 1–4: All passing ✅
 - Non-squad branches correctly rejected ✅
@@ -456,6 +477,7 @@ Updated `docs/CONTRIBUTING.md` to accurately reflect the enforced workflow after
 Contributors follow `docs/CONTRIBUTING.md` for onboarding and workflow. If the doc does not match the enforced workflow, new team members will be confused, leading to failed local pushes, wasted CI cycles, and support burden.
 
 By aligning the doc with the actual enforced workflow (post-Sprint 1.1 hardening):
+
 - **Reduce onboarding friction:** New contributors see the actual rules, not aspirational docs.
 - **Improve success rate:** Contributors understand branch naming and hook behavior upfront.
 - **Enable self-service troubleshooting:** Troubleshooting section mirrors playbook guidance.
@@ -505,6 +527,7 @@ Added **"After Your PR Is Merged"** subsection under "Pull Requests" in `docs/CO
 #### Future
 
 After Sprint 2 repo-fit review, the team may decide to:
+
 - Implement a pre-commit guard if the frequency warrants automation
 - Keep the guidance-only approach if contributors naturally avoid the anti-pattern
 - Escalate to a stricter hook if orphaned branches remain a problem
@@ -544,12 +567,12 @@ Keeping `building-protection` in the routing table as a do-not-inject asset is i
 
 **Updated `.squad/routing.md` — Skills section:**
 
-| Domain | Asset | When to Inject |
-|--------|-------|----------------|
-| Push-capable squad work | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. Default for normal `squad/{issue}-{slug}` delivery. |
-| Build/test gate failures | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md` | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push gates run. Aragorn owns this route. |
-| PR review, approval, merge | `.squad/playbooks/pr-merge-process.md` | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, merge, and cleanup. |
-| Resumed work on existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md` | Any agent about to `git commit` on a branch with prior PR activity or uncertain session state. Check for already-merged PR before committing. |
+| Domain                                    | Asset                                                                                | When to Inject                                                                                                                                |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Push-capable squad work                   | `.squad/skills/pre-push-test-gate/SKILL.md` + `.squad/playbooks/pre-push-process.md` | Any task expected to end in `git push`, branch handoff, or local gate validation. Default for normal `squad/{issue}-{slug}` delivery.         |
+| Build/test gate failures                  | `.squad/skills/build-repair/SKILL.md` + `.squad/skills/pre-push-test-gate/SKILL.md`  | Any task blocked by Release build failures, warning cleanup, failing tests, or a rejected pre-push gates run. Aragorn owns this route.        |
+| PR review, approval, merge                | `.squad/playbooks/pr-merge-process.md`                                               | Any Aragorn-led PR gate once CI is green, including Copilot-review read, parallel reviewer fan-out, merge, and cleanup.                       |
+| Resumed work on existing `squad/*` branch | `.squad/skills/merged-pr-guard/SKILL.md`                                             | Any agent about to `git commit` on a branch with prior PR activity or uncertain session state. Check for already-merged PR before committing. |
 
 **Updated `.squad/routing.md` — Workflow Guardrails section:**
 
@@ -582,12 +605,14 @@ Added 5 numbered workflow rules that clarify when/how guardrails apply post-Spri
 **Decision:** Approve and merge `.github/workflows/ci.yml` for PR validation pipeline.
 
 **What Changed:**
+
 - Added `.github/workflows/ci.yml` — full CI pipeline for PR validation
 - Workflow triggers on pull_request to main/squad/** and push to main
 - Executes: build (Release) + Architecture/Unit/Integration tests + coverage reporting
 - Uses GitHub Actions: checkout@v4, setup-dotnet@v4, cache@v4, test-reporter@v1, upload-artifact@v4, CodeCoverageSummary@v1.3.0, sticky-pull-request-comment@v2
 
 **Security Assessment:**
+
 1. ✅ **No hardcoded secrets** — workflow is clean, no credentials in source
 2. ✅ **Least-privilege permissions** — `contents:read`, `checks:write`, `pull-requests:write` (minimal)
 3. ✅ **Action pinning** — All actions pinned to major versions (@v4, @v1) from trusted publishers (GitHub, dorny, irongut, marocchino)
@@ -596,18 +621,21 @@ Added 5 numbered workflow rules that clarify when/how guardrails apply post-Spri
 6. ✅ **Test isolation** — Separate result directories per suite prevent cross-contamination
 
 **Verification:**
+
 - ✅ Build succeeded (Release config)
 - ✅ All 74 tests passing (Arch 6, Unit 59, Integration 9)
 - ✅ Code coverage: 91.64%
 - ✅ CI checks passed (build-and-test: SUCCESS, Test Results: SUCCESS)
 
 **Impact:**
+
 - Automated validation now active on all future PRs to main and squad/** branches
 - Coverage reporting added to PR comments
 - Reduced manual security/build review overhead
 - Enables coverage tracking and enforcement
 
 **Recommendations for Future PRs:**
+
 1. All PRs to main or squad/** will trigger automated build + test validation
 2. PR comments will show code coverage summaries; maintain ≥91%
 3. PRs must pass CI checks before merge
@@ -624,6 +652,7 @@ Added 5 numbered workflow rules that clarify when/how guardrails apply post-Spri
 **Decision:** Approve and merge removal of unused demo pages.
 
 **What Changed:**
+
 - Deleted `src/Web/Components/Pages/Counter.razor` (19 lines)
 - Deleted `src/Web/Components/Pages/Weather.razor` (66 lines)
 - Removed 2 obsolete test methods from `tests/Unit.Tests/Components/RazorSmokeTests.cs` (28 lines)
@@ -631,17 +660,20 @@ Added 5 numbered workflow rules that clarify when/how guardrails apply post-Spri
 - Total lines removed: 113
 
 **Security Findings:**
+
 1. ✅ **Reduced attack surface** — Removing unused routes (`/counter`, `/weather`) reduces potential attack vectors
 2. ✅ **No authorization bypass** — Neither deleted component had `[Authorize]` attributes or role requirements
 3. ✅ **Test coverage maintained** — 91.64% line coverage after removing obsolete tests
 4. ✅ **No secrets exposed** — No configuration changes, no secret additions or removals
 
 **Verification:**
+
 - ✅ Build succeeded (Release config, 0 errors, 0 warnings)
 - ✅ All 74 tests passing (Arch 6, Unit 59, Integration 9)
 - ✅ Code coverage: 91.64% maintained
 
 **Impact:**
+
 - Cleaner codebase focused on blog functionality
 - Reduced complexity and maintenance burden
 - Smaller attack surface
@@ -681,11 +713,11 @@ The Auth0 Management API and Security skills have been mined from imported reusa
 
 #### Ownership & Routing
 
-| Asset | Owner | Primary Audience | Trigger |
-|---|---|---|---|
-| `auth0-management-api` | Frodo (Tech Writer) | All squad; particularly Legolas (Frontend) | Role operations, API integration review |
-| `auth0-management-security` | Frodo (Tech Writer) | All squad | Security audit, secrets review, auth configuration change |
-| `docs/AUTH0_SETUP.md` | Frodo (Tech Writer) | Onboarding, new developers | Initial repo setup |
+| Asset                       | Owner               | Primary Audience                           | Trigger                                                   |
+| --------------------------- | ------------------- | ------------------------------------------ | --------------------------------------------------------- |
+| `auth0-management-api`      | Frodo (Tech Writer) | All squad; particularly Legolas (Frontend) | Role operations, API integration review                   |
+| `auth0-management-security` | Frodo (Tech Writer) | All squad                                  | Security audit, secrets review, auth configuration change |
+| `docs/AUTH0_SETUP.md`       | Frodo (Tech Writer) | Onboarding, new developers                 | Initial repo setup                                        |
 
 #### Next Steps
 
@@ -752,6 +784,7 @@ The imported `mongodb-dba-patterns` and `mongodb-filter-pattern` skills have bee
 #### Summary
 
 Imported `testcontainers-shared-fixture` and `webapp-testing` skills have been adapted to MyBlog's real test layout:
+
 - `Architecture.Tests` (architecture rule enforcement)
 - `Unit.Tests` (unit tests + bUnit components)
 - `Integration.Tests` (Mongo-backed integration tests via Testcontainers)
@@ -814,11 +847,11 @@ Three secondary imported skills assessed against MyBlog's repository structure, 
 
 #### Assessment Results
 
-| Skill | Fit | Decision | Reason |
-|-------|-----|----------|--------|
-| **post-build-validation** | ❌ Poor | **DELETE** | Pattern designed for external game-world state validation (RCON block verification after structure placement). MyBlog has no remote operations, RCON commands, or external API validation. No scenario for graceful degradation on validation failure. Test failures **should** block build. |
-| **static-config-pattern** | 🟡 Marginal | **DELETE** | Backwards-compatible const→static property refactor. MyBlog already uses ASP.NET Core `IConfiguration` + Options pattern. Const fields (`health path`, `cache key`) are infrastructure internals, not legacy config debt. No current business case. |
-| **microsoft-code-reference** | ✅ Good | **RETAIN & CLARIFY** | Reference skill (tools + query patterns), not code pattern. Applicable during CI/CD troubleshooting, NuGet verification, Azure SDK method lookup, GitHub Actions pattern discovery. Needs rewrite to clarify scope for DevOps/NuGet/GitHub Actions scenarios. |
+| Skill                        | Fit        | Decision             | Reason                                                                                                                                                                                                                                                                                       |
+| ---------------------------- | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **post-build-validation**    | ❌ Poor     | **DELETE**           | Pattern designed for external game-world state validation (RCON block verification after structure placement). MyBlog has no remote operations, RCON commands, or external API validation. No scenario for graceful degradation on validation failure. Test failures **should** block build. |
+| **static-config-pattern**    | 🟡 Marginal | **DELETE**           | Backwards-compatible const→static property refactor. MyBlog already uses ASP.NET Core `IConfiguration` + Options pattern. Const fields (`health path`, `cache key`) are infrastructure internals, not legacy config debt. No current business case.                                          |
+| **microsoft-code-reference** | ✅ Good     | **RETAIN & CLARIFY** | Reference skill (tools + query patterns), not code pattern. Applicable during CI/CD troubleshooting, NuGet verification, Azure SDK method lookup, GitHub Actions pattern discovery. Needs rewrite to clarify scope for DevOps/NuGet/GitHub Actions scenarios.                                |
 
 #### MyBlog Context
 
@@ -834,10 +867,10 @@ Three secondary imported skills assessed against MyBlog's repository structure, 
 
 #### Disposition Timeline
 
-| Item | Action | Owner | Effort | Sprint |
-|------|--------|-------|--------|--------|
-| post-build-validation | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
-| static-config-pattern | Delete from `.squad/skills/` | Boromir | 5 min | Sprint 3 |
+| Item                     | Action                                          | Owner   | Effort | Sprint             |
+| ------------------------ | ----------------------------------------------- | ------- | ------ | ------------------ |
+| post-build-validation    | Delete from `.squad/skills/`                    | Boromir | 5 min  | Sprint 3           |
+| static-config-pattern    | Delete from `.squad/skills/`                    | Boromir | 5 min  | Sprint 3           |
 | microsoft-code-reference | Rewrite for DevOps/NuGet/GitHub Actions, retain | Boromir | 30 min | Sprint 2 (backlog) |
 
 #### Implementation Notes
@@ -851,6 +884,7 @@ Three secondary imported skills assessed against MyBlog's repository structure, 
 ## Governance Update (Milestone 2)
 
 All meaningful skill retention decisions now include:
+
 1. Explicit ownership & routing rules
 2. Anchoring to real MyBlog code paths (no generic guidance)
 3. Called-out future work (backlog items, not current implementation)
@@ -936,6 +970,7 @@ The imported skill `.squad/skills/merged-pr-guard/SKILL.md` includes a pattern f
 - ✅ `.squad/routing.md` — continues to route the skill for awareness when resuming work
 
 **Do not implement:**
+
 - ❌ Pre-commit hook guard
 - ❌ Workflow automation to detect merged branches
 - ❌ Additional enforcement logic
@@ -1057,6 +1092,7 @@ When monitoring PR checks during the merge gate process, the "Agent" check (GitH
 ### Context
 
 During PR #16 creation and check monitoring:
+
 - 4 core test suites (Architecture, Unit, Integration, Coverage) completed successfully within ~60 seconds
 - 2 additional checks remain in-progress: Agent (Copilot review) and build-and-test (secondary CI job)
 - PR status: OPEN, MERGEABLE, ready for human review
@@ -1066,6 +1102,7 @@ During PR #16 creation and check monitoring:
 **Do not wait for optional async checks before declaring a PR "ready for review".**
 
 Required checks:
+
 - Test Results ✅
 - Architecture Tests ✅
 - Unit Tests ✅
@@ -1074,6 +1111,7 @@ Required checks:
 - Prepare ✅
 
 Optional/informational (do not block):
+
 - Agent (async Copilot review)
 - build-and-test (duplicate secondary job; tests already covered by main suite)
 
@@ -1101,6 +1139,7 @@ Squad members can proceed to review and merge once all required checks pass, eve
 Team repeatedly encounters GitHub's "Merging is blocked" error during PR merges, despite all required CI checks passing and reviewers approving. This blocks merge progress and requires escalation to repo owner.
 
 **Observed in:**
+
 - PR #13 (first block)
 - PR #14 (same block, documented)
 - PR #15, #16, #17 (blocked but resolved via manual thread closure)
@@ -1147,6 +1186,7 @@ Repository is protected by GitHub Ruleset `protectbranch` (ID: 15246849) with th
 **Implement Option 1: Add RepositoryOwner to bypass_actors**
 
 Modify ruleset `protectbranch` pull_request rule bypass actors:
+
 ```
 bypass_actors: [
   {
@@ -1158,13 +1198,13 @@ bypass_actors: [
 
 #### Rationale
 
-| Aspect | Justification |
-|--------|---------------|
-| **Effectiveness** | ✅ Allows repo owner to override merge block if needed; keeps rule enforced for all team members |
-| **Risk** | ✅ Low — only repo owner gains override; team workflows unchanged |
-| **Permanence** | ✅ Persistent configuration change; one-time setup |
-| **Effort** | ✅ Minimal — single API call or UI toggle |
-| **Alternative Risks** | ❌ Disabling thread resolution entirely weakens review rigor; audit mode defeats protection |
+| Aspect                | Justification                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| **Effectiveness**     | ✅ Allows repo owner to override merge block if needed; keeps rule enforced for all team members |
+| **Risk**              | ✅ Low — only repo owner gains override; team workflows unchanged                                |
+| **Permanence**        | ✅ Persistent configuration change; one-time setup                                               |
+| **Effort**            | ✅ Minimal — single API call or UI toggle                                                        |
+| **Alternative Risks** | ❌ Disabling thread resolution entirely weakens review rigor; audit mode defeats protection      |
 
 #### Implementation Steps
 
@@ -1183,18 +1223,21 @@ gh api repos/mpaulosky/MyBlog/rulesets/15246849 --jq '.bypass_actors'
 ### Alternatives Considered
 
 #### Option 2: Disable Thread Resolution Requirement
+
 - **Setting:** `required_review_thread_resolution: false`
 - **Impact:** Threads still posted but no longer block merge
 - **Risk:** ⚠️ Medium — threads might be routinely ignored by team
 - **Recommended:** ❌ No — weakens code review discipline
 
 #### Option 3: Set Ruleset to Audit Mode
+
 - **Setting:** `enforcement: "audit"`
 - **Impact:** Rules no longer block; only logged for monitoring
 - **Risk:** ⚠️ High — defeats entire protection mechanism
 - **Recommended:** ❌ No — not a permanent fix, defeats purpose
 
 #### Option 4: Manual Thread Resolution (Current Workaround)
+
 - **Process:** Team manually clicks "Resolve" for each Copilot thread before merge
 - **Impact:** Merge unblocked but repetitive and error-prone
 - **Risk:** ⚠️ Medium — forgotten threads re-block merge; high friction
@@ -1229,6 +1272,7 @@ gh api repos/mpaulosky/MyBlog/rulesets/15246849 --jq '.bypass_actors'
 ### Problem Statement
 
 PR #19 ("chore: remove orphan root diff artifact from branch") was blocked at merge with:
+
 ```
 Repository rule violations — Required status check 'build-and-test' is expected
 ```
@@ -1260,12 +1304,14 @@ The PR itself is safe and approved by both Aragorn (lead) and Boromir (DevOps). 
 **Action:** Triggered workflow rerun  
 **Command:** `gh run rerun 24631882902`  
 **Result:** ✅ SUCCEEDED
+
 - New run started: 2026-04-19T15:05:10Z
 - New run completed: 2026-04-19T15:06:36Z  
 - Conclusion: `success`
 - All required status checks now passing
 
 **Verification:**
+
 ```
 $ gh pr view 19 --json mergeStateStatus,mergeable
 {
@@ -1279,6 +1325,7 @@ $ gh pr view 19 --json mergeStateStatus,mergeable
 #### ✅ COMPLETE — PR #19 MERGED
 
 **Merge Execution:**
+
 ```bash
 $ gh pr merge 19 --squash --delete-branch
 ✓ Squashed and merged pull request mpaulosky/MyBlog#19 (chore: remove orphan root diff artifact from branch)
@@ -1286,6 +1333,7 @@ $ gh pr merge 19 --squash --delete-branch
 ```
 
 **Merge Details:**
+
 - Merged at: 2026-04-19T15:07:38Z by mpaulosky
 - Target branch: `dev`
 - Commit SHA: 04ba254
@@ -1293,6 +1341,7 @@ $ gh pr merge 19 --squash --delete-branch
 - Remote branch: deleted
 
 **Final PR Status:**
+
 - `state: MERGED` ✅
 - Branch cleanup: complete
 - Remote tracking: removed
@@ -1304,6 +1353,7 @@ $ gh pr merge 19 --squash --delete-branch
 ### Context for Future Reference
 
 **Why `action_required` Occurs:**
+
 - GitHub Actions enters `action_required` state when:
   1. A workflow step requires approval/manual intervention
   2. Firewall/environment blocks execution mid-workflow
@@ -1311,10 +1361,12 @@ $ gh pr merge 19 --squash --delete-branch
 - This status blocks merge even though the workflow code itself is sound
 
 **Rerun Strategy:**
+
 - Rerunning is appropriate when `action_required` is due to environment, not code
 - Evidence: PR body contained firewall warning; tests pass on code inspection; no recent code changes
 
 **Merge Verification:**
+
 - Before merge: `mergeStateStatus: CLEAN`, `mergeable: MERGEABLE`
 - All required checks: passing
 - Review decision: none required for artifact cleanup PRs (non-code change)
