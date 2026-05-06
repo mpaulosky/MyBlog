@@ -1,5 +1,5 @@
 
-# 2025-07-14 — Tailwind Migration Skill Review
+## 2025-07-14 — Tailwind Migration Skill Review
 
 Conducted a detailed review of `/home/mpaulosky/.config/squad/.github/skills/tailwind-migration/SKILL.md` against the actual MyBlog project structure.
 
