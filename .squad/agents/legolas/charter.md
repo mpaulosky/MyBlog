@@ -63,3 +63,13 @@ Preferred: auto (frontend implementation resolves to claude-sonnet-4.6)
 - Page files: `{Name}Page.razor`
 - Code-behind: `{Name}Component.razor.cs`
 - Namespace: `Web.Components.{Area}` or `Web.Pages`
+
+## Critical Rules
+
+1. **Component naming is enforced** — pages are `{Name}Page.razor`, components are `{Name}Component.razor`. No exceptions; architecture tests catch violations.
+2. **No backend code in Blazor files** — data access, repository calls, and business logic must go through injected services or MediatR handlers. Never access MongoDB directly from a component.
+3. **`.razor` files do NOT get copyright headers** — only `.cs` files get the block copyright comment.
+4. **Before any push: run the FULL local test suite** — `dotnet test tests/Unit.Tests tests/Architecture.Tests -c Release`. Zero failures required. CI must never be the first place failures are discovered.
+5. **bUnit tests ship with the component** — every new Blazor component must have corresponding bUnit coverage. Tests are not an afterthought; coordinate with Gimli.
+6. **GH Pages rebuild is mandatory after every Bilbo blog cycle** — regenerate `docs/index.html` from root `README.md` after each blog post. No Jekyll, no `_config.yml`. Plain HTML only.
+7. **FOUC prevention is non-negotiable** — any theme/dark-mode change must use the anti-FOUC IIFE in `<head>` per `.squad/skills/blazor-tailwind-theme-persistence/SKILL.md`.
