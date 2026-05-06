@@ -286,7 +286,11 @@ Write comprehensive unit tests for all 4 CRUD handler groups using xUnit + Fluen
 
 **By:** Pippin (Docs)
 
-**What:** MyBlog is a training/learning project to practice .NET Aspire orchestration, Blazor Server rendering, and clean architecture. Stack: .NET 10, Aspire 13.2.2, Blazor Server (Interactive Server Rendering), in-memory repository only. No database, no auth, no cache. Domain model: BlogPost entity with factory method and mutation methods. Clean architecture with Domain/Web layering. 9 tests total: 7 unit tests (BlogPost, InMemoryBlogPostRepository), 2 architecture tests (NetArchTest.Rules). All tests passing.
+**What:** MyBlog is a training/learning project to practice .NET Aspire orchestration, Blazor Server rendering, and clean architecture.
+Stack: .NET 10, Aspire 13.2.2, Blazor Server (Interactive Server Rendering), in-memory repository only.
+No database, no auth, no cache. Domain model: BlogPost entity with factory method and mutation methods.
+Clean architecture with Domain/Web layering. 9 tests total: 7 unit tests (BlogPost, InMemoryBlogPostRepository),
+2 architecture tests (NetArchTest.Rules). All tests passing.
 
 **Why:** User (Matthew Paulosky) directive — this is a hands-on learning project, not production. Captured for team memory to ensure all documentation and decisions stay scoped to actual project state.
 
@@ -390,7 +394,11 @@ Write comprehensive unit tests for all 4 CRUD handler groups using xUnit + Fluen
 
 - **Severity:** 🔴 Critical
 - **Area:** 2 — Completeness of Bootstrap Removal
-- **Finding:** Step 8 mentions removing `bootstrap.bundle.min.js` from `App.razor`, but the actual `App.razor` does **not** include a `<script>` tag for it — Bootstrap JS is delivered as a static file in `wwwroot/lib/bootstrap/dist/js/` (confirmed: `bootstrap.bundle.min.js`, `bootstrap.bundle.js`, etc. are present). The skill's Step 8 only says "Delete or empty `Web/wwwroot/lib/bootstrap/`" but the step that removes the CSS link from `App.razor` (Step 2f) doesn't cross-reference deleting the lib directory. The current `App.razor` references Bootstrap CSS via `@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]` — this asset fingerprinting syntax isn't addressed.
+- **Finding:** Step 8 mentions removing `bootstrap.bundle.min.js` from `App.razor`, but the actual `App.razor` does **not** include a `<script>`
+  tag for it — Bootstrap JS is delivered as a static file in `wwwroot/lib/bootstrap/dist/js/`.
+  The skill's Step 8 only says "Delete or empty `Web/wwwroot/lib/bootstrap/`" but the step that removes the CSS link from `App.razor` (Step 2f)
+  doesn't cross-reference deleting the lib directory. The current `App.razor` references Bootstrap CSS via
+  `@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]` — this asset fingerprinting syntax isn't addressed.
 - **Recommendation:** 
   1. In Step 2f, explicitly show removing the `@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]` link (not a plain href).
   2. In Step 8, confirm deletion of `src/Web/wwwroot/lib/bootstrap/` covers both CSS and JS artifacts.
@@ -431,7 +439,10 @@ Write comprehensive unit tests for all 4 CRUD handler groups using xUnit + Fluen
 
 - **Severity:** 🟡 Important
 - **Area:** 1 — Tailwind Version Accuracy
-- **Finding:** The skill description says "Tailwind CSS v4+" but `package.json` pins `"tailwindcss": "^3.4.0"`. Tailwind v4 uses a completely different setup: no `tailwind.config.js`, CSS-first config via `@import "tailwindcss"` in the CSS file, different CLI, and different content scanning. These two approaches are incompatible. Using `^3.4.0` will install v3 while the description misleads agents into thinking v4 behavior applies.
+- **Finding:** The skill description says "Tailwind CSS v4+" but `package.json` pins `"tailwindcss": "^3.4.0"`.
+  Tailwind v4 uses a completely different setup: no `tailwind.config.js`, CSS-first config via `@import "tailwindcss"` in the CSS file,
+  different CLI, and different content scanning. These two approaches are incompatible.
+  Using `^3.4.0` will install v3 while the description misleads agents into thinking v4 behavior applies.
 - **Recommendation:** Choose one and be explicit. For maximum stability, pin v3:
   - Change description to "Tailwind CSS v3"
   - Pin `"tailwindcss": "^3.4.17"` (latest v3)
@@ -484,7 +495,7 @@ Write comprehensive unit tests for all 4 CRUD handler groups using xUnit + Fluen
 - **Finding:** After adding `node_modules/` (from `npm install`) and generating `tailwind.css` (compiled output), the `.gitignore` should be updated. The skill has no step for this. Committing `node_modules/` or the compiled CSS to git are both common mistakes.
 - **Recommendation:** Add a step after Step 2b:
 
-  ```
+  ```text
   Add to .gitignore:
   node_modules/
   # Either exclude the compiled output (regenerate on build):
@@ -1383,7 +1394,10 @@ The current `NavMenu.razor` contains carefully structured `<AuthorizeView>` wrap
 - `Roles="Admin"` for "Manage Users" link  
 - `<Authorized>` / `<NotAuthorized>` for Login/Logout toggle
 
-The skill says to use the template at `./references/NavMenu.razor` (which doesn't exist), and its description gives no indication that these auth structures must be preserved. An agent following the skill naively will write a nav bar without auth-awareness, making all protected links visible to unauthenticated users (client-side only — server auth still protects the routes, but the nav is confusing and unprofessional).
+The skill says to use the template at `./references/NavMenu.razor` (which doesn't exist), and its description gives no indication
+that these auth structures must be preserved. An agent following the skill naively will write a nav bar without auth-awareness,
+making all protected links visible to unauthenticated users (client-side only — server auth still protects the routes, but the nav is
+confusing and unprofessional).
 
 **Fix:**  
 The skill's NavMenu template must include the full `<AuthorizeView>` structure. Document explicitly:
@@ -1511,7 +1525,7 @@ Step 6's table lists only the default Blazor template pages. The MyBlog project 
 **Fix:**  
 Extend the Step 6 table:
 
-```
+```text
 | Features/BlogPosts/List/Index.razor       | Blog post list with Tailwind table styling       |
 | Features/BlogPosts/Create/Create.razor    | Form fields using @layer components form styles  |
 | Features/BlogPosts/Edit/Edit.razor        | Same as Create                                   |
@@ -1776,19 +1790,19 @@ git push origin dev
 
 **Regular squad/feature branch PR:**
 
-```
+```text
 squad/my-feature → PR → dev (target dev as default base)
 ```
 
 **Release PR:**
 
-```
+```text
 dev → PR → main (only PR type allowed to main; title: [RELEASE] vX.Y.Z - ...)
 ```
 
 **Hotfix PR:**
 
-```
+```text
 hotfix/critical-bug → PR → main (only other PR type to main; requires 1 approval)
 ```
 
@@ -2187,7 +2201,7 @@ Update SKILL.md and PR template to point to `docs/CONTRIBUTING.md` as the author
 **From:** mpaulosky (via Copilot)  
 **Date:** 2026-04-18T21:21:06Z & 2026-04-18T21:18:50Z
 
-### Directive 1: Pre-Push Gate is Mandatory Hard Block
+## Directive 1: Pre-Push Gate is Mandatory Hard Block
 
 **What:** The pre-push gate is mandatory and must be a hard block — the gate retries/blocks the push until `dotnet build` AND `dotnet test` both succeed.
 
@@ -2199,7 +2213,7 @@ Update SKILL.md and PR template to point to `docs/CONTRIBUTING.md` as the author
 - `scripts/install-hooks.sh` installs the hook
 - Emergency bypass documented: `git push --no-verify` (use sparingly)
 
-### Directive 2: Always Run Pre-Push Gate Validation
+## Directive 2: Always Run Pre-Push Gate Validation
 
 **What:** Always run a pre-push gate before pushing branches to GitHub. Agents must run `dotnet build` and `dotnet test` locally before `git push` to lower the chance of pushing bad code.
 
@@ -2210,5 +2224,47 @@ Update SKILL.md and PR template to point to `docs/CONTRIBUTING.md` as the author
 - Pre-push hook enforces `dotnet build MyBlog.slnx -c Release`
 - Pre-push hook enforces `dotnet test MyBlog.slnx --no-build -c Release`
 - CI skips hook when `CI=true` environment variable set
+
+---
+
+# Decision: Pre-Commit Markdownlint Gate
+
+**Date:** 2026-04-25
+**Author:** Aragorn (Lead / Architect)
+**PR:** #232
+**Branch:** `squad/230-precommit-markdownlint-gate`
+
+## Context
+
+PR #229 fixed 3,243+ markdownlint violations across all `.md` files and added `.markdownlint.json` to the repo root. Without a commit-time gate, those violations could easily regress as contributors edit documentation.
+
+## Decision
+
+Add a pre-commit git hook (`.github/hooks/pre-commit`) that runs `markdownlint-cli2` on staged `.md` files only before each local commit.
+
+## Rationale
+
+- **Staged-only linting** is fast — no full-repo scan on every commit.
+- **Graceful degradation** — warns but does not block if the binary is absent, preserving developer ergonomics for contributors who have not run `npm install`.
+- **Consistent config** — reuses the existing `.markdownlint.json` so rules cannot diverge between the hook and CI.
+- **Pattern consistency** — mirrors the pre-push hook pattern already established in `.github/hooks/pre-push` and `scripts/install-hooks.sh`.
+
+## Implementation
+
+- `.github/hooks/pre-commit` — the hook source (tracked in git)
+- `scripts/install-hooks.sh` — updated to install both `pre-push` and `pre-commit` hooks
+- `package.json` — added `markdownlint-cli2 ^0.17.2` as dev dependency
+
+## Binary probe order
+
+1. `markdownlint` (global CLI)
+2. `./node_modules/.bin/markdownlint-cli2`
+3. `./node_modules/.bin/markdownlint`
+4. Not found → warn, exit 0 (graceful degrade)
+
+## Trade-offs
+
+- `package-lock.json` grows with the new dependency — acceptable for a DX tooling dep.
+- Contributors must run `npm install` to get the linter; the hook warns them if they haven't.
 
 ---

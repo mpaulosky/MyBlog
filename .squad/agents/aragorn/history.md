@@ -590,6 +590,7 @@ Gated Sprint 9 readiness assessment for Web.Tests xUnit v3 migration (Issue #190
 Reviewed and validated all 7 squad maintenance files modified in branch `squad/222-squad-maintenance`. Triggered by Boromir; working as Aragorn (Lead Developer).
 
 **Files validated as correct:**
+
 - `.squad/team.md` — table alignment and member roster accurate
 - `.squad/routing.md` — routing table alignment correct; all guardrail entries intact
 - `.squad/agents/aragorn/charter.md` — blank-line formatting improvements; content accurate
@@ -598,6 +599,7 @@ Reviewed and validated all 7 squad maintenance files modified in branch `squad/2
 - `.squad/decisions.md` — formatting improvements (blank lines after `**Bold:**` blocks, URL angle-bracket escaping); content accurate
 
 **Bugs fixed:**
+
 1. `.squad/identity/now.md` — truncated YAML timestamp (`2026-04-19T03:35:`) completed to `2026-04-19T03:35:00Z`
 2. `.squad/decisions.md` — duplicate section heading (`### 6.` and `### 5.` for same section) — removed the erroneous `### 6.` duplicate
 
