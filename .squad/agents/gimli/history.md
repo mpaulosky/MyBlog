@@ -422,3 +422,32 @@ Migrate `tests/Web.Tests.Integration` from xUnit v2 to xUnit v3 (3.2.2), matchin
 
 5. **Pre-push gate runs integration tests** — The repo's pre-push hook runs `tests/Web.Tests.Integration` automatically. All 12 tests passed including the Testcontainers-based MongoDB and Redis tests.
 6. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.
+
+## Session: Theme Colour Persistence Tests (Issue #239, 2025)
+
+### Task
+
+Write focused bUnit and architecture tests proving that theme colour selection persists across navigation (reads from JS localStorage on mount, writes on selection), all four Tailwind palette colours are supported, and shared layout surfaces (NavMenu, MainLayout) honour the selected primary palette.
+
+### Work Done
+
+- **ThemeColorPersistenceTests.cs** (14 new tests): Parametric tests for all 4 colours (red, blue, green, yellow) via `[Theory]`; simulated navigation scenario (unmount/remount reads fresh from JS); cascade verification (stored colour flows to ThemeColorDropdownComponent); exactly-once-per-mount `getColor`/`getBrightness` guard; JS error resilience for SetColor/SetBrightness.
+- **MainLayoutThemeTests.cs** (7 new tests): NavMenu `bg-primary-600` and `border-primary-200` CSS class assertions; NavMenu dropdown shows stored colour from cascaded ThemeProvider; MainLayout root div `bg-primary-400 dark:bg-primary-800` assertions; ThemeProvider + MainLayout integrated brightness cascade.
+- **ThemeLayerTests.cs** (+2 architecture tests): Layout components reside in `MyBlog.Web.Components.Layout` namespace; Theme components have no dependency on Auth0/Identity.
+- Result: **87 bUnit tests** (was 61), **13 architecture tests** (was 11).
+
+### Key Learnings — bUnit Theme Testing
+
+1. **`WaitForAssertion` required for ThemeProvider cascade** — `OnAfterRenderAsync` runs after bUnit's initial render cycle. Any assertion on `CurrentColor`/`CurrentBrightness` or child component values must use `cut.WaitForAssertion(() => ...)` to await the JS interop round-trip.
+
+2. **`JSInterop.Setup<string>` must precede `RenderComponent`** — In bUnit, JSInterop setup must be done before rendering the component or the `getColor`/`getBrightness` calls will fail with `JSRuntimeMode.Strict`. Set up the mock, then render.
+
+3. **`firstRender` guard is testable** — ThemeProvider only calls `getColor`/`getBrightness` once per mount. Verify by re-rendering via `cut.SetParametersAndRender()` and asserting `Received(1)` call count stays at 1 on subsequent renders.
+
+4. **`selected="@(CurrentColor == "blue")"` pattern** — Legolas fixed the dropdown to explicitly set the `selected` attribute per-option using Blazor bool binding. bUnit picks this up correctly — `cut.Find("option[value='blue']").HasAttribute("selected")` returns true when blue is active.
+
+5. **ThemeProvider moved to Routes.razor (interactive boundary)** — The key production fix: ThemeProvider was previously in App.razor (SSR context) where JS interop was unavailable. Moving it into Routes.razor (which carries `@rendermode InteractiveServer`) enables localStorage read on mount. bUnit tests are unaffected by this location change since they render ThemeProvider directly.
+
+6. **`TestAuthorizationService` required for layout components** — Any component tree containing `<AuthorizeView>` (NavMenu, MainLayout) requires `Services.AddSingleton<IAuthorizationService, TestAuthorizationService>()`. Omitting this throws `InvalidOperationException` at render time.
+
+7. **NavMenu renders ThemeSelector twice** — Desktop nav and mobile hamburger both include `<ThemeSelector />`. `cut.Find("select")` finds the first (desktop). `cut.FindAll("select")` returns 2. Write tests against the first unless explicitly testing mobile nav.
