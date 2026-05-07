@@ -80,3 +80,46 @@ As part of squad skills/playbooks review, MongoDB DBA patterns + filter pattern 
 **Timeline:** Sprint 7 (2h estimated).
 
 **Owner:** Sam (Domain Model) — routed with `mongodb-filter-pattern` skill injection.
+
+## 2026-05-07 — PR #243 Revision: Aragorn's Blockers Fixed
+
+### Task: Fix three test blockers flagged by Aragorn on PR #243 (issue #239)
+
+Aragorn rejected PR #243 with three specific blockers. Legolas and Gimli locked out per lockout rule. Sam owns the full revision cycle.
+
+### Blockers Addressed
+
+**1. ThemeLayerTests.cs — tautological layout namespace test**
+
+`LayoutComponents_ShouldResideIn_LayoutNamespace` filtered types by namespace and then asserted the same namespace — a tautology that provided zero architectural protection. Replaced with `ThemeComponents_ShouldNotDependOn_LayoutComponents`, which enforces the one-way coupling rule: layout components may consume theme components, but theme components must never depend on layout.
+
+**2. ThemeColorPersistenceTests.cs — async write path not properly awaited**
+
+Three test methods (`ThemeProviderSetColor_WritesToJs_*`, `ThemeProviderSetBrightness_WritesToJs_*`, `ThemeProvider_AfterSetColorRed_*`) were `void` and called `cut.InvokeAsync(...)` without `await`. Promoted all three to `async Task` and awaited the `InvokeAsync` call so the full `InvokeVoidAsync` write path completes before assertions run.
+
+**3. ThemeColorPersistenceTests.cs — JS-failure catch branch uncovered**
+
+Added two new tests:
+
+- `ThemeProvider_SetColor_SilentlySwallowsJsException_AndKeepsNewColor`
+- `ThemeProvider_SetBrightness_SilentlySwallowsJsException_AndKeepsNewBrightness`
+
+Both use `JSRuntimeMode.Strict` with the respective write method (`setColor`/`setBrightness`) **not** planned.
+bUnit throws on the unplanned `InvokeVoidAsync` call, exercising the catch branch.
+Tests assert that `CurrentColor`/`CurrentBrightness` is updated and no exception propagates to the caller.
+No production code change required — the bare `catch {}` blocks in `ThemeProvider.razor.cs` are already correct.
+
+### Build & Test Results
+
+- Build: 0 errors, 46 pre-existing test-project warnings (CA1707/CA1307 naming — not introduced by this change)
+- Architecture.Tests: 13/13 passed
+- Web.Tests.Bunit: 89/89 passed (up from 87 before JS-failure tests were added)
+- Domain.Tests: 42/42 passed
+- Web.Tests: 127/127 passed
+- All pre-push gates passed; pushed to `squad/239-fix-theme-color-selector-persistence`
+
+### Learnings
+
+- **Tautological architecture tests are silently useless.** `ResideInNamespace("X").Should().ResideInNamespace("X")` always passes and provides no enforcement. The meaningful pattern is `.ShouldNot().HaveDependencyOn(...)`.
+- **bUnit `InvokeAsync` must be awaited in async tests.** Fire-and-forget `InvokeAsync` in a `void` test can pass intermittently if `WaitForAssertion` retries long enough, but it doesn't pin the full async path. Always `await cut.InvokeAsync(...)` in `async Task` tests.
+- **`JSRuntimeMode.Strict` is the correct tool for catch-branch coverage.** Setting Strict mode and leaving a specific invocation unplanned causes bUnit to throw a `JSException`-derived exception on `InvokeVoidAsync`. The production `catch {}` swallows it. This cleanly exercises the error path without mocking custom exception types.
