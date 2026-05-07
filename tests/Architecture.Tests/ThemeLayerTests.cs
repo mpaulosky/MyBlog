@@ -46,17 +46,15 @@ public class ThemeLayerTests
 	}
 
 	[Fact]
-	public void LayoutComponents_ShouldResideIn_LayoutNamespace()
+	public void ThemeComponents_ShouldNotDependOn_LayoutComponents()
 	{
-		// Arrange
-		var layoutAssembly = WebAssembly;
-
-		// Act
-		var result = Types.InAssembly(layoutAssembly)
+		// Theme components are a lower-level UI primitive: layout may consume them,
+		// but theme components must never take a dependency on layout (one-way coupling).
+		var result = Types.InAssembly(WebAssembly)
 				.That()
-				.ResideInNamespace("MyBlog.Web.Components.Layout")
-				.Should()
-				.ResideInNamespace("MyBlog.Web.Components.Layout")
+				.ResideInNamespace("MyBlog.Web.Components.Theme")
+				.ShouldNot()
+				.HaveDependencyOn("MyBlog.Web.Components.Layout")
 				.GetResult();
 
 		// Assert

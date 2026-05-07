@@ -72,7 +72,7 @@ public sealed class ThemeColorPersistenceTests : BunitContext
 	[InlineData("blue")]
 	[InlineData("green")]
 	[InlineData("yellow")]
-	public void ThemeProviderSetColor_WritesToJs_ForAllSupportedPaletteColors(string newColor)
+	public async Task ThemeProviderSetColor_WritesToJs_ForAllSupportedPaletteColors(string newColor)
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -80,21 +80,20 @@ public sealed class ThemeColorPersistenceTests : BunitContext
 
 		var cut = Render<ThemeProvider>();
 
-		// Act
-		cut.InvokeAsync(() => cut.Instance.SetColor(newColor));
+		// Act — await so the full async write path (InvokeVoidAsync) completes before asserting
+		await cut.InvokeAsync(() => cut.Instance.SetColor(newColor));
 
 		// Assert — JS setColor is invoked, which writes to localStorage (read back on next page load)
-		cut.WaitForAssertion(() =>
-			JSInterop.Invocations.Should().Contain(i =>
-				i.Identifier == "themeManager.setColor" &&
-				i.Arguments.Contains(newColor),
-				because: $"SetColor('{newColor}') must persist to localStorage via themeManager.setColor"));
+		JSInterop.Invocations.Should().Contain(i =>
+			i.Identifier == "themeManager.setColor" &&
+			i.Arguments.Contains(newColor),
+			because: $"SetColor('{newColor}') must persist to localStorage via themeManager.setColor");
 	}
 
 	[Theory]
 	[InlineData("light")]
 	[InlineData("dark")]
-	public void ThemeProviderSetBrightness_WritesToJs_ForBothSupportedValues(string newBrightness)
+	public async Task ThemeProviderSetBrightness_WritesToJs_ForBothSupportedValues(string newBrightness)
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -102,15 +101,14 @@ public sealed class ThemeColorPersistenceTests : BunitContext
 
 		var cut = Render<ThemeProvider>();
 
-		// Act
-		cut.InvokeAsync(() => cut.Instance.SetBrightness(newBrightness));
+		// Act — await so the full async write path completes before asserting
+		await cut.InvokeAsync(() => cut.Instance.SetBrightness(newBrightness));
 
 		// Assert
-		cut.WaitForAssertion(() =>
-			JSInterop.Invocations.Should().Contain(i =>
-				i.Identifier == "themeManager.setBrightness" &&
-				i.Arguments.Contains(newBrightness),
-				because: $"SetBrightness('{newBrightness}') must persist to localStorage via themeManager.setBrightness"));
+		JSInterop.Invocations.Should().Contain(i =>
+			i.Identifier == "themeManager.setBrightness" &&
+			i.Arguments.Contains(newBrightness),
+			because: $"SetBrightness('{newBrightness}') must persist to localStorage via themeManager.setBrightness");
 	}
 
 	// ─── Navigation simulation: new ThemeProvider instance reads stored value ─
@@ -190,7 +188,7 @@ public sealed class ThemeColorPersistenceTests : BunitContext
 	// ─── SetColor updates the internal state AND cascades ─────────────────────
 
 	[Fact]
-	public void ThemeProvider_AfterSetColorRed_CurrentColorIsRed_AndColorDropdownReflectsIt()
+	public async Task ThemeProvider_AfterSetColorRed_CurrentColorIsRed_AndColorDropdownReflectsIt()
 	{
 		// Arrange — starts with blue
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
@@ -199,8 +197,8 @@ public sealed class ThemeColorPersistenceTests : BunitContext
 		var cut = Render<ThemeProvider>(parameters => parameters
 			.AddChildContent<ThemeSelector>());
 
-		// Act — user picks red
-		cut.InvokeAsync(() => cut.Instance.SetColor("red"));
+		// Act — user picks red; await the full async write path
+		await cut.InvokeAsync(() => cut.Instance.SetColor("red"));
 
 		// Assert — internal state updated AND cascaded to child dropdown
 		cut.WaitForAssertion(() =>
@@ -248,5 +246,48 @@ public sealed class ThemeColorPersistenceTests : BunitContext
 		// Assert
 		JSInterop.Invocations.Count(i => i.Identifier == "themeManager.getBrightness")
 			.Should().Be(1, because: "ThemeProvider must read brightness from JS only on firstRender");
+	}
+
+	// ─── JS-failure branch: catch block swallows the exception ──────────────
+
+	[Fact]
+	public async Task ThemeProvider_SetColor_SilentlySwallowsJsException_AndKeepsNewColor()
+	{
+		// Arrange — Strict mode: themeManager.setColor is not planned, so bUnit throws JSException;
+		// the catch block in SetColor must absorb it without propagating to the caller.
+		JSInterop.Mode = JSRuntimeMode.Strict;
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		// themeManager.setColor deliberately NOT planned — exercises the catch branch
+
+		var cut = Render<ThemeProvider>();
+		cut.WaitForAssertion(() => cut.Instance.CurrentColor.Should().Be("blue"));
+
+		// Act — must not throw even though JS persistence will fail
+		await cut.InvokeAsync(() => cut.Instance.SetColor("red"));
+
+		// Assert — CurrentColor updated to the new value despite the JS failure
+		cut.Instance.CurrentColor.Should().Be("red",
+			because: "SetColor must update CurrentColor even when the JS persistence call throws");
+	}
+
+	[Fact]
+	public async Task ThemeProvider_SetBrightness_SilentlySwallowsJsException_AndKeepsNewBrightness()
+	{
+		// Arrange — Strict mode: themeManager.setBrightness is not planned
+		JSInterop.Mode = JSRuntimeMode.Strict;
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		// themeManager.setBrightness deliberately NOT planned — exercises the catch branch
+
+		var cut = Render<ThemeProvider>();
+		cut.WaitForAssertion(() => cut.Instance.CurrentBrightness.Should().Be("light"));
+
+		// Act — must not throw even though JS persistence will fail
+		await cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
+
+		// Assert
+		cut.Instance.CurrentBrightness.Should().Be("dark",
+			because: "SetBrightness must update CurrentBrightness even when the JS persistence call throws");
 	}
 }
