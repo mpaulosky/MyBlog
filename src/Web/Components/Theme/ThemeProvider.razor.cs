@@ -50,13 +50,27 @@ public partial class ThemeProvider : ComponentBase
 	{
 		CurrentColor = color;
 		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setColor", color);
+		try
+		{
+			await Js.InvokeVoidAsync("themeManager.setColor", color);
+		}
+		catch
+		{
+			// Ignore JS errors (circuit disconnect, localStorage unavailable)
+		}
 	}
 
 	public async Task SetBrightness(string brightness)
 	{
 		CurrentBrightness = brightness;
 		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness);
+		try
+		{
+			await Js.InvokeVoidAsync("themeManager.setBrightness", brightness);
+		}
+		catch
+		{
+			// Ignore JS errors (circuit disconnect, localStorage unavailable)
+		}
 	}
 }

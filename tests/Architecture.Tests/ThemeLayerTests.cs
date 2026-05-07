@@ -44,4 +44,41 @@ public class ThemeLayerTests
 		// Assert
 		result.IsSuccessful.Should().BeTrue();
 	}
+
+	[Fact]
+	public void LayoutComponents_ShouldResideIn_LayoutNamespace()
+	{
+		// Arrange
+		var layoutAssembly = WebAssembly;
+
+		// Act
+		var result = Types.InAssembly(layoutAssembly)
+				.That()
+				.ResideInNamespace("MyBlog.Web.Components.Layout")
+				.Should()
+				.ResideInNamespace("MyBlog.Web.Components.Layout")
+				.GetResult();
+
+		// Assert
+		result.IsSuccessful.Should().BeTrue();
+	}
+
+	[Fact]
+	public void ThemeComponents_ShouldHaveNoDependencyOn_Auth0OrIdentityServer()
+	{
+		// Arrange
+		var assembly = WebAssembly;
+
+		// Act — theme components must not couple to authentication services;
+		// they receive auth context only via Blazor's cascading AuthenticationState
+		var result = Types.InAssembly(assembly)
+				.That()
+				.ResideInNamespace("MyBlog.Web.Components.Theme")
+				.ShouldNot()
+				.HaveDependencyOnAny("Auth0", "Microsoft.AspNetCore.Identity", "IdentityServer")
+				.GetResult();
+
+		// Assert
+		result.IsSuccessful.Should().BeTrue();
+	}
 }

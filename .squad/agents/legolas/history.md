@@ -461,3 +461,56 @@ No concerns. This is intentional recovery of uncommitted CSS from a stalled bran
 - ✅ UI components automatically benefit from role claim normalization
 
 **Status:** ✅ Completed — Fix verified and decision merged to decisions.md
+
+---
+
+## 2026-05-09 — Theme Color Selector Persistence Fix (Issue #239)
+
+### Root Cause Diagnosed
+
+**ThemeProvider was in the static SSR boundary (App.razor), causing silent failure:**
+
+- `App.razor` renders in static SSR context. `ThemeProvider` there never executes `OnAfterRenderAsync`, so JS interop calls (`themeManager.getColor`, `themeManager.getBrightness`) never fire.
+- Interactive child components calling `Provider.SetColor()` via cascading parameter updated a static parent instance — `StateHasChanged()` was a no-op and cascaded values never re-propagated.
+- This is the canonical Blazor Interactive Server render-boundary bug: static parents cannot be re-rendered by interactive children.
+
+### Fix Applied
+
+**Moved `ThemeProvider` from `App.razor` into `Routes.razor`:**
+
+- `Routes.razor` is rendered with `@rendermode="InteractiveServer"` from `App.razor` — it IS inside the interactive boundary.
+- `ThemeProvider` now wraps the `<Router>` in `Routes.razor` and correctly executes `OnAfterRenderAsync` on first render.
+- JS interop reads color/brightness from localStorage and calls `StateHasChanged()` to propagate to all theme-aware children.
+
+**Also fixed `ThemeColorDropdownComponent.razor`:**
+
+- Added explicit `selected="@(CurrentColor == "X")"` on each `<option>` for robustness. Blazor sets `.value` on `<select>` in interactive mode, but explicit `selected` attributes also correct initial static render markup.
+
+**Added JS error resilience to `ThemeProvider.razor.cs`:**
+
+- `SetColor` and `SetBrightness` now catch exceptions from `Js.InvokeVoidAsync`. Circuit disconnections during a JS call no longer crash the component.
+
+### Pre-existing Build Blocker Resolved
+
+- **Snappier 1.0.0** had a high-severity vulnerability (GHSA-pggp-6c3x-2xmx), causing `NU1903` (warning-as-error) build failure.
+- Applied fix from commit `e3754bf`: pinned `Snappier` to `1.3.1` in `Directory.Packages.props` and added direct `PackageReference` to `src/Web/Web.csproj` and `src/AppHost/AppHost.csproj`.
+
+### Key Rules Confirmed
+
+- **ThemeProvider must live inside the Interactive Server render boundary.** Any component using `OnAfterRenderAsync` for JS interop must be inside (or be) an interactive component. Wrapping interactive subtrees from a static parent is a known anti-pattern.
+- **The anti-FOUC IIFE in `App.razor <head>` must stay in `App.razor`.** It runs during static pre-render (before Blazor hydration) and must not be moved into an interactive component.
+- **`Routes.razor` is the correct host for app-wide cascading providers** when the app uses `<Routes @rendermode="InteractiveServer" />` in `App.razor`.
+
+### Files Changed
+
+1. `Directory.Packages.props` — added `Snappier 1.3.1`
+2. `src/AppHost/AppHost.csproj` — added `<PackageReference Include="Snappier" />`
+3. `src/Web/Web.csproj` — added `<PackageReference Include="Snappier" />`
+4. `src/Web/Components/App.razor` — removed `<ThemeProvider>` wrapper around `<Routes>`
+5. `src/Web/Components/Routes.razor` — added `@using` + `<ThemeProvider>` wrapping `<Router>`
+6. `src/Web/Components/Theme/ThemeColorDropdownComponent.razor` — added `selected=` attributes on each `<option>`
+7. `src/Web/Components/Theme/ThemeProvider.razor.cs` — added try-catch in `SetColor`/`SetBrightness`
+
+**Tests:** Architecture.Tests 15/15 ✅ · Web.Tests.Bunit 65/65 ✅ · Domain.Tests 42/42 ✅
+
+**Filed:** `.squad/decisions/inbox/legolas-theme-color-persistence.md`
