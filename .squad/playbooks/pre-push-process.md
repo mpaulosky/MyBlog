@@ -159,7 +159,7 @@ chmod +x .git/hooks/pre-push
 - **Build repair:** `.github/prompts/build-repair.prompt.md`
 - **Contributing guide:** `CONTRIBUTING.md` (Pre-Push Gates section)
 - **Ceremonies:** `.squad/ceremonies.md` (Build Repair Check, Standard Task Workflow Phase 3)
-- **Skill:** `.copilot/skills/pre-push-test-gate/SKILL.md`
+- **Skill:** `.squad/skills/pre-push-test-gate/SKILL.md`
 
 ---
 
