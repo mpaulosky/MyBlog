@@ -67,7 +67,40 @@ Case A: `appsettings.json` has empty strings for `Auth0:Domain` and `Auth0:Clien
 - AppHost does NOT inject Auth0 env vars — developers must set user secrets manually on `src/Web`
 - `appsettings.Development.json` should document required secret keys (with empty values) so developers know what to configure
 
-## 2026-04-19 — MongoDB Query Patterns Adoption (Skills Review)
+## 2026-05-07 — PR #242 Revision: Aragorn Review Blockers (Issue #238)
+
+### Task: Fix three Aragorn-rejected blockers on the light/dark theme toggle PR
+
+**Context:** Aragorn rejected PR #242 (feat(238): fix light/dark theme toggle). Sam owns the revision cycle (Legolas and Gimli locked out per reviewer routing).
+
+### Changes Made
+
+1. **`src/Web/Components/Theme/ThemeProvider.razor.cs`** — Removed ALL `ConfigureAwait(false)` calls.
+   - In Blazor Server, component lifecycle methods run on the renderer's synchronization context.
+   - `ConfigureAwait(false)` allows continuations to run on thread-pool threads, which means state mutations (`CurrentColor`, `CurrentBrightness`) and `InvokeAsync(StateHasChanged)` can execute off the renderer sync context — unsafe for interactive server components.
+   - Fix: plain `await` throughout; let the Blazor runtime keep continuations on the correct context.
+
+2. **`tests/Architecture.Tests/ThemeRenderBoundaryTests.cs`** — Hardened false-pass guard in `RoutesShouldWrapRouterInsideThemeProvider`.
+   - The original test only asserted `themeProviderStart >= 0`. If `</Router>` was absent (index = -1), `themeProviderEnd > routerEnd` became `positive > -1 = true` — a false pass.
+   - Fix: explicit `BeGreaterThanOrEqualTo(0)` assertions for `routerStart`, `routerEnd`, and `themeProviderEnd` before any positional comparison.
+
+3. **`tests/Web.Tests.Bunit/Components/Theme/ThemeProviderTests.cs`** — Corrected un-awaited `InvokeAsync` calls.
+   - Four test methods (`SetColor`/`SetBrightness` × 2) were `void` and discarded the `Task` returned by `cut.InvokeAsync(...)`. Any async failure inside `SetColor`/`SetBrightness` was silently swallowed.
+   - Fix: methods converted to `async Task`, `InvokeAsync` awaited.
+   - Also added `.SetVoidResult()` to `SetupVoid(...)` handlers — bUnit requires explicit resolution when a handler is explicitly configured, even in `Loose` mode.
+
+### Build Validation
+
+- ✅ Release build: 0 errors, 0 warnings (new code)
+- ✅ Architecture.Tests: 15/15 passed
+- ✅ Web.Tests.Bunit: 65/65 passed
+- ✅ All pre-push gates passed
+
+### Learnings
+
+- **`ConfigureAwait(false)` is never appropriate in Blazor Server component lifecycle methods** — it moves continuations off the renderer sync context, making state mutations and `StateHasChanged` calls racy.
+- **Architecture test false-pass pattern**: when index comparisons are used (`IndexOf`), every index value must be individually asserted `>= 0` before positional comparisons; otherwise absent elements (index = -1) can make ordering assertions trivially true.
+- **bUnit `SetupVoid` requires `.SetVoidResult()`** when the invocation is actually awaited. In `Loose` mode, un-configured invocations auto-resolve, but explicitly configured handlers (`SetupVoid(...)`) must be resolved with `.SetVoidResult()` or they hang the await.
 
 As part of squad skills/playbooks review, MongoDB DBA patterns + filter pattern identified for formalization.
 
