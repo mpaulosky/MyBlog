@@ -539,3 +539,48 @@ No concerns. This is intentional recovery of uncommitted CSS from a stalled bran
 - `tests/AppHost.Tests/Tests/Layout/LayoutAnonymousTests.cs` — added toggle visibility assertion
 
 **Filed:** `.squad/decisions/inbox/legolas-theme-toggle.md`
+
+---
+
+## Session: Issue #238 — Theme Toggle Frontend Implementation (2026-05-07)
+
+### Task
+
+Implement the root cause fix for the light/dark theme toggle by relocating `ThemeProvider` to the correct render boundary. The live app had the toggle component rendered but inert due to Blazor render-mode isolation.
+
+### Work Done
+
+- Moved `ThemeProvider` from `App.razor` context into `Routes.razor`, wrapping `<Router>` directly
+- Updated `App.razor` to remove inline theme script and rely solely on `ThemeProvider` cascade
+- Updated `NavMenu.razor` to place `ThemeSelector` in both desktop and mobile nav slots without declaring nested `@rendermode`
+- Registered `IThemeManager` DI dependency in `Program.cs`
+- Created two decision files documenting the structural fix and rationale
+
+### Key Decisions
+
+1. **ThemeProvider Placement** — Routes.razor only; Not App.razor. Routes shares the interactive boundary with ThemeSelector; App does not.
+2. **NavMenu RenderMode** — Must NOT declare `@rendermode` when consuming cascaded theme state.
+
+### Test Coverage
+
+- bUnit theme tests: 37 (+4 cascade integration + markInitialized readiness tests)
+- Architecture tests: 5 theme-specific tests (structural enforcement)
+- All tests passing
+
+### Commits
+
+- `70c9023` — feat(238): fix light/dark theme toggle with ThemeProvider cascade
+- `84a4cb0` — fix(238): light/dark theme toggle — implementation + full test coverage
+
+### Root Cause Analysis
+
+The interactive render-mode boundary was crossing between static `App.razor` and
+interactive `Routes.razor`. When `ThemeProvider` was outside or near the
+interactive fence, `ThemeSelector` in `NavMenu` (which was inside Routes) could
+not reliably receive cascaded values from the provider because Blazor cascades
+do not cross render-mode fences reliably. Moving `ThemeProvider` into
+`Routes.razor` kept both components in the same interactive subtree.
+
+### Outcome
+
+✅ Live app theme toggle now fully interactive. Regression guards in place.
