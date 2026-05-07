@@ -42,15 +42,15 @@ Spawned agents have read access to the entire repository, including `.env` files
 
 **NEVER write these to `.squad/` files:**
 
-| Pattern Type       | Examples                                                         | Regex Pattern (for scanning)                           |
-| ------------------ | ---------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------- | -------------------------- | --------- | -------------------- | ------ |
-| API Keys           | `OPENAI_API_KEY=sk-proj-...`, `GITHUB_TOKEN=ghp_...`             | `[A-Z_]+(?:KEY                                         | TOKEN                         | SECRET)=[^\s]+`            |
-| Passwords          | `DB_PASSWORD=super_secret_123`, `password: "..."`                | `[?:PASSWORD                                           | PASS                          | PWD](:=)\s\*["']?[^\s"']+` |
-| Connection Strings | `postgres://user:pass@host:5432/db`, `Server=...;Password=...`   | `(?:postgres                                           | mysql                         | mongodb)://[^@]+@          | (?:Server | Host)=.\*(?:Password | Pwd)=` |
-| JWT Tokens         | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`                        | `eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+` |
-| Private Keys       | `-----BEGIN PRIVATE KEY-----`, `-----BEGIN RSA PRIVATE KEY-----` | `-----BEGIN [A-Z ]+PRIVATE KEY-----`                   |
-| AWS Credentials    | `AKIA...`, `aws_secret_access_key=...`                           | `AKIA[0-9A-Z]{16}                                      | aws_secret_access_key=[^\s]+` |
-| Email Addresses    | `user@example.com` (PII violation per team decision)             | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`       |
+| Pattern Type | Examples | Regex Pattern (for scanning) |
+| --- | --- | --- |
+| API Keys | `OPENAI_API_KEY=sk-proj-...`, `GITHUB_TOKEN=ghp_...` | `[A-Z_]+(?:KEY\|TOKEN\|SECRET)=[^\s]+` |
+| Passwords | `DB_PASSWORD=super_secret_123`, `password: "..."` | `(?:PASSWORD\|PASS\|PWD)[:=]\s*["']?[^\s"']+` |
+| Connection Strings | `postgres://user:pass@host:5432/db`, `Server=...;Password=...` | `(?:(?:postgres\|mysql\|mongodb)://[^@]+@\|(?:Server\|Host)=.*(?:Password\|Pwd)=)` |
+| JWT Tokens | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` | `eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+` |
+| Private Keys | `-----BEGIN PRIVATE KEY-----`, `-----BEGIN RSA PRIVATE KEY-----` | `-----BEGIN [A-Z ]+PRIVATE KEY-----` |
+| AWS Credentials | `AKIA...`, `aws_secret_access_key=...` | `AKIA[0-9A-Z]{16}\|aws_secret_access_key=[^\s]+` |
+| Email Addresses | `user@example.com` (PII violation per team decision) | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` |
 
 **What to write instead:**
 
@@ -70,7 +70,7 @@ Spawned agents have read access to the entire repository, including `.env` files
    - Remove the file from staging: `git reset HEAD <file>`
    - Report to user:
 
-     ```
+    ```text
      🚨 SECRET DETECTED — commit blocked
 
      File: .squad/decisions/inbox/river-db-config.md
@@ -98,7 +98,7 @@ Spawned agents have read access to the entire repository, including `.env` files
 1. **STOP immediately** — do not make more commits
 2. **Alert the user:**
 
-   ```
+    ```text
    🚨 CREDENTIAL LEAK DETECTED
 
    A secret was found in git history:
@@ -123,7 +123,7 @@ Spawned agents have read access to the entire repository, including `.env` files
 
 **Agent needs to know what environment variables are required:**
 
-```
+```text
 Agent: "What environment variables does this app need?"
 → Reads `.env.example`:
     OPENAI_API_KEY=sk-...
@@ -142,7 +142,7 @@ Agent: "What environment variables does this app need?"
 
 **Agent needs to know database schema:**
 
-```
+```text
 Agent: (reads .env)
     DATABASE_URL=postgres://admin:super_secret_pw@prod.example.com:5432/appdb
 
@@ -154,7 +154,7 @@ Agent: (reads .env)
 
 **Correct approach:**
 
-```
+```text
 Agent: (reads .env.example OR asks user)
 User: "It's a Postgres database, schema is in migrations/"
 

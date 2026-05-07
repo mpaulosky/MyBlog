@@ -91,14 +91,17 @@ ghw api user --jq '.login'   # should show work username
 
 ## Repo-Specific Account Binding
 
-This repo (`bradygaster/squad`) is bound to the **bradygaster** (personal) account.
-All `gh` operations in this repo MUST use `ghp` / `gh-personal`.
+Do not hard-code a repo/account binding in this skill. Determine the correct alias from the current repository owner:
+
+- If the repo owner matches the user's personal account, use `ghp` / `gh-personal`
+- If the repo owner matches the user's work or EMU account, use `ghw` / `gh-work`
+- If the mapping is unclear, ask the user before any repo-mutating `gh` operation
 
 ## For Squad Agents
 
-At the TOP of any script touching GitHub, define:
+At the TOP of any script touching GitHub, define the functions with the usernames you just confirmed:
 
 ```powershell
-function gh-personal { gh auth switch --user bradygaster 2>$null | Out-Null; gh @args }
-function gh-work { gh auth switch --user bradyg_microsoft 2>$null | Out-Null; gh @args }
+function gh-personal { gh auth switch --user THEIR_PERSONAL_USERNAME 2>$null | Out-Null; gh @args }
+function gh-work { gh auth switch --user THEIR_WORK_USERNAME 2>$null | Out-Null; gh @args }
 ```

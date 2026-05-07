@@ -5,11 +5,9 @@ description: Turn the current conversation context into a PRD and publish it to 
 
 ## To PRD
 
-This skill takes the current conversation context and codebase understanding and produces a PRD. Do NOT interview the user — just synthesize what you already know.
+This skill takes the current conversation context and codebase understanding and produces a PRD. Default to synthesizing what you already know, and do not start with a broad discovery interview.
 
-If the issue tracker workflow, labels, or publishing expectations are unclear,
-inspect the existing issue tracker conventions or ask the user before
-publishing.
+If the issue tracker workflow, labels, publishing expectations, or a PRD-shaping requirement is genuinely unclear, inspect the existing issue tracker conventions first and ask only the smallest targeted follow-up needed before publishing.
 
 ## Process
 
@@ -19,7 +17,7 @@ publishing.
 
 A deep module (as opposed to a shallow module) is one which encapsulates a lot of functionality in a simple, testable interface which rarely changes.
 
-Check with the user that these modules match their expectations. Check with the user which modules they want tests written for.
+If the current context leaves module boundaries or test expectations ambiguous enough to materially change the PRD, confirm only those specific gaps with the user before publishing. Otherwise, record the assumptions in the PRD and continue.
 
 1. Write the PRD using the template below, then publish it to the project issue tracker. Apply the repo's current triage label conventions if they are known; otherwise publish without labels and note the gap.
 
