@@ -14,20 +14,25 @@ using Auth0.AspNetCore.Authentication;
 
 using FluentValidation;
 
-using MediatR;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.EntityFrameworkCore;
 
 using MyBlog.Domain.Behaviors;
-using MyBlog.Domain.Entities;
 using MyBlog.ServiceDefaults;
 using MyBlog.Web.Components;
-using MyBlog.Web.Infrastructure.Caching;
 using MyBlog.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// AppHost browser tests run the web app under the custom Testing environment.
+// Static web assets are wired automatically for Development, but not for arbitrary
+// environments launched from build output. Opting in here keeps Blazor framework
+// scripts, scoped CSS bundles, and component module scripts available during
+// AppHost/Playwright runs without changing published behavior.
+if (builder.Environment.IsEnvironment("Testing"))
+{
+	builder.WebHost.UseStaticWebAssets();
+}
 
 builder.AddServiceDefaults();
 

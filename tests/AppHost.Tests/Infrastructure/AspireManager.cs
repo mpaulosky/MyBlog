@@ -9,6 +9,7 @@
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+
 using Microsoft.Extensions.Logging;
 
 namespace AppHost.Tests.Infrastructure;
@@ -20,6 +21,8 @@ public class AspireManager : IAsyncLifetime
 {
 	private readonly ILogger<AspireManager> _logger = LoggerFactory.Create(builder => builder.AddConsole())
 		.CreateLogger<AspireManager>();
+	private const string FixedWebPortOptInEnvironmentVariable = "MYBLOG_APPHOST_TEST_FIXED_WEB_PORT";
+	private const int FixedHttpsPort = 7043;
 
 	internal PlaywrightManager PlaywrightManager { get; } = new();
 
@@ -58,9 +61,20 @@ public class AspireManager : IAsyncLifetime
 		_logger.LogInformation("Injecting ASPNETCORE_ENVIRONMENT=Testing into web resource...");
 		SetWebEnvironmentVariable(builder, "ASPNETCORE_ENVIRONMENT", "Testing");
 
-		// Fix the web project's HTTPS port so the test base URL is predictable.
-		_logger.LogInformation("Fixing web endpoint port to 7043...");
-		FixWebEndpointPort(builder, "https", 7043);
+		if (ShouldUseFixedWebPort())
+		{
+			_logger.LogInformation(
+				"Fixing web endpoint port to {Port} because {EnvironmentVariable}=true...",
+				FixedHttpsPort,
+				FixedWebPortOptInEnvironmentVariable);
+			FixWebEndpointPort(builder, "https", FixedHttpsPort);
+		}
+		else
+		{
+			_logger.LogInformation(
+				"Using Aspire-managed proxied HTTPS endpoint for the web app. Set {EnvironmentVariable}=true to opt into the legacy fixed-port Auth0 callback harness.",
+				FixedWebPortOptInEnvironmentVariable);
+		}
 
 		_logger.LogInformation("Building Aspire application...");
 		App = await builder.BuildAsync();
@@ -119,22 +133,22 @@ public class AspireManager : IAsyncLifetime
 			{
 				attemptCount++;
 				var elapsed = DateTime.UtcNow - startTime;
-				
+
 				try
 				{
-					_logger.LogInformation("Attempt {AttemptCount} (elapsed {ElapsedSeconds:F1}s): Polling {Endpoint}/alive", 
+					_logger.LogInformation("Attempt {AttemptCount} (elapsed {ElapsedSeconds:F1}s): Polling {Endpoint}/alive",
 						attemptCount, elapsed.TotalSeconds, endpoint);
-					
+
 					var response = await client.GetAsync(new Uri("/alive", UriKind.Relative), cts.Token);
-					
+
 					_logger.LogInformation("Response status: {StatusCode}", response.StatusCode);
-					
+
 					if (response.IsSuccessStatusCode)
 					{
 						_logger.LogInformation("Web app is healthy! Status: {StatusCode}", response.StatusCode);
 						return;
 					}
-					
+
 					_logger.LogWarning("Received non-success status code: {StatusCode}. Will retry...", response.StatusCode);
 				}
 				catch (HttpRequestException ex)
@@ -161,6 +175,12 @@ public class AspireManager : IAsyncLifetime
 
 		throw new TimeoutException($"Web app at {endpoint} was not ready after {timeout.TotalSeconds}s ({attemptCount} attempts)");
 	}
+
+	private static bool ShouldUseFixedWebPort() =>
+		bool.TryParse(Environment.GetEnvironmentVariable(FixedWebPortOptInEnvironmentVariable), out var useFixedWebPort)
+		&& useFixedWebPort;
+
+	/// <summary>
 	/// Adds an <see cref="EnvironmentCallbackAnnotation"/> to the named web resource so
 	/// that <paramref name="key"/> is set to <paramref name="value"/> when Aspire DCP
 	/// launches the child process.  This takes effect AFTER DCP injects its own
@@ -182,11 +202,13 @@ public class AspireManager : IAsyncLifetime
 	}
 
 	/// <summary>
-	/// Forces a fixed port on the named endpoint of the "web" resource so that the
-	/// Auth0 <c>redirect_uri</c> is predictable across test runs.
+	/// Forces a fixed port on the named endpoint of the "web" resource so that a real
+	/// OIDC/Auth0 <c>redirect_uri</c> is predictable across test runs.
 	/// Setting <c>IsProxied = false</c> makes the app bind directly to <paramref name="port"/>
 	/// without a DCP proxy in between, so both Playwright and the OIDC middleware see
-	/// the same URL (<c>https://localhost:7043/callback</c>).
+	/// the same URL (<c>https://localhost:7043/signin-auth0</c>). This is now opt-in
+	/// because the default AppHost browser tests authenticate through <c>/test/login</c>
+	/// and rely on Aspire's normal proxied endpoint for stable interactive behavior.
 	/// </summary>
 	private static void FixWebEndpointPort(IDistributedApplicationTestingBuilder builder, string scheme, int port)
 	{

@@ -23,40 +23,63 @@ public partial class ThemeProvider : ComponentBase
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (!firstRender) return;
-
-		try
+		if (!firstRender)
 		{
-			CurrentColor = await Js.InvokeAsync<string>("themeManager.getColor");
-		}
-		catch
-		{
-			// Keep default if localStorage is unavailable
+			return;
 		}
 
-		try
-		{
-			CurrentBrightness = await Js.InvokeAsync<string>("themeManager.getBrightness");
-		}
-		catch
-		{
-			// Keep default if localStorage is unavailable
-		}
+		CurrentColor = await GetStoredThemeValueAsync("themeManager.getColor", CurrentColor).ConfigureAwait(false);
+		CurrentBrightness = await GetStoredThemeValueAsync("themeManager.getBrightness", CurrentBrightness).ConfigureAwait(false);
 
-		StateHasChanged();
+		await TryMarkInitializedAsync().ConfigureAwait(false);
+		await InvokeAsync(StateHasChanged).ConfigureAwait(false);
 	}
 
 	public async Task SetColor(string color)
 	{
 		CurrentColor = color;
 		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setColor", color);
+		await Js.InvokeVoidAsync("themeManager.setColor", color).ConfigureAwait(false);
 	}
 
 	public async Task SetBrightness(string brightness)
 	{
 		CurrentBrightness = brightness;
 		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness);
+		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness).ConfigureAwait(false);
+	}
+
+	private async Task<string> GetStoredThemeValueAsync(string identifier, string fallback)
+	{
+		try
+		{
+			return await Js.InvokeAsync<string>(identifier).ConfigureAwait(false);
+		}
+		catch (JSException)
+		{
+			// Keep the bootstrap-applied fallback when JS storage is unavailable.
+			return fallback;
+		}
+		catch (JSDisconnectedException)
+		{
+			// Circuit teardown can race the initial theme read during shutdown.
+			return fallback;
+		}
+	}
+
+	private async Task TryMarkInitializedAsync()
+	{
+		try
+		{
+			await Js.InvokeVoidAsync("themeManager.markInitialized").ConfigureAwait(false);
+		}
+		catch (JSException)
+		{
+			// The provider still works without the optional readiness marker.
+		}
+		catch (JSDisconnectedException)
+		{
+			// Ignore disconnect races; they do not affect persisted theme state.
+		}
 	}
 }

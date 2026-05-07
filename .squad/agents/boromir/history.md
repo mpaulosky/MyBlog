@@ -675,7 +675,7 @@ Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thre
 
 **Option 1 — RECOMMENDED: Add Admin Bypass Actor**
 
-```
+```text
 Modify ruleset `protectbranch`:
 - Add bypass_actors: [{"type": "Actor", "actor_type": "OrganizationAdmin", "actor_id": null}]
   OR
@@ -688,7 +688,7 @@ Modify ruleset `protectbranch`:
 
 **Option 2 — NOT RECOMMENDED: Disable Thread Resolution Requirement**
 
-```
+```text
 Modify ruleset `protectbranch` pull_request rule:
 - Change required_review_thread_resolution: false
 ```
@@ -699,7 +699,7 @@ Modify ruleset `protectbranch` pull_request rule:
 
 **Option 3 — NOT RECOMMENDED: Set Enforcement to Audit**
 
-```
+```text
 Modify ruleset `protectbranch`:
 - Change enforcement: "audit" (temporarily)
 ```
@@ -1100,3 +1100,68 @@ git push --force-with-lease origin squad/94-rename-workflow-docs-update --no-ver
 
 - PR #182: feat(packages): add xUnit v3 to Architecture.Tests — Issue #176
 - PR #183: ci: validate xUnit v3 packages in Architecture.Tests CI — Issue #177
+
+## 2026-05-07 — Issue #238 AppHost Theme Harness Unblocked
+
+**Task:** Investigate and, if possible, fix the AppHost/Playwright harness so
+the runtime theme test can become interactive, toggle light/dark, navigate to
+`/blog`, and verify the persisted theme there.
+
+### Root cause confirmed
+
+- `tests/AppHost.Tests` forces the web app into
+   `ASPNETCORE_ENVIRONMENT=Testing`.
+- In that environment, static web assets were not being wired when the web app
+   was launched from build output under the AppHost test host.
+- The missing static-web-assets wiring left Blazor framework assets and theme
+   support assets unavailable in the browser harness, which kept the page in a
+   prerender-only state.
+- The strongest evidence was the direct asset diagnostics from
+   `ThemeToggleInteractionTests`: before the fix,
+   `/_framework/blazor.web.js`,
+   `/Components/Layout/ReconnectModal.razor.js`, and `/Web.styles.css`
+   all failed under AppHost Testing.
+- A second, independent asset bug also surfaced: `App.razor` referenced the
+   wrong scoped CSS bundle name (`MyBlog.Web.styles.css` instead of
+   `Web.styles.css`).
+
+### Changes applied
+
+- `src/Web/Program.cs`
+  - added `builder.WebHost.UseStaticWebAssets()` when the environment is
+    `Testing`
+- `src/Web/Components/App.razor`
+  - corrected the scoped CSS bundle reference to `@Assets["Web.styles.css"]`
+- `tests/AppHost.Tests/Tests/Layout/ThemeToggleInteractionTests.cs`
+  - kept the runtime/asset diagnostics used to isolate the failure
+  - updated the `/blog` assertion to target the real `Blog Posts` heading by
+    accessible role/name once the harness was interactive again
+
+### Validation
+
+- Focused runtime persistence test:
+  - `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release --filter "ThemeToggle_DarkMode_PersistsAfterNavigatingToBlogPosts"`
+  - Result: **Passed (1/1)**
+- Focused AppHost theme slice:
+  - `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release --filter "ThemeToggle"`
+  - Result: **Passed 2, Skipped 1, Failed 0**
+  - Remaining skip is the already-documented seeded localStorage reload race in
+    `LayoutThemeToggleTests`
+- Focused architecture theme slice:
+  - `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release --filter "Theme"`
+  - Result: **Passed 5/5**
+- Focused bUnit theme slice:
+  - `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj -c Release --filter "Theme"`
+  - Result: **Passed 33/33**
+
+### Learnings
+
+- When an AppHost browser test works in Development but stalls in `Testing`,
+   check static web asset activation before blaming the proxy, readiness waits,
+   or Playwright timing.
+- Once the harness became interactive again, the remaining failure was a normal
+   test assertion bug: the runtime test needed a stable `/blog` heading selector
+   instead of the first `h1` in the DOM.
+- Gimli does **not** need a follow-up pass to unblock the `/blog` persistence
+   scenario. The only remaining theme-related AppHost gap is the separate,
+   already-documented reload/bootstrap skip path.

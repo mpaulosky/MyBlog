@@ -8,10 +8,10 @@
 // =============================================
 
 using AppHost.Tests.Infrastructure;
-using FluentAssertions;
-using Microsoft.Playwright;
 
-namespace AppHost.Tests;
+using FluentAssertions;
+
+namespace AppHost.Tests.Tests.Layout;
 
 /// <summary>
 /// Playwright E2E tests for the Web application layout visible to anonymous (unauthenticated) users.

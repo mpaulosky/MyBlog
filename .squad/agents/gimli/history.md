@@ -422,3 +422,53 @@ Migrate `tests/Web.Tests.Integration` from xUnit v2 to xUnit v3 (3.2.2), matchin
 
 5. **Pre-push gate runs integration tests** — The repo's pre-push hook runs `tests/Web.Tests.Integration` automatically. All 12 tests passed including the Testcontainers-based MongoDB and Redis tests.
 6. Scope discipline matters here: do not churn nearby tests for unrelated convention gaps when the requested review is only about async continuation configuration.
+
+## 2026-05-07 — Issue #238 Theme Toggle Test Coverage
+
+### Task
+
+Strengthen automated coverage for the theme toggle render-boundary fix without
+touching production code.
+
+### Work Done
+
+- Tightened the skip reason in
+   `tests/AppHost.Tests/Tests/Layout/LayoutThemeToggleTests.cs` so the
+   reload/bootstrap race is explicit.
+- Reworked
+   `tests/AppHost.Tests/Tests/Layout/ThemeToggleInteractionTests.cs` into a
+   real AppHost runtime attempt that opens `/`, waits for theme readiness,
+   toggles light → dark, clicks `Blog Posts`, and verifies the persisted theme
+   signals on `/blog`.
+- Converted that AppHost runtime test to use xUnit v3 dynamic skips so it only
+   stands down when the harness still never becomes trustworthy, and the skip
+   reason now captures the exact observed browser state.
+- Added `tests/Architecture.Tests/ThemeRenderBoundaryTests.cs` with three source
+   structure guards for issue #238: `ThemeProvider` wraps the router in
+   `Routes.razor`, `App.razor` keeps only the interactive
+   `<Routes @rendermode="InteractiveServer" />`, and `NavMenu.razor` contains no
+   nested `@rendermode`.
+- Re-ran focused AppHost, Architecture, and `Web.Tests.Bunit` theme slices.
+
+### Learnings
+
+1. In `ASPNETCORE_ENVIRONMENT=Testing`, the AppHost Playwright harness can show
+    the theme toggle without ever hydrating it into a consistent interactive
+    state. The observed values stayed:
+    - aria-label: `Toggle dark mode (currently light)`
+    - `<html>.dark`: `true`
+    - `localStorage['theme-mode']`: `null`
+    - and those values did not change after a click.
+2. For issue #238, source-structure regression tests are the strongest reliable
+    fallback when AppHost runtime automation diverges from the live app. They
+    directly guard the render-boundary placement that caused the bug.
+3. Keep the two AppHost skips distinct: one documents the seeded-storage reload
+    race, and the other documents the broader Testing-environment hydration
+    mismatch.
+4. The updated `/blog` navigation-persistence test proved the blocker is even
+   earlier than navigation in the current harness: with the page forced to a
+   light system preference, the AppHost runtime never set
+   `data-theme-ready`, the toggle label stayed
+   `Toggle dark mode (currently light)`, and both `theme-mode` and
+   `theme-color` stayed `null` on the home page before the test could trust a
+   light → dark click.

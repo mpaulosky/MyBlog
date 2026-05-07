@@ -13,10 +13,6 @@ using MyBlog.Web.Components.Theme;
 
 namespace Web.Components.Theme;
 
-// NOTE: These tests are scaffolded ahead of production code.
-// They depend on Issue #82 (ThemeProvider) and will compile + pass once those
-// components are merged. Do NOT merge this PR before #82 is merged.
-
 public sealed class ThemeProviderTests : BunitContext
 {
 	public ThemeProviderTests()
@@ -144,6 +140,23 @@ public sealed class ThemeProviderTests : BunitContext
 						i.Arguments.Contains("green")));
 	}
 
+	[Fact]
+	public void ThemeProviderSetColorUpdatesCurrentColorAfterJsCall()
+	{
+		// Arrange
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		JSInterop.SetupVoid("themeManager.setColor", "red");
+
+		var cut = Render<ThemeProvider>();
+
+		// Act
+		cut.InvokeAsync(() => cut.Instance.SetColor("red"));
+
+		// Assert
+		cut.WaitForAssertion(() => cut.Instance.CurrentColor.Should().Be("red"));
+	}
+
 	// ─── SetBrightness ────────────────────────────────────────────────────────
 
 	[Fact]
@@ -181,6 +194,26 @@ public sealed class ThemeProviderTests : BunitContext
 
 		// Assert
 		cut.WaitForAssertion(() => cut.Instance.CurrentBrightness.Should().Be("dark"));
+	}
+
+	// ─── Readiness Marker ────────────────────────────────────────────────────
+
+	[Fact]
+	public void ThemeProviderCallsMarkInitializedAfterFirstRender()
+	{
+		// Arrange — the AppHost runtime verification relies on data-theme-ready="true"
+		// being set by themeManager.markInitialized; confirm it is invoked on first render.
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		JSInterop.SetupVoid("themeManager.markInitialized");
+
+		// Act
+		var cut = Render<ThemeProvider>();
+
+		// Assert
+		cut.WaitForAssertion(() =>
+				JSInterop.Invocations.Should().Contain(i => i.Identifier == "themeManager.markInitialized",
+						because: "ThemeProvider must signal readiness so AppHost Playwright tests can verify interactive state"));
 	}
 
 	// ─── Error Resilience ─────────────────────────────────────────────────────

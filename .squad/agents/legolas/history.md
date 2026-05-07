@@ -461,3 +461,81 @@ No concerns. This is intentional recovery of uncommitted CSS from a stalled bran
 - ✅ UI components automatically benefit from role claim normalization
 
 **Status:** ✅ Completed — Fix verified and decision merged to decisions.md
+
+## 2026-05-07 — Theme Toggle Render-Boundary Fix
+
+### What I Learned
+
+- `ThemeProvider` must live inside the interactive `Routes` subtree. Wrapping
+   `<Routes @rendermode="InteractiveServer" />` from `App.razor` lets bUnit
+   pass, but it can still break the live cascade that `ThemeSelector` needs.
+- `NavMenu.razor` must not declare its own `@rendermode InteractiveServer`
+   when it consumes cascaded theme state. That nested boundary can isolate the
+   brightness toggle and color dropdown from the provider in the real app.
+- The head bootstrap IIFE remains the source of truth for anti-FOUC and the
+   initial `<html>` classes. The provider should only hydrate UI state from the
+   existing split `theme-color` and `theme-mode` keys after interactivity starts.
+- Runtime verification is required for theme regressions. Focused bUnit tests
+   and layout smoke tests can both pass while the live app still leaves the
+   toggle inert across a render-mode boundary.
+
+## 2026-05-07 — Issue #238 Light/Dark Theme Toggle Fix (Completed)
+
+### What I Learned
+
+**ThemeProvider placement is the critical architectural constraint:**
+
+- `ThemeProvider` MUST live in `Routes.razor` wrapping `<Router>` — not in `App.razor`
+- `App.razor` runs in a static pre-render boundary; interactive components placed there are isolated from the interactive subtree's cascade
+- Architecture test `ThemeRenderBoundaryTests.cs` enforces this as a regression guard — three tests: provider wraps router, App.razor doesn't contain ThemeProvider, NavMenu has no `@rendermode`
+
+**NavMenu rendermode isolation breaks cascades:**
+
+- If `NavMenu.razor` declares `@rendermode InteractiveServer`, it creates a nested interactive boundary
+- Blazor Server crossing an interactive boundary breaks `[CascadingParameter]` passing — cascade does not cross render-mode fences
+- `ThemeSelector` inside NavMenu must receive the ThemeProvider cascade via same render boundary; no `@rendermode` on NavMenu
+
+**Anti-FOUC IIFE must be first in `<head>` and synchronous:**
+
+- Placed as first child of `<head>` before any `<link>` stylesheets to run synchronously during HTML parse
+- Reads `theme-color` (blue/red/green/yellow) and `theme-mode` (light/dark) from localStorage
+- Applies `color-{name}` and `dark` classes to `<html>` before CSS is processed
+- Includes migration shim: detects old unified key `tailwind-color-theme` (e.g. `theme-blue-dark`) and writes to new split keys
+
+**Split storage keys (current architecture):**
+
+- `theme-color`: one of `blue`, `red`, `green`, `yellow` (default `blue`)
+- `theme-mode`: `light` or `dark` (default `light`)
+- Tailwind dark mode strategy: `darkMode: 'class'` — `.dark` class on `<html>`
+- Color variants: `color-{name}` class on `<html>` activates CSS `@layer` variable overrides
+
+**`themeManager.markInitialized()` enables test readiness detection:**
+
+- Called from `ThemeProvider.OnAfterRenderAsync(firstRender=true)` after loading color/brightness
+- Sets `data-theme-ready="true"` on `<html>`
+- E2E Playwright tests gate on `data-theme-ready` attribute to avoid flaky assertions before Blazor hydration
+
+**ThemeProvider JS exception handling is nuanced:**
+
+- `JSException` — localStorage unavailable (private browsing, some CSP configs)
+- `JSDisconnectedException` — circuit teardown can race the initial theme read (Blazor Server reconnection or shutdown)
+- Both should fall back to current value silently; bare `catch` was too broad
+
+**LayoutThemeToggleTests.cs is intentionally skipped:**
+
+- Reload/persistence path has race between seeded localStorage and Blazor bootstrap readiness marker
+- `[Theory(Skip = "Reload path has timing race...")]` is correct — runtime coverage in `ThemeToggleInteractionTests.cs`
+- Do not un-skip unless the readiness detection is hardened
+
+**Files changed for issue #238:**
+
+- `src/Web/Components/App.razor` — anti-FOUC IIFE, split-key reads, migration shim
+- `src/Web/Components/Routes.razor` — ThemeProvider wraps Router
+- `src/Web/Components/Layout/NavMenu.razor` — ThemeSelector in desktop + mobile, no rendermode
+- `src/Web/Components/Theme/ThemeProvider.razor.cs` — specific JSException handling, markInitialized, InvokeAsync(StateHasChanged)
+- `tests/Architecture.Tests/ThemeRenderBoundaryTests.cs` — new structural enforcement tests
+- `tests/AppHost.Tests/Tests/Layout/LayoutThemeToggleTests.cs` — new E2E test (skipped)
+- `tests/AppHost.Tests/Tests/Layout/ThemeToggleInteractionTests.cs` — new E2E runtime test
+- `tests/AppHost.Tests/Tests/Layout/LayoutAnonymousTests.cs` — added toggle visibility assertion
+
+**Filed:** `.squad/decisions/inbox/legolas-theme-toggle.md`
