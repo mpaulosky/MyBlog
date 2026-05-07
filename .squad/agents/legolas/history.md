@@ -584,3 +584,68 @@ do not cross render-mode fences reliably. Moving `ThemeProvider` into
 ### Outcome
 
 ✅ Live app theme toggle now fully interactive. Regression guards in place.
+
+---
+
+## 2026-05-07 — Theme Color Persistence Fix (Issue #239)
+
+### Task
+
+Fix theme color selector persistence — selected color not surviving page reloads.
+
+### Root Cause Analysis
+
+**The Bug:** ThemeProvider was in App.razor (static SSR context). Static components never execute OnAfterRenderAsync, so JS interop calls to themeManager.getColor/getBrightness never fired. Interactive children calling SetColor() via cascading parameter updated a static instance — StateHasChanged() was a no-op and the cascade never re-propagated.
+
+**Why it failed:** The render-mode boundary issue from #238 was partially fixed, but the root cause remained: ThemeProvider was still in static context, preventing persistence logic from running on component lifecycle.
+
+### Solution
+
+1. **Move ThemeProvider to interactive boundary** — Relocated from App.razor (static) to Routes.razor (@rendermode="InteractiveServer")
+   - ThemeProvider now executes OnAfterRenderAsync on first render
+   - JS interop successfully reads color/brightness from localStorage
+   - Cascading parameters propagate correctly to theme-aware children (MainLayout, NavMenu, ThemeColorDropdownComponent)
+
+2. **Robust dropdown binding** — Added explicit `selected="@(CurrentColor == X)"` to each `<option>` in ThemeColorDropdownComponent
+   - Works correctly in both static initial HTML and interactive re-renders
+   - Prevents dropdown state desync
+
+3. **Error resilience** — Added try-catch to SetColor/SetBrightness in ThemeProvider.razor.cs
+   - Gracefully tolerates JS invocation failures during circuit disconnects
+
+4. **Bonus: Security fix** — Pinned Snappier 1.3.1 for NU1903 / GHSA-pggp-6c3x-2xmx mitigation
+
+### Test Coverage
+
+- **Architecture Tests (37 lines):** Theme layer structure validation, component dependency rules
+- **bUnit Tests (416 lines total):**
+  - MainLayoutThemeTests.cs (164 lines): Dropdown rendering, selection changes, cascade propagation
+  - ThemeColorPersistenceTests.cs (252 lines): localStorage integration, lifecycle, brightness/color sync
+
+### Files Modified
+
+- `src/Web/Components/App.razor` — ThemeProvider removed
+- `src/Web/Components/Routes.razor` — ThemeProvider integrated (@rendermode="InteractiveServer")
+- `src/Web/Components/Theme/ThemeColorDropdownComponent.razor` — `selected` binding added
+- `src/Web/Components/Theme/ThemeProvider.razor.cs` — Try-catch error handling
+- `Directory.Packages.props` — Snappier pinned to 1.3.1
+- `src/Web/Web.csproj` — Snappier reference added
+- `src/AppHost/AppHost.csproj` — Snappier reference added
+- `tests/Architecture.Tests/ThemeLayerTests.cs` — New theme layer tests
+- `tests/Web.Tests.Bunit/Components/Layout/MainLayoutThemeTests.cs` — New persistence UI tests
+- `tests/Web.Tests.Bunit/Components/Theme/ThemeColorPersistenceTests.cs` — New persistence verification tests
+
+### Gate Status
+
+✅ Architecture Tests: 15/15 pass  
+✅ bUnit Tests: 87/87 pass  
+✅ Domain Tests: 42/42 pass  
+✅ Pre-push gate: All checks green
+
+### Commit
+
+- `be9f423` — fix(theme): move ThemeProvider into interactive render boundary (#239)
+
+### Outcome
+
+✅ Theme color and brightness now persist correctly across page reloads and sessions. PR #239 opened, ready for review.

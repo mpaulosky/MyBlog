@@ -537,3 +537,63 @@ Finalize test coverage for the light/dark theme toggle fix and design runtime pr
 ### Outcome
 
 ✅ Comprehensive test coverage in place. Structural safeguards against regression active. Runtime tests designed for harness evolution.
+
+---
+
+## 2026-05-07 — Theme Color Persistence Test Suite (Issue #239)
+
+### Task
+
+Add test coverage for theme color persistence fix implemented by Legolas.
+
+### Work Done
+
+#### 1. Architecture Tests (ThemeLayerTests.cs, 37 lines)
+
+Structural enforcement rules:
+
+- Theme components must be in interactive render boundary (Routes.razor)
+- No nested `@rendermode` declarations
+- ThemeProvider placement rules validated
+
+#### 2. MainLayout Theme Behavior Tests (164 lines)
+
+Tests for integration of theme dropdown and layout cascading:
+
+- **Dropdown Rendering:** Verifies all 4 color options render with correct `selected` binding
+- **Selection Changes:** Confirms SetColor() cascades correctly when option changes
+- **Theme State Propagation:** Validates color/brightness cascade from MainLayout through NavMenu and child components
+- **UI State Sync:** Tests that dropdown reflects current theme state after changes
+
+#### 3. Theme Persistence Tests (252 lines)
+
+Comprehensive validation of localStorage integration and lifecycle:
+
+- **Initial Load:** Verifies ThemeProvider reads color/brightness from localStorage on first render
+- **Lifecycle Verification:** Confirms OnAfterRenderAsync executes in interactive boundary
+- **SetColor/SetBrightness:** Tests both methods update localStorage and cascade
+- **Circuit Disconnect Resilience:** Verifies try-catch in ThemeProvider handles JS invocation failures gracefully
+- **Roundtrip Validation:** Color selected → stored → retrieved → selected on reload
+
+### Test Infrastructure
+
+- bUnit JSInterop mock for localStorage simulation
+- CascadingValue helper for theme state propagation testing
+- Interactive render boundary context for proper component lifecycle testing
+
+### Gate Validation
+
+✅ Pre-push test gate: All 87 bUnit tests pass  
+✅ Architecture tests: 15 pass (includes new theme layer rules)  
+✅ Domain tests: 42 pass (baseline maintained)  
+✅ No test regressions
+
+### Files Added
+
+- `tests/Architecture.Tests/ThemeLayerTests.cs` — 37 lines
+- `tests/Web.Tests.Bunit/Components/Layout/MainLayoutThemeTests.cs` — 164 lines
+- `tests/Web.Tests.Bunit/Components/Theme/ThemeColorPersistenceTests.cs` — 252 lines
+
+### Outcome
+
+✅ Full test coverage for persistence feature. All gates green. PR #243 ready for review and merge.
