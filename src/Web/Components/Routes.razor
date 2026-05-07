@@ -1,17 +1,19 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
-            <NotAuthorized>
-                @if (!context.User.Identity?.IsAuthenticated ?? true)
-                {
-                    <RedirectToLogin />
-                }
-                else
-                {
-                    <p role="alert">You are not authorized to access this resource.</p>
-                }
-            </NotAuthorized>
-        </AuthorizeRouteView>
-        <FocusOnNavigate RouteData="routeData" Selector="#main-content" />
-    </Found>
-</Router>
+﻿<ThemeProvider>
+	<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+		<Found Context="routeData">
+			<AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+				<NotAuthorized>
+					@if (!context.User.Identity?.IsAuthenticated ?? true)
+					{
+						<RedirectToLogin />
+					}
+					else
+					{
+						<p role="alert">You are not authorized to access this resource.</p>
+					}
+				</NotAuthorized>
+			</AuthorizeRouteView>
+			<FocusOnNavigate RouteData="routeData" Selector="#main-content" />
+		</Found>
+	</Router>
+</ThemeProvider>

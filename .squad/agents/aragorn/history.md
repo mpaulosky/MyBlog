@@ -615,3 +615,63 @@ Reviewed and validated all 7 squad maintenance files modified in branch `squad/2
 - `mapfile -t` (bash 4+) cleanly converts newline-delimited output into an array for passing to the linter as individual file arguments.
 - When adding `markdownlint-cli2` via `npm install --save-dev`, the version installed may differ from what you specify; lock to a known good version with `^0.17.2` in `package.json`.
 - **Decision record:** `.squad/decisions/inbox/aragorn-precommit-gate.md`
+
+## 2026-05-07 — PR #241 Review Blockers (Legacy Skill Path Cleanup)
+
+Requested changes on PR `#241 chore(skills): clean up legacy skill paths (#240)`
+after Aragorn's gate review requested by Boromir.
+
+**Blocking content issues:**
+
+- `.github/skills/secret-handling/SKILL.md` has broken markdown table cells that
+   corrupt regex and pattern guidance.
+- `.squad/playbooks/pr-merge-process.md` has a broken table cell because
+   `| grep ...` is parsed as table separators in the review gate command.
+- `.github/skills/github-multi-account/SKILL.md` still hard-codes
+   `bradygaster/squad` and unrelated account bindings.
+- `.github/skills/to-prd/SKILL.md` still contains contradictory instructions.
+
+**Gate notes:**
+
+- `Closes #240` present; branch naming correct.
+- PR template not fully filled out.
+- CI red from ambient `NU1903` / `Snappier 1.0.0` and downstream CodeQL
+   autobuild failure.
+- 2 Copilot review threads remain unresolved.
+
+## 2026-05-07 — PR #241 Routed Fix Cycle (with Frodo)
+
+- Repaired `.squad/playbooks/pr-merge-process.md` in isolated worktree
+   `MyBlog-240`; markdown diagnostics were clean.
+- Frodo cleared the three skill-file blockers from the same routed fix cycle.
+- Remaining follow-up is GitHub-side: PR template/checklist confirmation and
+   post-push CI, coverage, and Copilot thread review.
+
+## 2026-05-07 — PR #241 GitHub Follow-Up Logged
+
+📌 Team update (2026-05-07T21:18:40Z): GitHub-side follow-up completed for
+PR #241. Aragorn updated the PR body to be more template-complete and truthful
+and replied on the two unresolved Copilot threads for
+`.squad/playbooks/pr-merge-process.md` and `.github/skills/to-prd/SKILL.md`.
+Local worktree fixes still need commit/push before those threads can be
+resolved, and failing checks still need rerun after that push. See
+`.squad/log/2026-05-07T21:18:40Z-pr241-github-follow-up.md`.
+
+## 2026-05-07 — PR #241 Delivery Completed
+
+- User approved the commit/push follow-up for the routed PR #241 fix cycle.
+- Aragorn first created docs commit `97022d8`
+   (`docs: address PR #241 follow-up review fixes (#240)`).
+- Push was blocked by repo-wide `NU1903` on transitive `Snappier 1.0.0` from
+   the Mongo/Aspire dependency graph.
+- Aragorn applied the minimal dependency repair: pinned `Snappier` to `1.3.1`
+   in `Directory.Packages.props` and added direct references in
+   `src/Web/Web.csproj` and `src/AppHost/AppHost.csproj`.
+- Final unblock commit: `e3754bf`
+   (`fix(deps): pin Snappier 1.3.1 for Mongo transitives (#240)`).
+- Local validation passed, push succeeded, PR #241 head advanced to
+   `e3754bf0347764a074d2ff1273cc857dd1b129c2`, and the two unresolved Copilot
+   threads were resolved.
+- Worktree residual state stayed limited to an untracked `node_modules`
+   symlink.
+- See `.squad/log/2026-05-07T21:46:02Z-pr241-delivery-complete.md`.

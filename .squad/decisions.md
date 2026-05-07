@@ -1222,7 +1222,7 @@ Repository is protected by GitHub Ruleset `protectbranch` (ID: 15246849) with th
 
 Modify ruleset `protectbranch` pull_request rule bypass actors:
 
-```
+```json
 bypass_actors: [
   {
     "type": "Actor",
@@ -1315,7 +1315,7 @@ gh api repos/mpaulosky/MyBlog/rulesets/15246849 --jq '.bypass_actors'
 
 PR #19 ("chore: remove orphan root diff artifact from branch") was blocked at merge with:
 
-```
+```text
 Repository rule violations — Required status check 'build-and-test' is expected
 ```
 
@@ -1354,7 +1354,7 @@ The PR itself is safe and approved by both Aragorn (lead) and Boromir (DevOps). 
 
 **Verification:**
 
-```
+```bash
 $ gh pr view 19 --json mergeStateStatus,mergeable
 {
   "mergeStateStatus": "CLEAN",
@@ -1448,3 +1448,196 @@ Complete squad infrastructure maintenance pass covering all 7 `.squad/` files: t
 3. Member charter audit — Several members lack fully populated charters; recommend comprehensive audit for Identity, Expertise, Responsibilities, Boundaries, Critical Rules, Model sections
 
 **PR Status:** Merged to `dev` with Closes #222
+
+### 16. ThemeProvider Placement in Routes.razor (Not App.razor)
+
+**Status:** ✅ Decided  
+**Date:** 2026-05-07  
+**Decided by:** Legolas (Frontend / Blazor)  
+**Issue:** #238 — Fix light/dark theme toggle  
+**Branch:** `squad/238-fix-light-dark-theme-toggle`
+
+**Context:**
+
+The light/dark theme toggle was inert in the live app. The root cause was `ThemeProvider` being placed in or near `App.razor`, which runs in a static pre-render boundary. `ThemeSelector` in `NavMenu` consumed the cascade but the interactive render boundary isolated it from the actual ThemeProvider instance.
+
+**Decision:**
+
+**`ThemeProvider` MUST live in `Routes.razor`, wrapping `<Router>` as its outermost child. It MUST NOT be placed in `App.razor` or outside the interactive subtree.**
+
+```razor
+<!-- Routes.razor — CORRECT -->
+<ThemeProvider>
+    <Router AppAssembly="typeof(Program).Assembly" ...>
+        ...
+    </Router>
+</ThemeProvider>
+```
+
+**Rationale:**
+
+- `Routes.razor` shares the interactive render boundary with `MainLayout`, `NavMenu`, and `ThemeSelector` — the cascade flows without crossing any render-mode fence.
+- `App.razor` is a static pre-render host component. Blazor cascades do not reliably cross the static-to-interactive boundary.
+- `NavMenu.razor` must NOT declare `@rendermode InteractiveServer` — that creates a nested boundary that would again isolate the toggle.
+
+**Enforcement:**
+
+`tests/Architecture.Tests/ThemeRenderBoundaryTests.cs` contains three tests that enforce this structure as a compile-time regression guard:
+
+1. `RoutesShouldWrapRouterInsideThemeProvider` — Routes.razor contains `<ThemeProvider>`
+2. `AppRazorShouldNotContainThemeProvider` — App.razor does NOT contain `<ThemeProvider>`
+3. `NavMenuShouldNotDeclareRenderMode` — NavMenu.razor has no `@rendermode`
+
+**Related:**
+
+- Anti-FOUC IIFE in `App.razor` `<head>` is separate from the interactive provider and reads `theme-color` / `theme-mode` split keys from localStorage synchronously
+- `themeManager.markInitialized()` called from `ThemeProvider.OnAfterRenderAsync` sets `data-theme-ready="true"` on `<html>` for E2E test readiness detection
+
+### 17. AppHost Theme Runtime Tests Must Enable Static Web Assets in Testing Environment
+
+**Status:** ✅ Decided  
+**Date:** 2026-05-07  
+**Decided by:** Boromir (DevOps / Infra)  
+**Issue:** #238  
+**Branch:** `squad/238-fix-light-dark-theme-toggle`
+
+**Context:**
+
+The AppHost Playwright harness launches the web app under
+`ASPNETCORE_ENVIRONMENT=Testing`. In that environment, the browser test never
+became a trustworthy interactive Blazor page until static web assets were
+explicitly enabled. Before the fix, the runtime diagnostics showed that the
+theme bootstrap script loaded, but the page still failed to hydrate correctly
+because the AppHost test host could not serve several required assets:
+
+- `/_framework/blazor.web.js`
+- `/Components/Layout/ReconnectModal.razor.js`
+- `/Web.styles.css`
+
+A separate asset mismatch was also present in `App.razor`: the app referenced `MyBlog.Web.styles.css`, but the correct scoped CSS bundle name is `Web.styles.css`.
+
+**Decision:**
+
+- In `src/Web/Program.cs`, call `builder.WebHost.UseStaticWebAssets()` when the environment is `Testing`.
+- In `src/Web/Components/App.razor`, reference the scoped CSS bundle as `@Assets["Web.styles.css"]`.
+- Keep the AppHost runtime theme test focused on the real user flow:
+  - open `/`
+  - toggle light → dark
+  - navigate to `/blog`
+  - verify that the dark theme persists there
+- Assert the `/blog` page with a stable accessible heading selector instead of a generic first-`h1` lookup.
+
+**Rationale:**
+
+- The failure was not an Aspire proxy problem and not just a timing problem. The page stayed prerender-only because the Blazor runtime and related static assets were unavailable in the `Testing` host configuration.
+- Enabling static web assets in `Testing` is a small, harness-enabling change that preserves normal published behavior while making the AppHost browser tests representative.
+- Correcting the scoped CSS asset name removes a real app-shell asset bug that would otherwise remain masked.
+- Once the harness hydrated correctly, the remaining failure was a normal test assertion issue, which confirmed the root infrastructure problem had been resolved.
+
+**Validation:**
+
+- Focused runtime persistence test passed: `ThemeToggle_DarkMode_PersistsAfterNavigatingToBlogPosts`
+- Focused AppHost theme slice passed: Passed 2, Skipped 1, Failed 0
+- Focused architecture theme slice passed: Passed 5, Failed 0
+- Focused bUnit theme slice passed: Passed 33, Failed 0
+
+**Follow-up:**
+
+- No immediate Gimli follow-up is required for the `/blog` persistence path.
+- The only remaining AppHost theme gap is the separate, already-documented seeded-localStorage reload/bootstrap race in `LayoutThemeToggleTests`.
+
+### 18. Theme Toggle Runtime Coverage Uses Dynamic Skip Until AppHost Testing Catches Up
+
+**Status:** ✅ Decided  
+**Date:** 2026-05-07  
+**Decided by:** Gimli (Tester)  
+**Issue:** #238  
+**Branch:** `squad/238-fix-light-dark-theme-toggle`
+
+**Context:**
+
+Manual browser verification on the live app confirmed the issue #238 fix:
+clicking the theme toggle updates `<html>.dark`, `localStorage['theme-mode']`,
+and the toggle aria-label.
+
+The AppHost Playwright harness does not observe the same runtime state under
+`ASPNETCORE_ENVIRONMENT=Testing`. In focused runs, the header toggle stayed at
+`Toggle dark mode (currently light)` and the new runtime readiness marker
+`data-theme-ready` never appeared. The latest AppHost test update now attempts
+the exact user flow that Boromir requested: open `/`, wait for theme readiness,
+toggle light → dark, navigate via the `Blog Posts` link to `/blog`, verify theme
+persistence on the Blog Posts page.
+
+In the current harness, that flow still blocks before the test can trust the toggle as interactive.
+
+**Decision:**
+
+- Keep `LayoutThemeToggleTests.cs` statically skipped for the seeded-storage reload/bootstrap race.
+- Convert `ThemeToggleInteractionTests.cs` into an xUnit v3 dynamic-skip runtime probe that tries the real light/dark → `/blog` persistence flow first and only skips when the AppHost Testing harness never becomes trustworthy.
+- Add architecture regression tests that lock down the fix's structural invariants:
+  - `ThemeProvider` wraps the router in `Routes.razor`
+  - `App.razor` keeps only `<Routes @rendermode="InteractiveServer" />`
+  - `NavMenu.razor` contains no nested `@rendermode`
+- Keep relying on the focused `Web.Tests.Bunit` theme tests for component-level behavior until the AppHost Testing environment matches the live app closely enough for meaningful runtime automation.
+
+**Rationale:**
+
+- The live bug was caused by render-boundary placement, so source-structure tests directly guard the highest-risk regression points.
+- A failing or misleading AppHost runtime test in the Testing environment would create noise instead of confidence.
+- Dynamic skip is the honest middle ground: the runtime test now exercises the real user path whenever the harness improves, but still reports the exact blocker instead of failing for the wrong reason or pretending to pass.
+- Structural guards and bUnit coverage remain the strongest trustworthy safety net while the AppHost Testing harness still misses interactive theme hydration.
+
+**Validation:**
+
+- `dotnet test tests/AppHost.Tests --filter Theme`: Passed 1, Failed 0, Skipped 2
+- `dotnet test tests/Architecture.Tests --filter Theme`: Passed 5, Failed 0, Skipped 0
+- `dotnet test tests/Web.Tests.Bunit --filter Theme`: Passed 37, Failed 0, Skipped 0
+- `dotnet test tests/Architecture.Tests`: Passed 15, Failed 0, Skipped 0
+
+**Related Pattern: bUnit Cascade Integration Tests**
+
+Full-pipeline cascade tests were added to `ThemeSelectorTests.cs` and a
+readiness-marker test to `ThemeProviderTests.cs`. These prove the
+`ThemeBrightnessToggleComponent → ThemeSelector → ThemeProvider` chain in bUnit
+without requiring E2E infrastructure. Pattern: render Provider with Selector as
+child content, trigger child event, assert Provider's cascaded state updates.
+
+### 19. Pre-Commit Markdownlint Gate
+
+**Date:** 2026-04-25
+**Author:** Aragorn (Lead / Architect)
+**PR:** #232
+**Branch:** `squad/230-precommit-markdownlint-gate`
+
+## Context
+
+PR #229 fixed 3,243+ markdownlint violations across all `.md` files and added `.markdownlint.json` to the repo root. Without a commit-time gate, those violations could easily regress as contributors edit documentation.
+
+## Decision
+
+Add a pre-commit git hook (`.github/hooks/pre-commit`) that runs `markdownlint-cli2` on staged `.md` files only before each local commit.
+
+## Rationale
+
+- **Staged-only linting** is fast — no full-repo scan on every commit.
+- **Graceful degradation** — warns but does not block if the binary is absent, preserving developer ergonomics for contributors who have not run `npm install`.
+- **Consistent config** — reuses the existing `.markdownlint.json` so rules cannot diverge between the hook and CI.
+- **Pattern consistency** — mirrors the pre-push hook pattern already established in `.github/hooks/pre-push` and `scripts/install-hooks.sh`.
+
+## Implementation
+
+- `.github/hooks/pre-commit` — the hook source (tracked in git)
+- `scripts/install-hooks.sh` — updated to install both `pre-push` and `pre-commit` hooks
+- `package.json` — added `markdownlint-cli2 ^0.17.2` as dev dependency
+
+## Binary probe order
+
+1. `markdownlint` (global CLI)
+2. `./node_modules/.bin/markdownlint-cli2`
+3. `./node_modules/.bin/markdownlint`
+4. Not found → warn, exit 0 (graceful degrade)
+
+## Trade-offs
+
+- `package-lock.json` grows with the new dependency — acceptable for a DX tooling dep.
+- Contributors must run `npm install` to get the linter; the hook warns them if they haven't.
