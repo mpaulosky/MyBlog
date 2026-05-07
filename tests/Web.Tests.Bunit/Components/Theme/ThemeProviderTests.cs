@@ -121,17 +121,17 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── SetColor ─────────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProviderSetColorCallsSetColorJsWithNewColor()
+	public async Task ThemeProviderSetColorCallsSetColorJsWithNewColor()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setColor", "green");
+		JSInterop.SetupVoid("themeManager.setColor", "green").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetColor("green"));
+		await cut.InvokeAsync(() => cut.Instance.SetColor("green"));
 
 		// Assert
 		cut.WaitForAssertion(() =>
@@ -141,17 +141,17 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProviderSetColorUpdatesCurrentColorAfterJsCall()
+	public async Task ThemeProviderSetColorUpdatesCurrentColorAfterJsCall()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setColor", "red");
+		JSInterop.SetupVoid("themeManager.setColor", "red").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetColor("red"));
+		await cut.InvokeAsync(() => cut.Instance.SetColor("red"));
 
 		// Assert
 		cut.WaitForAssertion(() => cut.Instance.CurrentColor.Should().Be("red"));
@@ -160,17 +160,17 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── SetBrightness ────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProviderSetBrightnessCallsSetBrightnessJsWithNewBrightness()
+	public async Task ThemeProviderSetBrightnessCallsSetBrightnessJsWithNewBrightness()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
+		await cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
 
 		// Assert
 		cut.WaitForAssertion(() =>
@@ -180,17 +180,17 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProviderSetBrightnessUpdatesCurrentBrightnessAfterJsCall()
+	public async Task ThemeProviderSetBrightnessUpdatesCurrentBrightnessAfterJsCall()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
+		await cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
 
 		// Assert
 		cut.WaitForAssertion(() => cut.Instance.CurrentBrightness.Should().Be("dark"));

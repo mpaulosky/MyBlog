@@ -23,9 +23,15 @@ public sealed class ThemeRenderBoundaryTests
 		var routerEnd = routesMarkup.IndexOf("</Router>", StringComparison.Ordinal);
 		var themeProviderEnd = routesMarkup.IndexOf("</ThemeProvider>", StringComparison.Ordinal);
 
-		// Act / Assert
+		// Act / Assert — guard every index before comparing order so a missing tag cannot false-pass
 		themeProviderStart.Should().BeGreaterThanOrEqualTo(0,
 				because: "ThemeProvider must exist in Routes.razor so it shares the interactive subtree with ThemeSelector");
+		routerStart.Should().BeGreaterThanOrEqualTo(0,
+				because: "<Router must be present in Routes.razor");
+		routerEnd.Should().BeGreaterThanOrEqualTo(0,
+				because: "</Router> closing tag must be present in Routes.razor before order can be verified");
+		themeProviderEnd.Should().BeGreaterThanOrEqualTo(0,
+				because: "</ThemeProvider> closing tag must be present in Routes.razor before order can be verified");
 		routerStart.Should().BeGreaterThan(themeProviderStart,
 				because: "ThemeProvider should wrap the router, not sit outside the interactive routes boundary");
 		themeProviderEnd.Should().BeGreaterThan(routerEnd,
