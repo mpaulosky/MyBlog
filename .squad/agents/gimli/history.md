@@ -472,3 +472,25 @@ touching production code.
    `Toggle dark mode (currently light)`, and both `theme-mode` and
    `theme-color` stayed `null` on the home page before the test could trust a
    light → dark click.
+
+## Session: Issue #238 — Theme Toggle bUnit Gap Coverage (2025)
+
+### Task
+
+Add missing bUnit and architecture test coverage for the light/dark theme toggle fix (issue #238). Work in parallel with Legolas (implementer) on branch `squad/238-fix-light-dark-theme-toggle`.
+
+### Work Done
+
+- Audited all existing theme test files (bUnit, Architecture, AppHost) against production component implementations
+- Identified 6 coverage gaps and added 5 new tests
+- Final counts: 65 bUnit tests (+4), 15 architecture tests (+1), all green
+
+### Key Learnings
+
+1. **Full cascade integration test pattern** — Render `ThemeProvider` + `ThemeSelector` in bUnit; trigger child event; assert provider state updates. Use `JSInterop.Mode = JSRuntimeMode.Loose` for permissive JS mocking.
+
+2. **`markInitialized` is the readiness signal** — `ThemeProvider.TryMarkInitializedAsync()` calls `themeManager.markInitialized()` which sets `data-theme-ready="true"` on `<html>`. AppHost tests poll for this. Test it in bUnit with `JSInterop.SetupVoid("themeManager.markInitialized")` and `Received()` verification.
+
+3. **Architecture tests can enforce component composition** — `ThemeRenderBoundaryTests` reads raw Razor file content to assert `<ThemeSelector />` presence in `NavMenu.razor`. Cost-effective structural guard.
+
+4. **`dotnet test` with multiple project paths fails on this dotnet version** — run each project separately.
