@@ -48,6 +48,18 @@
 
 ## Learnings
 
+### 2026-05-XX — Issue #269: Blog → README Sync workflow branch protection fix
+
+**Problem:** `blog-readme-sync.yml` pushed directly to `main` after updating `README.md`, which is blocked by branch protection rules (direct pushes forbidden, "Build Solution" check required).
+
+**Fix (Option C):** Changed `git push` to `git push origin HEAD:dev` in the "Commit updated README" step. The workflow still triggers on `push: branches: [main]` (reading `docs/blog/index.md` from main), but the README update is pushed to `dev` — the normal development branch — and flows through the standard dev→main release cycle.
+
+**Key insight:** The `permissions: contents: write` block was already present. No new secrets or PAT bypass needed. One-line change.
+
+**Decision:** Captured in `.squad/decisions/inbox/boromir-269-readme-sync-target.md`.
+
+---
+
 ### 2026-05-08 — Issue #249: AppHost Mongo Clear Hardening
 
 **What was done:**
