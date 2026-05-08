@@ -2268,3 +2268,66 @@ Add a pre-commit git hook (`.github/hooks/pre-commit`) that runs `markdownlint-c
 - Contributors must run `npm install` to get the linter; the hook warns them if they haven't.
 
 ---
+
+---
+
+# Decision: GitHub Projects V2 requires a classic PAT with `project` scope
+
+**Date:** 2026-05-08  
+**Author:** Boromir (DevOps Engineer)  
+**Issue:** #268  
+**PR:** #271 (squash-merged)  
+**Status:** ✅ Implemented
+
+## Context
+
+The `squad-mark-released.yml` workflow uses `actions/github-script` to call the GitHub Projects V2 GraphQL API. The previous `permissions: repository-projects: write` block applied only to `GITHUB_TOKEN` and was ineffective for Projects V2 mutations.
+
+## Decision
+
+1. **`GH_PROJECT_TOKEN` secret is required** for any workflow that calls the GitHub Projects V2 GraphQL API. The default `GITHUB_TOKEN` cannot be used — it is not an integration token with project scope.
+
+2. **Required PAT scopes:**
+   - Classic PAT: `project` OAuth scope
+   - Fine-grained PAT: "Projects" → read + write
+
+3. **Workflow `permissions` block** should be `contents: read` (minimum) in workflows that rely solely on a custom PAT for external API access.
+
+4. **Pre-flight validation** — any workflow using `GH_PROJECT_TOKEN` must include a validation step that checks the secret is set and fails early with an actionable error message if it is missing.
+
+## Setup
+
+To configure the secret:
+1. Create a classic PAT at https://github.com/settings/tokens with `project` scope
+2. Add it as repository secret: Settings → Secrets and variables → Actions → `GH_PROJECT_TOKEN`
+
+---
+
+# Decision: Blog README Sync pushes to `dev`, not `main`
+
+**Date:** 2026-05-08  
+**Author:** Boromir (DevOps Engineer)  
+**Issue:** #269  
+**PR:** #270 (squash-merged)  
+**Status:** ✅ Implemented
+
+## Context
+
+The `blog-readme-sync.yml` workflow reads `docs/blog/index.md` from `main` and writes an updated `README.md`. It previously pushed directly back to `main`, which violates branch protection rules (direct pushes blocked, PR + "Build Solution" check required).
+
+## Decision
+
+The workflow's "Commit updated README" step now uses `git push origin HEAD:dev` instead of `git push`. README updates flow into `dev` and are released to `main` via the normal dev→main PR/release cycle.
+
+## Rationale
+
+- No new secrets or PAT permissions required.
+- Consistent with the project's branch flow: `squad/*` → `dev` → `main`.
+- `README.md` on `main` is slightly behind `dev` until the next release, which is acceptable — it reflects the released state.
+
+## Alternatives Considered
+
+- **Option A (PAT bypass):** Create a PAT with bypass permission. Rejected — adds secret management overhead and bypasses protection intentionally.
+- **Option B (PR from workflow):** Have the workflow open a PR to main. Rejected — requires `pull-requests: write`, adds noise, and needs the "Build Solution" check to pass before merge.
+- **Option C (push to dev) ← CHOSEN:** Simple one-line fix, no new permissions.
+
