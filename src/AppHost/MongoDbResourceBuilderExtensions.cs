@@ -19,8 +19,8 @@ namespace Aspire.Hosting;
 
 internal static class MongoDbResourceBuilderExtensions
 {
-// Shared semaphore — one per process; all commands share the same mutex.
-private static readonly SemaphoreSlim _clearMutex = new(1, 1);
+// Shared semaphore — guards all three dev commands (Clear, Seed, Stats) so only one runs at a time.
+private static readonly SemaphoreSlim _dbMutex = new(1, 1);
 
 public static IResourceBuilder<MongoDBServerResource> WithMongoDbDevCommands(
 this IResourceBuilder<MongoDBServerResource> builder,
@@ -45,7 +45,7 @@ builder.WithCommand(
 executeCommand: async context =>
 {
 // AC2: Non-blocking acquire — return immediately if another clear is already in flight.
-if (!await _clearMutex.WaitAsync(0))
+if (!await _dbMutex.WaitAsync(0))
 {
 context.Logger.LogWarning(
 "Clear MyBlog data skipped on {ResourceName} — a clear operation is already in progress.",
@@ -137,7 +137,7 @@ Message = message
 }
 finally
 {
-_clearMutex.Release();
+_dbMutex.Release();
 }
 },
 new CommandOptions
@@ -165,7 +165,7 @@ builder.WithCommand(
 "🌱 Seed MyBlog Data",
 executeCommand: async context =>
 {
-if (!await _clearMutex.WaitAsync(0))
+if (!await _dbMutex.WaitAsync(0))
 {
 context.Logger.LogWarning(
 "Seed MyBlog data skipped on {ResourceName} — a database operation is already in progress.",
@@ -251,7 +251,7 @@ Message = $"blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
 }
 finally
 {
-_clearMutex.Release();
+_dbMutex.Release();
 }
 },
 new CommandOptions
@@ -274,7 +274,7 @@ builder.WithCommand(
 "📊 Show MyBlog Stats",
 executeCommand: async context =>
 {
-if (!await _clearMutex.WaitAsync(0))
+if (!await _dbMutex.WaitAsync(0))
 {
 context.Logger.LogWarning(
 "Show MyBlog stats skipped on {ResourceName} — a database operation is already in progress.",
@@ -342,7 +342,7 @@ DisplayImmediately = true
 }
 finally
 {
-_clearMutex.Release();
+_dbMutex.Release();
 }
 },
 new CommandOptions
