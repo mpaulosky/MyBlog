@@ -83,7 +83,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	public async Task ShowMyBlogStats_Concurrent_Invocations_Allow_Only_One_Run()
 	{
 		// Arrange
-		await PrepareAsync(blogPostCount: 0);
+		await PrepareAsync(blogPostCount: 50);
 
 		var annotation = GetAnnotation();
 
