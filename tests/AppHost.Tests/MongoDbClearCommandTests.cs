@@ -144,38 +144,6 @@ state.Should().Be(ResourceCommandState.Disabled,
 "the clear-myblog-data command must be unavailable when MongoDB is unhealthy");
 }
 
-/// <summary>
-/// Without a running Aspire host the MongoDB connection string cannot be resolved.
-/// The handler must return a graceful failure (Success = false) with a descriptive
-/// message rather than throwing an exception.
-/// </summary>
-[Fact(Skip = "GetValueAsync blocks without a running DCP host — covered by MongoClearDataIntegrationTests")]
-public async Task Handler_Without_Running_Host_Returns_Graceful_Failure_Not_Exception()
-{
-// Arrange
-var builder = await CreateBuilderAsync();
-var annotation = GetClearMyBlogDataAnnotation(builder);
-
-var ctx = new ExecuteCommandContext
-{
-ResourceName = "mongodb",
-ServiceProvider = new ServiceCollection().BuildServiceProvider(),
-Logger = NullLogger.Instance,
-CancellationToken = TestContext.Current.CancellationToken,
-};
-
-// Act
-var result = await annotation.ExecuteCommand(ctx);
-
-// Assert
-result.Should().NotBeNull("the handler must always return a result — never throw");
-
-result.Success.Should().BeFalse(
-"without a running Aspire host GetValueAsync() returns null, so the handler returns Success = false");
-
-result.Message.Should().NotBeNullOrEmpty(
-"even on failure the handler must return a human-readable diagnostic message");
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
