@@ -57,6 +57,26 @@
 **Key insight:** The `permissions: contents: write` block was already present. No new secrets or PAT bypass needed. One-line change.
 
 **Decision:** Captured in `.squad/decisions/inbox/boromir-269-readme-sync-target.md`.
+### 2026-05-08 — Issue #268: Fix squad-mark-released GraphQL Permission Error
+
+**Root cause:**
+The `permissions: repository-projects: write` block in the workflow was incorrect — it applies only to `GITHUB_TOKEN`, not to a custom PAT. The workflow uses `${{ secrets.GH_PROJECT_TOKEN }}`, but:
+
+1. If the secret is not set, `actions/github-script` receives an empty string and falls back to `GITHUB_TOKEN`
+2. `GITHUB_TOKEN` cannot access GitHub Projects V2 GraphQL API, producing `Resource not accessible by integration`
+3. Even if set, the PAT needs the `project` OAuth scope (classic PAT) for Projects V2 mutations
+
+**What was fixed:**
+
+1. Changed `permissions: repository-projects: write` → `permissions: contents: read` (correct for a workflow that only uses a custom PAT — no GITHUB_TOKEN escalation needed)
+2. Added a pre-flight validation step that explicitly checks `GH_PROJECT_TOKEN` is set, failing early with an actionable error message including setup instructions
+3. Downgraded `actions/github-script@v9` → `@v7` (stable LTS version)
+4. Added a top-of-file comment documenting the required PAT scope (`project`)
+
+**Key lesson:** For GitHub Projects V2 GraphQL, `GITHUB_TOKEN` is never sufficient regardless of `permissions` block settings. A classic PAT with `project` OAuth scope (or fine-grained PAT with Projects read/write) is required. Always add a pre-flight secret validation step so failures are immediately actionable.
+
+**Files changed:** `.github/workflows/squad-mark-released.yml`
+**Related decisions inbox:** `boromir-268-project-token.md`
 
 ---
 
