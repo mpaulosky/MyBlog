@@ -173,4 +173,74 @@ public class EditBlogPostHandlerTests
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("redis down");
 	}
+
+	[Fact]
+	public async Task HandleEdit_OperationCanceled_Rethrows()
+	{
+		// Arrange
+		var post = BlogPost.Create("Title", "Content", "Author");
+		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content");
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>())
+			.ThrowsAsync(new OperationCanceledException());
+
+		// Act
+		Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		await act.Should().ThrowAsync<OperationCanceledException>();
+	}
+
+	[Fact]
+	public async Task HandleEdit_UnexpectedException_ReturnsUnexpectedErrorResult()
+	{
+		// Arrange
+		var post = BlogPost.Create("Title", "Content", "Author");
+		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content");
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>())
+			.ThrowsAsync(new TimeoutException("db timeout"));
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be("An unexpected error occurred.");
+	}
+
+	[Fact]
+	public async Task HandleGetById_OperationCanceled_Rethrows()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		_cache.GetOrFetchByIdAsync(
+			id,
+			Arg.Any<Func<Task<BlogPostDto?>>>(),
+			Arg.Any<CancellationToken>())
+			.ThrowsAsync(new OperationCanceledException());
+
+		// Act
+		Func<Task> act = () => _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
+
+		// Assert
+		await act.Should().ThrowAsync<OperationCanceledException>();
+	}
+
+	[Fact]
+	public async Task HandleGetById_UnexpectedException_ReturnsUnexpectedErrorResult()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		_cache.GetOrFetchByIdAsync(
+			id,
+			Arg.Any<Func<Task<BlogPostDto?>>>(),
+			Arg.Any<CancellationToken>())
+			.ThrowsAsync(new TimeoutException("db timeout"));
+
+		// Act
+		var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be("An unexpected error occurred.");
+	}
 }
