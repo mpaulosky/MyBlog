@@ -68,4 +68,35 @@ public class CreateBlogPostHandlerTests
 		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
 		await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 	}
+
+	[Fact]
+	public async Task Handle_OperationCanceled_Rethrows()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
+			.ThrowsAsync(new OperationCanceledException());
+
+		// Act
+		Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		await act.Should().ThrowAsync<OperationCanceledException>();
+	}
+
+	[Fact]
+	public async Task Handle_UnexpectedException_ReturnsUnexpectedErrorResult()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
+			.ThrowsAsync(new TimeoutException("db timeout"));
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be("An unexpected error occurred.");
+	}
 }
