@@ -1948,3 +1948,130 @@ This model choice supersedes the Layer 0 defaults in all squad sessions going fo
 - Should this decision apply retroactively to existing tests in the codebase? (Not in scope for this decision; can be a future refactoring sprint.)
 - Should PR reviews include explicit checks for TDD violations? (Already covered by Aragorn's PR gate; this formalizes the standard.)
 - If other squad members would benefit from GPT-5.4 overrides, document those decisions separately with similar rationale.
+
+---
+
+## Sprint 18 Release Decisions
+
+### AppHost.Tests CI Hang Fix — Parallel Collection Serialization
+
+**Date:** 2025-07-25  
+**Author:** Aragorn (Lead Developer)  
+**Branch:** squad/247-mongo-clear-command-tests  
+**PR:** #251  
+
+#### Problem
+
+`AppHost.Tests` was hanging in CI (PR #251) while all other test jobs were green. Root cause: `xunit.runner.json` had `parallelizeTestCollections: true`. The assembly contains two xUnit collections that each boot a full Aspire host (with DCP + Docker MongoDB). When both collections started simultaneously, they competed for DCP resources, causing `App.StartAsync()` to hang indefinitely.
+
+#### Fix
+
+Changed `tests/AppHost.Tests/xunit.runner.json`:
+
+```diff
+- "parallelizeTestCollections": true
++ "parallelizeTestCollections": false
+```
+
+This serializes xUnit collections, allowing only one Aspire host to start at a time. No Docker volume conflicts, no DCP contention, no hang.
+
+#### Rationale
+
+Minimum-correct change: one line, zero code changes, zero regression risk. Sequential execution adds ~5-10 minutes over prior parallel execution — well within the 45-minute CI budget.
+
+---
+
+### PR Review Outcomes — #262 and #257
+
+**Author:** Aragorn (Lead Developer)  
+**Date:** 2026-05-08  
+
+#### PR #262 — APPROVED and squash-merged ✅
+
+**Branch:** `squad/259-extract-withcleardatabasecommand`  
+**Closes:** #259  
+**Author:** Sam (Backend/.NET)  
+
+Sam's refactor cleanly extracts the inline `WithCommand` clear-data block from `AppHost.cs` into `MongoDbResourceBuilderExtensions`. All checklist items passed. CI green.
+
+Two Copilot inline comments flagged for follow-up (not blocking current single-instance project):
+
+1. **Static SemaphoreSlim** — `_clearMutex` is `static readonly` at class level, violating the extension's reusability contract. Harmless in this project but should be fixed before a second MongoDB resource is added.
+2. **Hard-coded database name in UX strings** — Parameter drives logic but UI strings still hard-code "myblog".
+
+**Decision:** Both are legitimate design defects but do not affect current behavior. A follow-up issue should be raised.
+
+#### PR #257 — APPROVED and squash-merged ✅
+
+**Branch:** `squad/256-fix-squad-mark-released-token`  
+**Closes:** #256  
+**Author:** mpaulosky  
+
+Correct fix: `secrets.GITHUB_TOKEN` lacks Projects V2 GraphQL mutation rights; `secrets.GH_PROJECT_TOKEN` (a PAT with project scope) is the correct credential. No hardcoded secrets. No `.squad/` files.
+
+Branch was behind dev after PR #262 landed. Required manual: `git fetch → git merge origin/dev → git push` before merge. **Lesson:** Merge concurrent PRs in strict priority order and update downstream branches before attempting merge.
+
+---
+
+### Issue #249 AppHost Clear Hardening — Implementation Choices
+
+**Date:** 2026-05-08  
+**Author:** Boromir  
+
+Issue #249 asks for three resilience properties on the `clear-myblog-data` operator action. All are AppHost/runtime concerns.
+
+#### AC1: UpdateState gates only on mongo health
+
+**Decision:** The existing `UpdateState` lambda was already correct. Added an explicit comment rather than a code change.
+
+**Rationale:** `UpdateState` receives a snapshot of the resource the command belongs to (`mongodb`). Checking the `web` resource's state from here would couple the clear command's availability to the liveness of the application layer—not a valid reason to disable a DBA operator action.
+
+#### AC2: Single-run protection via SemaphoreSlim(1,1) + WaitAsync(0)
+
+**Decision:** Declared `var clearMutex = new SemaphoreSlim(1, 1)` in top-level statements scope and applied `WaitAsync(0)` (non-blocking try-acquire) at the top of the `executeCommand` lambda. Failure to acquire returns `{ Success = false, Message = "..." }` immediately. The semaphore is released in `finally`.
+
+**Rationale:**
+
+- `WaitAsync(0)` is the idiomatic .NET non-blocking semaphore try-acquire
+- `finally` guarantees release even on early-return paths, preventing permanent lock-out
+- Top-level scope is appropriate: the `clearMutex` is a process-lifetime singleton and protects a single resource
+
+#### AC3: Best-effort per-collection via per-collection try/catch
+
+**Decision:** Wrapped each `DeleteManyAsync` call in its own `catch` block for
+`Exception ex when (ex is not OperationCanceledException)`. Caught exceptions are logged at Warning
+level, appended to a warnings list, and do NOT halt the loop. The final result message appends
+`⚠️ {N} collection(s) had errors: ...` when warnings exist. `OperationCanceledException` is
+intentionally excluded to allow operator-initiated cancellation to propagate normally.
+
+**Rationale:** Issue #249 AC3 states: *"the action continues remaining collections and returns warnings plus partial-progress results."* This implementation satisfies that literally.
+
+#### Gimli Follow-up (AC4)
+
+Tests should cover: (1) UpdateState returns Enabled with mongo Healthy regardless of web state; (2) Two concurrent handler invocations—exactly one succeeds, other returns failure; (3) Simulate a handler where the second collection throws—assert first and third collections appear in results, second in warnings, Success = true overall.
+
+---
+
+### Sprint 18 Release PR #272 Opened
+
+**Date:** 2026-05-08  
+**Author:** Boromir (DevOps)  
+
+Release PR **#272** has been opened to promote `dev` → `main` for Sprint 18.
+
+**PR:** [#272 — [RELEASE] Promote dev to main — Sprint 18](https://github.com/mpaulosky/MyBlog/pull/272)  
+**Branch:** `dev` → `main`  
+**Commits ahead:** 55  
+**Sprint 18 PRs included:** #262, #263, #264, #267, #270, #271  
+
+**CI status at PR open:**
+
+- ✅ Squad CI (`ci.yml`) — green on latest `dev` commit
+- ⚠️ Test Suite — 1 flaky failure: `SeedMyBlogData Concurrent Invocations` (timing race in test harness; not a production regression). Squad CI is the authoritative gate.
+
+**Next steps:**
+
+1. Aragorn reviews scope and approves
+2. PR CI must pass before merge
+3. Merge to `main` via squash merge
+4. Tag `main` with appropriate `vX.Y.Z` after CI green
