@@ -15,8 +15,11 @@ env:
 
 jobs:
   add-to-project:
-    # Only add squad-labeled issues
-    if: contains(github.event.issue.labels.*.name, 'squad')
+    # Only add sprint-stamped delivery issues.
+    if: >
+      contains(github.event.issue.labels.*.name, 'squad') &&
+      startsWith(github.event.issue.title, '[Sprint ') &&
+      github.event.issue.milestone != null
     runs-on: ubuntu-latest
 
     steps:

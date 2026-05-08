@@ -19,7 +19,7 @@ The pre-push hook (`.github/hooks/pre-push`) enforces **5 gates** that mirror CI
 ### The 5 Gates
 
 | Gate | Name | What It Does | Blocks If |
-|------|------|-------------|-----------|
+| ------ | ------ | ------------- | ----------- |
 | **0** | Branch protection | Checks current branch | Push is to `main` or `dev` |
 | **1** | Untracked source files | Scans for untracked `.razor`/`.cs` files | Untracked source files found (prompts y/N) |
 | **2** | Release build | `dotnet build MyBlog.slnx --configuration Release` | Build fails (3 retries) |
@@ -60,7 +60,7 @@ chmod +x .git/hooks/pre-push
 ### Failure Taxonomy (Known Patterns)
 
 | Symptom | Root Cause | Fix |
-|---------|-----------|-----|
+| --------- | ----------- | ----- |
 | Warning treated as error (Gate 2) | `TreatWarningsAsErrors=true` in Directory.Build.props | Fix the warning — do not suppress |
 | Architecture test failure (Gate 3) | Naming convention violation | Commands → `Command`, queries → `Query`, handlers → `Handler` (must be `sealed`), validators → `Validator` |
 | bUnit test failure (Gate 3) | API change in bUnit 2.x | Use `Render<T>()` not `RenderComponent<T>()` |

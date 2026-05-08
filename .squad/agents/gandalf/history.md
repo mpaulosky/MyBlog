@@ -1,10 +1,10 @@
 
-
 ## Learnings
 
 ### PR #5, #6, #7 Security Review — 2026-04-18
 
 **PRs Reviewed:**
+
 - **PR #5:** "ci: add PR build and test workflow" ✅ MERGED
 - **PR #6:** "chore: remove Weather and Counter template leftovers" ✅ MERGED
 - **PR #7:** "chore: add copyright headers to all .cs files" ✅ MERGED
@@ -14,6 +14,7 @@
 Files changed: `.github/workflows/ci.yml`, `.squad/agents/boromir/history.md`
 
 Security findings:
+
 - ✅ **No hardcoded secrets** — All authentication uses GitHub tokens with proper scopes
 - ✅ **Minimal RBAC permissions** — `contents:read`, `checks:write`, `pull-requests:write` only
 - ✅ **GitHub Actions pinned** — Uses major version pins (@v4, @v1) for supply chain safety
@@ -26,6 +27,7 @@ Security findings:
 Files changed: Counter.razor, Weather.razor deleted; RazorSmokeTests.cs modified
 
 Security findings:
+
 - ✅ **Reduced attack surface** — Removed unused routes `/counter`, `/weather`
 - ✅ **No authorization bypass** — Deleted components had no auth requirements
 - ✅ **Test coverage maintained** — 91.64% line coverage, 74 tests passing
@@ -36,6 +38,7 @@ Security findings:
 Files changed: 48 C# source files across all projects
 
 Security findings:
+
 - ✅ **Zero functional changes** — Copyright headers are purely cosmetic comments
 - ✅ **No secrets or credentials** — No password/key/token keywords found in diffs
 - ✅ **Build verification** — All 74 tests passing, 0 errors, 0 warnings
@@ -74,9 +77,11 @@ Security findings:
    - CI re-runs after force-push, ensuring rebased code tested
 
 **Decision Records Created:**
+
 - `.squad/decisions/inbox/gandalf-pr5-pr6-merged.md` (PR #5 & #6)
 
 **Build Workaround:**
+
 - `.slnx` solution build fails with CLR error 0x80131506 (unrelated to PRs)
 - Use individual project builds: `dotnet build src/Web/Web.csproj`
 
@@ -184,6 +189,7 @@ Posted security approval comment to PR #16.
 **Cross-team:** Aragorn merged PR #16 to dev with non-destructive integration. Local dev now ahead of origin/dev by 5 commits. Sprint 1.1 complete.
 
 **Orchestration Log:** `.squad/orchestration-log/2026-04-19T13:26:36Z-gandalf.md`
+
 ### PR #17 Security Review — 2026-04-19
 
 **PR #17** — `squad/1002-boromir-history-update` → `dev` (29 files: skills docs, playbooks, agent histories)
@@ -193,12 +199,14 @@ Posted security approval comment to PR #16.
 **Scope:** All changes confined to `.squad/` directory — documentation only, no feature code.
 
 **Security Checks:**
+
 - **[CLEAN] No hardcoded secrets** — Secret references in skill docs are environment variable names only (GITHUB_TOKEN, NUGET_API_KEY), not values
 - **[CLEAN] Auth guidance correct** — Auth0 skills correctly emphasize user-secrets for local dev, GitHub Actions secrets for CI
 - **[CLEAN] No sensitive file changes** — src/, appsettings, Program.cs unaffected
 
 **Merge Conflict Resolution:**
 Resolved 7 add/add conflicts in `.squad/skills/` by accepting `origin/dev` versions (Sprint 2 mining adaptations with MyBlog-specific paths and ownership rules):
+
 - auth0-management-api/SKILL.md
 - auth0-management-security/SKILL.md
 - mongodb-dba-patterns/SKILL.md

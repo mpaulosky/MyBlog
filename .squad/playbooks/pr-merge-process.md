@@ -53,18 +53,18 @@ gh pr checks <PR-number> --watch --interval 5
 
 Ralph MUST verify ALL of the following before spawning reviewers. Any failing gate blocks review:
 
-| Gate                      | Command                                                          | Expected                        |
-| ------------------------- | ---------------------------------------------------------------- | ------------------------------- |
-| GitHub issue exists       | `gh pr view <N> --json body -q .body \| grep -E "Closes #[0-9]+"` | Contains `Closes #N`            |
-| CI fully green            | `gh pr checks <N> --watch --interval 5`                          | All checks passing (including coverage gate) |
-| Coverage gate passing     | Check CI run logs for `The total line coverage is below`         | No coverage error in logs        |
-| No conflicts              | `gh pr view <N> --json mergeable -q .mergeable`                  | `MERGEABLE`                     |
-| PR template filled        | `gh pr view <N> --json body`                                     | Contains filled checkboxes      |
-| Branch is `squad/*`       | `gh pr view <N> --json headRefName -q .headRefName`              | Starts with `squad/`            |
-| Tests authored            | PR diff includes test file additions/modifications               | Gimli coverage present           |
+| Gate                  | Command                                                           | Expected                                     |
+| --------------------- | ----------------------------------------------------------------- | -------------------------------------------- |
+| GitHub issue exists   | `gh pr view <N> --json body -q .body \| grep -E "Closes #[0-9]+"` | Contains `Closes #N`                         |
+| CI fully green        | `gh pr checks <N> --watch --interval 5`                           | All checks passing (including coverage gate) |
+| Coverage gate passing | Check CI run logs for `The total line coverage is below`          | No coverage error in logs                    |
+| No conflicts          | `gh pr view <N> --json mergeable -q .mergeable`                   | `MERGEABLE`                                  |
+| PR template filled    | `gh pr view <N> --json body`                                      | Contains filled checkboxes                   |
+| Branch is `squad/*`   | `gh pr view <N> --json headRefName -q .headRefName`               | Starts with `squad/`                         |
+| Tests authored        | PR diff includes test file additions/modifications                | Gimli coverage present                       |
 
 > **If `Closes #N` is missing**, the PR was opened without a GitHub issue. Ralph must STOP, create the issue, link it in the PR body, assign it to the correct milestone and Project #4, then re-run this gate.
-
+>
 > **If coverage gate is failing** (CI red on coverage, not test logic), DO NOT spawn reviewers. Route to Gimli (issue #68 pattern) to add Domain tests. The PR is not review-ready until CI is fully green including coverage.
 
 ## Step 4 — Spawn Reviewers
@@ -198,8 +198,8 @@ echo "✅ Orphan branch cleanup complete."
 ## Related Documents
 
 - **Full ceremonies:** `.squad/ceremonies.md` (PR Review Gate, CHANGES_REQUESTED, Post-Merge Orphan Branch Cleanup)
-- **Reviewer protocol skill:** `.copilot/skills/reviewer-protocol/SKILL.md`
-- **Merged PR guard skill:** `.copilot/skills/merged-pr-guard/SKILL.md`
+- **Reviewer protocol skill:** `.github/skills/reviewer-protocol/SKILL.md`
+- **Merged PR guard skill:** `.squad/skills/merged-pr-guard/SKILL.md`
 - **Routing:** `.squad/routing.md` (reviewer mapping)
 - **Pre-push playbook:** `.squad/playbooks/pre-push-process.md`
 

@@ -468,7 +468,7 @@ dotnet user-secrets clear
 
 ## Related Documentation
 
-- [Auth0 Setup Guide](../src/Web/Auth/README.md)
+- [Auth0 Setup Guide](./AUTH0_SETUP.md)
 - [Azure Key Vault Documentation](https://learn.microsoft.com/azure/key-vault/)
 - [.NET User Secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets)
 - [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/)

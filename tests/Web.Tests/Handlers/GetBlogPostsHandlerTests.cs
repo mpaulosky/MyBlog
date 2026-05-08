@@ -127,4 +127,37 @@ public class GetBlogPostsHandlerTests
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("redis down");
 	}
+
+	[Fact]
+	public async Task Handle_OperationCanceled_Rethrows()
+	{
+		// Arrange
+		_cache.GetOrFetchAllAsync(
+			Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
+			Arg.Any<CancellationToken>())
+			.ThrowsAsync(new OperationCanceledException());
+
+		// Act
+		Func<Task> act = () => _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
+
+		// Assert
+		await act.Should().ThrowAsync<OperationCanceledException>();
+	}
+
+	[Fact]
+	public async Task Handle_UnexpectedException_ReturnsUnexpectedErrorResult()
+	{
+		// Arrange
+		_cache.GetOrFetchAllAsync(
+			Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
+			Arg.Any<CancellationToken>())
+			.ThrowsAsync(new TimeoutException("db timeout"));
+
+		// Act
+		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be("An unexpected error occurred.");
+	}
 }

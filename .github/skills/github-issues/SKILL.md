@@ -30,7 +30,7 @@ Manage GitHub issues using the `@modelcontextprotocol/server-github` MCP server.
 
 ### Required Parameters
 
-```
+```text
 owner: repository owner (org or user)
 repo: repository name  
 title: clear, actionable title
@@ -39,7 +39,7 @@ body: structured markdown content
 
 ### Optional Parameters
 
-```
+```text
 labels: ["bug", "enhancement", "documentation", ...]
 assignees: ["username1", "username2"]
 milestone: milestone number (integer)
@@ -69,7 +69,7 @@ Always use the templates in [references/templates.md](references/templates.md). 
 
 Use `mcp__github__update_issue` with:
 
-```
+```text
 owner, repo, issue_number (required)
 title, body, state, labels, assignees, milestone (optional - only changed fields)
 ```
@@ -83,6 +83,7 @@ State values: `open`, `closed`
 **User**: "Create a bug issue - the login page crashes when using SSO"
 
 **Action**: Call `mcp__github__create_issue` with:
+
 ```json
 {
   "owner": "github",
@@ -98,6 +99,7 @@ State values: `open`, `closed`
 **User**: "Create a feature request for dark mode with high priority"
 
 **Action**: Call `mcp__github__create_issue` with:
+
 ```json
 {
   "owner": "github",

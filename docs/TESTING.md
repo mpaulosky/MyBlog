@@ -40,11 +40,12 @@ Coverage reports are generated in `TestResults/<guid>/coverage.cobertura.xml`.
 
 ## Test Naming Convention
 
-```
+```text
 {MethodUnderTest}_{Scenario}_{ExpectedBehavior}
 ```
 
 Examples:
+
 - `CreateIssue_WithValidData_ReturnsSuccessResult`
 - `GetIssueById_WhenNotFound_ReturnsFailure`
 - `ValidateIssue_WithEmptyTitle_HasValidationError`
@@ -100,11 +101,13 @@ Coverage is enforced in CI via the `squad-test.yml` workflow.
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Push to `main` branch
 - Pull requests to any branch
 - Manual workflow dispatch
 
 The `squad-test.yml` workflow:
+
 1. Builds the solution
 2. Runs all test projects in parallel
 3. Collects and merges coverage reports

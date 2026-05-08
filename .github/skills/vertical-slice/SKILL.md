@@ -155,7 +155,7 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
 
 ## Step 5 — Create feature folder structure
 
-```
+```text
 Web/Features/<Feature>/
 ├── <Feature>.cs                              # Domain model
 ├── <Feature>Repository.cs                    # IBlogPostRepository + MongoDB impl

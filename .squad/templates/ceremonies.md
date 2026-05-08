@@ -5,7 +5,7 @@
 ## Design Review
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | auto |
 | **When** | before |
 | **Condition** | multi-agent task involving 2+ agents modifying shared systems |
@@ -15,6 +15,7 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
+
 1. Review the task and requirements
 2. Agree on interfaces and contracts between components
 3. Identify risks and edge cases
@@ -25,7 +26,7 @@
 ## Sprint Planning
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | auto |
 | **When** | on plan creation or material update |
 | **Condition** | any `plan.md` created or materially updated |
@@ -35,6 +36,7 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
+
 1. Ralph reviews `plan.md` and SQL todos, groups into logical sprints (3–6 issues each)
 2. Aragorn creates one GitHub milestone per sprint (`Sprint N: {Theme}`)
 3. Aragorn creates GitHub issues per todo, assigned to milestones, triaged with `squad:{member}` label
@@ -48,7 +50,7 @@
 ## Retrospective
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | auto |
 | **When** | after |
 | **Condition** | build failure, test failure, or reviewer rejection |
@@ -58,6 +60,7 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
+
 1. What happened? (facts only)
 2. Root cause analysis
 3. What should change?

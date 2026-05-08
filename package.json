@@ -6,7 +6,8 @@
     "tw:watch": "npx @tailwindcss/cli -i ./src/Web/Styles/input.css -o ./src/Web/wwwroot/css/tailwind.css --watch"
   },
   "devDependencies": {
-    "tailwindcss": "^4.2.0",
-    "@tailwindcss/cli": "^4.2.0"
+    "@tailwindcss/cli": "^4.2.0",
+    "markdownlint-cli2": "^0.22.1",
+    "tailwindcss": "^4.2.0"
   }
 }

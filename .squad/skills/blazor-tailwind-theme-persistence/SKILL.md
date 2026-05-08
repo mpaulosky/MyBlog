@@ -12,6 +12,7 @@ tools: []
 **This skill documents the OLD 8-theme system which has been replaced.**
 
 **Current Architecture (2025-01-29):**
+
 - **4 color swap classes**: `:root.color-blue`, `:root.color-red`, `:root.color-green`, `:root.color-yellow`
 - **Native dark mode**: Uses `.dark` class + Tailwind's `dark:` variant
 - **Split storage keys**: `theme-color` + `theme-mode` (not unified `tailwind-color-theme`)
@@ -170,6 +171,7 @@ Theme classes are applied to `<html>`. Tailwind selectors use the `.dark` varian
 ```
 
 CSS (tailwind.css / input.css):
+
 ```css
 .theme-blue-light  { --color-primary: ...; }
 .theme-blue-dark   { --color-primary: ...; }
@@ -184,7 +186,7 @@ CSS (tailwind.css / input.css):
 **Key commits on `feature/tailwind-migration`:**
 
 | SHA     | What                                           |
-|---------|------------------------------------------------|
+| --------- | ------------------------------------------------ |
 | 8105239 | Move IIFE to `<head>` — FOUC prevention        |
 | 4c41df0 | Footer color consistency                       |
 | c56ac47 | MutationObserver + delayed retry               |

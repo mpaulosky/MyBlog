@@ -73,7 +73,7 @@ purely structural (AAA comment additions and variable extractions for clarity).
 
 The three-wave dependency model performed exactly as intended:
 
-```
+```text
 Wave 1 (Boromir): Packages + CI  →  Wave 2 (Gimli): Code migration  →  Wave 3 (Pippin + Aragorn): Docs + Retro
 ```
 
@@ -110,6 +110,7 @@ corrected approach.
 ### The planned migration order shifted between sprints
 
 The Sprint 7 retrospective template listed the rollout order as:
+
 - Sprint 8 → `Unit.Tests`
 - Sprint 9 → `Architecture.Tests`
 
@@ -222,6 +223,7 @@ bUnit which has explicit xUnit v3 support. Migrating it next would complete
 the pilot phase and establish the bUnit + xUnit v3 pattern.
 
 **Suggested Sprint 9 scope:**
+
 - Wave 1 (Boromir): Update `Blazor.Tests` packages
 - Wave 2 (Gimli): Migrate test code, confirm bUnit compatibility
 - Wave 3 (Pippin): ADR, (Aragorn): Retrospective

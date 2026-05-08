@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.2.2">
+<Project Sdk="Aspire.AppHost.Sdk/13.3.0">
 
   <ItemGroup>
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" IsAspireProjectResource="false" />
@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.MongoDB" />
     <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Snappier" />
   </ItemGroup>
 
   <PropertyGroup>

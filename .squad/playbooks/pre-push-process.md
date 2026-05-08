@@ -10,6 +10,7 @@
 > Bypassing the pre-push hook defeats all local quality gates (build, tests,
 > coverage). CI becomes the first place failures are discovered — wasting
 > everyone's time. **Fix the root cause instead:**
+>
 > - SDK mismatch → install the SDK version pinned in `global.json` from https://dot.net
 > - Hook not installed → run `scripts/install-hooks.sh`
 > - Docker not running → start Docker Desktop / `sudo systemctl start docker`
@@ -158,7 +159,7 @@ chmod +x .git/hooks/pre-push
 - **Build repair:** `.github/prompts/build-repair.prompt.md`
 - **Contributing guide:** `CONTRIBUTING.md` (Pre-Push Gates section)
 - **Ceremonies:** `.squad/ceremonies.md` (Build Repair Check, Standard Task Workflow Phase 3)
-- **Skill:** `.copilot/skills/pre-push-test-gate/SKILL.md`
+- **Skill:** `.squad/skills/pre-push-test-gate/SKILL.md`
 
 ---
 

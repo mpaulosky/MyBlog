@@ -3,6 +3,7 @@
 ### MyBlog DevOps & Infrastructure Patterns
 
 **CI/CD & Workflow:**
+
 - Pre-push hook enforces `squad/{issue}-{slug}` branch naming locally; 5 sequential validation gates (build, tests, Docker integration)
 - GitHub Actions: `ci.yml` on push (main validation), `squad-test.yml` on PR (parallel test runs)
 - **Sprint branch flow:** `squad/*` → `sprint/*` → `dev` → `main` (sprint branches are consolidation checkpoints)
@@ -11,21 +12,34 @@
 - `global-json-file: global.json` in all dotnet setups (avoids preview SDK conflicts)
 
 **Hook System:**
+
 - `.github/hooks/pre-push` is committed source of truth; local copy at `.git/hooks/pre-push` via `install-hooks.sh`
 - `.github/hooks/post-checkout` auto-bootstraps pre-push guard on clone (eliminates manual setup bypass)
 - `git rev-parse --git-path hooks` ensures worktree-safe installation
 
 **Testing Infrastructure:**
+
 - Test projects: `Architecture.Tests` (6), `Unit.Tests` (59), `Integration.Tests` (9) via xUnit
 - Integration tests use Testcontainers with Docker requirement (Gate 4)
 - Squad pre-push gate auto-retries transient build errors (internal CLR abort)
 
 **Key DevOps Decisions:**
+
 - Decision 4: CI Workflow Conventions (global.json, nuGetVersion, continue-on-error surgical use)
 - Decision 7.1: Pre-push gate references CONTRIBUTING.md (canonical guide, not duplicated)
 - Sprint 1.1: Hook hardening + auto-bootstrap (mandatory squad naming, elimination of bypass paths)
 
+### Worktree & Branch Cleanup Ops
+
+**Sprint 15 Worktree Hygiene (Issue #240):**
+
+- **2026-05-06:** Removed stale worktree `/home/mpaulosky/Repos/MyBlog-240` (branch `squad/240-cleanup-legacy-skill-paths-and-duplicate-workspace-skill-copies` from merged PR #241).
+- Procedure: `git worktree remove --force` + `git worktree prune` + `git branch -D` to fully clean dangling references.
+- Final state: Only root worktree remains on `dev` (stable). Local branches: `dev` (tracking origin), `main` (tracking origin).
+- Verification: `git worktree list --porcelain` shows single entry; no orphaned branches remain locally.
+
 **Known Gotchas:**
+
 - Existing non-squad branches fail at push (intentional; part of adoption)
 - Docker must be running for Gate 4 (integration tests)
 - CI/CD automation using non-squad branches needs `--no-verify` escape hatch (documented)
@@ -33,6 +47,34 @@
 ---
 
 ## Learnings
+
+### 2026-05-08 — Issue #249: AppHost Mongo Clear Hardening
+
+**What was done:**
+
+Three acceptance-criteria hardening passes applied directly to `src/AppHost/AppHost.cs`:
+
+1. **AC1 (non-blocked by dependents):** The `UpdateState` lambda was already correct — it gates only on `mongo`'s own `HealthStatus.Healthy`. Added an explicit comment making this intent visible so reviewers and tests know it is intentional, not an oversight.
+
+2. **AC2 (single-run protection):** Introduced a `SemaphoreSlim(1,1)` (`clearMutex`) scoped before the `IsRunMode` block. The lambda uses `WaitAsync(0)` (non-blocking try-acquire). A second concurrent click returns `Success = false` with a human-readable message rather than racing against the first run. The semaphore is released in a `finally` block,
+so it is always returned even on early-exit paths.
+
+3. **AC3 (best-effort per collection):** Each `DeleteManyAsync` is wrapped in its own `try/catch (Exception ex) when (ex is not OperationCanceledException)`. Failures are logged as `LogWarning` with the exception, added to a `warnings` list, and the loop continues. The final result message appends `⚠️ {N} collection(s) had errors: ...` when warnings exist.
+`OperationCanceledException` is intentionally re-thrown so operator-initiated cancellation propagates naturally.
+
+**Key patterns established:**
+
+- `SemaphoreSlim(1,1)` at module-level (top-level statements scope) is the idiomatic way to protect a single-resource Aspire command from overlap.
+- `WaitAsync(0)` (zero-millisecond timeout, no CT) is the correct non-blocking try-acquire; the semaphore is always released in `finally`.
+- Exception filter `when (ex is not OperationCanceledException)` gives best-effort-with-propagation in one clause.
+- `UpdateState` lambda in `CommandOptions` should only inspect the resource it is attached to — never peer resources — to avoid phantom disabling.
+
+**Build state:** 0 errors, 15 warnings (all pre-existing CA analysis patterns — CA1848, CA2007, CA1515, CA1014, CA2000 for the new SemaphoreSlim which is process-lifetime and disposal-safe).
+
+**Files changed:** `src/AppHost/AppHost.cs`
+**Related decisions inbox:** `boromir-249-apphost-clear-hardening.md`
+
+---
 
 ### 2026-04-19 — PR #19 CI Blockage Root Cause & Remediation (MERGED ✅)
 
@@ -78,6 +120,7 @@
 ### 2026-04-19 — PR #16 Creation & Check Validation
 
 **Work completed:**
+
 - Inspected `squad/1001-sprint-1-1` branch: 7 commits ahead of dev, no uncommitted changes, already synced with origin
 - Created PR #16 from `squad/1001-sprint-1-1` → `dev` with comprehensive Sprint 1.1 summary
 - Monitored 4 required checks to >90% completion:
@@ -89,20 +132,25 @@
   - 🔄 build-and-test (secondary): in_progress
 
 **PR Status:**
+
 - PR #16 is OPEN, MERGEABLE, no review decision yet (awaiting human review or Copilot completion)
 - No blockers detected; the two in-progress checks (Agent and build-and-test) are non-blocking for review decision
 
 **Branch checkout:**
+
 - Successfully checked out `dev` and pulled `origin/dev` (already up to date)
 - Pre-push hook auto-re-installed during checkout (as expected)
 
 **Key insights:**
+
 - The "Agent" check is Copilot's async review tool running in the background — it doesn't block merge readiness
 - All required test suites passed; PR is ready for human review
 - Hook auto-reinstall on branch change is working as designed
+
 ### 2026-04-18 — Sprint 1.1: Hook Hardening (Completed)
 
 **Work completed:**
+
 - Implemented strict squad/{issue}-{slug} branch naming validation in Gate 0 of `.github/hooks/pre-push`
 - Created `.github/hooks/post-checkout` hook to auto-bootstrap pre-push guard on clone and checkout
 - Refactored `scripts/install-hooks.sh` to install both pre-push and post-checkout hooks with safe backups and diff detection
@@ -110,23 +158,27 @@
 - Branch naming enforced: `squad/1001-sprint-1-1` ✅, `feature/test` ❌ correctly rejected
 
 **Key implementation details:**
+
 - Gate 0 regex: `^squad/[0-9]+-[a-z0-9-]+$` enforces squad workflow locally before push
 - Post-checkout hook auto-triggers after `git clone` and `git checkout`, preventing silent bypass
 - install-hooks.sh uses `git rev-parse --git-path hooks` for worktree-safe installation
 - Clear error messages guide contributors to fix branch names or use `--no-verify` escape hatch
 
 **Testing & verification:**
+
 - Smoke test baseline: all 5 gates pass (pre-implementation)
 - Post-implementation: all 5 gates pass with new strict branch naming
 - Non-squad branches correctly rejected at push time
 - Worktree and CI/CD scenarios verified safe
 
 **Known gotchas documented:**
+
 - Existing branches failing at push will need renaming (intentional — part of adoption)
 - CI/CD automation must use `squad/*` naming or `--no-verify` flag (documented)
 - Migration should be announced to team with clear guidance
 
 **Branch & Commit:**
+
 - Branch: `squad/1001-sprint-1-1`
 - Commit: `3e672e6` — feat(devops): Sprint 1.1 — Hook Hardening
 - Status: ✅ Complete, ready for PR review
@@ -134,6 +186,7 @@
 ### 2026-04-18 — Pre-Push Gate Implementation
 
 **Work completed:**
+
 - Added `.github/hooks/pre-push` as the committed source of truth for the local hook.
 - Fixed copied-project drift in the hook: `IssueTrackerApp.slnx` → `MyBlog.slnx`, Gate 3 reduced to the real `Architecture.Tests` and `Unit.Tests` projects, and Gate 4 reduced to the real `Integration.Tests` project.
 - Rewrote `scripts/install-hooks.sh` to copy the committed hook into the local hooks directory, skip when already identical, and back up any differing local hook before overwriting.
@@ -141,10 +194,12 @@
 - Kept the emergency escape hatch documented as `git push --no-verify`.
 
 **Branch and PR:**
+
 - Created `squad/prepush-gate` from `origin/dev`.
 - Pushed follow-up corrections to PR #12 (`squad/prepush-gate` → `dev`) after reconciling the copied hook with the actual MyBlog repo layout.
 
 **Key implementation details:**
+
 - `.github/hooks/pre-push` is the source of truth; `.git/hooks/pre-push` is installed locally and is never committed.
 - Gate 2 builds `MyBlog.slnx` in Release mode and auto-retries once inside each attempt to ride through transient CLR aborts.
 - Gate 3 runs `tests/Architecture.Tests/Architecture.Tests.csproj` and `tests/Unit.Tests/Unit.Tests.csproj`.
@@ -152,6 +207,7 @@
 - The installer resolves the hooks directory with `git rev-parse --git-path hooks`, so it works in worktrees and nonstandard Git dir layouts.
 
 **Testing:**
+
 - Reinstalled the hook locally with `./scripts/install-hooks.sh`; the installer backed up the previous differing hook before replacing it.
 - Pushed the branch successfully through all 5 gates:
   - Build: passed after one automatic retry following transient `Internal CLR error (0x80131506)`
@@ -161,6 +217,7 @@
   - Push: allowed after all gates passed
 
 **Lessons learned:**
+
 - Keep the committed hook and installer aligned by copying from a single source of truth instead of embedding hook bodies in the install script.
 - Repo-specific automation copied from another project must be reconciled immediately; stale solution names and test project paths can silently invalidate the gate.
 - Worktree-safe hook installation should use `git rev-parse --git-path hooks`, not a hardcoded `.git/hooks` path.
@@ -198,12 +255,15 @@
    - Lesson: comments that contradict the code are worse than no comments — they mislead future readers
 
 **Commits pushed to squad/cicd-phase3-4:**
+
 - `173f3e14` — ci.yml: global.json SDK + nuGetVersion + InformationalVersion
 - `2d2efdcd` — squad-test.yml: global.json SDK + remove push trigger + tighten continue-on-error
 - `1d054a4b` — squad-issue-assign.yml: fix misleading base branch comment
+
 ### 2025-01-29 — CI/CD Phase 3-4: Parallel Tests, GitVersion, Dev Branch Strategy
 
 **Work completed:**
+
 - Created `dev` branch from main and set as default branch (GitHub API)
 - Applied branch protection rules via gh api:
   - `main`: strict checks, 1 approval required, only accepts PRs from dev or hotfix/*
@@ -214,6 +274,7 @@
 - Fixed `.github/workflows/squad-issue-assign.yml`: Hardcoded `dev` as base branch (was using dynamic default_branch)
 
 **Branch strategy implemented:**
+
 - `dev` is now the default branch and primary development target
 - `main` becomes release-only branch (strict protection)
 - Feature/squad branches → PR to `dev` → merge to `dev`
@@ -221,11 +282,13 @@
 - Hotfixes can go directly to main, but auto-reminder triggers to backport to dev
 
 **GitVersion integration:**
+
 - GitVersion.yml already existed at repo root with full branch config (main/dev/feature/squad/pull-request)
 - Added GitVersion steps to ci.yml: setup → execute → display SemVer
 - Build now stamps assemblies with GitVersion-calculated versions: Version, AssemblyVersion, FileVersion
 
 **Parallel test workflow features:**
+
 - Version job runs GitVersion once, outputs used by all test jobs
 - 3 test jobs run in parallel: Architecture, Unit, Integration
 - Each job uploads test results (TRX) and coverage (cobertura.xml)
@@ -234,6 +297,7 @@
 - All coverage steps use `continue-on-error: true` to prevent failures if no coverage files
 
 **Key decisions:**
+
 - Used `fetch-depth: 0` for GitVersion (requires full git history)
 - Version job outputs semVer and assemblySemVer for downstream jobs
 - Hardcoded `dev` in squad-issue-assign.yml to ensure Copilot agent uses correct base branch
@@ -241,11 +305,13 @@
 - Used GitVersion action versions: `gittools/actions/gitversion/setup@v3` and `gittools/actions/gitversion/execute@v3`
 
 **PR created:**
+
 - PR #9: `squad/cicd-phase3-4` → `dev`
 - All workflow changes committed in single commit
 - Branch protection rules applied before PR creation
 
 **Next steps:**
+
 - Monitor PR #9 CI run to verify GitVersion integration and parallel tests
 - Consider adding `squad-promote.yml` workflow for dev → main releases
 - May need to adjust coverage thresholds based on aggregated coverage data
@@ -253,17 +319,20 @@
 ### 2025-01-29 — PR #4 Review: Razor @using Consolidation
 
 **Review process for application code PRs:**
+
 - Always check for `.squad/` file modifications — they are only allowed in `squad/*` branches
 - Verify branch name matches pattern before flagging protected branch violation
 - Build verification is critical for Razor changes — missing usings are immediately caught by Razor compiler
 - Run full test suite (Architecture + Unit + Integration) to ensure no regressions
 
 **What was reviewed:**
+
 - PR #4 from Legolas: consolidated 14 redundant `@using` directives from 9 Razor files into `Features/_Imports.razor`
 - Added `@using Microsoft.AspNetCore.Authorization` and `@using MediatR` to Features/_Imports.razor
 - Branch: `squad/razor-imports-consolidation` (permitted .squad/ changes)
 
 **Build & test results:**
+
 - Build: ✅ 0 errors, 0 warnings
 - Architecture.Tests: ✅ 6 passed
 - Unit.Tests: ✅ 61 passed (92.04% coverage)
@@ -271,12 +340,14 @@
 - All tests: ✅ 76/76 passing
 
 **Action taken:**
+
 - Merged PR #4 with squash + deleted branch
 - Verified main branch updated successfully
 
 ### 2025-01-29 — Created CI/CD Workflow for Pull Requests
 
 **Project context:**
+
 - MyBlog solution uses .NET 10 (net10.0) with .slnx format (not .sln)
 - Three test projects: Architecture.Tests (6 tests), Unit.Tests (61 tests, 92.04% coverage), Integration.Tests (9 tests)
 - Unit tests use coverlet.msbuild with cobertura output format and 89% threshold
@@ -284,6 +355,7 @@
 - Web project has custom Tailwind build target that skips when CI=true
 
 **Workflow features built:**
+
 1. **Triggers** — pull_request to main/squad/**, push to main
 2. **Build** — dotnet build MyBlog.slnx in Release mode with CI=true env var
 3. **Test execution** — all three test suites with TRX output + code coverage
@@ -292,6 +364,7 @@
 6. **NuGet caching** — caches ~/.nuget/packages keyed by csproj + Directory.Packages.props
 
 **Key decisions:**
+
 - Used .NET 10.x preview quality in setup-dotnet (global.json specifies 10.0.100)
 - Set CI=true environment variable for build to skip Tailwind compilation
 - Ran tests with --no-build to avoid double compilation
@@ -300,14 +373,17 @@
 - Used marocchino/sticky-pull-request-comment for coverage to avoid comment spam
 
 **Integration test considerations:**
+
 - Testcontainers.MongoDb package detected — no special CI setup needed
 - GitHub Actions runner has Docker pre-installed, Testcontainers will pull images automatically
 - No external MongoDB service configuration required
 
 **Files created:**
+
 - `.github/workflows/ci.yml` — full CI pipeline with build, test, coverage
 
 **Next steps:**
+
 - Monitor first workflow run on PR #5 to verify all steps execute successfully
 - May need to adjust coverage thresholds or exclusions based on actual coverage data
 - Consider adding caching for Docker images if Testcontainers startup becomes slow
@@ -319,9 +395,11 @@
 - PR #12 merged successfully with all green checks passing
 - Decision on gate references documented in `.squad/decisions/decisions.md`
 - Orchestration log created in `.squad/orchestration-log/2026-04-18T17-05-49-boromir.md`
+
 ### 2025-01-29 — IssueTrackerApp Workflow Analysis for MyBlog CI/CD Strategy
 
 **Reviewed workflows:**
+
 1. squad-ci.yml — fast PR validation (build only, no tests)
 2. squad-test.yml — comprehensive test suite with multiple jobs (Domain, Web, Architecture, bUnit, Integration, MongoDB, Azure, Aspire+Playwright)
 3. squad-promote.yml — workflow_dispatch to open dev → main release PR using GitVersion
@@ -336,6 +414,7 @@
 12. sync-squad-labels.yml — syncs squad labels from .squad/team.md
 
 **Key patterns observed:**
+
 - **Branch strategy:** IssueTrackerApp uses dev/preview/insider/main with dev as primary development branch, main as release-only
 - **Test parallelization:** squad-test.yml runs 10+ test jobs in parallel with build artifact caching
 - **MongoDB setup:** Uses docker run mongo:7.0 with replica set initialization for integration tests (EF Core transactions)
@@ -348,6 +427,7 @@
 - **Secrets:** Auth0 and MongoDB connection strings passed as env vars
 
 **Dev/main branch strategy insights:**
+
 - squad-ci.yml triggers on PR to dev/preview/main/insider and push to dev/insider
 - squad-promote.yml opens PR from dev → main with GitVersion-calculated version
 - squad-milestone-release.yml runs on main to create GitHub Release tag
@@ -355,6 +435,7 @@
 - squad-issue-assign.yml uses baseBranch = 'dev' for @copilot agent assignments
 
 **Recommendations for MyBlog:**
+
 1. **Adopt immediately:** squad-triage.yml, squad-pr-auto-label.yml, squad-label-enforce.yml, sync-squad-labels.yml, codeql-analysis.yml
 2. **Adapt for MyBlog stack:** squad-test.yml (remove MongoDB/Azure persistence jobs, keep Architecture/Unit/Integration/Blazor tests)
 3. **Dev branch strategy:** Requires creating dev branch as default branch, main becomes release-only
@@ -362,12 +443,12 @@
 5. **Skip:** squad-heartbeat.yml (Ralph agent), squad-issue-assign.yml (@copilot auto-assign), squad-milestone-release.yml (not using GitVersion), code-metrics.yml (low priority)
 6. **Gap analysis:** MyBlog lacks parallel test execution, MongoDB integration test setup, Aspire E2E tests, dev→main promotion workflow
 
-
 ### 2026-04-19 — PR #13 Merge Attempt & Ruleset Blocking Discovery
 
 **Task:** Merge PR #13 (governance consolidation) into `dev` and sync local repo
 
 **Findings:**
+
 - PR #13 created from `squad/prepush-gate` → `dev` with all tests passing (6 CI checks green)
 - Attempted merge via `gh pr merge 13 --admin --squash` but hit "Repository rule violations: A conversation must be resolved"
 - Root cause: Repository ruleset `protectbranch` (ID: 15246849) has `pull_request` rule with `required_review_thread_resolution: true`
@@ -376,24 +457,29 @@
 - Alternative merge path (local squash merge + push) also blocked: ruleset requires all direct pushes to `dev` go through PR + CI
 
 **Key findings about rulesets:**
+
 - GitHub Rulesets (not branch protection rules) enforce "Changes must be made through a pull request" and "Required status check" on `dev` branch
 - Rulesets take precedence over branch protection rules
 - No admin bypass available without modifying ruleset configuration
 - CLI API for ruleset updates is incomplete/not accepting PATCH for individual rule parameters
 
 **Solution required:**
+
 - Repository owner must disable `required_review_thread_resolution` in ruleset `protectbranch` rule, OR
 - Add admin bypass actor to the ruleset to allow repo owner overrides, OR  
 - Lower enforcement to "audit" mode temporarily for merge, then re-enable
 
 **Lesson learned:**
+
 - Rulesets are more restrictive than branch protection — requires explicit owner intervention
 - When Copilot bot leaves review threads, only explicit "Resolve conversation" in GitHub UI fully clears the status (reply threads are insufficient)
 - Direct push bypass (`--no-verify` for pre-push hook) doesn't override remote rulesets
 
 **Action taken:**
+
 - Documented on PR #13 that merge was blocked by the ruleset until owner
   intervention resolved or bypassed the enforcement requirement
+
 - Recommended owner modify ruleset enforcement or bypass configuration
 - Decision rationale captured in this history entry pending any separate inbox decision file
 
@@ -402,6 +488,7 @@
 **Task:** Complete after PR #13 was merged by owner
 
 **Execution:**
+
 1. Verified PR #13 merged successfully:
    - Merge commit: `310f281f2c2682dd048292c5da3fc2d98bc9b36`
    - Merged at: 2026-04-19T01:06:22Z
@@ -432,12 +519,14 @@
    - File now shows as modified in working directory
 
 **Final Local State:**
+
 - Branch: `dev` (at commit `310f281`)
 - Status: Up to date with `origin/dev`
 - Working tree: Clean except for `.squad/agents/boromir/history.md` (modified)
 - Stash: 2 older stashes remain (from main and squad/copyright-headers); new one popped
 
 **Branches cleaned up:**
+
 - ✅ Deleted `squad/prepush-gate` (local only; remote already gone)
 - Other local branches (feature/tailwind-migration, squad/cicd-phase1-2, etc.) remain for reference
 
@@ -449,6 +538,7 @@ When a feature branch is merged via PR and GitHub auto-deletes the remote, local
 **Task:** Commit and PR the preserved `.squad/agents/boromir/history.md` changes
 
 **Execution:**
+
 1. Restored stashed history.md from previous session (containing PR #13 ruleset blocker documentation)
 2. Created branch `squad/13-boromir-merge-notes` from current `dev`
 3. Committed changes with message: "docs: Log PR #13 merge blockers and post-merge sync findings"
@@ -457,15 +547,18 @@ When a feature branch is merged via PR and GitHub auto-deletes the remote, local
 4. Pushed branch to `origin/squad/13-boromir-merge-notes`
 
 **PR #14 Created:**
+
 - Title: "docs: Log PR #13 merge blockers and post-merge sync findings"
 - Linked to related issue: #13
 - Pre-push gate: Passed all 5 gates (build, arch tests, unit tests, integration tests, push)
 
 **CI Results:**
+
 - ✅ All 6 checks passed: Architecture Tests, Integration Tests, Unit Tests, Coverage Summary, build-and-test, Test Results
 - No failures or warnings
 
 **Current Status:**
+
 - **Blocked by ruleset** `protectbranch`: Requires pull request review approval before merge
 - Documentation accurate and complete; ready for owner approval and merge
 - Cannot self-approve as PR author; awaiting external reviewer or owner override
@@ -478,6 +571,7 @@ The same ruleset that blocked PR #13 also blocks PR #14 — this is consistent b
 Reviewed squad skills/playbooks from DevOps perspective. Identified 5 high-priority gaps in automation, branch validation, and PR gating.
 
 **Week 1 Actions (4.5h):**
+
 1. Auto-install pre-push hook via post-checkout (1h)
 2. Add Docker check to Gate 0.5 (1h)
 3. Enforce squad branch regex in Gate 0 (1h)
@@ -485,6 +579,7 @@ Reviewed squad skills/playbooks from DevOps perspective. Identified 5 high-prior
 5. Link build-repair prompt (30min)
 
 **Week 2–3 Actions (8h):**
+
 1. Create PR gate automation workflow (3h)
 2. Add pre-commit merged-PR guard (1h)
 3. Configure GitHub branch protection rules (1h)
@@ -498,6 +593,7 @@ Reviewed squad skills/playbooks from DevOps perspective. Identified 5 high-prior
 ## 2026-04-19: Roadmap Stress-Test (Sprint 0)
 
 Operationally validated adoption roadmap against live repo. Key findings:
+
 - Pre-push hook exists with 5 gates; hook installer exists; contributor docs complete
 - 4 of 5 Milestone 1 items already partly implemented
 - Narrowed M1 scope: 5 items / ~2h (vs. original 4–5h)
@@ -550,6 +646,7 @@ Finalized merged-branch guard decision and coordinated secondary skills assessme
 - Sprint 3 cleanup ready for execution
 
 **Constraints Satisfied:**
+
 - ✅ Decision evidence-based (15 PR merges, zero incidents)  
 - ✅ Guidance path remains active (routing + docs)  
 - ✅ Automation deferred, not rejected (reversible)  
@@ -560,6 +657,7 @@ Finalized merged-branch guard decision and coordinated secondary skills assessme
 Inspected squad/1001-sprint-1-1 branch for uncommitted changes, confirmed sync state, created PR #16 to dev, and monitored CI check progression through merge-ready state.
 
 **Work completed:**
+
 - Verified squad/1001-sprint-1-1 had no uncommitted changes; working tree clean
 - Confirmed branch synced with origin/dev (no local divergence)
 - Created GitHub PR #16 with 30 modified files (hooks, install script, skills, routing, integration tests)
@@ -585,6 +683,7 @@ Do not wait for optional async checks before declaring a PR "ready for review." 
 Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thread_resolution: true` on `dev` and `main` branches, requiring ALL Copilot bot review threads to be explicitly resolved before merge is allowed — even when all required checks are green and all human reviewers have approved.
 
 **Exact Current Setting:**
+
 - **Ruleset name:** `protectbranch`
 - **Target branches:** `refs/heads/main`, `refs/heads/dev`
 - **Enforcement:** `active` (not audit mode)
@@ -592,6 +691,7 @@ Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thre
 - **Bypass actors:** `[]` (empty — no admin bypass configured)
 
 **Why This Keeps Happening:**
+
 1. Copilot-pull-request-reviewer[bot] leaves 8–10 review threads per PR (per standard code review style)
 2. Replying to a thread in GitHub UI does NOT mark it resolved
 3. Only clicking "Resolve conversation" button in GitHub UI marks thread as resolved
@@ -602,6 +702,7 @@ Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thre
 ### Why This Blocks Every PR
 
 **Evidence from Recent Merges:**
+
 - PR #17: MERGED (manually resolved all Copilot threads first)
 - PR #16: MERGED (same workaround)
 - PR #15: MERGED (same workaround)
@@ -611,30 +712,40 @@ Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thre
 ### Recommended Fix (Minimal & Safest)
 
 **Option 1 — RECOMMENDED: Add Admin Bypass Actor**
-```
+
+```text
 Modify ruleset `protectbranch`:
+
 - Add bypass_actors: [{"type": "Actor", "actor_type": "OrganizationAdmin", "actor_id": null}]
   OR
+
 - Add bypass_actors: [{"type": "Actor", "actor_type": "RepositoryOwner"}]
 ```
+
 **Impact:** Repo owner can bypass the rule if needed. Keeps enforcement for all other contributors.
 **Effort:** 1 API call or UI toggle.
 **Risk:** Low — only affects owner, not team workflows.
 
 **Option 2 — NOT RECOMMENDED: Disable Thread Resolution Requirement**
-```
+
+```text
 Modify ruleset `protectbranch` pull_request rule:
+
 - Change required_review_thread_resolution: false
 ```
+
 **Impact:** Any unresolved threads no longer block merge (but threads still created and visible).
 **Effort:** 1 API call or UI toggle.
 **Risk:** Moderate — team might miss important feedback if threads routinely left unresolved.
 
 **Option 3 — NOT RECOMMENDED: Set Enforcement to Audit**
-```
+
+```text
 Modify ruleset `protectbranch`:
+
 - Change enforcement: "audit" (temporarily)
 ```
+
 **Impact:** Rules no longer block merge; only logged for monitoring.
 **Effort:** 1 API call or UI toggle.
 **Risk:** High — defeats entire protection system; not a permanent solution.
@@ -642,6 +753,7 @@ Modify ruleset `protectbranch`:
 ### Current Workaround (What Teams Are Doing Now)
 
 All team members currently resolve Copilot review threads manually before merge:
+
 1. After Copilot bot posts its review
 2. Click "Resolve conversation" for each thread (usually 8–10 clicks)
 3. Wait for merge button to become green
@@ -652,7 +764,7 @@ All team members currently resolve Copilot review threads manually before merge:
 ### Decision Framework
 
 | Option | Effort | Risk | Permanent? | Recommended? |
-|--------|--------|------|-----------|--------------|
+| -------- | -------- | ------ | ----------- | -------------- |
 | Add admin bypass | 1 call | Low | ✅ Yes | **✅ YES** |
 | Disable thread req | 1 call | Medium | ✅ Yes | ❌ No (weakens review) |
 | Audit mode | 1 call | High | ❌ No (temporary) | ❌ No (not permanent) |
@@ -661,6 +773,7 @@ All team members currently resolve Copilot review threads manually before merge:
 ### Implementation Path
 
 **Repo owner should:**
+
 1. Navigate to GitHub repo → Settings → Rules → `protectbranch`
 2. Click "Edit" on the pull_request rule
 3. Under "Bypass actors," add:
@@ -671,6 +784,7 @@ All team members currently resolve Copilot review threads manually before merge:
 **Result:** Repo owner can use `--admin` flag if needed, but rule remains enforced for team.
 
 **After Change Verification:**
+
 ```bash
 gh api repos/mpaulosky/MyBlog/rulesets/15246849 \
   --jq '.bypass_actors'
@@ -697,9 +811,11 @@ gh api repos/mpaulosky/MyBlog/rulesets/15246849 \
 ## 2026-04-15: Squad/18 — Preserve Local Dev History (Branch Preservation)
 
 ### Context
+
 Local `dev` branch held 9 unpushed commits investigating recurring merge blocks. User requested branching those commits into a dedicated `squad/18-preserve-local-dev-history` branch for cleanup without affecting local dev state.
 
 ### Action Taken
+
 1. **Verified state:** Confirmed local `dev` was 9 commits ahead of `origin/dev` ✓
 2. **Created branch:** `git branch squad/18-preserve-local-dev-history HEAD` at commit `36d4352` ✓
 3. **Pushed with tracking:** Ran `git push --set-upstream origin squad/18-preserve-local-dev-history` ✓
@@ -707,12 +823,14 @@ Local `dev` branch held 9 unpushed commits investigating recurring merge blocks.
 5. **Preserved dev:** Switched back to `dev` — remains 9 commits ahead of `origin/dev` untouched ✓
 
 ### Outcome
+
 - **Branch:** `squad/18-preserve-local-dev-history` → `origin/squad/18-preserve-local-dev-history` (upstream tracking live)
 - **Local dev:** Remains at HEAD `36d4352`, still 9 commits ahead of `origin/dev` 
 - **Hook status:** Pre-push gates enforced; zero manual fixes needed
 - **State:** Dev history preserved, squad branch available for PR/cleanup workflow
 
 ### Key Learning
+
 The pre-push hook's branch-naming gate (Gate 0) allows `squad/*` naming without requiring strict issue/slug validation when branch already exists and commit history passes all build/test gates. This enables rapid branch-off operations for local history preservation.
 
 ---
@@ -722,6 +840,7 @@ The pre-push hook's branch-naming gate (Gate 0) allows `squad/*` naming without 
 **Task:** Review & merge PR #19 (artifact cleanup) per the PR merge process playbook.
 
 **Work completed:**
+
 1. **PR Context Verified:**
    - Issue #18 (branch clean-up) marked `go:resolved-by-pr`
    - PR #19: minimal scope — deletes orphaned `pr2-diff.txt` artifact only
@@ -752,25 +871,28 @@ The pre-push hook's branch-naming gate (Gate 0) allows `squad/*` naming without 
 The `build-and-test` required status check is in `action_required` and has not completed. This is an **environment issue** (firewall block on MongoDB connectivity), not a code/config problem. The PR itself is valid and safe to merge once CI completes.
 
 **Next Responsible Actor:** Aragorn (lead) — can either:
+
 - Option A: Resolve the MongoDB firewall/environment blocker and re-run CI
 - Option B: Review the CI failure rationale and use lead authority to bypass if this is a known environment issue
 - Option C: Route to Boromir to diagnose and fix the CI environment blocker
 
 **State Left:**
+
 - PR #19: Open, ready for review (both Aragorn & Boromir approved)
 - Issue #18: Open (pending PR merge to auto-close)
 - Branch `copilot/clean-orphan-changes`: Live, awaiting CI completion
 
-
 ### 2026-04-19 — PR #19 CI Diagnosis & Merge (COMPLETE ✅)
 
 **Phase 1: Merge Block Investigation**
+
 - Identified GitHub Ruleset `protectbranch` blocking all PRs due to required thread resolution
 - Root cause: Copilot bot creates ~8–10 review threads per PR; rule requires manual "Resolve" clicks
 - Recommendation: Add RepositoryOwner to bypass_actors (low risk, immediate fix)
 - **Decision 16 documented:** Recurring merge block mitigation strategy
 
 **Phase 2: PR #19 CI Diagnosis**
+
 - Root cause: Firewall block on compass.mongodb.com (MongoDB connectivity during CI)
 - Status `action_required` = workflow stalled in environment, not code
 - **Action:** Triggered workflow rerun (24631882902)
@@ -778,31 +900,35 @@ The `build-and-test` required status check is in `action_required` and has not c
 - **Verification:** PR state CLEAN, mergeable, all checks passing
 
 **Phase 3: PR #19 Merge**
+
 - ✅ Executed merge: `gh pr merge 19 --squash --delete-branch`
 - ✅ Target: dev branch (commit 04ba254)
 - ✅ Remote branch cleaned up
 - **Decision 17 documented:** PR #19 CI blockage root cause and remediation (complete)
 
 **Final Status:**
+
 - ✅ PR #19: MERGED to dev
 - ✅ Issue #18: AUTO-CLOSED by merge
 - ✅ Ralph board: CLEAR
 
 **Artifacts:**
+
 - `.squad/decisions.md` — Decisions 16–17 merged from inbox
 - `.squad/orchestration-log/2026-04-19T15:09:42Z-boromir.md` — Full execution log
-
 
 ---
 
 ### 2026-04-19 — Sprint 2: Rewrite microsoft-code-reference Skill for MyBlog DevOps Focus
 
 **Work completed:**
+
 - Rewrote `.squad/skills/microsoft-code-reference/SKILL.md` to replace generic Azure SDK reference with **DevOps-specific MyBlog patterns**
 - Grounded skill in actual CI/CD practices: Aspire AppHost resource wiring, NuGet centralization, GitHub Actions workflows, .NET 10 / Aspire 13 compatibility
 - Updated routing.md entry to reflect new scope (removed "Marked for Sprint 2 scope rewrite" placeholder)
 
 **Key changes to SKILL.md:**
+
 1. **Header/metadata:** Added explicit owner (Boromir), scope (MyBlog CI/CD, Aspire, NuGet, GitHub Actions)
 2. **Use cases table:** Replaced Azure Blob / Graph SDK examples with MyBlog-specific scenarios:
    - AppHost resource won't start → verify `AddMongoDB()` signature
@@ -816,10 +942,12 @@ The `build-and-test` required status check is in `action_required` and has not c
 7. **Validation Workflow:** Added concrete testing guidance (run `dotnet build MyBlog.slnx`, test AppHost locally with `dotnet run`)
 
 **Routing.md updates:**
+
 - Removed "Marked for Sprint 2 scope rewrite (DevOps/NuGet/GitHub Actions focus)" note
 - Updated description to explicitly call out: "Aspire AppHost resources" and clarify Boromir ownership
 
 **Design rationale:**
+
 - Skill is now **grounded in MyBlog's actual tech stack** (Aspire 13.2.2, .NET 10, MongoDB + Redis via Aspire, GitHub Actions ci.yml)
 - **Concrete over generic:** All examples reference real resources and methods used in the codebase
 - **Dev context:** When Boromir encounters AppHost failures, NuGet mismatches, or GitHub Actions issues, the skill provides immediate MyBlog-specific queries and expected outcomes
@@ -828,10 +956,10 @@ The `build-and-test` required status check is in `action_required` and has not c
 **Branch:** N/A (squad asset change, committed directly to history)  
 **Status:** ✅ COMPLETE
 
-
 **2026-04-19 — Follow-up Corrections: Repo Convention Accuracy**
 
 **Issues identified and fixed:**
+
 1. **NuGet centralization reference corrected:** 
    - Changed from: "centralized NuGet versioning in `Directory.Build.props` or individual `.csproj` files"
    - Changed to: "centralizes ALL NuGet package versions in `Directory.Packages.props` (single source of truth)"
@@ -851,21 +979,21 @@ The `build-and-test` required status check is in `action_required` and has not c
    - Use cases now reference `global.json` as source of truth for .NET SDK version
 
 **Verification:**
+
 - Skill now accurately reflects Boromir's critical NuGet centralization rule
 - Terminology aligns with .NET SDK (not legacy .NET Framework)
 - All file references match repo structure and conventions
 
 **Status:** ✅ CORRECTED & VERIFIED
 
-
 **Final pass correction:**
+
 - Line 152: Fixed "Directory.Build.props" → "Directory.Packages.props" in Validation Workflow section
 - Comprehensive verification: ✅ All 6 Directory.Packages.props references are correct
 - Comprehensive verification: ✅ No legacy .NET Framework references remain
 - Comprehensive verification: ✅ All global.json and .NET SDK/target framework references align with repo
 
 **Skill Status:** ✅ FULLY ALIGNED WITH REPO CONVENTIONS
-
 
 ---
 
@@ -874,15 +1002,18 @@ The `build-and-test` required status check is in `action_required` and has not c
 **Observation:** The `squad-test.yml` workflow had **no `push` trigger at all** — only `pull_request` targeting `main`, `dev`, and `squad/**`. Sprint branches (`sprint/**`) existed in the branch strategy as consolidation checkpoints but were invisible to CI.
 
 **Sprint workflow consolidation layer:**
+
 - Branches flow: `squad/*` → `sprint/*` → `dev` → `main`
 - Sprint branches aggregate multiple squad/* features before merging to dev
 - Without CI on sprint branches, consolidation merges had zero remote validation — a real regression risk
 
 **Fix applied (PR #70):**
+
 1. Added `push.branches: ['sprint/**']` — so direct pushes to sprint consolidation branches trigger the parallel test suite
-2. Added `sprint/**` to `pull_request.branches` — so squad/* → sprint/* PRs also trigger CI
+2. Added `sprint/**` to `pull_request.branches` — so squad/*→ sprint/* PRs also trigger CI
 
 **Verified:**
+
 - YAML syntax valid (Python yaml.safe_load ✅)
 - Push to `sprint/69-test-ci-trigger`: `Tests (Parallel)` workflow fired (run ID 24674077867 ✅)
 - PR #70 CI checks all running correctly
@@ -911,6 +1042,7 @@ The `build-and-test` required status check is in `action_required` and has not c
    - Rationale: This file is the core deliverable of the PR; dev changes were orthogonal versioning work
 
 **Rebase process:**
+
 ```bash
 git checkout squad/94-rename-workflow-docs-update
 git rebase origin/dev
@@ -921,12 +1053,14 @@ git push --force-with-lease origin squad/94-rename-workflow-docs-update --no-ver
 ```
 
 **Key learnings:**
+
 - **Conflict pattern:** When a feature branch heavily modifies CI workflows and base branch has conflicting changes, `--ours` (our = squad/XX branch intent) is the right strategy
 - **Dropped commits:** Rebase automatically identified and dropped 2 commits already in origin/dev (Aragorn's Sprint 3 findings, squad-test sprint/* fix)
 - **Pre-push gate escape:** Used `--no-verify` because local .NET SDK 10.0.202 not installed; safe for YAML-only changes per established procedure
 - **Post-rebase verification:** `git log --oneline origin/dev..HEAD` shows only the squads/94-specific work, clean history
 
 **PR Status Post-Resolution:**
+
 - ✅ State: OPEN
 - ✅ Mergeable: TRUE (zero conflicts)
 - ✅ CI Checks: IN_PROGRESS (Squad CI, CodeQL, Tests(Parallel), PR Auto-Label all triggered after force push)
@@ -943,6 +1077,7 @@ git push --force-with-lease origin squad/94-rename-workflow-docs-update --no-ver
 ### Sprint 7: xUnit v3 Packaging & CI Setup
 
 **xUnit v3 Package Names (NuGet):**
+
 - xUnit v3 uses entirely different package IDs from v2: `xunit.v3`, `xunit.v3.assert`, `xunit.v3.extensibility.core` — NOT `xunit` (which is v2 only)
 - Latest stable at Sprint 7 kickoff: `3.2.2` for all v3 packages
 - `xunit.analyzers` 1.27.0 is compatible with both v2 and v3 — safe to add without breaking existing projects
@@ -950,17 +1085,20 @@ git push --force-with-lease origin squad/94-rename-workflow-docs-update --no-ver
 - Both `xunit` (v2) and `xunit.v3` can coexist in `Directory.Packages.props` during a staged migration
 
 **xUnit v3 CI Compatibility:**
+
 - xUnit v3 is fully compatible with `dotnet test` — no runner changes required
 - `XPlat Code Coverage` (coverlet 10.0.0) works unchanged with v3
 - TRX logger and `EnricoMi/publish-unit-test-result-action` work unchanged with v3
 - No special flags or env vars needed for v3 vs v2 in `squad-test.yml`
 
 **Branch / Push Workflow:**
+
 - Pre-push hook runs a full solution Release build + unit/arch tests — takes 5–15 min on a cold cache
 - For NuGet version-only changes to `Directory.Packages.props`, `--no-verify` is acceptable after manual `dotnet restore` confirms resolution (purely additive, no code changes)
 - Always create squad branches from the sprint branch (`sprint/N-slug`), not from `dev`
 
 **PRs for Sprint 7:**
+
 - PR #173: feat: add xUnit v3 packages to Directory.Packages.props (Issue #162)
 - PR #174: ci: add Domain.Tests job to squad-test.yml for xUnit v3 CI validation (Issue #165)
 
@@ -969,32 +1107,172 @@ git push --force-with-lease origin squad/94-rename-workflow-docs-update --no-ver
 ### Sprint 8 Wave 1: xUnit v3 Architecture.Tests (#176, #177)
 
 **xUnit v3 Package Versions Used:**
+
 - `xunit.v3`: 3.2.2 (centralized in `Directory.Packages.props` — already present from Sprint 7)
 - `xunit.analyzers`: 1.27.0 (same entry, already present from Sprint 7)
 - `xunit.v3.assert`: 3.2.2 (centralized — available but not explicitly referenced in Architecture.Tests; xunit.v3 meta-package covers it)
 
 **Architecture.Tests Migration Pattern (mirrors Domain.Tests):**
+
 - Replace `<PackageReference Include="xunit"/>` → `<PackageReference Include="xunit.v3"/>`
 - Add `<PackageReference Include="xunit.analyzers"/>` (no version pin — centralized)
 - Add `xunit.runner.json` as `Content` item with `CopyToOutputDirectory="PreserveNewest"`
 - Keep `xunit.runner.visualstudio` and `Microsoft.NET.Test.Sdk` unchanged
 
 **Differences vs. Domain.Tests Sprint 7 Pilot:**
+
 - `Directory.Packages.props` needed no changes (packages already added in Sprint 7)
 - Architecture.Tests does NOT reference `xunit.v3.assert` explicitly (Domain.Tests doesn't either — the meta-package handles it)
 - Architecture.Tests does NOT reference FluentValidation/MediatR (domain-specific dependencies not needed for arch tests)
 - The `xunit.runner.json` config is identical between both projects (parallel execution enabled)
 
 **CI Config Changes for Architecture.Tests:**
+
 - `squad-preview.yml`: Added `dotnet test tests/Domain.Tests` — Sprint 7 pilot was missing from preview gate
 - `squad-ci.yml`: No changes needed — build-only gate is correct for PR validation
 - Architecture.Tests already ran in `squad-preview.yml` — xunit.v3 upgrade is transparent to the CI invocation
 
 **Local Validation Results (Sprint 8):**
+
 - Build: ✅ 0 errors (306 pre-existing CA2007/CA1707 warnings in integration tests — not xunit-related)
 - Architecture.Tests (11 tests): ✅ All passed
 - Domain.Tests (42 tests): ✅ All passed
 
 **PRs for Sprint 8 Wave 1:**
+
 - PR #182: feat(packages): add xUnit v3 to Architecture.Tests — Issue #176
 - PR #183: ci: validate xUnit v3 packages in Architecture.Tests CI — Issue #177
+
+## 2026-05-07 — Issue #238 AppHost Theme Harness Unblocked
+
+**Task:** Investigate and, if possible, fix the AppHost/Playwright harness so
+the runtime theme test can become interactive, toggle light/dark, navigate to
+`/blog`, and verify the persisted theme there.
+
+### Root cause confirmed
+
+- `tests/AppHost.Tests` forces the web app into
+   `ASPNETCORE_ENVIRONMENT=Testing`.
+
+- In that environment, static web assets were not being wired when the web app
+   was launched from build output under the AppHost test host.
+
+- The missing static-web-assets wiring left Blazor framework assets and theme
+   support assets unavailable in the browser harness, which kept the page in a
+   prerender-only state.
+
+- The strongest evidence was the direct asset diagnostics from
+   `ThemeToggleInteractionTests`: before the fix,
+   `/_framework/blazor.web.js`,
+   `/Components/Layout/ReconnectModal.razor.js`, and `/Web.styles.css`
+   all failed under AppHost Testing.
+
+- A second, independent asset bug also surfaced: `App.razor` referenced the
+   wrong scoped CSS bundle name (`MyBlog.Web.styles.css` instead of
+   `Web.styles.css`).
+
+### Changes applied
+
+- `src/Web/Program.cs`
+  - added `builder.WebHost.UseStaticWebAssets()` when the environment is
+    `Testing`
+
+- `src/Web/Components/App.razor`
+  - corrected the scoped CSS bundle reference to `@Assets["Web.styles.css"]`
+- `tests/AppHost.Tests/Tests/Layout/ThemeToggleInteractionTests.cs`
+  - kept the runtime/asset diagnostics used to isolate the failure
+  - updated the `/blog` assertion to target the real `Blog Posts` heading by
+    accessible role/name once the harness was interactive again
+
+### Validation
+
+- Focused runtime persistence test:
+  - `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release --filter "ThemeToggle_DarkMode_PersistsAfterNavigatingToBlogPosts"`
+  - Result: **Passed (1/1)**
+- Focused AppHost theme slice:
+  - `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release --filter "ThemeToggle"`
+  - Result: **Passed 2, Skipped 1, Failed 0**
+  - Remaining skip is the already-documented seeded localStorage reload race in
+    `LayoutThemeToggleTests`
+
+- Focused architecture theme slice:
+  - `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release --filter "Theme"`
+  - Result: **Passed 5/5**
+- Focused bUnit theme slice:
+  - `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj -c Release --filter "Theme"`
+  - Result: **Passed 33/33**
+
+### Learnings
+
+- When an AppHost browser test works in Development but stalls in `Testing`,
+   check static web asset activation before blaming the proxy, readiness waits,
+   or Playwright timing.
+
+- Once the harness became interactive again, the remaining failure was a normal
+   test assertion bug: the runtime test needed a stable `/blog` heading selector
+   instead of the first `h1` in the DOM.
+
+- Gimli does **not** need a follow-up pass to unblock the `/blog` persistence
+   scenario. The only remaining theme-related AppHost gap is the separate,
+   already-documented reload/bootstrap skip path.
+
+## 2026-05-07 Theme Work Cleanup Session
+
+**Issue:** Squad board clear after theme PRs (#238, #239, #240) completion. Cleanup of merged/stale branches and worktrees.
+
+**Situation:**
+
+- PR #242 (squad/238): Merged into `dev` — local branch needed cleanup
+- PR #243 (squad/239): Closed without merge (stale) — cleanup required
+- Issue #240: Active unrelated work on separate worktree — preserved
+- Root worktree was on squad/238 with uncommitted changes
+
+**Actions Taken:**
+
+1. Stashed uncommitted `.vscode/settings.json` changes from root worktree
+2. Moved root worktree from squad/238 to dev (synced to latest)
+3. Deleted local branches: squad/238, squad/239 (force-deleted)
+4. Removed worktree: ../MyBlog-239 (force-removed after cleanup)
+5. Remote branch squad/239 already deleted by previous session
+
+**Final State:**
+
+- Root worktree: `/home/mpaulosky/Repos/MyBlog` on `dev` branch (945d65a, clean)
+- Active worktree: `/home/mpaulosky/Repos/MyBlog-240` on squad/240 branch (40060d4, clean) — PRESERVED
+- Deleted worktrees: MyBlog-239 (squad/239)
+- Deleted branches: squad/238, squad/239 (local only; squad/238 was on main already via PR #242, squad/239 was remote-deleted)
+- Board state: Clear, no pending theme issues or PRs
+
+**Result:** Safe, isolated cleanup with zero impact on active issue #240 work.
+
+---
+
+### 2026-05-08 — Sprint 15 Issue #247: Expose Local-Only Mongo Clear Command in AppHost (TRACER BULLET ✅)
+
+**Issue:** #247 — [Feature] Expose local-only Mongo clear command in AppHost  
+**Status:** ✅ AppHost wiring complete — local-only, health-gated, confirmation-required
+
+**Work done (this pass — local only, no commit):**
+
+1. Preserved in-progress Sprint 15 changes: Aspire 13.3.0 upgrade (packages + SDK), `.WithVolume("mongo-data")` addition
+2. Added `WithCommand("clear-myblog-data", ...)` to the `mongodb` resource with full contract:
+   - **Local-only gate:** wrapped in `if (builder.ExecutionContext.IsRunMode)` — command is invisible when publishing
+   - **Destructive label:** `IsHighlighted = true`, `IconName = "DatabaseWarning"`
+   - **Health gate:** `UpdateState` returns `ResourceCommandState.Disabled` unless `HealthStatus.Healthy`
+   - **Confirmation:** `ConfirmationMessage` set — declining in the dashboard = inherent no-op by Aspire protocol
+   - **Zero-deletion baseline:** handler returns `{ Success = true, Message = "0 collections cleared. (Confirmation acknowledged — no data was deleted.)" }` — tracer bullet contract
+3. Added `using Microsoft.Extensions.Diagnostics.HealthChecks;` and `using Microsoft.Extensions.Logging;`
+4. Build: ✅ clean (0 errors, warnings are pre-existing CA1014/CA1515/CA1848)
+
+**Key API patterns learned:**
+
+- `builder.ExecutionContext.IsRunMode` (not `IsDevelopment()`) is the correct Aspire way to gate local-run-only behaviour
+- `CommandOptions.UpdateState` callback receives `UpdateCommandStateContext.ResourceSnapshot.HealthStatus` (nullable `HealthStatus` from `Microsoft.Extensions.Diagnostics.HealthChecks`)
+- `ConfirmationMessage` on `CommandOptions` wires the dashboard dialog; declining = command not invoked = zero deletions by protocol
+- `CommandResults` factory has `Success()`, `Failure()`, `Canceled()` overloads; `ExecuteCommandResult` direct initializer is fine for tracer bullet
+- Global usings in AppHost do NOT include `Microsoft.Extensions.Diagnostics.HealthChecks` or `Microsoft.Extensions.Logging` — both need explicit `using`
+
+**Handoff required:**
+
+- **Sam:** Implement actual MongoDB collection clearing logic inside the command handler (connect to the mongodb resource endpoint, enumerate collections, drop non-system collections, return per-collection counts)
+- **Gimli:** Write automated coverage for #247 AC4: verify (a) command annotation exists on mongodb resource in RunMode, (b) `ConfirmationMessage` is non-null, (c) `UpdateState` returns `Disabled` when `HealthStatus != Healthy`, (d) handler returns `Success = true` with zero-deletion message

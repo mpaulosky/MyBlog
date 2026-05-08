@@ -121,7 +121,7 @@ The following assets were evaluated but retained after adaptation:
 ## Reference: Decision 9 — Secondary Skill Fit Assessment
 
 | Skill | Fit | Decision | Reason |
-|-------|-----|----------|--------|
+| ------- | ----- | ---------- | -------- |
 | **post-build-validation** | ❌ Poor | DELETE | Pattern designed for external game-world state validation (RCON block verification). MyBlog has no remote operations. Test failures **must** block build. |
 | **static-config-pattern** | 🟡 Marginal | DELETE | Backwards-compatible const→static refactor. MyBlog uses ASP.NET Core `IConfiguration` + Options pattern. No current business case. |
 | **building-protection** | ❌ Poor | DELETE | Minecraft-only world-building guard. Kept temporarily as quarantine context, but no MyBlog use case was approved before Sprint 3 cleanup. |

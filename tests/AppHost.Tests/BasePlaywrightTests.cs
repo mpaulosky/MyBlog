@@ -8,6 +8,7 @@
 // =============================================
 
 using AppHost.Tests.Infrastructure;
+
 using Microsoft.Playwright;
 
 namespace AppHost.Tests;

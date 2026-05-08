@@ -13,11 +13,6 @@ using MyBlog.Web.Components.Theme;
 
 namespace Web.Components.Theme;
 
-// NOTE: These tests are scaffolded ahead of production code.
-// They depend on Issue #82 (ThemeProvider) and Issue #83 (ThemeSelector family).
-// They compile + pass once those components are merged.
-// Do NOT merge this PR before #82 and #83 are merged.
-
 // ─── ThemeSelector ────────────────────────────────────────────────────────────
 
 public sealed class ThemeSelectorTests : BunitContext
@@ -356,5 +351,43 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 		cut.WaitForAssertion(() =>
 				JSInterop.Invocations.Should().Contain(i =>
 						i.Identifier == "themeManager.setBrightness"));
+	}
+
+	[Fact]
+	public void BrightnessToggleClickInsideThemeProviderUpdatesCurrentBrightnessInCascade()
+	{
+		// Arrange — proves the full toggle pipeline: click → HandleBrightnessChanged → Provider.SetBrightness → CurrentBrightness
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+
+		var cut = Render<ThemeProvider>(parameters => parameters
+				.AddChildContent<ThemeSelector>());
+
+		// Act
+		cut.WaitForAssertion(() => cut.FindComponent<ThemeBrightnessToggleComponent>().Should().NotBeNull());
+		cut.Find("button").Click();
+
+		// Assert
+		cut.WaitForAssertion(() => cut.Instance.CurrentBrightness.Should().Be("dark",
+				because: "clicking the brightness toggle should propagate all the way back to ThemeProvider.CurrentBrightness"));
+	}
+
+	[Fact]
+	public void ColorDropdownChangeInsideThemeProviderUpdatesCurrentColorInCascade()
+	{
+		// Arrange — proves the full color pipeline: change → HandleColorChanged → Provider.SetColor → CurrentColor
+		JSInterop.SetupVoid("themeManager.setColor", "yellow");
+
+		var cut = Render<ThemeProvider>(parameters => parameters
+				.AddChildContent<ThemeSelector>());
+
+		// Act
+		cut.WaitForAssertion(() => cut.FindComponent<ThemeColorDropdownComponent>().Should().NotBeNull());
+		cut.Find("select").Change("yellow");
+
+		// Assert
+		cut.WaitForAssertion(() => cut.Instance.CurrentColor.Should().Be("yellow",
+				because: "changing the color dropdown should propagate all the way back to ThemeProvider.CurrentColor"));
 	}
 }

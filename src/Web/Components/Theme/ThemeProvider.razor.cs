@@ -23,27 +23,16 @@ public partial class ThemeProvider : ComponentBase
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (!firstRender) return;
-
-		try
+		if (!firstRender)
 		{
-			CurrentColor = await Js.InvokeAsync<string>("themeManager.getColor");
-		}
-		catch
-		{
-			// Keep default if localStorage is unavailable
+			return;
 		}
 
-		try
-		{
-			CurrentBrightness = await Js.InvokeAsync<string>("themeManager.getBrightness");
-		}
-		catch
-		{
-			// Keep default if localStorage is unavailable
-		}
+		CurrentColor = await GetStoredThemeValueAsync("themeManager.getColor", CurrentColor);
+		CurrentBrightness = await GetStoredThemeValueAsync("themeManager.getBrightness", CurrentBrightness);
 
-		StateHasChanged();
+		await TryMarkInitializedAsync();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	public async Task SetColor(string color)
@@ -58,5 +47,39 @@ public partial class ThemeProvider : ComponentBase
 		CurrentBrightness = brightness;
 		StateHasChanged();
 		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness);
+	}
+
+	private async Task<string> GetStoredThemeValueAsync(string identifier, string fallback)
+	{
+		try
+		{
+			return await Js.InvokeAsync<string>(identifier);
+		}
+		catch (JSException)
+		{
+			// Keep the bootstrap-applied fallback when JS storage is unavailable.
+			return fallback;
+		}
+		catch (JSDisconnectedException)
+		{
+			// Circuit teardown can race the initial theme read during shutdown.
+			return fallback;
+		}
+	}
+
+	private async Task TryMarkInitializedAsync()
+	{
+		try
+		{
+			await Js.InvokeVoidAsync("themeManager.markInitialized");
+		}
+		catch (JSException)
+		{
+			// The provider still works without the optional readiness marker.
+		}
+		catch (JSDisconnectedException)
+		{
+			// Ignore disconnect races; they do not affect persisted theme state.
+		}
 	}
 }

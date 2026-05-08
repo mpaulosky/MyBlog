@@ -29,6 +29,7 @@ Following the successful xUnit v3 pilot on Domain.Tests (Sprint 7), Architecture
   - Clean domain layer architecture ensures stable, fast test execution
 
 **Drivers for Architecture.Tests rollout:**
+
 - Pilot success validates xUnit v3 readiness for broader adoption
 - Architecture.Tests is the next logical target: small, stable, architecture-critical
 - Consistency: keeping Architecture.Tests on v2 while Domain.Tests uses v3 creates maintenance confusion
@@ -55,17 +56,20 @@ Adopt xUnit v3 for **Architecture.Tests** in Sprint 8 Wave 2, following the same
 ## Rationale
 
 **Why Architecture.Tests as Wave 2?**
+
 - Domain.Tests pilot proved xUnit v3 feasibility; risk is now minimal
 - Architecture.Tests is small and stable—ideal for confirming rollout process
 - NetArchTest patterns are well-understood; API changes are minimal
 - Success here validates readiness for larger test suites (Unit.Tests, Integration.Tests)
 
 **Why now?**
+
 - Pilot learnings are fresh; team expertise is highest right after Domain.Tests
 - Sprint 8 roadmap includes Architecture.Tests; Wave 2 fits planned timeline
 - Early rollout on smaller projects creates buffer for unforeseen issues before tackling Integration.Tests (largest project)
 
 **API changes minimal:**
+
 - 11 tests; mostly fact-based architecture validations
 - No Theory data-driven patterns; no complex assertion rewrites
 - FluentAssertions compatibility maintained
@@ -101,12 +105,14 @@ Adopt xUnit v3 for **Architecture.Tests** in Sprint 8 Wave 2, following the same
 ### Baseline (xUnit v2.9.3 — pre-migration)
 
 **Test execution (Architecture.Tests):**
+
 - Observed duration: **45–50 ms** (11 tests, estimated based on Domain.Tests per-test average of ~2.5 ms)
 - Per-test average: ~4.1–4.5 ms (architecture tests slightly heavier due to NetArchTest reflection)
 - Platform: net10.0, Debug configuration
 - CI contribution: ~8–10% of total test suite time
 
 **Build time (Architecture.Tests):**
+
 - Observed: ~2–3 seconds (full rebuild, Debug)
 - Incremental rebuild: <500 ms
 - NetArchTest dependency adds minimal overhead
@@ -114,17 +120,20 @@ Adopt xUnit v3 for **Architecture.Tests** in Sprint 8 Wave 2, following the same
 ### Post-migration performance (xUnit v3.2.2)
 
 **Test execution (observed):**
+
 - Measured: ~42–48 ms (Architecture.Tests with xUnit v3.2.2)
 - Improvement: ~5–8% (consistent with Domain.Tests pilot ~8.7%)
 - Per-test average: ~3.8–4.4 ms
 - MTP parallelization reduces variance in execution time
 
 **Build time (v3):**
+
 - Observed: ~2–3 seconds (equivalent to v2; no regression)
 - OutputType=Exe overhead negligible for Architecture.Tests (small project)
 - Incremental rebuild: <500 ms
 
 **CI impact (cumulative):**
+
 - Domain.Tests: ~95 ms (was 104 ms)
 - Architecture.Tests: ~45 ms (was 50 ms)
 - Combined savings: ~14 ms (~7.5% total for these two projects)
@@ -133,9 +142,11 @@ Adopt xUnit v3 for **Architecture.Tests** in Sprint 8 Wave 2, following the same
 ### Measurement validation
 
 **Sprint 7 baseline (Domain.Tests):**
+
 - v2: 104 ms → v3: 95 ms (8.7% improvement) ✅
 
 **Sprint 8 validation (Architecture.Tests):**
+
 - v2 estimate: 45–50 ms → v3 measured: 42–48 ms (5–8% improvement) ✅
 - Consistent with pilot; validates performance gains scale across projects
 
@@ -157,12 +168,15 @@ Adopt xUnit v3 for **Architecture.Tests** in Sprint 8 Wave 2, following the same
 ## Alternatives considered
 
 ### 1. Defer Architecture.Tests until Unit.Tests
+
 **Rejected** — Delays consistency; Domain and Architecture tests should share framework version to reduce maintenance burden. Pilot success supports moving ahead now.
 
 ### 2. Keep Architecture.Tests on v2 indefinitely
+
 **Rejected** — Creates fragmented testing strategy; v2 will be unsupported within 2–3 years. Better to migrate now while team expertise is peak.
 
 ### 3. Batch Architecture.Tests with Unit.Tests in one sprint
+
 **Rejected** — Higher risk; if issues arise, multiple projects affected. Wave-based rollout (one project per sprint) catches issues early and builds confidence incrementally.
 
 ## References
@@ -234,6 +248,7 @@ public class DomainLayerTests
 ```
 
 **Key changes:**
+
 - `[Fact]` → `[Test]`
 - NetArchTest and FluentAssertions remain compatible
 - Assert patterns unchanged

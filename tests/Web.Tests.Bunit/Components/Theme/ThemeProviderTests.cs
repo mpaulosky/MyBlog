@@ -13,10 +13,6 @@ using MyBlog.Web.Components.Theme;
 
 namespace Web.Components.Theme;
 
-// NOTE: These tests are scaffolded ahead of production code.
-// They depend on Issue #82 (ThemeProvider) and will compile + pass once those
-// components are merged. Do NOT merge this PR before #82 is merged.
-
 public sealed class ThemeProviderTests : BunitContext
 {
 	public ThemeProviderTests()
@@ -125,17 +121,17 @@ public sealed class ThemeProviderTests : BunitContext
 	// ─── SetColor ─────────────────────────────────────────────────────────────
 
 	[Fact]
-	public void ThemeProviderSetColorCallsSetColorJsWithNewColor()
+	public async Task ThemeProviderSetColorCallsSetColorJsWithNewColor()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setColor", "green");
+		JSInterop.SetupVoid("themeManager.setColor", "green").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetColor("green"));
+		await cut.InvokeAsync(() => cut.Instance.SetColor("green"));
 
 		// Assert
 		cut.WaitForAssertion(() =>
@@ -144,20 +140,37 @@ public sealed class ThemeProviderTests : BunitContext
 						i.Arguments.Contains("green")));
 	}
 
-	// ─── SetBrightness ────────────────────────────────────────────────────────
-
 	[Fact]
-	public void ThemeProviderSetBrightnessCallsSetBrightnessJsWithNewBrightness()
+	public async Task ThemeProviderSetColorUpdatesCurrentColorAfterJsCall()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+		JSInterop.SetupVoid("themeManager.setColor", "red").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
+		await cut.InvokeAsync(() => cut.Instance.SetColor("red"));
+
+		// Assert
+		cut.WaitForAssertion(() => cut.Instance.CurrentColor.Should().Be("red"));
+	}
+
+	// ─── SetBrightness ────────────────────────────────────────────────────────
+
+	[Fact]
+	public async Task ThemeProviderSetBrightnessCallsSetBrightnessJsWithNewBrightness()
+	{
+		// Arrange
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark").SetVoidResult();
+
+		var cut = Render<ThemeProvider>();
+
+		// Act
+		await cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
 
 		// Assert
 		cut.WaitForAssertion(() =>
@@ -167,20 +180,40 @@ public sealed class ThemeProviderTests : BunitContext
 	}
 
 	[Fact]
-	public void ThemeProviderSetBrightnessUpdatesCurrentBrightnessAfterJsCall()
+	public async Task ThemeProviderSetBrightnessUpdatesCurrentBrightnessAfterJsCall()
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark").SetVoidResult();
 
 		var cut = Render<ThemeProvider>();
 
 		// Act
-		cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
+		await cut.InvokeAsync(() => cut.Instance.SetBrightness("dark"));
 
 		// Assert
 		cut.WaitForAssertion(() => cut.Instance.CurrentBrightness.Should().Be("dark"));
+	}
+
+	// ─── Readiness Marker ────────────────────────────────────────────────────
+
+	[Fact]
+	public void ThemeProviderCallsMarkInitializedAfterFirstRender()
+	{
+		// Arrange — the AppHost runtime verification relies on data-theme-ready="true"
+		// being set by themeManager.markInitialized; confirm it is invoked on first render.
+		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
+		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
+		JSInterop.SetupVoid("themeManager.markInitialized");
+
+		// Act
+		var cut = Render<ThemeProvider>();
+
+		// Assert
+		cut.WaitForAssertion(() =>
+				JSInterop.Invocations.Should().Contain(i => i.Identifier == "themeManager.markInitialized",
+						because: "ThemeProvider must signal readiness so AppHost Playwright tests can verify interactive state"));
 	}
 
 	// ─── Error Resilience ─────────────────────────────────────────────────────

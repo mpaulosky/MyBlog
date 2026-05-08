@@ -28,6 +28,7 @@ idiomatic patterns, and reusable fixtures.
 
 - Use the .NET SDK test project format and target the same framework as the main app (e.g., `net7.0`).
 - Recommended package references:
+
   ```xml
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="*" />
@@ -305,23 +306,24 @@ Project setup (packages & templates)
 - Use DotNet.Testcontainers to run a real Postgres (or other) container per suite and a unique database name per
   factory/test to isolate state.
 
+```yaml
 name: Integration Tests
 
 on:
-workflow_dispatch:
-push:
-paths:
-- 'tests/Web.Tests.Integration/**'
-- '.github/workflows/integration-tests.yml'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/Web.Tests.Integration/**'
+      - '.github/workflows/integration-tests.yml'
 
 jobs:
-integration:
-runs-on: ubuntu-latest
-env:
-DOTNET_CLI_TELEMETRY_OPTOUT: '1'
-steps:
-- name: Checkout repo
-uses: actions/checkout@v4
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -341,5 +343,4 @@ uses: actions/checkout@v4
         run: dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj --logger "trx;LogFileName=integration.trx" --verbosity normal --no-build
         env:
           DOTNET_TEST_CONTAINER_OVERRIDE: 'true'
-
-``````
+```

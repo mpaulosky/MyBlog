@@ -99,7 +99,7 @@ git checkout dev
 git pull origin dev
 ```
 
-2. Create a `squad/*` branch with the issue number and a kebab-case slug:
+1. Create a `squad/*` branch with the issue number and a kebab-case slug:
 
 ```bash
 git checkout -b squad/42-fix-login-validation
@@ -117,10 +117,10 @@ Before `git push`:
 git symbolic-ref --short HEAD
 ```
 
-2. Ensure all untracked `.razor` and `.cs` files are staged or intentionally
+1. Ensure all untracked `.razor` and `.cs` files are staged or intentionally
    excluded from git.
 
-3. Run the pre-push gates locally to catch errors early:
+2. Run the pre-push gates locally to catch errors early:
 
 ```bash
 # The hook runs automatically on git push, but you can test manually:
@@ -130,7 +130,7 @@ dotnet test tests/Unit.Tests --configuration Release --no-build
 dotnet test tests/Integration.Tests --configuration Release --no-build  # requires Docker
 ```
 
-4. Push:
+1. Push:
 
 ```bash
 git push
@@ -158,18 +158,18 @@ gh pr create \
 - [ ] Manual testing done"
 ```
 
-2. **Wait for CI to pass** — all checks must be green before requesting review.
+1. **Wait for CI to pass** — all checks must be green before requesting review.
 
-3. Address code review feedback. If changes are needed, push corrections to the
+2. Address code review feedback. If changes are needed, push corrections to the
    same branch.
 
-4. Once all reviewers approve and CI is green, squash-merge to `dev`:
+3. Once all reviewers approve and CI is green, squash-merge to `dev`:
 
 ```bash
 gh pr merge <PR-number> --squash --delete-branch
 ```
 
-5. After merge, local branch cleanup is automatic via the post-checkout hook,
+1. After merge, local branch cleanup is automatic via the post-checkout hook,
    but you can also manually clean up orphaned branches:
 
 ```bash
@@ -191,13 +191,13 @@ git checkout dev
 git pull origin dev
 ```
 
-2. **Create a fresh `squad/{issue}-{slug}` branch for your next task:**
+1. **Create a fresh `squad/{issue}-{slug}` branch for your next task:**
 
 ```bash
 git checkout -b squad/45-next-issue
 ```
 
-3. **Push to the new branch** — the pre-push gate will guide you.
+1. **Push to the new branch** — the pre-push gate will guide you.
 
 If you accidentally commit on a merged branch, you can recover by following these
 same steps. New commits on a merged branch create orphaned history; starting fresh

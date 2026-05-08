@@ -15,6 +15,7 @@
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" />
+    <PackageReference Include="Snappier" />
   </ItemGroup>
 
   <PropertyGroup>

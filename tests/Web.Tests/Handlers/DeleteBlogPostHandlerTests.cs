@@ -75,4 +75,37 @@ public class DeleteBlogPostHandlerTests
 		result.Failure.Should().BeTrue();
 		result.ErrorCode.Should().Be(ResultErrorCode.Concurrency);
 	}
+
+	[Fact]
+	public async Task Handle_OperationCanceled_Rethrows()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		var command = new DeleteBlogPostCommand(id);
+		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
+			.ThrowsAsync(new OperationCanceledException());
+
+		// Act
+		Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		await act.Should().ThrowAsync<OperationCanceledException>();
+	}
+
+	[Fact]
+	public async Task Handle_UnexpectedException_ReturnsUnexpectedErrorResult()
+	{
+		// Arrange
+		var id = Guid.NewGuid();
+		var command = new DeleteBlogPostCommand(id);
+		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
+			.ThrowsAsync(new TimeoutException("db timeout"));
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be("An unexpected error occurred.");
+	}
 }

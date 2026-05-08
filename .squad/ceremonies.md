@@ -5,7 +5,7 @@
 ## Feature Work Kickoff
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | auto |
 | **When** | before |
 | **Condition** | any agent picks up a feature or fix issue that touches production code |
@@ -15,6 +15,7 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
+
 1. Feature author reads the issue and identifies files to be changed
 2. Gimli is spawned in parallel to write tests from the issue's acceptance criteria
 3. Frodo is spawned in parallel to note doc/README impact
@@ -28,7 +29,7 @@
 ## Design Review
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | auto |
 | **When** | before |
 | **Condition** | multi-agent task involving 2+ agents modifying shared systems |
@@ -38,6 +39,7 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
+
 1. Review the task and requirements
 2. Agree on interfaces and contracts between components
 3. Identify risks and edge cases
@@ -48,7 +50,7 @@
 ## Retrospective
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Trigger** | auto |
 | **When** | after |
 | **Condition** | build failure, test failure, coverage gate failure, CI failure, or reviewer rejection |
@@ -58,6 +60,7 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
+
 1. What happened? (facts only — no blame)
 2. Root cause analysis (was it a guardrail gap? a bypass? missing agent activation?)
 3. What should change? (update routing.md, ceremonies.md, or playbooks)
