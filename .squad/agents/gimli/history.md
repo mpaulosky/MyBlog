@@ -820,3 +820,66 @@ The project had the skill but it wasn't mandatory. Gimli's updated charter now s
 
 - Issue #252: [Sprint 16] Update Gimli charter to use TDD and red-green-refactor (parent issue)
 - Decision #23 in `.squad/decisions.md`: Full decision record with rationale
+
+## Session: Integration Test Fix — WithDataVolume (2026-05, Issue #248)
+
+### Task
+
+Get 3 `MongoClearDataIntegrationTests` tests GREEN against Sam's `clear-myblog-data` Aspire handler on branch `squad/247-mongo-clear-command-tests`.
+
+### Root Cause Identified
+
+`AppHost.cs` used `.WithVolume("mongo-data")` — a generic Aspire volume API that passes the volume name as both the source and Docker target path. Docker rejects this with:
+
+```text
+invalid mount config for type "volume": invalid mount path: 'mongo-data' mount path must be absolute
+```
+
+DCP retried 3+ times per run but the MongoDB container was never created. Redis started fine (Redis has no volume), but MongoDB was permanently stuck in a retry loop — never reaching `Running` state. The 3-minute CancellationToken in `ClearCommandAppFixture` fired before MongoDB could recover.
+
+### Fix
+
+Changed `src/AppHost/AppHost.cs`:
+
+```csharp
+// Before (broken):
+var mongo = builder.AddMongoDB("mongodb")
+    .WithVolume("mongo-data");
+
+// After (correct):
+var mongo = builder.AddMongoDB("mongodb")
+    .WithDataVolume("mongo-data");
+```
+
+`WithDataVolume` is the MongoDB-specific extension from `Aspire.Hosting.MongoDB` that mounts the named volume at the standard `/data/db` container path.
+
+### Diagnostics Used
+
+1. `docker ps` during test — Redis container appeared, MongoDB never created
+2. DCP work dir `/tmp/aspire-dcp*/mongodb-*_starterr_*` — showed exact Docker error
+3. DCP container log `resource-container-*.log` — confirmed reconciler retry loop
+
+### Test Results
+
+All 10 relevant tests pass:
+
+| Suite | Count | Status |
+|-------|-------|--------|
+| `MongoDbClearCommandTests` (unit) | 5 | ✅ |
+| `MongoClearDataIntegrationTests` (integration) | 3 | ✅ |
+| `EnvVarTests` | 2 | ✅ |
+
+Integration tests run in ~26 seconds end-to-end.
+
+### Key Learnings
+
+1. **`WithVolume` vs `WithDataVolume`** — Generic `WithVolume(name)` uses the volume name as the Docker target path. Container-specific `WithDataVolume(name)` knows the correct target (MongoDB: `/data/db`). Always prefer the resource-specific API.
+
+2. **DCP work dir for diagnosis** — DCP writes per-container start logs to `/tmp/aspire-dcp*/` during test runs. Files named `{container}_starterr_*` contain raw Docker error output — invaluable for diagnosing why a container won't start.
+
+3. **Redis starts, MongoDB doesn't** pattern — When one resource starts and another doesn't, check whether the failing resource uses a volume. The volume path issue only affects mounted containers.
+
+### Commits
+
+- `8a6e48c` — prior session (unit tests, MD lint fixes)
+- `6d13f93` — `fix: use WithDataVolume for MongoDB to set correct /data/db mount path`
