@@ -7,6 +7,8 @@
 //Project Name :  AppHost
 //=======================================================
 
+using System.Text;
+
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
@@ -29,6 +31,7 @@ return builder;
 
 builder.WithClearDatabaseCommand(databaseName);
 builder.WithSeedDataCommand(databaseName);
+builder.WithShowStatsCommand(databaseName);
 return builder;
 }
 
@@ -255,6 +258,97 @@ new CommandOptions
 {
 Description = "Inserts seed blog posts into the myblog database. Local development only.",
 IconName = "DatabaseArrowUp",
+UpdateState = ctx =>
+ctx.ResourceSnapshot.HealthStatus == HealthStatus.Healthy
+? ResourceCommandState.Enabled
+: ResourceCommandState.Disabled
+});
+}
+
+private static void WithShowStatsCommand(
+this IResourceBuilder<MongoDBServerResource> builder,
+string databaseName)
+{
+builder.WithCommand(
+"show-myblog-stats",
+"📊 Show MyBlog Stats",
+executeCommand: async context =>
+{
+if (!await _clearMutex.WaitAsync(0))
+{
+context.Logger.LogWarning(
+"Show MyBlog stats skipped on {ResourceName} — a database operation is already in progress.",
+context.ResourceName);
+
+return CommandResults.Failure(
+"A database operation is already in progress. Wait for the current run to finish, then try again.");
+}
+
+try
+{
+context.Logger.LogInformation(
+"Show MyBlog stats invoked on {ResourceName} — querying '{Database}'.",
+context.ResourceName, databaseName);
+
+var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
+if (connectionString is null)
+{
+context.Logger.LogError("Could not resolve MongoDB connection string for resource {ResourceName}.", context.ResourceName);
+return CommandResults.Failure("Could not resolve MongoDB connection string. Is the MongoDB resource running?");
+}
+
+var client = new MongoClient(connectionString);
+var database = client.GetDatabase(databaseName);
+
+var namesCursor = await database.ListCollectionNamesAsync(cancellationToken: context.CancellationToken);
+var collectionNames = await namesCursor.ToListAsync(context.CancellationToken);
+var userCollections = collectionNames
+.Where(static n => !n.StartsWith("system.", StringComparison.OrdinalIgnoreCase))
+.ToList();
+
+var sb = new StringBuilder();
+sb.AppendLine("| Collection | Document Count |");
+sb.AppendLine("| --- | --- |");
+
+if (userCollections.Count == 0)
+{
+sb.AppendLine("| *(no collections found)* | - |");
+}
+else
+{
+foreach (var name in userCollections)
+{
+var col = database.GetCollection<BsonDocument>(name);
+var count = await col.CountDocumentsAsync(
+FilterDefinition<BsonDocument>.Empty,
+cancellationToken: context.CancellationToken);
+sb.AppendLine($"| {name} | {count} |");
+}
+}
+
+var markdownTable = sb.ToString();
+context.Logger.LogInformation(
+"Show MyBlog stats complete: {Count} collection(s) reported.",
+userCollections.Count);
+
+return CommandResults.Success(
+$"{userCollections.Count} collection(s) found in '{databaseName}'",
+new CommandResultData
+{
+Value = markdownTable,
+Format = CommandResultFormat.Markdown,
+DisplayImmediately = true
+});
+}
+finally
+{
+_clearMutex.Release();
+}
+},
+new CommandOptions
+{
+Description = "Displays document counts per collection in the myblog database. Local development only.",
+IconName = "ChartMultiple",
 UpdateState = ctx =>
 ctx.ResourceSnapshot.HealthStatus == HealthStatus.Healthy
 ? ResourceCommandState.Enabled
