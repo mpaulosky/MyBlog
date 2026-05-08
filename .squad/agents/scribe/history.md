@@ -45,3 +45,39 @@ Initial setup complete.
 
 - **Gimli:** Resolve pre-existing `CustomResourceSnapshot` init setter issue; align command name `"clear-myblog-data"`
 - **Boromir:** Proceed with #249 hardening after Gimli validates coverage (tests turn GREEN)
+
+---
+
+## Session: 2026-05-08 — Ralph Board Sweep: Release Labeling, Mutex Rename, CI Failures Filed
+
+**Triggered by:** Ralph (Work Monitor) — "Ralph, go" autonomous board sweep
+**Team Outcome:** ✅ Issue #265 closed (release-candidate label applied); 🔄 PR #267 open targeting `dev`; 🆕 Issues #268 and #269 filed for Boromir
+
+### Agents & Issues
+
+- **Ralph (#265):** ✅ Milestone review — decided Option A (release candidate, minor version bump to v1.5.0). Rationale: PRs #259 (`WithClearDatabaseCommand`) and #260 (`WithSeedDataCommand`) are additive user-facing enhancements, no breaking changes, CI green. Applied `release-candidate` label, removed `pending-review`, commented decision on issue. Issue auto-closed by `milestone-blog.yml` automation.
+- **Sam (#266):** ✅ Refactor rename complete — created branch `squad/266-rename-clear-mutex-to-db-mutex`,
+  renamed `_clearMutex → _dbMutex` across 7 sites in `src/AppHost/MongoDbResourceBuilderExtensions.cs`
+  (1 declaration + 6 usage sites + 1 comment updated). Pre-push gates green: build 0 errors,
+  Architecture.Tests 15/15, Domain.Tests 42/42, Integration.Tests 12/12.
+  PR #267 opened targeting `dev`, Copilot review requested.
+- **Ralph (CI triage):** 🆕 Filed Issue #268 — `squad-mark-released.yml` fails with GraphQL permission error (`GITHUB_TOKEN` lacks `project` scope for ProjectV2 queries; fix: `PROJECT_TOKEN` PAT secret). Filed Issue #269 — Blog→README Sync workflow fails because direct push to `main` is blocked by branch ruleset (fix: PR-based approach via `sync/*` branch). Both labeled `squad:boromir,bug`.
+
+### Cross-Team Decisions
+
+None — no new patterns or conventions introduced this session. This was a release-labeling and refactor-rename sweep.
+
+### Board State at Session End
+
+| Item | Status |
+|------|--------|
+| Issue #265 | ✅ Closed — `release-candidate` label applied; auto-closed by `milestone-blog.yml` |
+| Issue #266 | ✅ Closed — resolved by PR #267 |
+| PR #267 | 🔄 Open, targeting `dev`, awaiting merge |
+| Issue #268 | 🆕 Filed for Boromir — Squad Mark Released CI GraphQL permission fix |
+| Issue #269 | 🆕 Filed for Boromir — Blog→README Sync CI direct-push-to-main fix |
+
+### Blockers & Next Steps
+
+- **Boromir:** Fix CI issues #268 (add `PROJECT_TOKEN` secret, update `squad-mark-released.yml`) and #269 (PR-based sync workflow for `main`)
+- **PR #267:** Awaiting reviewer merge to `dev`

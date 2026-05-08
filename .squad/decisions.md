@@ -2075,3 +2075,159 @@ Release PR **#272** has been opened to promote `dev` → `main` for Sprint 18.
 2. PR CI must pass before merge
 3. Merge to `main` via squash merge
 4. Tag `main` with appropriate `vX.Y.Z` after CI green
+
+---
+
+### 24. AppHost Clear-Command Test Harness Architecture
+
+**Status:** ✅ Proposed  
+**Date:** 2025  
+**Decided by:** Gimli (Tester)  
+**Issue:** #248
+
+#### Context
+
+Issue #248 required automated test coverage for the `clear-myblog-data` Aspire operator command. The handler in `AppHost.cs` captures the `mongo` resource builder in a closure and calls `mongo.Resource.ConnectionStringExpression.GetValueAsync(ct)` to resolve the live MongoDB connection string. This architectural choice bypasses the `ServiceProvider` — standard DI mocks cannot intercept it.
+
+#### Decision
+
+Use a **two-tier test strategy**:
+
+1. **Model-level unit tests** (`MongoDbClearCommandTests`, no Docker):  
+   Boot `DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>()` without calling `StartAsync()`. Verify the Aspire annotation contract: command name, `IsHighlighted`, `ConfirmationMessage`, and `UpdateState` enabled/disabled by health status.  
+   **Do NOT call `ExecuteCommand` from unit tests** — `GetValueAsync()` blocks without DCP.
+
+2. **Integration tests** (`MongoClearDataIntegrationTests`, Docker required):  
+   Use `ClearCommandAppFixture` (IAsyncLifetime) to boot a full Aspire host via `DistributedApplicationTestingBuilder.CreateAsync` + `StartAsync`. Seed MongoDB via the Driver, invoke `ExecuteCommand` through the registered annotation, and assert post-clear database state.
+
+#### Consequences
+
+- Unit tests run in CI without Docker.
+- Integration tests are gated by Docker availability (same gate as existing integration tests).
+- Tests are in xUnit collection `"MongoClearIntegration"` to share one fixture instance across all three integration tests (single container boot).
+- Any future handler that captures DI resources in closures must use the same two-tier pattern.
+
+#### Rejected Alternatives
+
+- **Single Testcontainers test**: Would lose fast-feedback unit coverage of the annotation contract.
+- **Mock `ConnectionStringExpression`**: The `MongoDBServerResource` type is sealed/internal in Aspire; expression resolution is not mockable from external assemblies.
+- **`[Fact(Skip)]` for the unreachable code path**: Violates Gimli charter (no skipped tests). The null-connection-string graceful failure path is covered implicitly — if `GetValueAsync` returns null in integration, the test fails with a descriptive message.
+
+---
+
+### 25. Gimli's Default Test Approach — TDD / Red-Green-Refactor
+
+**Status:** ✅ Documented  
+**Date:** 2026-05-XX  
+**Decided by:** Boromir (requested) + Ralph (executed)
+
+> **Note:** This decision supplements and reinforces Decision #23 (Gimli's Testing Approach & Model Override). It documents the TDD policy independently of the model override change.
+
+#### Decision
+
+Gimli's default test-authoring approach is **Test-Driven Development (TDD)** using the **red-green-refactor** cycle. All testing work defaults to behavior-first, observable-outcome validation, not implementation-detail coupling.
+
+#### Rationale
+
+1. **Behavior-first testing is more maintainable:** Tests that verify observable outcomes through public interfaces survive refactoring. Tests coupled to implementation details fail when internal structure changes, even if behavior remains unchanged.
+2. **Red-green-refactor prevents premature design:** Vertical slices (one test → one implementation → repeat) respond to what we learn from actual code.
+3. **TDD catches design problems early:** Writing tests first reveals interface friction. If a feature is hard to test, that signals an interface design problem.
+4. **Project skill alignment:** The project maintains `.github/skills/tdd/SKILL.md` with tracer-bullet patterns, anti-patterns, and refactoring guidance. Gimli routing injects this skill by default for all testing tasks.
+
+#### Implementation
+
+- **Charter:** Gimli's `.squad/agents/gimli/charter.md` documents TDD as the default approach with references to behavior-first principles and the `/tdd` skill suite.
+- **Routing:** `.squad/routing.md` injects `.squad/skills/tdd/SKILL.md` + `.github/skills/tdd/tests.md` for every Gimli testing task.
+- **Critical Rules:** Gimli enforces the full pre-push test suite (`dotnet test tests/Unit.Tests tests/Architecture.Tests -c Release`) and coverage gate (89% line threshold) before any branch push.
+
+#### Implications
+
+- New or updated test work always uses TDD — even bug fixes require writing the test first.
+- Red-green-refactor is non-negotiable; horizontal slicing (write all tests, then code) is not permitted.
+- If a feature is hard to test, designers (Aragorn, Sam, Legolas) are consulted before implementation.
+- Vertical slices preferred: each behavior is a single RED→GREEN→REFACTOR loop.
+
+#### Related Artifacts
+
+- `.squad/agents/gimli/charter.md` — Gimli's full charter and critical rules
+- `.github/skills/tdd/SKILL.md` — Core TDD workflow, tracer bullets, anti-patterns
+- `.github/skills/tdd/tests.md` — Behavior-first vs. implementation-detail examples
+- `.github/skills/tdd/refactoring.md` — Refactor patterns and post-GREEN cleanup
+- `.github/skills/tdd/mocking.md` — Mocking guidelines
+- `.squad/routing.md` — Skill injection for all Gimli testing tasks
+
+---
+
+### PR #273 Gate Decision — squad/harden-apphost-tests-flake
+
+**Date:** 2026-05-08  
+**Author:** Aragorn (Lead Developer)  
+**PR:** squad/harden-apphost-tests-flake → dev  
+**Verdict:** APPROVED ✅
+
+#### What Changed
+
+Three `*_Concurrent_Invocations_Allow_Only_One_Run` integration tests in `AppHost.Tests`
+(MongoClearData, MongoSeedData, MongoShowStats) were hardened against timing flakiness.
+The original code called `ExecuteCommand` sequentially on the same async task, so
+`_dbMutex.WaitAsync(0)` could complete synchronously twice — no real race ever occurred.
+Fix: each invocation is dispatched via `Task.Run` to a thread-pool worker; a `SemaphoreSlim(0,2)`
+start gate holds both workers until `Release(2)` opens them simultaneously, forcing a genuine
+concurrent race for the production `_dbMutex`. Additionally, `.squad/` decision and Ralph history
+files were updated with prior-session operational notes (appends to existing files).
+
+#### Rationale
+
+Approved. The `SemaphoreSlim(0,2)` + `Release(2)` pattern is idiomatic and correct. MongoDB I/O
+duration (tens of milliseconds) dwarfs thread-scheduling latency (sub-millisecond), so the start
+gate reliably forces a genuine race in practice. Copilot flagged a theoretical residual flakiness
+window (Release fires before both workers reach WaitAsync), but: (1) both Task.Run items are queued
+before Release is called on a pre-warmed thread pool, and (2) CI confirmed AppHost.Tests green on
+first run. The `.squad/` additions are appends to existing files, not new files — minor scope note,
+not a blocker. All 19 CI checks passed including codecov/project and codecov/patch.
+
+**Coverage delta:** No report in PR comments; codecov/project: pass, codecov/patch: pass — no decrease detected.
+
+---
+
+### Gate Decision: Release PR #272 — Sprint 18
+
+**Date:** 2026-05-08  
+**Author:** Aragorn (Lead Developer)  
+**PR:** [#272 — RELEASE: Promote dev to main — Sprint 18](https://github.com/mpaulosky/MyBlog/pull/272)  
+**Base:** `main` ← **Head:** `dev`  
+**Decision:** APPROVED ✅
+
+#### Rationale
+
+**Scope:** Diff is clean and bounded to Sprint 18 work:
+
+- `src/AppHost/MongoDbResourceBuilderExtensions.cs` + `AppHost.cs` — feature implementation
+- `tests/AppHost.Tests/` (6 files) — test coverage for all 3 new commands
+- `.github/workflows/blog-readme-sync.yml`, `squad-mark-released.yml` — CI fixes (#270, #271)
+- `.squad/agents/boromir/history.md` — release log (acceptable on dev→main)
+- `.vscode/settings.json` — tooling
+
+No `.squad/` files from feature branches. No unexpected production code changes.
+
+**CI Gate:** Squad CI (authoritative gate per playbook): GREEN on both push and pull_request.
+AppHost.Tests flaky failure is non-blocking — the `SeedMyBlogData Concurrent Invocations Allow Only
+One Run` test is a known timing-sensitive race in the test harness. The prior push run
+(ID 25572554825) on the same head SHA (c272febe) passed all tests. One subsequent run failed due to
+CI environment timing variance — this is a flake, not a regression.
+
+**Automated Reviews:** GitHub Copilot automated review: No comments posted. Codecov bot: No coverage decrease flagged.
+
+**Architecture Quality:** Sprint 18 work is a clean refactor — three dev-lifecycle methods extracted into a dedicated `MongoDbResourceBuilderExtensions` static class. Follows VSA patterns. Additive only; no breaking changes to public API surface.
+
+**Sprint Completeness:** All 4 Sprint 18 milestone issues closed (#262, #263, #264, #267). No open Sprint 18 PRs.
+
+#### Note on Approval Mechanism
+
+GitHub rejected `gh pr review --approve` (cannot approve own PR via same account). Gate decision posted as PR comment #4409029831 instead. Merge authority remains with mpaulosky.
+
+#### Post-Merge Actions Required
+
+1. Squash merge PR #272
+2. Tag `main` with `vX.Y.Z` after CI green
+3. Run `squad-mark-released` workflow
