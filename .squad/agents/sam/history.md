@@ -160,3 +160,21 @@ Replace Boromir's tracer-bullet handler in `AppHost.cs` with actual `DeleteManyA
   - `CustomResourceSnapshot.HealthStatus` and `HealthReports` are read-only (no `init` setter) — object-initializer syntax fails
   - Tests reference command name `"clear-data"` but the actual command is `"clear-myblog-data"`
 - These failures are Gimli's responsibility (issue #249)
+
+## 2026-05-xx — Issue #266: Rename `_clearMutex` to `_dbMutex`
+
+### Task
+
+Rename the shared semaphore in `MongoDbResourceBuilderExtensions` from `_clearMutex` to `_dbMutex`;
+the field guards all three dev commands (Clear, Seed, Stats), not just Clear.
+
+### Changes Made
+
+- `src/AppHost/MongoDbResourceBuilderExtensions.cs`: updated field comment + renamed 1 declaration + 3 WaitAsync + 3 Release (7 sites)
+
+### Build Validation
+
+- ✅ Build: 0 errors
+- ✅ Architecture.Tests: 15/15, Domain.Tests: 42/42, Integration.Tests: 12/12
+
+### PR: #267
