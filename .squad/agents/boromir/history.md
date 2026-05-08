@@ -29,6 +29,15 @@
 - Decision 7.1: Pre-push gate references CONTRIBUTING.md (canonical guide, not duplicated)
 - Sprint 1.1: Hook hardening + auto-bootstrap (mandatory squad naming, elimination of bypass paths)
 
+### Worktree & Branch Cleanup Ops
+
+**Sprint 15 Worktree Hygiene (Issue #240):**
+
+- **2026-05-06:** Removed stale worktree `/home/mpaulosky/Repos/MyBlog-240` (branch `squad/240-cleanup-legacy-skill-paths-and-duplicate-workspace-skill-copies` from merged PR #241).
+- Procedure: `git worktree remove --force` + `git worktree prune` + `git branch -D` to fully clean dangling references.
+- Final state: Only root worktree remains on `dev` (stable). Local branches: `dev` (tracking origin), `main` (tracking origin).
+- Verification: `git worktree list --porcelain` shows single entry; no orphaned branches remain locally.
+
 **Known Gotchas:**
 
 - Existing non-squad branches fail at push (intentional; part of adoption)
@@ -38,6 +47,34 @@
 ---
 
 ## Learnings
+
+### 2026-05-08 — Issue #249: AppHost Mongo Clear Hardening
+
+**What was done:**
+
+Three acceptance-criteria hardening passes applied directly to `src/AppHost/AppHost.cs`:
+
+1. **AC1 (non-blocked by dependents):** The `UpdateState` lambda was already correct — it gates only on `mongo`'s own `HealthStatus.Healthy`. Added an explicit comment making this intent visible so reviewers and tests know it is intentional, not an oversight.
+
+2. **AC2 (single-run protection):** Introduced a `SemaphoreSlim(1,1)` (`clearMutex`) scoped before the `IsRunMode` block. The lambda uses `WaitAsync(0)` (non-blocking try-acquire). A second concurrent click returns `Success = false` with a human-readable message rather than racing against the first run. The semaphore is released in a `finally` block,
+so it is always returned even on early-exit paths.
+
+3. **AC3 (best-effort per collection):** Each `DeleteManyAsync` is wrapped in its own `try/catch (Exception ex) when (ex is not OperationCanceledException)`. Failures are logged as `LogWarning` with the exception, added to a `warnings` list, and the loop continues. The final result message appends `⚠️ {N} collection(s) had errors: ...` when warnings exist.
+`OperationCanceledException` is intentionally re-thrown so operator-initiated cancellation propagates naturally.
+
+**Key patterns established:**
+
+- `SemaphoreSlim(1,1)` at module-level (top-level statements scope) is the idiomatic way to protect a single-resource Aspire command from overlap.
+- `WaitAsync(0)` (zero-millisecond timeout, no CT) is the correct non-blocking try-acquire; the semaphore is always released in `finally`.
+- Exception filter `when (ex is not OperationCanceledException)` gives best-effort-with-propagation in one clause.
+- `UpdateState` lambda in `CommandOptions` should only inspect the resource it is attached to — never peer resources — to avoid phantom disabling.
+
+**Build state:** 0 errors, 15 warnings (all pre-existing CA analysis patterns — CA1848, CA2007, CA1515, CA1014, CA2000 for the new SemaphoreSlim which is process-lifetime and disposal-safe).
+
+**Files changed:** `src/AppHost/AppHost.cs`
+**Related decisions inbox:** `boromir-249-apphost-clear-hardening.md`
+
+---
 
 ### 2026-04-19 — PR #19 CI Blockage Root Cause & Remediation (MERGED ✅)
 
@@ -442,6 +479,7 @@
 
 - Documented on PR #13 that merge was blocked by the ruleset until owner
   intervention resolved or bypassed the enforcement requirement
+
 - Recommended owner modify ruleset enforcement or bypass configuration
 - Decision rationale captured in this history entry pending any separate inbox decision file
 
@@ -677,8 +715,10 @@ Repository ruleset `protectbranch` (ID: 15246849) enforces `required_review_thre
 
 ```text
 Modify ruleset `protectbranch`:
+
 - Add bypass_actors: [{"type": "Actor", "actor_type": "OrganizationAdmin", "actor_id": null}]
   OR
+
 - Add bypass_actors: [{"type": "Actor", "actor_type": "RepositoryOwner"}]
 ```
 
@@ -690,6 +730,7 @@ Modify ruleset `protectbranch`:
 
 ```text
 Modify ruleset `protectbranch` pull_request rule:
+
 - Change required_review_thread_resolution: false
 ```
 
@@ -701,6 +742,7 @@ Modify ruleset `protectbranch` pull_request rule:
 
 ```text
 Modify ruleset `protectbranch`:
+
 - Change enforcement: "audit" (temporarily)
 ```
 
@@ -1111,16 +1153,20 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
 
 - `tests/AppHost.Tests` forces the web app into
    `ASPNETCORE_ENVIRONMENT=Testing`.
+
 - In that environment, static web assets were not being wired when the web app
    was launched from build output under the AppHost test host.
+
 - The missing static-web-assets wiring left Blazor framework assets and theme
    support assets unavailable in the browser harness, which kept the page in a
    prerender-only state.
+
 - The strongest evidence was the direct asset diagnostics from
    `ThemeToggleInteractionTests`: before the fix,
    `/_framework/blazor.web.js`,
    `/Components/Layout/ReconnectModal.razor.js`, and `/Web.styles.css`
    all failed under AppHost Testing.
+
 - A second, independent asset bug also surfaced: `App.razor` referenced the
    wrong scoped CSS bundle name (`MyBlog.Web.styles.css` instead of
    `Web.styles.css`).
@@ -1130,6 +1176,7 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
 - `src/Web/Program.cs`
   - added `builder.WebHost.UseStaticWebAssets()` when the environment is
     `Testing`
+
 - `src/Web/Components/App.razor`
   - corrected the scoped CSS bundle reference to `@Assets["Web.styles.css"]`
 - `tests/AppHost.Tests/Tests/Layout/ThemeToggleInteractionTests.cs`
@@ -1147,6 +1194,7 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
   - Result: **Passed 2, Skipped 1, Failed 0**
   - Remaining skip is the already-documented seeded localStorage reload race in
     `LayoutThemeToggleTests`
+
 - Focused architecture theme slice:
   - `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release --filter "Theme"`
   - Result: **Passed 5/5**
@@ -1159,9 +1207,72 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
 - When an AppHost browser test works in Development but stalls in `Testing`,
    check static web asset activation before blaming the proxy, readiness waits,
    or Playwright timing.
+
 - Once the harness became interactive again, the remaining failure was a normal
    test assertion bug: the runtime test needed a stable `/blog` heading selector
    instead of the first `h1` in the DOM.
+
 - Gimli does **not** need a follow-up pass to unblock the `/blog` persistence
    scenario. The only remaining theme-related AppHost gap is the separate,
    already-documented reload/bootstrap skip path.
+
+## 2026-05-07 Theme Work Cleanup Session
+
+**Issue:** Squad board clear after theme PRs (#238, #239, #240) completion. Cleanup of merged/stale branches and worktrees.
+
+**Situation:**
+
+- PR #242 (squad/238): Merged into `dev` — local branch needed cleanup
+- PR #243 (squad/239): Closed without merge (stale) — cleanup required
+- Issue #240: Active unrelated work on separate worktree — preserved
+- Root worktree was on squad/238 with uncommitted changes
+
+**Actions Taken:**
+
+1. Stashed uncommitted `.vscode/settings.json` changes from root worktree
+2. Moved root worktree from squad/238 to dev (synced to latest)
+3. Deleted local branches: squad/238, squad/239 (force-deleted)
+4. Removed worktree: ../MyBlog-239 (force-removed after cleanup)
+5. Remote branch squad/239 already deleted by previous session
+
+**Final State:**
+
+- Root worktree: `/home/mpaulosky/Repos/MyBlog` on `dev` branch (945d65a, clean)
+- Active worktree: `/home/mpaulosky/Repos/MyBlog-240` on squad/240 branch (40060d4, clean) — PRESERVED
+- Deleted worktrees: MyBlog-239 (squad/239)
+- Deleted branches: squad/238, squad/239 (local only; squad/238 was on main already via PR #242, squad/239 was remote-deleted)
+- Board state: Clear, no pending theme issues or PRs
+
+**Result:** Safe, isolated cleanup with zero impact on active issue #240 work.
+
+---
+
+### 2026-05-08 — Sprint 15 Issue #247: Expose Local-Only Mongo Clear Command in AppHost (TRACER BULLET ✅)
+
+**Issue:** #247 — [Feature] Expose local-only Mongo clear command in AppHost  
+**Status:** ✅ AppHost wiring complete — local-only, health-gated, confirmation-required
+
+**Work done (this pass — local only, no commit):**
+
+1. Preserved in-progress Sprint 15 changes: Aspire 13.3.0 upgrade (packages + SDK), `.WithVolume("mongo-data")` addition
+2. Added `WithCommand("clear-myblog-data", ...)` to the `mongodb` resource with full contract:
+   - **Local-only gate:** wrapped in `if (builder.ExecutionContext.IsRunMode)` — command is invisible when publishing
+   - **Destructive label:** `IsHighlighted = true`, `IconName = "DatabaseWarning"`
+   - **Health gate:** `UpdateState` returns `ResourceCommandState.Disabled` unless `HealthStatus.Healthy`
+   - **Confirmation:** `ConfirmationMessage` set — declining in the dashboard = inherent no-op by Aspire protocol
+   - **Zero-deletion baseline:** handler returns `{ Success = true, Message = "0 collections cleared. (Confirmation acknowledged — no data was deleted.)" }` — tracer bullet contract
+3. Added `using Microsoft.Extensions.Diagnostics.HealthChecks;` and `using Microsoft.Extensions.Logging;`
+4. Build: ✅ clean (0 errors, warnings are pre-existing CA1014/CA1515/CA1848)
+
+**Key API patterns learned:**
+
+- `builder.ExecutionContext.IsRunMode` (not `IsDevelopment()`) is the correct Aspire way to gate local-run-only behaviour
+- `CommandOptions.UpdateState` callback receives `UpdateCommandStateContext.ResourceSnapshot.HealthStatus` (nullable `HealthStatus` from `Microsoft.Extensions.Diagnostics.HealthChecks`)
+- `ConfirmationMessage` on `CommandOptions` wires the dashboard dialog; declining = command not invoked = zero deletions by protocol
+- `CommandResults` factory has `Success()`, `Failure()`, `Canceled()` overloads; `ExecuteCommandResult` direct initializer is fine for tracer bullet
+- Global usings in AppHost do NOT include `Microsoft.Extensions.Diagnostics.HealthChecks` or `Microsoft.Extensions.Logging` — both need explicit `using`
+
+**Handoff required:**
+
+- **Sam:** Implement actual MongoDB collection clearing logic inside the command handler (connect to the mongodb resource endpoint, enumerate collections, drop non-system collections, return per-collection counts)
+- **Gimli:** Write automated coverage for #247 AC4: verify (a) command annotation exists on mongodb resource in RunMode, (b) `ConfirmationMessage` is non-null, (c) `UpdateState` returns `Disabled` when `HealthStatus != Healthy`, (d) handler returns `Success = true` with zero-deletion message

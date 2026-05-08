@@ -1,4 +1,20 @@
 
+## 2026-05-08 — PR #245 Re-Review After Sam/Boromir Fix Cycle
+
+Re-reviewed PR #245 (`test: raise Web coverage above 80%`) after Gimli's CHANGES_REQUESTED triggered the lockout/fix cycle.
+
+### Learnings
+
+**Copilot inline comment `is_outdated: true` is a reliable fix signal.** Both Copilot threads were marked outdated after the fix commits, which confirmed without needing a secondary diff that the code was updated. Checking `is_outdated` on review threads is a fast first pass before reading the file directly.
+
+**Always fetch the branch and read the file before approving a re-review.** Even with outdated thread signals, a direct `git show origin/<branch>:path/to/file | head -20` gives ground truth in seconds and removes any doubt about what's actually in HEAD.
+
+**Fix cycle worked as intended.** Gimli flagged two blockers (zero indentation + unused using), Sam applied the formatting fix, Boromir re-cleaned and pushed, CI turned green. Re-review was clean — no new issues introduced. The lockout/route/fix/re-review protocol is functioning correctly for formatting-class blockers.
+
+**Verdict posted as comment.** GitHub self-approval is not possible; approval comment pattern established in first review remains the correct approach.
+
+---
+
 ## 2025-07-14 — Tailwind Migration Skill Review
 
 Conducted a detailed review of `/home/mpaulosky/.config/squad/.github/skills/tailwind-migration/SKILL.md` against the actual MyBlog project structure.
@@ -405,7 +421,7 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 
 ### PR #63 — `feat(#32)`: Add build properties to Directory.Build.props
 
-**Verdict: 🟡 CONDITIONAL APPROVE** _(pending local build confirmation)_
+**Verdict: 🟡 CONDITIONAL APPROVE** *(pending local build confirmation)*
 
 - 6-line diff to `Directory.Build.props`: adds `LangVersion=latest`, `EnableNETAnalyzers`, `AnalysisMode=All`, `EnforceCodeStyleInBuild=true`, `CodeAnalysisTreatWarningsAsErrors=false`
 - `CodeAnalysisTreatWarningsAsErrors=false` correctly decouples analyzer warnings from `TreatWarningsAsErrors=true` (compiler)
@@ -417,7 +433,7 @@ Triaged Issue #18 ("Branch clean-up" / orphan local-repo changes) against draft 
 
 ### PR #60 — `test(#59)`: Add UI component tests, Profile page, RoleClaimsHelper
 
-**Verdict: ❌ NEEDS_CHANGES** _(3 blocking items)_
+**Verdict: ❌ NEEDS_CHANGES** *(3 blocking items)*
 
 **Blocking:**
 
@@ -625,10 +641,13 @@ after Aragorn's gate review requested by Boromir.
 
 - `.github/skills/secret-handling/SKILL.md` has broken markdown table cells that
    corrupt regex and pattern guidance.
+
 - `.squad/playbooks/pr-merge-process.md` has a broken table cell because
    `| grep ...` is parsed as table separators in the review gate command.
+
 - `.github/skills/github-multi-account/SKILL.md` still hard-codes
    `bradygaster/squad` and unrelated account bindings.
+
 - `.github/skills/to-prd/SKILL.md` still contains contradictory instructions.
 
 **Gate notes:**
@@ -637,12 +656,14 @@ after Aragorn's gate review requested by Boromir.
 - PR template not fully filled out.
 - CI red from ambient `NU1903` / `Snappier 1.0.0` and downstream CodeQL
    autobuild failure.
+
 - 2 Copilot review threads remain unresolved.
 
 ## 2026-05-07 — PR #241 Routed Fix Cycle (with Frodo)
 
 - Repaired `.squad/playbooks/pr-merge-process.md` in isolated worktree
    `MyBlog-240`; markdown diagnostics were clean.
+
 - Frodo cleared the three skill-file blockers from the same routed fix cycle.
 - Remaining follow-up is GitHub-side: PR template/checklist confirmation and
    post-push CI, coverage, and Copilot thread review.
@@ -662,16 +683,269 @@ resolved, and failing checks still need rerun after that push. See
 - User approved the commit/push follow-up for the routed PR #241 fix cycle.
 - Aragorn first created docs commit `97022d8`
    (`docs: address PR #241 follow-up review fixes (#240)`).
+
 - Push was blocked by repo-wide `NU1903` on transitive `Snappier 1.0.0` from
    the Mongo/Aspire dependency graph.
+
 - Aragorn applied the minimal dependency repair: pinned `Snappier` to `1.3.1`
    in `Directory.Packages.props` and added direct references in
    `src/Web/Web.csproj` and `src/AppHost/AppHost.csproj`.
+
 - Final unblock commit: `e3754bf`
    (`fix(deps): pin Snappier 1.3.1 for Mongo transitives (#240)`).
+
 - Local validation passed, push succeeded, PR #241 head advanced to
    `e3754bf0347764a074d2ff1273cc857dd1b129c2`, and the two unresolved Copilot
    threads were resolved.
+
 - Worktree residual state stayed limited to an untracked `node_modules`
    symlink.
+
 - See `.squad/log/2026-05-07T21:46:02Z-pr241-delivery-complete.md`.
+
+## 2026-05-08 — Sprint 14 Theme Board Sync & Closeout
+
+**Board Review:** Inspected MyBlog GitHub Project #4 following closure of theme
+work issues #238 and #239 (Sprint 14 theme automation).
+
+**Findings:**
+
+- **Issue #238** ([Sprint 14] Fix light/dark theme toggle)
+  - Status: CLOSED
+  - PR #242 merged (`feat(theme): fix light/dark theme toggle (#242)`)
+  - Board status: **Done** ✓
+  - Closure: Automated by PR #242 merge via `Closes #238` link
+  
+- **Issue #239** ([Sprint 14] Fix theme color selector persistence)
+  - Status: CLOSED
+  - PR #243 closed without merge (stale against trunk)
+  - Board status: **Done** ✓
+  - Closure: Automated when PR #243 was closed via `Closes #239` link
+  - **Key finding:** The actual fix for #239 is in dev through PR #242 (same
+    root cause as #238 — ThemeProvider placement). PR #243 was redundant and
+    stale. The issue is correctly marked Done.
+  
+- **PR #242** (theme toggle + persistence)
+  - State: MERGED into dev
+  - Not on board (correct — delivery board excludes PRs)
+  - Merged commit: `945d65a`
+  
+- **PR #243** (duplicate persistence fix)
+  - State: CLOSED without merge
+  - Not on board (correct)
+  - Closed due to staleness against trunk
+
+**Board Automation Verdict:** ✅ **No manual corrections needed.** The project
+board accurately reflects the theme work outcome:
+
+- Both issues correctly marked as Done
+- Fixes are in dev via PR #242
+- No stale automation artifacts on the board
+- The closure via closed-without-merge PR #243 is unusual but doesn't create a
+  board sync problem (both issues resolved, both marked Done)
+
+**Recommendation:** Document this theme PR closeout path in decisions as a
+reference for future similar scenarios where a closed-without-merge PR still
+correctly closes an issue because the fix was merged via a parallel PR.
+
+## 2026-07-14 — PR #245 Lead Review Gate
+
+Ran the full lead review gate for PR #245 (`squad/244-raise-web-project-coverage-above-80`), requested by Boromir.
+
+### Summary
+
+- **PR Author:** Gimli (mpaulosky), working as Tester
+- **Scope:** Test-only — raises Web project coverage from 69.5% → 81.5%, clearing the 80% gate for issue #244
+- **CI Status:** All 18 checks green including `codecov/project` and `codecov/patch`
+- **Verdict:** ✅ APPROVED (with optional cleanup recommended)
+
+### Gate Results
+
+| Gate | Result |
+|---|---|
+| CI green | ✅ |
+| Branch `squad/*` | ✅ |
+| `Closes #244` | ✅ |
+| MERGEABLE | ✅ |
+| Copyright header on new file | ✅ |
+| No `.squad/` files in diff | ✅ |
+| No production code changed | ✅ |
+| Coverage increase | ✅ +12pp |
+
+### Copilot Review Items (both discretionary)
+
+1. Unused `using Microsoft.Extensions.Options;` in `BlogPostCacheServiceTests.cs` — IDE0005, not a hard error (`CodeAnalysisTreatWarningsAsErrors=false`). Recommend cleanup pre-merge.
+2. Indentation inconsistency in `BlogPostCacheServiceTests.cs` — class members at column 0. Style concern.
+
+### Tooling Note
+
+GitHub prevents self-approval (`"Review Can not approve your own pull request"`). Posted approval verdict as a PR comment instead. This is a known limitation when the authenticated account matches the PR author.
+
+### Key Learnings
+
+- `Directory.Build.props` sets `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` but `<CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>` — base compiler warnings are errors, but Roslyn/IDE analyzer warnings (IDE0005 unused using) are not. Unused import in test file does not block CI.
+- When PR author matches the authenticated GitHub account, `gh pr review --approve` fails. Use `gh pr comment` as fallback for recording the verdict.
+
+---
+
+## 2026-05-06 — Sprint 15 Issue #246 PRD Audit
+
+**Requested by:** Boromir  
+**Task:** Audit issue #246 (PRD: local Mongo data clear command in AppHost) to determine whether it was already satisfied or whether missing deliverables remained unassigned.
+
+### Analysis
+
+Issue #246 contains a **complete, ship-ready product specification**:
+
+- **Problem Statement:** Developers need a first-class way to clear local MongoDB data from AppHost without manual inspection.
+- **Solution:** Add a local-development-only dashboard operator command.
+- **User Stories:** 20 comprehensive stories covering workflow, gating, confirmation, resilience, and observability.
+- **Implementation Decisions:** Three-module architecture (dashboard action, data executor, result contract); delete-all-non-system-collections strategy; best-effort execution; confirmation-declined-as-success semantics.
+- **Testing Decisions:** Observable contract (no persistence mocks); integration-style coverage against real MongoDB.
+- **Out of Scope:** Shared/prod administration, DB dropping, auto-reseeding, general MongoDB console.
+- **Further Notes:** Database-wide collection strategy to future-proof against schema growth; PRD assumes current Aspire-managed local MongoDB.
+
+### Decision
+
+**Issue #246 is SATISFIED and closed.** The issue body is the complete product definition. It does not need to deliver code—it needs to deliver spec, which it did.
+
+Implementation is correctly routed to three vertical-slice issues with proper ownership and blocking:
+
+- **#247** (squad:boromir) — AppHost UI + confirmation; unblocked
+- **#248** (squad:sam) — Collection enumeration & deletion; depends on #247
+- **#249** (squad:boromir) — Reentrancy, best-effort, live-clear; depends on #248
+
+### Key Learning
+
+**PRD issues should close upon spec completion, not remain open pending implementation.** Conflating product specification (a research and requirements artifact) with implementation delivery (code) creates ambiguous issue lifecycle and unclear ownership boundaries.
+The team should treat PRD issues as "define the problem; hand off to slice issues for code." This pattern keeps artifact scope clear and prevents indefinite open-ended issues.
+
+Documented routing decision in `.squad/decisions/inbox/aragorn-246-prd-audit.md`.
+
+---
+
+## 2026-05-06 — Gimli Charter Updated: TDD as Default Approach
+
+**Requested by:** Boromir  
+**Issue:** #252 (Sprint 16)
+
+Updated Gimli's charter and squad routing to formalize **Test-Driven Development (TDD)** as his default testing methodology. This addresses the problem of implementation-detail-coupled tests that break when refactoring, by enforcing behavior-first test design from the start.
+
+### Changes Made
+
+1. **Gimli Charter (.squad/agents/gimli/charter.md)**:
+   - Added new "Testing Approach: Test-Driven Development (TDD)" section
+   - Defined behavior-first principle: tests use public interfaces only, survive internal refactors
+   - Provided clear examples of ✅ good vs. ❌ bad test patterns
+   - Embedded links to `.github/skills/tdd/` for tracer bullets, anti-patterns, mocking guidelines
+
+2. **Squad Routing (.squad/routing.md)**:
+   - Added TDD skills table entry: triggers on every Gimli testing task
+   - Specifies injection: `.squad/skills/tdd/SKILL.md` + `.github/skills/tdd/tests.md`
+   - Documents: TDD is default (not optional); behavior-first (not implementation-detail)
+
+3. **Team Decision (.squad/decisions/inbox/aragorn-gimli-tdd-default.md)**:
+   - Records rationale: why TDD prevents fragile, refactor-hostile tests
+   - Links to project's existing TDD skill (already complete)
+   - Clarifies: impact on future PRs (Aragorn will enforce), impact on refactors (confident change), impact on team culture (testing becomes default)
+
+### Key Learnings
+
+**Formalizing a methodology requires three artifacts:**
+
+1. **Charter section** — define the principle and philosophy so agents understand *why*
+2. **Routing entry** — ensure every spawn triggers the skill automatically (no manual injection needed)
+3. **Decision record** — document the *what* and *why* for the team to reference
+
+**The project already had the skill** (`.github/skills/tdd/SKILL.md`, `tests.md`, etc.), but it wasn't mandatory. Gimli's charter now surfaces it as the default, making it "read before starting" for all test-writing tasks.
+
+**Behavior-first philosophy is non-negotiable downstream:**
+
+- PR review (Aragorn) will now flag implementation-detail tests and request refactoring
+- This is not a stylistic preference — it prevents test brittleness and supports refactor confidence
+- Existing tests are grandfathered; all new tests follow TDD
+
+### Related Decisions
+
+- `.squad/decisions/inbox/aragorn-gimli-tdd-default.md` (this session)
+- Charter updates enforce the routing guidance automatically for all future spawns
+
+---
+
+## 2026-05-06 — Gimli Model Override Added: GPT-5.4 Default
+
+**Requested by:** Boromir  
+**Issue:** #252 (Sprint 16, continued)
+
+Added agent-specific model override for Gimli in `.squad/config.json`, setting GPT-5.4 as his default model. This supersedes Layer 0 defaults and is persisted so all future Gimli spawns use GPT-5.4 automatically.
+
+### Changes Made
+
+1. **Squad Config (.squad/config.json)**:
+   - Added `agentModelOverrides.Gimli = "gpt-5.4"`
+   - Persistent override (Layer 0 configuration wins in all sessions)
+
+2. **Gimli Charter (.squad/agents/gimli/charter.md)**:
+   - Updated Model section to reference `gpt-5.4` and explain why it's set in config
+   - Clarifies: preference is no longer `auto`; it's explicitly `gpt-5.4`
+
+3. **Decision Document (.squad/decisions/inbox/aragorn-gimli-tdd-default.md)**:
+   - Added "Change 2: Gimli Model Override — GPT-5.4" section
+   - Rationale: GPT-5.4 provides superior reasoning for TDD planning, edge-case analysis, refactoring suggestions
+
+### Key Learning
+
+**Config overrides are authoritative and persist across sessions.** Unlike spawn-prompt specifications (which are ephemeral), `agentModelOverrides` in `.squad/config.json` are the canonical way to enforce model preferences. This ensures Gimli always uses GPT-5.4 without needing manual spawn-script modifications, and the decision is documented for future team members.
+
+---
+
+## 2026-05-08 — Sprint 16: Gimli TDD Defaults Formalization
+
+**Task:** Formalize Gimli's testing approach to TDD + red-green-refactor + GPT-5.4 model override  
+**Issue:** #252  
+**Spawn Mode:** Background agent
+
+Completed orchestration of team-wide formalization of test-driven development as Gimli's default. This was a multi-part change affecting charter, routing, config, and decision records.
+
+### Changes Completed
+
+1. **Gimli Charter (.squad/agents/gimli/charter.md)** ✅
+   - Added "Testing Approach: Test-Driven Development (TDD)" section with philosophy
+   - Clarified behavior-first patterns with ✅/❌ examples
+   - Updated "Responsibilities" to explicitly include "Enforce TDD workflow"
+   - Added references to `.github/skills/tdd/` guides (SKILL.md, tests.md, interface-design.md, refactoring.md)
+   - Updated "Model" section to document GPT-5.4 preference
+
+2. **Routing (.squad/routing.md)** ✅
+   - Added TDD skills table entry (owner: Gimli)
+   - Specifies automatic injection of `.squad/skills/tdd/SKILL.md` + `.github/skills/tdd/tests.md` for all Gimli testing tasks
+   - Documented rationale: behavior-first prevents implementation-detail coupling
+
+3. **Squad Config (.squad/config.json)** ✅
+   - Added `agentModelOverrides.Gimli = "gpt-5.4"`
+   - Persists across all squad sessions; no ephemeral spawn-prompt override needed
+   - Provides superior reasoning for tracer bullets, edge-case analysis, refactoring
+
+4. **Decision Record (.squad/decisions/inbox/ → decisions.md)** ✅
+   - Decision #23: Gimli's Testing Approach & Model Override
+   - Comprehensive rationale for both changes
+   - Documented impact on PR review (Aragorn will enforce), refactors (confident), team culture (testing standard)
+   - Noted backward compatibility (existing tests grandfathered, all new tests TDD)
+
+### Key Decision Insight
+
+The project already had the TDD skill (`.github/skills/tdd/`), but it was optional. By putting it in the charter and routing, we made it mandatory and ensured it's injected into every Gimli spawn. This is how informal best practices become formal team standards.
+
+### Backward Compatibility
+
+- **No retroactive changes** — existing tests keep their current style
+- **All future tests TDD** — Gimli will write test-first going forward
+- **Argon's PR gate will enforce** — implementation-detail tests will be flagged and requested for refactoring
+
+### Relation to Other Work
+
+- Issue #252 (Sprint 16 parent issue) tracks this formalization
+- Gimli's recent sessions (#247–249) completed with the old (flexible) charter; going forward, TDD is mandatory
+- Decision #23 (decisions.md) provides team-level rationale and impact analysis
+
+This change makes TDD not just a suggestion but a structural part of Gimli's identity and the squad's testing pipeline.

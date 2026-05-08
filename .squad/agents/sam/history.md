@@ -113,3 +113,50 @@ As part of squad skills/playbooks review, MongoDB DBA patterns + filter pattern 
 **Timeline:** Sprint 7 (2h estimated).
 
 **Owner:** Sam (Domain Model) — routed with `mongodb-filter-pattern` skill injection.
+
+## 2026-05-08 — Issue #248: AppHost `clear-myblog-data` Real Implementation
+
+### Task
+
+Replace Boromir's tracer-bullet handler in `AppHost.cs` with actual `DeleteManyAsync` logic for the `clear-myblog-data` operator command.
+
+### Changes Made
+
+1. **`src/AppHost/AppHost.cs`** — Replaced stub handler body with full clearing logic:
+   - Resolve connection string via `mongo.Resource.ConnectionStringExpression.GetValueAsync(ct)` (see Learnings)
+   - Connect `MongoClient`, call `database.ListCollectionNamesAsync()`
+   - Skip `system.*` collections
+   - `DeleteManyAsync(FilterDefinition<BsonDocument>.Empty)` per collection — documents deleted, collection structure preserved
+   - Return structured `ExecuteCommandResult` with per-collection counts and total
+
+### Build Validation
+
+- ✅ `dotnet build src/AppHost/AppHost.csproj` — 0 errors, warnings only (pre-existing CA rules)
+- ⚠️ `tests/AppHost.Tests` has pre-existing build errors (Gimli's domain — not touched)
+
+### Learnings
+
+#### Aspire `MongoDBServerResource` Connection String Resolution (Aspire 13.3.0)
+
+- `MongoDBServerResource` does NOT directly expose `GetConnectionStringAsync()` as a callable instance method
+- `GetConnectionStringAsync()` is defined as a default interface method on `IResourceWithConnectionString`; calling it requires casting to the interface: `((IResourceWithConnectionString)resource).GetConnectionStringAsync(ct)`
+- **Preferred alternative**: use `resource.ConnectionStringExpression.GetValueAsync(ct)` directly — `ConnectionStringExpression` is a `ReferenceExpression` with a public `GetValueAsync(CancellationToken)` method; no cast needed
+- The expression resolves to `mongodb://localhost:{allocatedPort}` at runtime after Aspire allocates the endpoint
+
+#### MongoDB.Driver in AppHost — No Extra PackageReference Needed
+
+- `MongoDB.Driver 3.6.0` and `MongoDB.Bson 3.6.0` are compile-time transitive deps via `Aspire.Hosting.MongoDB` → `AspNetCore.HealthChecks.MongoDb`
+- Add only `using MongoDB.Bson;` and `using MongoDB.Driver;` — no csproj changes required
+
+#### Full-Collection Wipe Without Dropping
+
+- `collection.DeleteManyAsync(FilterDefinition<BsonDocument>.Empty, ct)` deletes all documents while preserving collection structure and indexes
+- Issue #248 spec is clear: delete documents, do NOT drop collections
+- Boromir's handoff note used the word "drop" loosely — always prefer the issue spec over prose notes
+
+#### Pre-Existing AppHost.Tests Build Errors (Gimli)
+
+- `tests/AppHost.Tests/MongoDbClearCommandTests.cs` does not compile against Aspire 13.3.0:
+  - `CustomResourceSnapshot.HealthStatus` and `HealthReports` are read-only (no `init` setter) — object-initializer syntax fails
+  - Tests reference command name `"clear-data"` but the actual command is `"clear-myblog-data"`
+- These failures are Gimli's responsibility (issue #249)

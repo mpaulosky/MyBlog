@@ -1044,10 +1044,13 @@ The imported release assets still referenced IssueTrackerApp, upstream release w
 1. Active release guidance for squad work is now MyBlog-specific:
    `.squad/skills/release-process/SKILL.md` routes release work to
    `.squad/playbooks/release-myblog.md`.
+
 2. The old IssueTrackerApp playbook is replaced by
    `.squad/playbooks/release-myblog.md`.
+
 3. `.squad/skills/release-process-base/SKILL.md` is quarantined and must not be
    injected into normal MyBlog work.
+
 4. Normal `dev` → `main` releases do **not** require syncing `main` back into
    `dev` after merge. Only hotfixes merged to `main` require a backport to `dev`.
 
@@ -1056,8 +1059,10 @@ The imported release assets still referenced IssueTrackerApp, upstream release w
 - Release guidance now matches the repo's actual branch model and workflows
 - The team has a clear owner path: Aragorn approves release scope; Boromir runs
   the operational steps
+
 - Generic release automation language is explicitly out of scope until MyBlog
   actually adds those workflows
+
 - Sprint 3 can safely delete the quarantined generic base skill unless a new
   template-use case is approved
 
@@ -1078,8 +1083,10 @@ Sprint 3 now has the needed follow-through context:
 1. MyBlog-specific release guidance exists in
    `.squad/skills/release-process/SKILL.md` and
    `.squad/playbooks/release-myblog.md`.
+
 2. No decision ever approved a live MyBlog use case for the Minecraft-only
    `building-protection` skill.
+
 3. The old `release-MyBlog` playbook has already been replaced and should
    remain deleted.
 
@@ -1088,14 +1095,18 @@ Sprint 3 now has the needed follow-through context:
 1. Execute the already-approved deletions for
    `.squad/skills/post-build-validation/` and
    `.squad/skills/static-config-pattern/`.
+
 2. Delete `.squad/skills/building-protection/` because its quarantine was
    temporary and no explicit keep decision exists.
+
 3. Delete `.squad/skills/release-process-base/` because the MyBlog-specific
    release workflow replaced the generic template and no template-retention
    decision was approved.
+
 4. Keep `.squad/playbooks/release-myblog.md`,
    `.squad/skills/release-process/SKILL.md`, and
    `.squad/skills/microsoft-code-reference/SKILL.md` unchanged.
+
 5. Treat `.squad/decisions/DELETED-ASSETS.md` as the published manifest for the
    final disposition state.
 
@@ -1104,6 +1115,7 @@ Sprint 3 now has the needed follow-through context:
 - Normal squad routing now only references assets with an active MyBlog fit.
 - The remaining imported catalog is smaller and less likely to mislead future
   contributors with quarantined-but-dead guidance.
+
 - Any future reintroduction of these deleted assets now requires a new explicit
   architecture decision instead of silent reuse.
 
@@ -1641,3 +1653,298 @@ Add a pre-commit git hook (`.github/hooks/pre-commit`) that runs `markdownlint-c
 
 - `package-lock.json` grows with the new dependency — acceptable for a DX tooling dep.
 - Contributors must run `npm install` to get the linter; the hook warns them if they haven't.
+
+### 20. Routing: Sprint 15 Issue #246 PRD Audit
+
+**Status:** ✅ Decided  
+**Date:** 2026-05-08  
+**Decided by:** Aragorn (Lead)  
+**Issue:** #246  
+
+**Context:**
+
+Boromir requested audit of Sprint 15 issue #246 (PRD: local Mongo data clear command in AppHost) to determine whether the product definition was complete or whether missing deliverables remained unassigned.
+
+**Decision:**
+
+**Issue #246 is satisfied as a PRD artifact and is now closed.**
+
+The issue body contains a complete, ship-ready product specification:
+
+- Complete problem statement and solution framing
+- 20 comprehensive user stories covering developer workflow, local-only gating, confirmation behavior, resilience, and observability
+- Clear architectural guidance (three-module pattern: dashboard action, data executor, result contract)
+- Explicit implementation decisions (e.g., delete-all-non-system-collections, best-effort execution, confirmation-declined-as-success)
+- Observable testing contract with rationale
+- Out-of-scope boundary markers
+- Further notes contextualizing assumptions
+
+This is a **complete, ship-ready product specification.** No additional research or architecture work is needed before implementation can begin.
+
+**Routing:**
+
+Implementation is correctly distributed across three properly-sequenced tracer-bullet slices:
+
+- **#247** (squad:boromir) — AppHost action UI + confirmation  
+  *Builds the operator experience; unblocked, can start immediately.*
+
+- **#248** (squad:sam) — Collection enumeration & deletion logic  
+  *Realizes the data-clearing contract; depends on #247.*
+
+- **#249** (squad:boromir) — Reentrancy, best-effort resilience, live-clear  
+  *Hardens the feature; depends on #248.*
+
+Each issue is scoped as a vertical slice, routed to the appropriate domain owner, and properly blocked.
+
+**Rationale:**
+
+PRD issues exist to specify product intent, not to deliver code.
+Issue #246 did exactly that.
+Expecting #246 to also deliver implementation would either (a) overload a single issue
+with heterogeneous scope, or (b) require it to remain open indefinitely pending
+code completion — both patterns create confusion.
+By closing #246 upon PRD completion and delegating implementation to scoped slice issues,
+the team maintains clear artifact boundaries and traceable ownership.
+
+---
+
+### 21. Feature Boundary & Handoff: #247 AppHost Clear Command
+
+**Status:** ✅ Decided  
+**Date:** 2026-05-08  
+**Decided by:** Boromir (Backend/AppHost)  
+**Issue:** #247
+
+**Context:**
+
+Issue #247 asked Boromir to wire a local-only Mongo data clear command in the AppHost `mongodb` resource, gated by health status and requiring user confirmation.
+
+**Decision:**
+
+The `mongodb` resource in `AppHost.cs` now exposes a `clear-myblog-data` operator action gated by:
+
+1. **Local-only:** `builder.ExecutionContext.IsRunMode` — command is invisible during publish
+2. **Health gate:** `CommandOptions.UpdateState` returns `Disabled` unless `HealthStatus.Healthy`
+3. **Confirmation required:** `ConfirmationMessage` set — declining in the dashboard is a no-op by Aspire protocol
+4. **Tracer-bullet handler:** returns `{ Success = true, Message = "0 collections cleared…" }` — no actual database work yet
+
+**Boundary:**
+
+This pass stops at AppHost wiring. The handler intentionally does zero destructive work.
+
+**Handoff Required:**
+
+### → Sam (Backend)
+
+Implement the actual clearing logic inside the `executeCommand` lambda in `AppHost.cs`. The handler needs to:
+
+- Resolve the MongoDB connection string via `context.ServiceProvider`
+- Enumerate user collections in the `myblog` database
+- Delete documents in each collection (preserving indexes and schema; see issue #248 AC)
+- Return a result with the per-collection count: `"N collections cleared."`
+
+### → Gimli (Tests)
+
+Write automated AppHost contract tests for #247 AC4:
+
+- Verify `ResourceCommandAnnotation` with `Type == "clear-myblog-data"` exists on the `mongodb` resource when `IsRunMode = true`
+- Verify `ConfirmationMessage` is non-null (declined = no-op contract)
+- Verify `UpdateState` returns `ResourceCommandState.Disabled` when `HealthStatus != Healthy`
+- Verify `UpdateState` returns `ResourceCommandState.Enabled` when `HealthStatus == Healthy`
+- Invoke the handler directly; verify `result.Success == true` and result message contains "0 collections"
+
+**Key API Patterns:**
+
+- `builder.ExecutionContext.IsRunMode` (not `IsDevelopment()`) is the correct Aspire way to gate local-run-only behavior
+- `CommandOptions.UpdateState` callback receives `UpdateCommandStateContext.ResourceSnapshot.HealthStatus` (nullable `HealthStatus` from `Microsoft.Extensions.Diagnostics.HealthChecks`)
+- `ConfirmationMessage` on `CommandOptions` wires the dashboard dialog; declining = command not invoked = zero deletions by protocol
+- `CommandResults` factory has `Success()`, `Failure()`, `Canceled()` overloads; `ExecuteCommandResult` direct initializer is fine for tracer bullet
+
+---
+
+### 22. Implementation Choices: #248 Collection Clearing Logic
+
+**Status:** ✅ Decided  
+**Date:** 2026-05-08  
+**Decided by:** Sam (Backend/.NET)  
+**Issue:** #248
+
+**Context:**
+
+Issue #248 asked Sam to replace Boromir's tracer-bullet handler body in `AppHost.cs` with real MongoDB collection clearing logic. The implementation is complete and builds cleanly.
+
+**Decisions:**
+
+#### 1. `DeleteManyAsync` over `DropCollection`
+
+**Chose:** `collection.DeleteManyAsync(FilterDefinition<BsonDocument>.Empty, ct)`  
+**Rejected:** `database.DropCollectionAsync(name, ct)`
+
+The issue #248 acceptance criteria explicitly state: *"All documents in each non-system collection are deleted; the collection itself is preserved (indexes, schema validation)."* Boromir's handoff note used the word "drop" loosely — the issue spec is authoritative. Dropping would destroy indexes and schema validators, making a re-seed harder.
+
+#### 2. Connection String via `ConnectionStringExpression.GetValueAsync()`
+
+**Chose:** `await mongo.Resource.ConnectionStringExpression.GetValueAsync(ct)`  
+**Rejected:** `await mongo.Resource.GetConnectionStringAsync(ct)`
+
+`GetConnectionStringAsync` is a default interface method on `IResourceWithConnectionString`.
+In C# default interface methods can only be dispatched through an interface reference,
+not through the concrete type (`MongoDBServerResource`).
+Using `ConnectionStringExpression.GetValueAsync()` directly is cleaner:
+`ConnectionStringExpression` is a `ReferenceExpression` with a public
+`GetValueAsync(CancellationToken)` method — no cast, no interface gymnastics.
+
+Alternative that also works if needed: `((IResourceWithConnectionString)mongo.Resource).GetConnectionStringAsync(ct)`.
+
+#### 3. Zero-count collections included in the result
+
+**Chose:** Include all non-system collections in the result summary, even those with zero documents.
+
+Issue #248 AC says *"The success message lists each collection and its deleted count."* A collection with 0 documents cleared is still a valid data point — excluding it would silently misrepresent what was enumerated. The message format is: `"{N} collection(s) cleared — {total} total document(s) deleted. ({col}: {n}; ...)"`.
+
+#### 4. Command name stays `"clear-myblog-data"`
+
+The command was named `"clear-myblog-data"` by Boromir in issue #247. Sam's scope is the handler body only. Gimli's tests in `tests/AppHost.Tests/MongoDbClearCommandTests.cs` reference `"clear-data"` — that is a pre-existing mismatch that Gimli must resolve as part of issue #249.
+
+**Flagged for Gimli (Issue #249):**
+
+`tests/AppHost.Tests/MongoDbClearCommandTests.cs` has two pre-existing build blockers:
+
+1. **Read-only property assignment**: `CustomResourceSnapshot.HealthStatus` and `HealthReports` have no `init` setter in Aspire 13.3.0. Object-initializer syntax `{ HealthStatus = ..., HealthReports = ... }` fails to compile.
+2. **Command name mismatch**: Tests assert `"clear-data"` but the wired command is `"clear-myblog-data"`.
+
+Neither was introduced by Sam's changes.
+
+---
+
+### Decision: Two-Tier Test Harness for Aspire Handler with Closure-Captured Resources
+
+**Author**: Gimli (Tester) | **Issue**: #248 | **Date**: 2025
+
+#### Context
+
+The `clear-myblog-data` handler in `AppHost.cs` captures the `mongo` resource builder in a closure and calls `mongo.Resource.ConnectionStringExpression.GetValueAsync(ct)` to resolve the live MongoDB connection string. This bypasses `ServiceProvider` — standard DI mocking cannot intercept it.
+
+#### Decision: Two-Tier Strategy
+
+**Tier 1 — Model-level unit tests** (no Docker): Boot `DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>()` WITHOUT calling `StartAsync()`. Verify the annotation contract only: command name, `IsHighlighted`, `ConfirmationMessage`, `UpdateState` (health-gated enabled/disabled). **Do NOT call `ExecuteCommand` from unit tests** — `GetValueAsync()` blocks without a running DCP host.
+
+**Tier 2 — Integration tests** (Docker required): Use `ClearCommandAppFixture` (IAsyncLifetime) to boot a full Aspire host via `StartAsync()`. Seed MongoDB via the Driver, invoke `ExecuteCommand` through the registered annotation, assert post-clear state.
+
+#### Consequences
+
+- Unit tests run in CI without Docker.
+- Integration tests are gated by Docker availability (same gate as existing integration suite).
+- xUnit collection `"MongoClearIntegration"` shares one fixture instance across all integration tests (single container boot per test run).
+- Any future AppHost handler that captures DI resources in closures must follow this same two-tier pattern.
+
+#### Rejected: `[Fact(Skip)]` for unreachable code path
+
+`GetValueAsync()` blocks without DCP — no fast-feedback unit test can call `ExecuteCommand` safely. A skipped test provides zero signal and violates the no-skipped-tests charter. The graceful-failure code path (null connection string) is covered transitively: if the integration fixture fails to start, the tests fail with descriptive messages.
+
+---
+
+### 23. Gimli's Testing Approach & Model Override — TDD + GPT-5.4
+
+**Status:** ✅ Accepted  
+**Date:** 2026-05-06  
+**Decided by:** Aragorn (Lead Developer)  
+**Sprint:** 16  
+**Issue:** #252
+
+#### What Changed
+
+1. **Gimli's default testing approach**: TDD / red-green-refactor with behavior-first test design (charter + routing)
+2. **Gimli's model override**: GPT-5.4 (persistent in `.squad/config.json` as authoritative; overrides Layer 0 defaults)
+
+#### Change 1: Test-Driven Development (TDD) as Default
+
+Gimli's charter and routing configuration have been updated to make **Test-Driven Development (TDD)** and the **red-green-refactor workflow** his default testing approach. Previously, Gimli had flexibility on test structure; now TDD is mandatory for all testing tasks (unit, bUnit, integration, architecture).
+
+##### Problem Addressed
+
+- **Implementation-detail coupling**: Without explicit guidance, tests risk coupling to internal structure (mocking internal collaborators, testing private methods, asserting call counts rather than observable outcomes).
+- **Fragile tests**: Tests that break when refactoring but behavior hasn't changed are a code smell — they're testing implementation, not contracts.
+- **Wasted refactor effort**: Each internal reorganization requires updating test mocks and assertions instead of just running the test suite.
+- **Test as specification loss**: Tests should read like "system does X when user does Y" — not "function calls function before returning."
+
+##### Rationale for TDD
+
+TDD forces behavior-first thinking from the start:
+
+1. **Write a failing test** that describes the observable outcome a caller cares about
+2. **Write minimal code** to pass that test
+3. **Refactor** with confidence — test still passes, no implementation is hidden
+
+This workflow naturally produces tests that:
+
+- Describe *what* the system does, not *how* it does it
+- Use public interfaces only (no internal mocking for implementation details)
+- Survive internal refactors without modification
+- Form a living specification of system behavior
+
+##### Skill Integration
+
+The project's `.github/skills/tdd/` already contains comprehensive guidance:
+
+- **SKILL.md**: Tracer bullets, incremental loops, anti-patterns, vertical slicing
+- **tests.md**: Examples of behavior-first vs. implementation-detail tests
+- **interface-design.md**: Designing interfaces for testability upfront
+- **refactoring.md**: Safe refactoring patterns
+
+This decision formalizes the adoption of that skill as Gimli's default.
+
+##### What Gimli Does Now
+
+For every testing task (unit, bUnit, integration, architecture):
+
+1. **Plan**: Confirm with the user which behaviors matter most (prioritize — can't test everything)
+2. **Tracer bullet**: ONE test → ONE minimal implementation → confirm it works end-to-end
+3. **Incremental loop**: Next behavior → test → code → repeat
+4. **Refactor**: After all tests pass, extract duplication and deepen modules
+5. **Reference the TDD skill** for anti-patterns, mocking guidelines, and process
+
+##### Implementation
+
+**Charter updates (.squad/agents/gimli/charter.md)**:
+
+- Responsibilities section now includes "Enforce TDD workflow"
+- New "Testing Approach" section explains behavior-first philosophy
+- References to `.github/skills/tdd/` guide all test authoring
+
+**Routing updates (.squad/routing.md)**:
+
+- New TDD skills table entry
+- Specifies: every Gimli testing task injects `.squad/skills/tdd/SKILL.md` + `.github/skills/tdd/tests.md`
+- Documents owner (Gimli) and rationale
+
+**Sprint 16 issue #252**:
+
+- Tracks completion of charter and routing updates
+- Links behavior-first guidance to all future Gimli spawn prompts
+
+##### Impact
+
+- **Immediate**: All new tests written by Gimli in spawn sessions include the TDD skill and charter guidance
+- **On code review**: Aragorn will raise PRs that violate TDD principles (implementation-detail tests, mocking internals, high call-count assertions) and request refactoring to behavior-first
+- **On refactors**: Gimli can refactor internal code safely without updating test mocks, because tests were written through public interfaces
+- **On handoff**: When Gimli spawns in parallel with feature authors, TDD becomes the team's testing standard
+
+#### Change 2: Gimli Model Override — GPT-5.4
+
+**Implementation**: `.squad/config.json` `agentModelOverrides.Gimli = "gpt-5.4"`
+
+**Rationale**: GPT-5.4 provides superior reasoning capability for complex test design and interface planning:
+
+- Better at tracer-bullet planning (understanding which ONE test to write first)
+- Stronger at identifying test anti-patterns (implementation-detail coupling) and suggesting behavior-first alternatives
+- More reliable refactoring suggestions after all tests pass
+- Improved edge-case analysis for test coverage prioritization
+
+This model choice supersedes the Layer 0 defaults in all squad sessions going forward. When Gimli is spawned, the config override ensures GPT-5.4 is used automatically — no manual spawn-prompt specification needed.
+
+#### Open Questions / Future Work
+
+- Should this decision apply retroactively to existing tests in the codebase? (Not in scope for this decision; can be a future refactoring sprint.)
+- Should PR reviews include explicit checks for TDD violations? (Already covered by Aragorn's PR gate; this formalizes the standard.)
+- If other squad members would benefit from GPT-5.4 overrides, document those decisions separately with similar rationale.

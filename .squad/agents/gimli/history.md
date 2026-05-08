@@ -435,19 +435,23 @@ touching production code.
 - Tightened the skip reason in
    `tests/AppHost.Tests/Tests/Layout/LayoutThemeToggleTests.cs` so the
    reload/bootstrap race is explicit.
+
 - Reworked
    `tests/AppHost.Tests/Tests/Layout/ThemeToggleInteractionTests.cs` into a
    real AppHost runtime attempt that opens `/`, waits for theme readiness,
    toggles light → dark, clicks `Blog Posts`, and verifies the persisted theme
    signals on `/blog`.
+
 - Converted that AppHost runtime test to use xUnit v3 dynamic skips so it only
    stands down when the harness still never becomes trustworthy, and the skip
    reason now captures the exact observed browser state.
+
 - Added `tests/Architecture.Tests/ThemeRenderBoundaryTests.cs` with three source
    structure guards for issue #238: `ThemeProvider` wraps the router in
    `Routes.razor`, `App.razor` keeps only the interactive
    `<Routes @rendermode="InteractiveServer" />`, and `NavMenu.razor` contains no
    nested `@rendermode`.
+
 - Re-ran focused AppHost, Architecture, and `Web.Tests.Bunit` theme slices.
 
 ### Learnings
@@ -455,6 +459,7 @@ touching production code.
 1. In `ASPNETCORE_ENVIRONMENT=Testing`, the AppHost Playwright harness can show
     the theme toggle without ever hydrating it into a consistent interactive
     state. The observed values stayed:
+
     - aria-label: `Toggle dark mode (currently light)`
     - `<html>.dark`: `true`
     - `localStorage['theme-mode']`: `null`
@@ -462,9 +467,11 @@ touching production code.
 2. For issue #238, source-structure regression tests are the strongest reliable
     fallback when AppHost runtime automation diverges from the live app. They
     directly guard the render-boundary placement that caused the bug.
+
 3. Keep the two AppHost skips distinct: one documents the seeded-storage reload
     race, and the other documents the broader Testing-environment hydration
     mismatch.
+
 4. The updated `/blog` navigation-persistence test proved the blocker is even
    earlier than navigation in the current harness: with the page forced to a
    light system preference, the AppHost runtime never set
@@ -597,3 +604,282 @@ Comprehensive validation of localStorage integration and lifecycle:
 ### Outcome
 
 ✅ Full test coverage for persistence feature. All gates green. PR #243 ready for review and merge.
+
+---
+
+## 2026-05-08 — PR #245 Review: Web Coverage to 80% (Issue #244)
+
+### Task
+
+Review PR #245 — "test: raise Web coverage above 80% (issue #244)" — for correctness, maintainability, and genuine coverage improvement.
+
+### Files Reviewed
+
+- `tests/Web.Tests/Handlers/CreateBlogPostHandlerTests.cs` (modified — 2 new tests)
+- `tests/Web.Tests/Handlers/DeleteBlogPostHandlerTests.cs` (modified — 2 new tests)
+- `tests/Web.Tests/Handlers/EditBlogPostHandlerTests.cs` (modified — 4 new tests)
+- `tests/Web.Tests/Handlers/GetBlogPostsHandlerTests.cs` (modified — 2 new tests)
+- `tests/Web.Tests/Infrastructure/Caching/BlogPostCacheServiceTests.cs` (new — 11 tests)
+
+### Findings
+
+#### Passes
+
+- ✅ All handler tests use correct `Func<Task> act = () => ...` + `ThrowAsync<OperationCanceledException>()` rethrow pattern
+- ✅ Unexpected exception tests assert `result.Error.Should().Be("An unexpected error occurred.")` — exact contract match
+- ✅ `BlogPostCacheService` tests use real `MemoryCache` for L1 (correct — avoids IMemoryCache.Set extension mock trap)
+- ✅ All four cache tiers covered per method: L1 hit, L2 hit, corrupt-JSON fallback, full miss
+- ✅ Null DB-result path covered for `GetOrFetchByIdAsync`
+- ✅ `IDisposable` on test class to clean up `MemoryCache` resource
+- ✅ AAA comments throughout
+- ✅ File headers correct on all files
+- ✅ All 4 modified handler files use proper tab indentation
+- ✅ Coverage increase is genuine — tests real production branches (OperationCanceledException, catch(Exception) blocks)
+- ✅ 21 net new tests; all 304 tests pass (per CI comment)
+
+#### Blockers (REQUEST CHANGES)
+
+1. **`BlogPostCacheServiceTests.cs` — zero indentation (Critical Rule 8)**: The new file has NO indentation inside the class body. All fields, test methods, local variables, and assertions are flush-left at column 0. Tab indentation is required.
+2. **Unused `using Microsoft.Extensions.Options;`** on line 13 of `BlogPostCacheServiceTests.cs` — unused import, remove it.
+
+#### Non-blockers
+
+- `GetOrFetchAllAsync_L2Hit` and `GetOrFetchByIdAsync_L2Hit` tests don't assert `fetch` was NOT called (L1 hit tests DO track this). Minor gap.
+- `EditBlogPostHandler` Edit path has no test for `UpdateAsync` throwing `InvalidOperationException`. Pre-existing gap.
+
+### Verdict
+
+**REQUEST CHANGES** — posted as comment (GitHub self-review restriction prevents formal review verdict).
+
+### Learnings
+
+1. **New files added via PR may have formatting issues not visible until diffing against CI**: The 4 modified handler files had correct indentation; only the new `BlogPostCacheServiceTests.cs` was flush-left. Always inspect new files specifically for Critical Rule 8.
+
+2. **Real MemoryCache pattern is correct for cache service testing**: Using `new MemoryCache(new MemoryCacheOptions())` (real implementation) for L1 and `Substitute.For<IDistributedCache>()` for L2 gives true behavioral verification of the memory cache without hitting the IMemoryCache.Set extension-method trap.
+
+3. **OperationCanceledException rethrow test pattern**: Use `Func<Task> act = () => _handler.Handle(...)` then `await act.Should().ThrowAsync<OperationCanceledException>()` — NOT `Func<Task<Result>> act`. Using the correct lambda type is critical to avoid xUnit swallowing the exception.
+
+## Session: PR #245 Re-Review (2026-05-08)
+
+### Task
+
+Re-review PR #245 after REQUEST CHANGES verdict. Confirm both blockers were resolved by Sam/Boromir, then post approval.
+
+### Work Done
+
+- Read full PR diff for `BlogPostCacheServiceTests.cs` — the file as submitted now has correct tab indentation throughout (class fields, constructor, all 11 test methods) and the unused `using Microsoft.Extensions.Options;` is gone.
+- Confirmed both original blockers are resolved.
+- Posted APPROVED verdict on PR #245 as a GitHub review comment.
+
+### Learnings
+
+1. **Re-review workflow**: When re-reviewing after REQUEST CHANGES, always re-read the PR diff directly (not just the local file) — the branch may have been rebased/amended, so the on-disk state and the PR diff can diverge. The PR diff is the canonical source of truth for what will be merged.
+
+2. **Lockout + fix confirmation pattern**: When a changes-requested lockout is enforced and the author re-pushes, the re-review should verify the specific blockers by line reference in the patch — not just trust that the file looks cleaner. Precision prevents re-review ambiguity.
+
+## Session: Issue #247 — MongoDB Clear-Data Command Tests (2026-05-08)
+
+### Task
+
+Write automated test coverage for the "Expose local-only Mongo clear command in AppHost" feature (issue #247). Three acceptance criteria:
+
+1. The mongodb resource exposes a destructive clear-data command annotation.
+2. The command is enabled only when MongoDB is healthy.
+3. Declining confirmation produces a successful no-op.
+
+### Work Done
+
+- Investigated `Aspire.Hosting` 13.3.0 API via reflection: `ResourceCommandAnnotation`, `UpdateCommandStateContext`, `CustomResourceSnapshot`, `HealthReportSnapshot`, `ResourceCommandState`.
+- Discovered production code is **not yet implemented** — `AppHost.cs` has no `WithCommand` call.
+- Created `tests/AppHost.Tests/MongoDbClearCommandTests.cs` with 5 model-level tests (no Docker required).
+- All 5 tests are RED (as expected) with `Sequence contains no matching element` until Boromir implements the feature.
+- Existing `EnvVarTests` remain GREEN (2/2 pass).
+
+### Learnings
+
+1. **Aspire 13.3.0 `CustomResourceSnapshot` is a sealed record with inaccessible init setters**: `HealthReports` has an internal `init` accessor; `HealthStatus` has a private computed setter. Use `typeof(CustomResourceSnapshot).GetProperty("HealthReports")!.GetSetMethod(nonPublic: true)!.Invoke(snapshot, [reports])` to set health state in tests from outside the assembly.
+
+2. **`ConfirmationMessage` IS the "declined = no-op" contract**: When `ConfirmationMessage` is set, Aspire's dashboard shows an OK/Cancel dialog. Clicking Cancel means `ExecuteCommand` is never called — the framework handles the no-op. Testing that `ConfirmationMessage != null` is the correct unit-test contract for this behavior.
+
+3. **`ExecuteCommandContext` does NOT expose the confirmation input parameter to the callback**: The `Parameter` property visible in `ResourceCommandAnnotation` is metadata for the *annotation* (e.g., display hint), not user input passed to the execute callback. Declined confirmation must be handled via `ConfirmationMessage`, not by inspecting input inside the callback.
+
+4. **Annotation construction requires full positional constructor**: `ResourceCommandAnnotation` has no `CommandOptions` builder from outside the assembly — Boromir must use `mongo.WithCommand(name, displayName, executeCommand, commandOptions)` where `CommandOptions` is set via object initializer in `Aspire.Hosting.ResourceBuilderExtensions`.
+
+---
+
+## Session: AppHost Clear Command Test Coverage — Issue #248 (2025)
+
+### Task
+
+Write model-level and integration tests for the `clear-myblog-data` Aspire operator command
+introduced by issue #247 / PR #251. Working as Gimli (Tester) on branch `squad/247-mongo-clear-command-tests`.
+
+### Work Done
+
+- **Discovery**: All implementation and test scaffolding was already committed by Boromir on
+  `squad/247-mongo-clear-command-tests` (commit `41b7cac`). Gimli's contribution was a focused
+  quality pass: removed one untestable skipped test and verified the remaining 5+3 tests pass.
+
+- **Removed skipped test** (`Handler_Without_Running_Host_Returns_Graceful_Failure_Not_Exception`):
+  `[Fact(Skip = "GetValueAsync blocks without a running DCP host")]` — violates Gimli charter
+  (no skipped tests). The behavior is transitively covered by `MongoClearDataIntegrationTests`.
+  Deleted the test entirely.
+
+- **Verified 5 unit tests pass** (`MongoDbClearCommandTests.cs`) — no Docker required:
+  1. Resource exposes `clear-myblog-data` annotation
+  2. `IsHighlighted = true` (destructive action)
+  3. `ConfirmationMessage` is set (y/n prompt)
+  4. `UpdateState` → Enabled when MongoDB is healthy
+  5. `UpdateState` → Disabled when MongoDB is unhealthy
+
+- **3 integration tests** exist (`MongoClearDataIntegrationTests.cs`) — require Docker:
+  1. Removes all documents while preserving collection shells
+  2. Result message includes per-collection deleted counts
+  3. Empty collections appear in result with count 0
+
+### Key Learnings
+
+1. **`create`/`edit` tool overlay vs real filesystem**: In some session contexts, `view` reads from
+   a tool overlay that does NOT reflect the real filesystem. Always verify file existence with
+   `ls` / `bash cat` after creation. To guarantee real disk writes, use `bash` with heredoc or
+   `cat << 'EOF'`. This was the #1 debugging trap across two sessions.
+
+2. **`GetValueAsync()` blocks without DCP**: `mongo.Resource.ConnectionStringExpression.GetValueAsync()`
+   in the Aspire container resource waits for DCP to allocate a port — it does NOT return null
+   immediately if no port is allocated. Never write a unit test that calls `ExecuteCommand` without
+   a full `DistributedApplication` started via `StartAsync()`.
+
+3. **Skipped tests are dead coverage**: If a test requires infrastructure you can't reliably
+   provision in the test runner, delete it and cover the behavior via integration tests.
+   `[Fact(Skip = "...")]` violates the no-skipped-tests charter and provides zero signal.
+
+4. **`IsRunMode` is true in `CreateAsync`**: `DistributedApplicationTestingBuilder.CreateAsync`
+   runs `AppHost.Program.Main()` in RunMode — the `if (builder.ExecutionContext.IsRunMode)` guard
+   IS entered, so `WithCommand` annotations ARE registered without needing `StartAsync()`.
+
+5. **Reflection required for `CustomResourceSnapshot.HealthStatus`**: Both `HealthReports` and
+   `HealthStatus` have non-public setters inaccessible from test assemblies. Use reflection:
+   `typeof(CustomResourceSnapshot).GetProperty("HealthStatus")!.GetSetMethod(nonPublic: true)!.Invoke(...)`.
+
+### Test Counts
+
+| Suite | Count | Infrastructure |
+|-------|-------|---------------|
+| Unit — `MongoDbClearCommandTests` | 5 | None (no Docker) |
+| Integration — `MongoClearDataIntegrationTests` | 3 | Docker + Aspire host |
+| **Total** | **8** | |
+
+---
+
+## 2026-05-08 — Gimli Orchestration: TDD + GPT-5.4 Defaults Formalized
+
+**Orchestrated by:** Aragorn (Lead / Architect) via background spawn  
+**Related:** Issue #252 (Sprint 16)
+
+The project's previously-informal TDD philosophy has been formalized as Gimli's default testing approach. This is a team-wide decision that affects all future test-writing tasks.
+
+### What This Means for Gimli
+
+1. **Charter Updated**: Gimli now has a formal "Testing Approach: Test-Driven Development (TDD)" section
+   - Behavior-first philosophy is now explicit (not implicit)
+   - References `.github/skills/tdd/` for all anti-patterns, mocking guidance, and workflow
+   - Includes examples: ✅ vs. ❌ test patterns
+
+2. **Routing Injected**: `.squad/routing.md` now specifies that every Gimli testing task automatically includes:
+   - `.squad/skills/tdd/SKILL.md`
+   - `.github/skills/tdd/tests.md`
+   - No manual skill injection needed in spawn prompts going forward
+
+3. **Model Override Locked In**: `.squad/config.json` now has `agentModelOverrides.Gimli = "gpt-5.4"`
+   - Gimli's spawns will always use GPT-5.4 for reasoning-heavy test design
+   - This persists across all sessions; no ephemeral prompt override needed
+
+4. **Decision Recorded**: Full decision entry (23) in `.squad/decisions.md`
+   - Documents why: avoids implementation-detail coupling, prevents test brittleness, supports confident refactors
+   - Documents how: tracer bullets, incremental loops, behavior-first interface testing
+   - Documents impact: Aragorn will flag TDD violations on PR review
+
+### Backward Compatibility
+
+- **Existing tests are grandfathered in** — this does not require retroactive refactoring
+- **All new tests follow TDD** — Gimli will write tests in this style going forward
+- **Project already had the skill** (`.github/skills/tdd/`), but it wasn't mandatory
+- **Gimli was already strong at testing** — this formalizes and reinforces existing strengths
+
+### Key Learning
+
+Formalizing a methodology requires three artifacts:
+
+1. **Charter section** — define the principle and philosophy
+2. **Routing entry** — ensure every spawn triggers the skill automatically
+3. **Decision record** — document what changed and why for team reference
+
+The project had the skill but it wasn't mandatory. Gimli's updated charter now surfaces it as the default, making it "read before starting" for all test-writing tasks.
+
+### Related Issues
+
+- Issue #252: [Sprint 16] Update Gimli charter to use TDD and red-green-refactor (parent issue)
+- Decision #23 in `.squad/decisions.md`: Full decision record with rationale
+
+## Session: Integration Test Fix — WithDataVolume (2026-05, Issue #248)
+
+### Task
+
+Get 3 `MongoClearDataIntegrationTests` tests GREEN against Sam's `clear-myblog-data` Aspire handler on branch `squad/247-mongo-clear-command-tests`.
+
+### Root Cause Identified
+
+`AppHost.cs` used `.WithVolume("mongo-data")` — a generic Aspire volume API that passes the volume name as both the source and Docker target path. Docker rejects this with:
+
+```text
+invalid mount config for type "volume": invalid mount path: 'mongo-data' mount path must be absolute
+```
+
+DCP retried 3+ times per run but the MongoDB container was never created. Redis started fine (Redis has no volume), but MongoDB was permanently stuck in a retry loop — never reaching `Running` state. The 3-minute CancellationToken in `ClearCommandAppFixture` fired before MongoDB could recover.
+
+### Fix
+
+Changed `src/AppHost/AppHost.cs`:
+
+```csharp
+// Before (broken):
+var mongo = builder.AddMongoDB("mongodb")
+    .WithVolume("mongo-data");
+
+// After (correct):
+var mongo = builder.AddMongoDB("mongodb")
+    .WithDataVolume("mongo-data");
+```
+
+`WithDataVolume` is the MongoDB-specific extension from `Aspire.Hosting.MongoDB` that mounts the named volume at the standard `/data/db` container path.
+
+### Diagnostics Used
+
+1. `docker ps` during test — Redis container appeared, MongoDB never created
+2. DCP work dir `/tmp/aspire-dcp*/mongodb-*_starterr_*` — showed exact Docker error
+3. DCP container log `resource-container-*.log` — confirmed reconciler retry loop
+
+### Test Results
+
+All 10 relevant tests pass:
+
+| Suite | Count | Status |
+|-------|-------|--------|
+| `MongoDbClearCommandTests` (unit) | 5 | ✅ |
+| `MongoClearDataIntegrationTests` (integration) | 3 | ✅ |
+| `EnvVarTests` | 2 | ✅ |
+
+Integration tests run in ~26 seconds end-to-end.
+
+### Key Learnings
+
+1. **`WithVolume` vs `WithDataVolume`** — Generic `WithVolume(name)` uses the volume name as the Docker target path. Container-specific `WithDataVolume(name)` knows the correct target (MongoDB: `/data/db`). Always prefer the resource-specific API.
+
+2. **DCP work dir for diagnosis** — DCP writes per-container start logs to `/tmp/aspire-dcp*/` during test runs. Files named `{container}_starterr_*` contain raw Docker error output — invaluable for diagnosing why a container won't start.
+
+3. **Redis starts, MongoDB doesn't** pattern — When one resource starts and another doesn't, check whether the failing resource uses a volume. The volume path issue only affects mounted containers.
+
+### Commits
+
+- `8a6e48c` — prior session (unit tests, MD lint fixes)
+- `6d13f93` — `fix: use WithDataVolume for MongoDB to set correct /data/db mount path`

@@ -28,6 +28,7 @@
 		<PackageReference Include="Aspire.Hosting.Testing" />
 		<PackageReference Include="FluentAssertions" />
 		<PackageReference Include="Microsoft.Playwright" />
+		<PackageReference Include="MongoDB.Driver" />
 		<PackageReference Include="coverlet.collector" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="xunit.runner.visualstudio" />
