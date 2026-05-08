@@ -5,8 +5,12 @@ on:
     types: [published, released]
   workflow_dispatch: {}
 
+# NOTE: The default GITHUB_TOKEN cannot access GitHub Projects V2 via GraphQL.
+# This workflow requires a repository secret named GH_PROJECT_TOKEN set to a
+# classic Personal Access Token (PAT) with the `project` OAuth scope.
+# See: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects
 permissions:
-  repository-projects: write
+  contents: read
 
 env:
   PROJECT_ID:        PVT_kwHOA5k0b84BVFTy
@@ -21,10 +25,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate GH_PROJECT_TOKEN secret is configured
+        env:
+          TOKEN_CHECK: ${{ secrets.GH_PROJECT_TOKEN }}
+        run: |
+          if [ -z "$TOKEN_CHECK" ]; then
+            echo "::error::GH_PROJECT_TOKEN secret is not set."
+            echo "::error::Add a classic PAT with the 'project' OAuth scope as a repository secret named GH_PROJECT_TOKEN."
+            echo "::error::See: Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+          echo "✅ GH_PROJECT_TOKEN secret is present."
+
       - name: Move Done → Released on project board
-        uses: actions/github-script@v9
+        uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_PROJECT_TOKEN }}
           script: |
             const PROJECT_ID        = process.env.PROJECT_ID;
             const STATUS_FIELD_ID   = process.env.STATUS_FIELD_ID;

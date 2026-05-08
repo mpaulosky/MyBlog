@@ -78,5 +78,5 @@ jobs:
           git diff --quiet README.md || (
             git add README.md &&
             git commit -m "docs: sync Dev Blog section from docs/blog/index.md [skip ci]" &&
-            git push
+            git push origin HEAD:dev
           )
