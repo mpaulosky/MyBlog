@@ -48,6 +48,19 @@
 
 ## Learnings
 
+### 2026-05-08 — Sprint 18 Release PR #272
+
+**What was done:** Opened release PR #272 to promote `dev` → `main` for Sprint 18 (AppHost
+MongoDB Dev Commands Refactor). Verified Squad CI was green on `dev`. Noted one flaky test
+(`SeedMyBlogData Concurrent Invocations Allow Only One Run` — timing race in test harness, not
+prod code) in the Test Suite workflow; Squad CI gate remained authoritative and green. PR body
+includes Sprint 18 summary (PRs #262, #263, #264, #267, #270, #271), CI status note, and standard
+release checklist per playbook. Awaiting Aragorn approval and PR CI pass before merge.
+
+**PR:** #272 — https://github.com/mpaulosky/MyBlog/pull/272
+
+---
+
 ### 2026-05-XX — Issue #269: Blog → README Sync workflow branch protection fix
 
 **Problem:** `blog-readme-sync.yml` pushed directly to `main` after updating `README.md`, which is blocked by branch protection rules (direct pushes forbidden, "Build Solution" check required).
@@ -57,6 +70,7 @@
 **Key insight:** The `permissions: contents: write` block was already present. No new secrets or PAT bypass needed. One-line change.
 
 **Decision:** Captured in `.squad/decisions/inbox/boromir-269-readme-sync-target.md`.
+
 ### 2026-05-08 — Issue #268: Fix squad-mark-released GraphQL Permission Error
 
 **Root cause:**
