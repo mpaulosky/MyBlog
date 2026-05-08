@@ -39,11 +39,13 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	public async Task ClearMyBlogData_Removes_All_Documents_And_Preserves_Collection_Shells()
 	{
 		// Arrange
-		var db = await DropAndSeedAsync(new Dictionary<string, int>
+		var seededDatabase = await DropAndSeedAsync(new Dictionary<string, int>
 		{
 			["posts"] = 5,
 			["comments"] = 3,
 		});
+		using var mongoClient = seededDatabase.Client;
+		var db = seededDatabase.Database;
 
 		var annotation = GetAnnotation();
 		var ctx = MakeContext();
@@ -75,11 +77,12 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	public async Task ClearMyBlogData_Result_Message_Includes_Per_Collection_Deleted_Counts()
 	{
 		// Arrange
-		await DropAndSeedAsync(new Dictionary<string, int>
+		var seededDatabase = await DropAndSeedAsync(new Dictionary<string, int>
 		{
 			["posts"] = 4,
 			["tags"] = 2,
 		});
+		using var mongoClient = seededDatabase.Client;
 
 		var annotation = GetAnnotation();
 		var ctx = MakeContext();
@@ -101,11 +104,12 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	public async Task ClearMyBlogData_Empty_Collections_Appear_In_Result_With_Zero_Count()
 	{
 		// Arrange
-		await DropAndSeedAsync(new Dictionary<string, int>
+		var seededDatabase = await DropAndSeedAsync(new Dictionary<string, int>
 		{
 			["posts"] = 1,
 			["empty-collection"] = 0,
 		});
+		using var mongoClient = seededDatabase.Client;
 
 		var annotation = GetAnnotation();
 		var ctx = MakeContext();
@@ -119,19 +123,91 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 			"a collection that was already empty must appear in the result with count 0");
 	}
 
+	/// <summary>
+	/// Two overlapping clear attempts must not run together: exactly one proceeds and the other
+	/// fails fast with operator-visible feedback.
+	/// </summary>
+	[Fact]
+	public async Task ClearMyBlogData_Concurrent_Invocations_Allow_Only_One_Run()
+	{
+		// Arrange
+		var seededDatabase = await DropAndSeedAsync(new Dictionary<string, int>
+		{
+			["posts"] = 50,
+			["comments"] = 50,
+			["tags"] = 50,
+		});
+		using var mongoClient = seededDatabase.Client;
+
+		var annotation = GetAnnotation();
+
+		// Act
+		var firstTask = annotation.ExecuteCommand(MakeContext());
+		var secondTask = annotation.ExecuteCommand(MakeContext());
+		var results = await Task.WhenAll(firstTask, secondTask);
+
+		// Assert
+		results.Count(static r => r.Success).Should().Be(1,
+			"the semaphore should allow only one clear operation to run at a time");
+		results.Count(static r => !r.Success).Should().Be(1,
+			"the overlapping clear attempt should fail fast instead of queueing");
+		results.Single(static r => !r.Success).Message.Should().Contain("already in progress",
+			"the operator needs immediate feedback when another clear is in flight");
+	}
+
+	/// <summary>
+	/// A failure clearing one collection must be reported as a warning while the remaining
+	/// collections still clear successfully.
+	/// </summary>
+	[Fact]
+	public async Task ClearMyBlogData_Collection_Failure_Is_Reported_As_Warning_And_Other_Collections_Continue()
+	{
+		// Arrange
+		var seededDatabase = await DropAndSeedAsync(new Dictionary<string, int>
+		{
+			["posts"] = 2,
+			["tags"] = 1,
+		});
+		using var mongoClient = seededDatabase.Client;
+		var db = seededDatabase.Database;
+		await CreateViewAsync(db, "posts-readonly-view", "posts");
+
+		var annotation = GetAnnotation();
+
+		// Act
+		var result = await annotation.ExecuteCommand(MakeContext());
+
+		// Assert
+		result.Success.Should().BeTrue(
+			"per-collection failures should be downgraded to warnings so the overall clear can continue");
+		result.Message.Should().Contain("posts: 2");
+		result.Message.Should().Contain("tags: 1");
+		result.Message.Should().Contain("1 collection(s) had errors");
+		result.Message.Should().Contain("posts-readonly-view:",
+			"the warning summary should identify the collection that could not be cleared");
+
+		(await db.GetCollection<BsonDocument>("posts")
+			.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty, cancellationToken: TestContext.Current.CancellationToken))
+			.Should().Be(0, "successful collections should still be cleared when one collection fails");
+
+		(await db.GetCollection<BsonDocument>("tags")
+			.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty, cancellationToken: TestContext.Current.CancellationToken))
+			.Should().Be(0, "collections after the failure should still be processed");
+	}
+
 	// ---------------------------------------------------------------------------
 	// Helpers
 	// ---------------------------------------------------------------------------
 
-	private async Task<IMongoDatabase> DropAndSeedAsync(Dictionary<string, int> collections)
+	private async Task<(MongoClient Client, IMongoDatabase Database)> DropAndSeedAsync(Dictionary<string, int> collections)
 	{
 		var client = new MongoClient(fixture.MongoConnectionString);
-		client.DropDatabase("myblog");
+		await client.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
 		var db = client.GetDatabase("myblog");
 
 		foreach (var (name, count) in collections)
 		{
-			await db.CreateCollectionAsync(name);
+			await db.CreateCollectionAsync(name, cancellationToken: TestContext.Current.CancellationToken);
 
 			if (count > 0)
 			{
@@ -140,11 +216,24 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 					.Select(i => new BsonDocument("n", i))
 					.ToList();
 
-				await db.GetCollection<BsonDocument>(name).InsertManyAsync(docs);
+				await db.GetCollection<BsonDocument>(name)
+					.InsertManyAsync(docs, cancellationToken: TestContext.Current.CancellationToken);
 			}
 		}
 
-		return db;
+		return (client, db);
+	}
+
+	private static async Task CreateViewAsync(IMongoDatabase db, string viewName, string sourceCollection)
+	{
+		var createViewCommand = new BsonDocument
+		{
+			{ "create", viewName },
+			{ "viewOn", sourceCollection },
+			{ "pipeline", new BsonArray() },
+		};
+
+		await db.RunCommandAsync<BsonDocument>(createViewCommand, cancellationToken: TestContext.Current.CancellationToken);
 	}
 
 	private ResourceCommandAnnotation GetAnnotation()
@@ -156,7 +245,7 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 			.Single(static a => a.Name == CommandName);
 	}
 
-	private ExecuteCommandContext MakeContext() => new()
+	private static ExecuteCommandContext MakeContext() => new()
 	{
 		ResourceName = "mongodb",
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),

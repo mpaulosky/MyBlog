@@ -56,7 +56,9 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 			KnownResourceStates.Running,
 			cts.Token);
 
-		MongoConnectionString = await App.GetConnectionStringAsync("mongodb", cts.Token) ?? string.Empty;
+		MongoConnectionString = await App.GetConnectionStringAsync("mongodb", cts.Token)
+			?? throw new InvalidOperationException(
+				"Could not resolve the MongoDB connection string from the Aspire host.");
 	}
 
 	public async ValueTask DisposeAsync()
