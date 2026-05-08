@@ -24,7 +24,7 @@ jobs:
       - name: Move Done → Released on project board
         uses: actions/github-script@v9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_PROJECT_TOKEN }}
           script: |
             const PROJECT_ID        = process.env.PROJECT_ID;
             const STATUS_FIELD_ID   = process.env.STATUS_FIELD_ID;
