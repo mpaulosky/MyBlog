@@ -12,19 +12,6 @@
 /* ─── Tailwind design tokens (runtime CSS var resolution) ────────────────── */
 /* @theme inline generates utility classes (bg-primary-400, text-primary-50,  */
 /* etc.) whose values resolve from CSS vars at runtime.                       */
-@theme inline {
-	--color-primary-50:  var(--primary-50);
-	--color-primary-100: var(--primary-100);
-	--color-primary-200: var(--primary-200);
-	--color-primary-300: var(--primary-300);
-	--color-primary-400: var(--primary-400);
-	--color-primary-500: var(--primary-500);
-	--color-primary-600: var(--primary-600);
-	--color-primary-700: var(--primary-700);
-	--color-primary-800: var(--primary-800);
-	--color-primary-900: var(--primary-900);
-	--color-primary-950: var(--primary-950);
-}
 
 @layer base {
 	/* ─── Common element standardization ──────────────────────────────────── */
@@ -87,11 +74,11 @@
 
 	/* ─── Blazor form validation ──────────────────────────────────────────── */
 	.valid.modified:not([type=checkbox]) {
-		@apply outline outline-1 outline-green-500;
+		@apply outline-1 outline-green-500;
 	}
 
 	.invalid {
-		@apply outline outline-1 outline-red-500;
+		@apply outline-1 outline-red-500;
 	}
 
 	.validation-message {
