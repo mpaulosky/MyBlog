@@ -11,20 +11,20 @@
 
 @if (_error is not null)
 {
-    <div class="rounded-lg border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm mb-4 flex items-center justify-between" role="alert">
+    <div class="alert-error" role="alert">
         <span>@_error</span>
-        <button type="button" class="ml-4 cursor-pointer text-red-700 hover:text-red-900" @onclick="() => _error = null">&times;</button>
+        <button type="button" class="alert-dismiss" @onclick="() => _error = null">&times;</button>
     </div>
 }
 
 @if (_concurrencyError)
 {
-    <div class="rounded-lg border border-yellow-300 bg-yellow-50 text-yellow-700 px-4 py-3 text-sm mb-4 flex items-center justify-between" role="alert">
+    <div class="alert-warning" role="alert">
         <div>
             <strong class="font-semibold">Concurrency Conflict:</strong> This post was modified by another user. 
             Please reload the page to get the latest version.
         </div>
-        <button type="button" class="ml-4 cursor-pointer text-yellow-700 hover:text-yellow-900" @onclick="() => _concurrencyError = false">&times;</button>
+        <button type="button" class="alert-dismiss" @onclick="() => _concurrencyError = false">&times;</button>
     </div>
 }
 
@@ -34,23 +34,23 @@
 }
 else if (_model is not null)
 {
-    <div class="rounded-lg shadow p-6 bg-white dark:bg-gray-800 max-w-2xl">
+    <div class="form-panel">
         <EditForm Model="_model" OnValidSubmit="HandleSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary class="mb-4" />
 
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Title</label>
-                <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Title" />
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <InputText class="form-input" @bind-Value="_model.Title" />
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Content</label>
-                <InputTextArea class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" rows="8" @bind-Value="_model.Content" />
+            <div class="form-group">
+                <label class="form-label">Content</label>
+                <InputTextArea class="form-input" rows="8" @bind-Value="_model.Content" />
             </div>
 
             <div class="flex gap-2">
                 <button type="submit" class="btn-primary">Save</button>
-                <a href="/blog" class="px-4 py-2 rounded font-medium border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</a>
+                <a href="/blog" class="btn-secondary">Cancel</a>
             </div>
         </EditForm>
     </div>

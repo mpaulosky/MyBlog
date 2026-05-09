@@ -85,6 +85,79 @@
 		rounded-lg shadow;
 	}
 
+	/* ─── Tables ──────────────────────────────────────────────────────────── */
+	.table-wrapper {
+		@apply rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden;
+	}
+
+	.data-table {
+		@apply w-full text-sm text-left text-gray-900 dark:text-gray-50;
+
+		& thead {
+			@apply bg-primary-500 dark:bg-primary-900
+			text-primary-900 dark:text-primary-500
+			border-b border-primary-300 dark:border-primary-700;
+		}
+
+		& thead th {
+			@apply px-4 py-3;
+		}
+
+		& tbody tr {
+			@apply odd:bg-white odd:dark:bg-gray-800 even:bg-gray-50 even:dark:bg-gray-900
+			border-b border-gray-200 dark:border-gray-700
+			hover:bg-primary-100 dark:hover:bg-primary-800 transition;
+		}
+
+		& tbody td {
+			@apply px-4 py-3;
+		}
+	}
+
+	/* ─── Forms ───────────────────────────────────────────────────────────── */
+	.form-panel {
+		@apply rounded-lg shadow p-6 bg-white dark:bg-gray-800 max-w-2xl;
+	}
+
+	.form-group {
+		@apply mb-4;
+	}
+
+	.form-label {
+		@apply block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1;
+	}
+
+	.form-input {
+		@apply w-full rounded border border-gray-300 dark:border-gray-600
+		bg-white dark:bg-gray-700
+		text-gray-900 dark:text-gray-50
+		px-3 py-2 text-sm
+		focus:outline-none focus:ring-2 focus:ring-primary-400;
+	}
+
+	/* ─── Secondary button (Cancel / neutral action) ──────────────────────── */
+	.btn-secondary {
+		@apply px-4 py-2 rounded font-medium
+		border border-gray-300 dark:border-gray-600
+		text-gray-900 dark:text-gray-50
+		hover:bg-gray-100 dark:hover:bg-gray-700 transition;
+	}
+
+	/* ─── Alert banners ───────────────────────────────────────────────────── */
+	.alert-error {
+		@apply rounded-lg border border-red-300 bg-red-50 text-red-700
+		px-4 py-3 text-sm mb-4 flex items-center justify-between;
+	}
+
+	.alert-warning {
+		@apply rounded-lg border border-yellow-300 bg-yellow-50 text-yellow-700
+		px-4 py-3 text-sm mb-4 flex items-center justify-between;
+	}
+
+	.alert-dismiss {
+		@apply ml-4 cursor-pointer hover:opacity-75;
+	}
+
 	/* ─── Blazor form validation ──────────────────────────────────────────── */
 	.valid.modified:not([type=checkbox]) {
 		@apply outline-1 outline-green-500;
