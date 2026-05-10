@@ -156,6 +156,62 @@ The solution builds successfully and all tests pass. The only issue is a minor
 code coverage gap of 0.54%. Adding tests for approximately 5 more lines will
 meet the 89% threshold.
 
+ADDENDUM: PR #279 SHARPCOMPRESS / NU1902 CI INVESTIGATION
+---------------------------------------------------------
+Generated: 2026-05-10
+Scope: Allowed-file remediation only. Preserved existing dirty app files in
+     src/Web/Features/UserManagement/UserManagementHandler.cs and
+     src/Web/Program.cs.
+
+ROOT CAUSE
+----------
+- CI restore was failing with NU1902 because MongoDB.Driver 3.6.0 resolved the
+  transitive package SharpCompress 0.30.1.
+- NuGet restore audit is enabled and warnings are treated as errors in CI, so
+  advisory GHSA-6c8g-7p36-r338 became a build-blocking restore error.
+- Scratch-package verification during this session showed MongoDB.Driver 3.7.1
+  and 3.8.0 still resolve SharpCompress 0.30.1, so upgrading only the driver was
+  not a minimal safe fix.
+
+FIX APPLIED
+-----------
+- Enabled CentralPackageTransitivePinningEnabled in Directory.Packages.props.
+- Added a central transitive pin for SharpCompress 0.48.0.
+
+VERIFICATION
+------------
+1. Command: dotnet restore MyBlog.slnx
+  Status: ✅ SUCCESS
+  Result: Restore completed without NU1902.
+
+2. Command: dotnet build MyBlog.slnx --configuration Release --no-restore
+  Status: ✅ SUCCESS
+  Result: Build completed with 326 existing analyzer/code-quality warnings and
+        0 errors. No SharpCompress / NU1902 failure remained.
+
+3. Command: dotnet package list --project src/Web/Web.csproj --include-transitive --vulnerable --format json --no-restore
+  Status: ✅ SUCCESS
+  Result: Vulnerable package count = 0
+
+4. Command: dotnet package list --project src/AppHost/AppHost.csproj --include-transitive --vulnerable --format json --no-restore
+  Status: ✅ SUCCESS
+  Result: Vulnerable package count = 0
+
+5. Test verification (Release, --no-build)
+  Status: ✅ SUCCESS
+  Passed projects:
+  - tests/Architecture.Tests/Architecture.Tests.csproj
+  - tests/Domain.Tests/Domain.Tests.csproj
+  - tests/Web.Tests/Web.Tests.csproj
+  - tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj
+  - tests/Web.Tests.Integration/Web.Tests.Integration.csproj
+  - tests/AppHost.Tests/AppHost.Tests.csproj
+
+REMAINING BLOCKER
+-----------------
+None found for the SharpCompress / NU1902 issue after the package pin was
+applied and verified.
+
 ================================================================================
 END OF BUILD LOG
 ================================================================================

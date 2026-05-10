@@ -2,15 +2,19 @@
 //=======================================================
 
 using System.Net;
+using System.Text;
+using System.Text.Json;
 
 using Microsoft.Extensions.Configuration;
 
 using MyBlog.Web.Features.UserManagement;
 
-namespace Unit.Handlers;
+namespace Web.Handlers;
 
 public class UserManagementHandlerTests
 {
+	private const string InvalidAccessTokenError = "Auth0 Management API token response did not contain a valid access_token.";
+
 	private readonly IConfiguration _config = Substitute.For<IConfiguration>();
 	private readonly IHttpClientFactory _httpFactory = Substitute.For<IHttpClientFactory>();
 	private readonly UserManagementHandler _handler;
@@ -24,7 +28,7 @@ public class UserManagementHandlerTests
 	// ── Domain missing ──────────────────────────────────────────────────────────────
 
 	[Fact]
-	public async Task Handle_GetUsersWithRoles_DomainMissing_ReturnsFailResult()
+	public async Task HandleGetUsersWithRolesDomainMissingReturnsFailResult()
 	{
 		// Arrange (none)
 
@@ -37,7 +41,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_AssignRole_DomainMissing_ReturnsFailResult()
+	public async Task HandleAssignRoleDomainMissingReturnsFailResult()
 	{
 		// Arrange (none)
 
@@ -51,7 +55,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_RemoveRole_DomainMissing_ReturnsFailResult()
+	public async Task HandleRemoveRoleDomainMissingReturnsFailResult()
 	{
 		// Arrange (none)
 
@@ -65,7 +69,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_GetAvailableRoles_DomainMissing_ReturnsFailResult()
+	public async Task HandleGetAvailableRolesDomainMissingReturnsFailResult()
 	{
 		// Arrange (none)
 
@@ -80,7 +84,7 @@ public class UserManagementHandlerTests
 	// ── ClientId missing ────────────────────────────────────────────────────────────────
 
 	[Fact]
-	public async Task Handle_GetUsersWithRoles_ClientIdMissing_ReturnsFailResult()
+	public async Task HandleGetUsersWithRolesClientIdMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientIdMissing();
@@ -94,7 +98,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_AssignRole_ClientIdMissing_ReturnsFailResult()
+	public async Task HandleAssignRoleClientIdMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientIdMissing();
@@ -109,7 +113,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_RemoveRole_ClientIdMissing_ReturnsFailResult()
+	public async Task HandleRemoveRoleClientIdMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientIdMissing();
@@ -124,7 +128,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_GetAvailableRoles_ClientIdMissing_ReturnsFailResult()
+	public async Task HandleGetAvailableRolesClientIdMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientIdMissing();
@@ -140,7 +144,7 @@ public class UserManagementHandlerTests
 	// ── ClientSecret missing ──────────────────────────────────────────────────────────────
 
 	[Fact]
-	public async Task Handle_GetUsersWithRoles_ClientSecretMissing_ReturnsFailResult()
+	public async Task HandleGetUsersWithRolesClientSecretMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
@@ -154,7 +158,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_AssignRole_ClientSecretMissing_ReturnsFailResult()
+	public async Task HandleAssignRoleClientSecretMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
@@ -169,7 +173,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_RemoveRole_ClientSecretMissing_ReturnsFailResult()
+	public async Task HandleRemoveRoleClientSecretMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
@@ -184,7 +188,7 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_GetAvailableRoles_ClientSecretMissing_ReturnsFailResult()
+	public async Task HandleGetAvailableRolesClientSecretMissingReturnsFailResult()
 	{
 		// Arrange
 		var handler = BuildHandlerClientSecretMissing();
@@ -200,10 +204,12 @@ public class UserManagementHandlerTests
 	// ── HTTP token endpoint fails ────────────────────────────────────────────────────────────────────
 
 	[Fact]
-	public async Task Handle_GetUsersWithRoles_TokenEndpointFails_ReturnsFailResult()
+	public async Task HandleGetUsersWithRolesTokenEndpointFailsReturnsFailResult()
 	{
 		// Arrange
-		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
+		using var httpHandler = new StubHttpHandler(HttpStatusCode.InternalServerError);
+		using var httpClient = new HttpClient(httpHandler);
+		var handler = BuildHandlerHttpFail(new StaticHttpClientFactory(httpClient));
 
 		// Act
 		var result = await handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
@@ -214,10 +220,12 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_AssignRole_TokenEndpointFails_ReturnsFailResult()
+	public async Task HandleAssignRoleTokenEndpointFailsReturnsFailResult()
 	{
 		// Arrange
-		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
+		using var httpHandler = new StubHttpHandler(HttpStatusCode.InternalServerError);
+		using var httpClient = new HttpClient(httpHandler);
+		var handler = BuildHandlerHttpFail(new StaticHttpClientFactory(httpClient));
 
 		// Act
 		var result = await handler.Handle(
@@ -229,10 +237,12 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_RemoveRole_TokenEndpointFails_ReturnsFailResult()
+	public async Task HandleRemoveRoleTokenEndpointFailsReturnsFailResult()
 	{
 		// Arrange
-		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
+		using var httpHandler = new StubHttpHandler(HttpStatusCode.InternalServerError);
+		using var httpClient = new HttpClient(httpHandler);
+		var handler = BuildHandlerHttpFail(new StaticHttpClientFactory(httpClient));
 
 		// Act
 		var result = await handler.Handle(
@@ -244,10 +254,12 @@ public class UserManagementHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_GetAvailableRoles_TokenEndpointFails_ReturnsFailResult()
+	public async Task HandleGetAvailableRolesTokenEndpointFailsReturnsFailResult()
 	{
 		// Arrange
-		var handler = BuildHandlerHttpFail(HttpStatusCode.InternalServerError);
+		using var httpHandler = new StubHttpHandler(HttpStatusCode.InternalServerError);
+		using var httpClient = new HttpClient(httpHandler);
+		var handler = BuildHandlerHttpFail(new StaticHttpClientFactory(httpClient));
 
 		// Act
 		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
@@ -257,7 +269,100 @@ public class UserManagementHandlerTests
 		result.Error.Should().Contain("500");
 	}
 
+	// ── Management configuration/token contract ──────────────────────────────────────────────
+
+	[Fact]
+	public async Task HandleGetAvailableRolesPrimaryManagementKeysUsePrimaryConfigAndConfiguredAudience()
+	{
+		// Arrange
+		using var httpHandler = new RecordingTokenHttpHandler("{\"access_token\":\"   \"}");
+		using var httpClient = new HttpClient(httpHandler, disposeHandler: false);
+		var handler = BuildHandlerWithPrimaryKeys(new StaticHttpClientFactory(httpClient), "https://api.example.com/");
+
+		// Act
+		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
+		httpHandler.LastRequestBody.Should().NotBeNullOrWhiteSpace();
+		using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be(InvalidAccessTokenError);
+		httpHandler.LastRequestUri.Should().Be(new Uri("https://primary.auth0.com/oauth/token"));
+		requestBody.RootElement.GetProperty("client_id").GetString().Should().Be("primary-client-id");
+		requestBody.RootElement.GetProperty("client_secret").GetString().Should().Be("primary-client-secret");
+		requestBody.RootElement.GetProperty("audience").GetString().Should().Be("https://api.example.com/");
+		requestBody.RootElement.GetProperty("grant_type").GetString().Should().Be("client_credentials");
+	}
+
+	[Fact]
+	public async Task HandleGetAvailableRolesWhitespacePrimaryManagementKeysFallBackToLegacyConfig()
+	{
+		// Arrange
+		using var httpHandler = new RecordingTokenHttpHandler("{\"access_token\":\"\"}");
+		using var httpClient = new HttpClient(httpHandler, disposeHandler: false);
+		var handler = BuildHandlerWithLegacyFallback(new StaticHttpClientFactory(httpClient));
+
+		// Act
+		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
+		httpHandler.LastRequestBody.Should().NotBeNullOrWhiteSpace();
+		using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be(InvalidAccessTokenError);
+		httpHandler.LastRequestUri.Should().Be(new Uri("https://legacy.auth0.com/oauth/token"));
+		requestBody.RootElement.GetProperty("client_id").GetString().Should().Be("legacy-client-id");
+		requestBody.RootElement.GetProperty("client_secret").GetString().Should().Be("legacy-client-secret");
+		requestBody.RootElement.GetProperty("audience").GetString().Should().Be("https://legacy.auth0.com/api/v2/");
+		requestBody.RootElement.GetProperty("grant_type").GetString().Should().Be("client_credentials");
+	}
+
+	[Theory]
+	[InlineData("{\"access_token\":\"\"}")]
+	[InlineData("{\"access_token\":\"   \"}")]
+	[InlineData("{}")]
+	public async Task HandleGetAvailableRolesBlankOrMissingAccessTokenReturnsExplicitFailure(string tokenResponseJson)
+	{
+		// Arrange
+		using var httpHandler = new RecordingTokenHttpHandler(tokenResponseJson);
+		using var httpClient = new HttpClient(httpHandler, disposeHandler: false);
+		var handler = BuildHandlerWithPrimaryKeys(new StaticHttpClientFactory(httpClient), "https://api.example.com/");
+
+		// Act
+		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be(InvalidAccessTokenError);
+	}
+
 	// ── helpers ───────────────────────────────────────────────────────────────────────────────
+
+	private static UserManagementHandler BuildHandlerWithPrimaryKeys(IHttpClientFactory httpFactory, string audience)
+	{
+		var config = Substitute.For<IConfiguration>();
+		config["Auth0Management:Domain"].Returns("primary.auth0.com");
+		config["Auth0Management:ClientId"].Returns("primary-client-id");
+		config["Auth0Management:ClientSecret"].Returns("primary-client-secret");
+		config["Auth0Management:Audience"].Returns(audience);
+		config["Auth0:ManagementApiDomain"].Returns("legacy.auth0.com");
+		config["Auth0:ManagementApiClientId"].Returns("legacy-client-id");
+		config["Auth0:ManagementApiClientSecret"].Returns("legacy-client-secret");
+		return new UserManagementHandler(config, httpFactory);
+	}
+
+	private static UserManagementHandler BuildHandlerWithLegacyFallback(IHttpClientFactory httpFactory)
+	{
+		var config = Substitute.For<IConfiguration>();
+		config["Auth0Management:Domain"].Returns("   ");
+		config["Auth0Management:ClientId"].Returns("\t");
+		config["Auth0Management:ClientSecret"].Returns(" ");
+		config["Auth0Management:Audience"].Returns(" ");
+		config["Auth0:ManagementApiDomain"].Returns("legacy.auth0.com");
+		config["Auth0:ManagementApiClientId"].Returns("legacy-client-id");
+		config["Auth0:ManagementApiClientSecret"].Returns("legacy-client-secret");
+		return new UserManagementHandler(config, httpFactory);
+	}
 
 	private static UserManagementHandler BuildHandlerClientIdMissing()
 	{
@@ -276,14 +381,12 @@ public class UserManagementHandlerTests
 		return new UserManagementHandler(config, Substitute.For<IHttpClientFactory>());
 	}
 
-	private static UserManagementHandler BuildHandlerHttpFail(HttpStatusCode statusCode)
+	private static UserManagementHandler BuildHandlerHttpFail(IHttpClientFactory httpFactory)
 	{
 		var config = Substitute.For<IConfiguration>();
 		config["Auth0:ManagementApiDomain"].Returns("test.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("test-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns("test-client-secret");
-		var httpFactory = Substitute.For<IHttpClientFactory>();
-		httpFactory.CreateClient().Returns(new HttpClient(new StubHttpHandler(statusCode)));
 		return new UserManagementHandler(config, httpFactory);
 	}
 
@@ -292,6 +395,32 @@ public class UserManagementHandlerTests
 		protected override Task<HttpResponseMessage> SendAsync(
 			HttpRequestMessage request, CancellationToken cancellationToken) =>
 			Task.FromResult(new HttpResponseMessage(statusCode));
+	}
+
+	private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
+	{
+		public HttpClient CreateClient(string name) => httpClient;
+	}
+
+	private sealed class RecordingTokenHttpHandler(string responseJson) : HttpMessageHandler
+	{
+		public Uri? LastRequestUri { get; private set; }
+
+		public string? LastRequestBody { get; private set; }
+
+		protected override async Task<HttpResponseMessage> SendAsync(
+			HttpRequestMessage request, CancellationToken cancellationToken)
+		{
+			LastRequestUri = request.RequestUri;
+			LastRequestBody = request.Content is null
+				? null
+				: await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+			return new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+			};
+		}
 	}
 }
 
