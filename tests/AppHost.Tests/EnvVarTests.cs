@@ -8,6 +8,7 @@
 // =============================================
 
 using Aspire.Hosting;
+
 using FluentAssertions;
 
 namespace AppHost.Tests;
