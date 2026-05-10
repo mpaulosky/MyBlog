@@ -26,7 +26,7 @@ namespace MyBlog.ServiceDefaults;
 // This project should be referenced by each service project in your solution.
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
 [ExcludeFromCodeCoverage(Justification = "Aspire infrastructure bootstrap — not business logic")]
-public static class Extensions
+public static class ServiceDefaultsExtensions
 {
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
@@ -121,6 +121,8 @@ public static class Extensions
 
 	public static WebApplication MapDefaultEndpoints(this WebApplication app)
 	{
+        ArgumentNullException.ThrowIfNull(app);
+
 		// Adding health checks endpoints to applications in non-development environments has security implications.
 		// See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
 		if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))

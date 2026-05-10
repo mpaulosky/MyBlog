@@ -34,7 +34,7 @@ internal sealed class BlogPostCacheService(
 			return cached;
 
 		// L2 hit
-		var bytes = await distributedCache.GetAsync(BlogPostCacheKeys.All, ct);
+		var bytes = await distributedCache.GetAsync(BlogPostCacheKeys.All, ct).ConfigureAwait(false);
 		if (bytes is not null)
 		{
 			try
@@ -49,19 +49,19 @@ internal sealed class BlogPostCacheService(
 			catch (JsonException)
 			{
 				// Stale or corrupt bytes — remove and fall through to the DB
-				await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None);
+				await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None).ConfigureAwait(false);
 			}
 		}
 
 		// DB via caller-supplied fetch
-		var result = await fetch();
+		var result = await fetch().ConfigureAwait(false);
 		var list = result as List<BlogPostDto> ?? result.ToList();
 		localCache.Set(BlogPostCacheKeys.All, list, LocalOpts);
 		await distributedCache.SetAsync(
 			BlogPostCacheKeys.All,
 			JsonSerializer.SerializeToUtf8Bytes(list, JsonOpts),
 			RedisOpts,
-			ct);
+			ct).ConfigureAwait(false);
 		return result;
 	}
 
@@ -77,7 +77,7 @@ internal sealed class BlogPostCacheService(
 			return cached;
 
 		// L2 hit
-		var bytes = await distributedCache.GetAsync(key, ct);
+		var bytes = await distributedCache.GetAsync(key, ct).ConfigureAwait(false);
 		if (bytes is not null)
 		{
 			try
@@ -92,12 +92,12 @@ internal sealed class BlogPostCacheService(
 			catch (JsonException)
 			{
 				// Stale or corrupt bytes — remove and fall through to the DB
-				await distributedCache.RemoveAsync(key, CancellationToken.None);
+				await distributedCache.RemoveAsync(key, CancellationToken.None).ConfigureAwait(false);
 			}
 		}
 
 		// DB via caller-supplied fetch
-		var result = await fetch();
+		var result = await fetch().ConfigureAwait(false);
 		if (result is null)
 			return null;
 
@@ -106,7 +106,7 @@ internal sealed class BlogPostCacheService(
 			key,
 			JsonSerializer.SerializeToUtf8Bytes(result, JsonOpts),
 			RedisOpts,
-			ct);
+			ct).ConfigureAwait(false);
 		return result;
 	}
 
@@ -114,7 +114,7 @@ internal sealed class BlogPostCacheService(
 	{
 		localCache.Remove(BlogPostCacheKeys.All);
 		// CancellationToken.None: the DB write already committed — must not be cancelled
-		await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None);
+		await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None).ConfigureAwait(false);
 	}
 
 	public async Task InvalidateByIdAsync(Guid id, CancellationToken ct = default)
@@ -122,6 +122,6 @@ internal sealed class BlogPostCacheService(
 		var key = BlogPostCacheKeys.ById(id);
 		localCache.Remove(key);
 		// CancellationToken.None: the DB write already committed — must not be cancelled
-		await distributedCache.RemoveAsync(key, CancellationToken.None);
+		await distributedCache.RemoveAsync(key, CancellationToken.None).ConfigureAwait(false);
 	}
 }

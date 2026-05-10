@@ -22,6 +22,12 @@ internal static class MongoDbResourceBuilderExtensions
 // Shared semaphore — guards all three dev commands (Clear, Seed, Stats) so only one runs at a time.
 private static readonly SemaphoreSlim _dbMutex = new(1, 1);
 
+/// <summary>
+/// Test-only hook used by <c>AppHost.Tests</c> to hold the seed command inside the shared mutex
+/// so overlapping invocations can be asserted deterministically.
+/// </summary>
+internal static Func<CancellationToken, ValueTask>? SeedCommandAfterMutexAcquiredAsync { get; set; }
+
 public static IResourceBuilder<MongoDBServerResource> WithMongoDbDevCommands(
 this IResourceBuilder<MongoDBServerResource> builder,
 string databaseName)
@@ -180,6 +186,10 @@ Message = "A database operation is already in progress. Wait for the current run
 
 try
 {
+	var afterMutexAcquired = SeedCommandAfterMutexAcquiredAsync;
+	if (afterMutexAcquired is not null)
+		await afterMutexAcquired(context.CancellationToken);
+
 context.Logger.LogInformation(
 "Seed MyBlog data invoked on {ResourceName} — inserting seed data into '{Database}'.",
 context.ResourceName, databaseName);
