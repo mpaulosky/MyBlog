@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pre-push gate: mirrors CI checks to catch failures before they reach GitHub
-# Runs: branch protection → untracked-file check → Release build → unit/architecture tests → integration tests
+# Runs: branch protection → untracked-file check → dotnet format → Release build → unit/architecture tests → integration tests
 # NOTE: git provides refspecs on stdin; interactive prompts must use /dev/tty.
 set -uo pipefail
 
@@ -49,7 +49,34 @@ if [[ -n "$UNTRACKED_SRC" ]]; then
   fi
 fi
 
-# ── Gate 2: Release build (mirrors CI exactly) ─────────────────────────────
+# ── Gate 2: dotnet format check ────────────────────────────────────────────
+echo -e "\n${CYAN}🎨 Checking code formatting (dotnet format --verify-no-changes)...${RESET}"
+dotnet format MyBlog.slnx --verify-no-changes 2>&1
+FORMAT_EXIT=$?
+
+if [[ $FORMAT_EXIT -ne 0 ]]; then
+  echo -e "${RED}❌  Formatting issues detected — one or more files require formatting changes.${RESET}"
+  echo -e "${YELLOW}    Fix:  dotnet format MyBlog.slnx${RESET}"
+  echo -e "${YELLOW}    Then: git add -u && git commit (or --amend), then re-push.${RESET}"
+  echo ""
+  printf "Auto-fix formatting now? Modified files must be staged and committed before re-pushing. [y/N] " >/dev/tty
+  read -r FORMAT_FIX </dev/tty
+  if [[ "$FORMAT_FIX" == "y" || "$FORMAT_FIX" == "Y" ]]; then
+    echo -e "${CYAN}  🔧 Running dotnet format MyBlog.slnx...${RESET}"
+    dotnet format MyBlog.slnx
+    if [[ $? -ne 0 ]]; then
+      echo -e "${RED}❌  dotnet format encountered errors. Fix manually and re-push.${RESET}"
+      exit 1
+    fi
+    echo -e "${YELLOW}  ⚠️  Formatting applied to working tree. Stage changes: git add -u${RESET}"
+    echo -e "${YELLOW}       Then commit and re-push.${RESET}"
+  fi
+  echo -e "${RED}Push blocked: commit the formatting changes and re-push.${RESET}"
+  exit 1
+fi
+echo -e "${GREEN}✅  Formatting OK.${RESET}"
+
+# ── Gate 3: Release build (mirrors CI exactly) ─────────────────────────────
 MAX_ATTEMPTS=3
 BUILD_ATTEMPT=0
 BUILD_OK=false
@@ -85,7 +112,7 @@ if [[ "$BUILD_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 3: Unit + Architecture tests ──────────────────────────────────────
+# ── Gate 4: Unit + Architecture tests ──────────────────────────────────────
 TEST_PROJECTS=(
   "tests/Architecture.Tests/Architecture.Tests.csproj"
   "tests/Domain.Tests/Domain.Tests.csproj"
@@ -121,7 +148,7 @@ if [[ "$TESTS_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 4: Docker-backed integration tests ────────────────────────────────
+# ── Gate 5: Docker-backed integration tests ────────────────────────────────
 # Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
   "tests/Web.Tests.Integration/Web.Tests.Integration.csproj"
