@@ -81,8 +81,7 @@ builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.Authenticati
 	var existingOnTokenValidated = options.Events.OnTokenValidated;
 	options.Events.OnTokenValidated = async context =>
 	{
-		if (existingOnTokenValidated is not null)
-			await existingOnTokenValidated(context);
+		await existingOnTokenValidated(context).ConfigureAwait(false);
 
 		if (context.Principal?.Identity is not ClaimsIdentity identity)
 		{
@@ -161,7 +160,7 @@ app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 	var props = new LoginAuthenticationPropertiesBuilder()
 			.WithRedirectUri(safeReturn)
 			.Build();
-	await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props);
+	await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props).ConfigureAwait(false);
 }).AllowAnonymous();
 
 app.MapGet("/Account/Logout", async ctx =>
@@ -169,8 +168,8 @@ app.MapGet("/Account/Logout", async ctx =>
 	var props = new LogoutAuthenticationPropertiesBuilder()
 			.WithRedirectUri("/")
 			.Build();
-	await ctx.SignOutAsync(Auth0Constants.AuthenticationScheme, props);
-	await ctx.SignOutAsync();
+	await ctx.SignOutAsync(Auth0Constants.AuthenticationScheme, props).ConfigureAwait(false);
+	await ctx.SignOutAsync().ConfigureAwait(false);
 }).RequireAuthorization();
 
 // Test-only login endpoint for E2E testing (Development/Testing environments only)
@@ -206,11 +205,12 @@ static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
 	await ctx.SignInAsync("Cookies", principal, new AuthenticationProperties
 	{
 		IsPersistent = true,
-	});
+	}).ConfigureAwait(false);
 
 	ctx.Response.Redirect("/");
 }
 
 // Exclude the compiler-generated Program class (top-level bootstrap statements) from coverage.
+[SuppressMessage("Design", "CA1515:Consider making public types internal", Justification = "WebApplicationFactory<Program> requires a public entry point for integration tests.")]
 [ExcludeFromCodeCoverage(Justification = "Application bootstrap entry-point — not business logic")]
 public partial class Program { }

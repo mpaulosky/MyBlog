@@ -30,12 +30,12 @@ try
 var client = await GetManagementClientAsync(cancellationToken).ConfigureAwait(false);
 var usersPager = await client.Users.ListAsync(new ListUsersRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
 var result = new List<UserWithRolesDto>();
-await foreach (var user in usersPager)
+await foreach (var user in usersPager.ConfigureAwait(false))
 {
 var rolesPager = await client.Users.Roles.ListAsync(
 user.UserId ?? string.Empty, new ListUserRolesRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
 var roles = new List<string>();
-await foreach (var role in rolesPager)
+await foreach (var role in rolesPager.ConfigureAwait(false))
 {
 roles.Add(role.Name ?? string.Empty);
 }
@@ -136,7 +136,7 @@ try
 var client = await GetManagementClientAsync(cancellationToken).ConfigureAwait(false);
 var rolesPager = await client.Roles.ListAsync(new ListRolesRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
 var roles = new List<RoleDto>();
-await foreach (var role in rolesPager)
+await foreach (var role in rolesPager.ConfigureAwait(false))
 {
 roles.Add(new RoleDto(role.Id ?? string.Empty, role.Name ?? string.Empty));
 }
