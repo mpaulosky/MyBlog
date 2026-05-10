@@ -86,6 +86,55 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
+	public void ProfileUsesNamespacedEmailClaimTailWhenDirectEmailClaimsAreMissing()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|namespaced-email",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("https://schemas.example.com/email", "namespaced-admin@example.com")
+				]);
+
+		// Act
+		var cut = RenderForUser(principal);
+		var emailLine = cut.Find("section.card div.space-y-2 > p");
+
+		// Assert
+		emailLine.TextContent.Trim().Should().Be("namespaced-admin@example.com");
+	}
+
+	[Fact]
+	public void ProfileIgnoresNonStringEntriesInJsonEmailsClaimAndUsesFirstStringEmail()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|json-emails",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("emails", "[{\"value\":\"ignore-me\"},\"json-array@example.com\",42]")
+				]);
+
+		IRenderedComponent<Profile>? cut = null;
+		Action act = () => cut = RenderForUser(principal);
+
+		// Act
+		act.Should().NotThrow();
+
+		// Assert
+		cut.Should().NotBeNull();
+		cut!.Find("section.card div.space-y-2 > p").TextContent.Trim().Should().Be("json-array@example.com");
+	}
+
+	[Fact]
 	public void ProfileUsesFallbackValuesWhenOptionalClaimsAreMissing()
 	{
 		// Arrange

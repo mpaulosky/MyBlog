@@ -19,13 +19,13 @@ else
 			<div class="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
 				@if (!string.IsNullOrWhiteSpace(_pictureUrl))
 				{
-					<img src="@_pictureUrl"
-					     alt="@($"{_displayName} profile image")"
-					     class="h-24 w-24 rounded-full border-2 border-primary-300 object-cover shadow-md dark:border-primary-700" />
+					<img src="@_pictureUrl" alt="@($"{_displayName} profile image")"
+							 class="h-24 w-24 rounded-full border-2 border-primary-300 object-cover shadow-md dark:border-primary-700" />
 				}
 				else
 				{
-					<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary-600 text-3xl font-bold text-primary-50 shadow-md dark:bg-primary-700">
+					<div
+						class="flex h-24 w-24 items-center justify-center rounded-full bg-primary-600 text-3xl font-bold text-primary-50 shadow-md dark:bg-primary-700">
 						@_initials
 					</div>
 				}
@@ -35,8 +35,9 @@ else
 						<h2 class="!text-2xl">@_displayName</h2>
 						@if (_isAdmin)
 						{
-							<span class="rounded-full bg-red-600 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm dark:bg-red-700"
-							      title="Administrator">Admin</span>
+							<span
+							class="rounded-full bg-red-600 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm dark:bg-red-700"
+							title="Administrator">Admin</span>
 						}
 					</div>
 					<p class="!text-base !font-medium text-gray-600 dark:text-gray-300">@_emailAddress</p>
@@ -48,7 +49,8 @@ else
 			</div>
 
 			<div class="mt-6 grid gap-4 sm:grid-cols-2">
-				<div class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
+				<div
+					class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
 					<h3 class="mb-2 !text-base">Identity</h3>
 					<dl class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
 						<div>
@@ -62,7 +64,8 @@ else
 					</dl>
 				</div>
 
-				<div class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
+				<div
+					class="rounded-lg border border-primary-200 bg-primary-50/70 p-4 dark:border-primary-800 dark:bg-primary-950/40">
 					<h3 class="mb-2 !text-base">Roles</h3>
 					@if (_roles.Count > 0)
 					{
@@ -71,11 +74,13 @@ else
 							{
 								@if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
 								{
-									<span class="rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">@role</span>
+									<span
+									class="rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">@role</span>
 								}
 								else
 								{
-									<span class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-300">@role</span>
+									<span
+									class="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-300">@role</span>
 								}
 							}
 						</div>
@@ -91,40 +96,45 @@ else
 		<section class="card overflow-hidden">
 			<div class="border-b border-primary-200 px-6 py-4 dark:border-primary-800">
 				<h2 class="!text-xl">Claims</h2>
-				<p class="!mt-1 !text-sm !font-medium text-gray-600 dark:text-gray-300">Claims currently present on your authenticated user principal.</p>
-			</div>
+				<p class="!mt-1 !text-sm !font-medium text-gray-600 dark:text-gray-300">Claims currently present on your
+					authenticated user principal.</p>
+				</div>
 
-			@if (_claims.Count == 0)
-			{
-				<div class="px-6 py-4">
-					<p class="!text-sm !font-medium text-gray-600 dark:text-gray-300">No claims were found.</p>
+				@if (_claims.Count == 0)
+				{
+					<div class="px-6 py-4">
+						<p class="!text-sm !font-medium text-gray-600 dark:text-gray-300">No claims were found.</p>
+					</div>
+				}
+				else
+				{
+					<div class="overflow-x-auto">
+						<table class="min-w-full divide-y divide-primary-200 dark:divide-primary-800">
+							<thead class="bg-primary-50 dark:bg-primary-950/60">
+								<tr>
+									<th
+										class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
+										Claim Type</th>
+										<th
+											class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
+											Value</th>
+										</tr>
+									</thead>
+									<tbody class="divide-y divide-primary-100 dark:divide-primary-900/80">
+										@foreach (var claim in _claims)
+										{
+											<tr class="align-top odd:bg-white odd:dark:bg-gray-900 even:bg-primary-50/40 even:dark:bg-primary-950/20">
+												<td class="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-200 break-all">@claim.Type</td>
+												<td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-all">@claim.Value</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						}
+					</section>
 				</div>
 			}
-			else
-			{
-				<div class="overflow-x-auto">
-					<table class="min-w-full divide-y divide-primary-200 dark:divide-primary-800">
-						<thead class="bg-primary-50 dark:bg-primary-950/60">
-							<tr>
-								<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Claim Type</th>
-								<th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">Value</th>
-							</tr>
-						</thead>
-						<tbody class="divide-y divide-primary-100 dark:divide-primary-900/80">
-							@foreach (var claim in _claims)
-							{
-								<tr class="align-top odd:bg-white odd:dark:bg-gray-900 even:bg-primary-50/40 even:dark:bg-primary-950/20">
-									<td class="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-200 break-all">@claim.Type</td>
-									<td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-all">@claim.Value</td>
-								</tr>
-							}
-						</tbody>
-					</table>
-				</div>
-			}
-		</section>
-	</div>
-}
 
 @code {
 	[CascadingParameter]
@@ -253,8 +263,9 @@ else
 				{
 					return document.RootElement
 						.EnumerateArray()
-						.Select(element => element.GetString())
-						.Where(value => !string.IsNullOrWhiteSpace(value))
+						.Where(static element => element.ValueKind == JsonValueKind.String)
+						.Select(static element => element.GetString())
+						.Where(static value => !string.IsNullOrWhiteSpace(value))
 						.Cast<string>()
 						.ToArray();
 				}
@@ -303,7 +314,8 @@ else
 
 	private static string GetInitials(string displayName, string emailAddress)
 	{
-		var source = !string.IsNullOrWhiteSpace(displayName) && !displayName.Equals("Unknown User", StringComparison.OrdinalIgnoreCase)
+		var source = !string.IsNullOrWhiteSpace(displayName) && !displayName.Equals("Unknown User",
+StringComparison.OrdinalIgnoreCase)
 			? displayName
 			: emailAddress;
 

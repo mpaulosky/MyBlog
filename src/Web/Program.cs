@@ -120,7 +120,7 @@ builder.Services.AddScoped<IBlogPostRepository>(sp =>
 // MediatR — scans Web assembly for all handlers
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+	cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
 });
 
 // FluentValidation — scans Web assembly for all validators
