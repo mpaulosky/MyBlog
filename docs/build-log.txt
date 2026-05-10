@@ -248,10 +248,11 @@ BASELINE
 
 FIXES APPLIED
 -------------
-- tests/Domain.Tests/Domain.Tests.csproj
-  - Added justified test-project suppressions for CA1707, CA1849, and CA1515.
-    These warnings were test-only naming / focused-sync-validator patterns,
-    not production defects.
+- .editorconfig
+  - Added centralized `[tests/**/*.cs]` suppressions for CA1707, CA1849, and
+    CA1515 so test-only analyzer noise stays managed in one repo-wide location.
+    These warnings are xUnit naming / focused-sync-validator patterns in test
+    code, not production defects.
 - src/ServiceDefaults/Extensions.cs
   - Renamed the extension container type to `ServiceDefaultsExtensions` to
     remove CA1724.
@@ -267,9 +268,9 @@ FIXES APPLIED
   - Added a justified CA1515 suppression because the public DbContext type is
     part of the composition root and shared test infrastructure.
 - Local worktree-only environment fix
-  - Linked `/home/mpaulosky/Repos/MyBlog-280/node_modules` to the main repo's
-    `node_modules` directory so Tailwind could build inside the sibling
-    worktree. No tracked files changed for this environment repair.
+  - Added an untracked local `node_modules` symlink back to the primary checkout
+    so Tailwind could build inside the sibling worktree. No tracked files
+    changed for this environment repair.
 
 RESULT
 ------
