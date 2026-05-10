@@ -212,6 +212,92 @@ REMAINING BLOCKER
 None found for the SharpCompress / NU1902 issue after the package pin was
 applied and verified.
 
+ADDENDUM: ISSUE #280 RELEASE ANALYZER WARNING CLEANUP
+----------------------------------------------------
+Generated: 2026-05-10
+Branch: squad/280-cleanup-release-build-warnings
+Scope: DevOps/infra-side warning cleanup after refreshing the preserved
+       issue branch with `dev`.
+
+BASELINE
+--------
+- Preserved worktree branch was 4 commits ahead and 1 commit behind `dev`.
+  Merged `dev` into the worktree first so the baseline included PR #279 and
+  the SharpCompress transitive pin.
+- Initial deduplicated Release analyzer baseline after the merge:
+  - 89 warnings
+  - 0 source-code errors
+  - 1 local worktree environment error: Tailwind CLI was not resolvable because
+    the sibling worktree lacked `node_modules`
+- Top warning IDs before cleanup:
+  - CA2007 = 37
+  - CA1707 = 34
+  - CA1849 = 8
+  - CA1515 = 4
+  - CA2225 = 2
+  - CA1062 = 2
+  - CA1724 = 1
+  - CA1865 = 1
+- Highest-leverage files before cleanup:
+  - tests/Domain.Tests/Behaviors/ValidationBehaviorTests.cs
+  - tests/Domain.Tests/Entities/BlogPostTests.cs
+  - tests/Domain.Tests/Abstractions/ResultTests.cs
+  - src/Web/Data/MongoDbBlogPostRepository.cs
+  - src/Web/Infrastructure/Caching/BlogPostCacheService.cs
+  - src/Web/Components/Theme/ThemeProvider.razor.cs
+
+FIXES APPLIED
+-------------
+- tests/Domain.Tests/Domain.Tests.csproj
+  - Added justified test-project suppressions for CA1707, CA1849, and CA1515.
+    These warnings were test-only naming / focused-sync-validator patterns,
+    not production defects.
+- src/ServiceDefaults/Extensions.cs
+  - Renamed the extension container type to `ServiceDefaultsExtensions` to
+    remove CA1724.
+  - Added `ArgumentNullException.ThrowIfNull(app)` to remove CA1062.
+- src/Domain/Behaviors/ValidationBehavior.cs
+  - Added `ConfigureAwait(false)` to both async handler awaits.
+- src/Web/Data/MongoDbBlogPostRepository.cs
+  - Added `ConfigureAwait(false)` to repository async calls.
+- src/Web/Infrastructure/Caching/BlogPostCacheService.cs
+  - Added `ConfigureAwait(false)` to distributed-cache and fetch awaits.
+- src/Web/Data/BlogDbContext.cs
+  - Added `ArgumentNullException.ThrowIfNull(modelBuilder)` for CA1062.
+  - Added a justified CA1515 suppression because the public DbContext type is
+    part of the composition root and shared test infrastructure.
+- Local worktree-only environment fix
+  - Linked `/home/mpaulosky/Repos/MyBlog-280/node_modules` to the main repo's
+    `node_modules` directory so Tailwind could build inside the sibling
+    worktree. No tracked files changed for this environment repair.
+
+RESULT
+------
+- `dotnet build MyBlog.slnx --configuration Release --no-restore`
+  - Status: ✅ SUCCESS
+  - Final baseline: 0 warnings, 0 errors
+
+VERIFICATION
+------------
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build`
+  - ✅ Passed 16/16
+- `dotnet test tests/Domain.Tests/Domain.Tests.csproj --configuration Release --no-build`
+  - ✅ Passed 42/42
+- `dotnet test tests/Web.Tests/Web.Tests.csproj --configuration Release --no-build`
+  - ✅ Passed 153/153
+- `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build`
+  - ✅ Passed 69/69
+- `dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj --configuration Release --no-build`
+  - ✅ Passed 12/12
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --no-build`
+  - ✅ Passed 48/49, Skipped 1 documented AppHost theme skip
+
+REMAINING WARNINGS / HANDOFF
+---------------------------
+- None in the final Release build baseline.
+- No natural handoff to Legolas is required from this pass because the build is
+  warning-clean after the infra/backend and test-project cleanup.
+
 ================================================================================
 END OF BUILD LOG
 ================================================================================

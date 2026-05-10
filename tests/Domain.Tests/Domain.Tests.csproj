@@ -7,6 +7,11 @@
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
 		<RootNamespace>MyBlog.Domain.Tests</RootNamespace>
+		<!-- Test-project suppressions:
+		     CA1707 – Underscore naming is standard for xUnit test methods
+		     CA1849 – Unit tests intentionally exercise synchronous validator APIs
+		     CA1515 – xUnit test classes and fixtures are created by test infrastructure -->
+		<NoWarn>$(NoWarn);CA1707;CA1849;CA1515</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
