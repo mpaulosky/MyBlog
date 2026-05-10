@@ -9,6 +9,8 @@
 
 using AppHost.Tests.Infrastructure;
 
+using Aspire.Hosting;
+
 using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
@@ -80,36 +82,43 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		await db.CreateCollectionAsync("blogposts", cancellationToken: TestContext.Current.CancellationToken);
 
 		var annotation = GetAnnotation();
-
-		// Act — dispatch both calls to thread-pool workers and open the gate at the same
-		// moment so they race to acquire _dbMutex.  Without this the async lambda may run
-		// entirely synchronously (fast local MongoDB) and release the semaphore before the
-		// second call even starts, causing both to succeed (flake).
 		var ct = TestContext.Current.CancellationToken;
-		using var startGate = new SemaphoreSlim(0, 2);
+		var enteredCriticalSection = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var releaseCriticalSection = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		var firstTask = Task.Run(async () =>
+		MongoDbResourceBuilderExtensions.SeedCommandAfterMutexAcquiredAsync = async cancellationToken =>
 		{
-			await startGate.WaitAsync(ct);
-			return await annotation.ExecuteCommand(MakeContext());
-		}, ct);
+			enteredCriticalSection.TrySetResult(true);
+			await releaseCriticalSection.Task.WaitAsync(cancellationToken);
+		};
 
-		var secondTask = Task.Run(async () =>
+		try
 		{
-			await startGate.WaitAsync(ct);
-			return await annotation.ExecuteCommand(MakeContext());
-		}, ct);
+			// Act — hold the first seed invocation inside the shared mutex, then trigger the
+			// second invocation while the first is still in flight. This proves true overlap
+			// deterministically instead of relying on Task.Run scheduler timing.
+			var firstTask = annotation.ExecuteCommand(MakeContext());
 
-		startGate.Release(2); // open the gate — both workers race for _dbMutex
-		var results = await Task.WhenAll(firstTask, secondTask);
+			await enteredCriticalSection.Task.WaitAsync(ct);
+			var secondResult = await annotation.ExecuteCommand(MakeContext());
 
-		// Assert
-		results.Count(static r => r.Success).Should().Be(1,
-			"the semaphore should allow only one seed operation to run at a time");
-		results.Count(static r => !r.Success).Should().Be(1,
-			"the overlapping seed attempt should fail fast instead of queueing");
-		results.Single(static r => !r.Success).Message.Should().Contain("already in progress",
-			"the operator needs immediate feedback when another database operation is in flight");
+			releaseCriticalSection.TrySetResult(true);
+			var firstResult = await firstTask;
+			var results = new[] { firstResult, secondResult };
+
+			// Assert
+			results.Count(static r => r.Success).Should().Be(1,
+				"the semaphore should allow only one seed operation to run at a time");
+			results.Count(static r => !r.Success).Should().Be(1,
+				"the overlapping seed attempt should fail fast instead of queueing");
+			results.Single(static r => !r.Success).Message.Should().Contain("already in progress",
+				"the operator needs immediate feedback when another database operation is in flight");
+		}
+		finally
+		{
+			releaseCriticalSection.TrySetResult(true);
+			MongoDbResourceBuilderExtensions.SeedCommandAfterMutexAcquiredAsync = null;
+		}
 	}
 
 	/// <summary>
