@@ -164,21 +164,20 @@ return Result.Fail<IReadOnlyList<RoleDto>>("An unexpected error occurred.");
 
 private async Task<ManagementApiClient> GetManagementClientAsync(CancellationToken cancellationToken)
 {
-var domain = configuration["Auth0:ManagementApiDomain"]
-?? throw new InvalidOperationException("Auth0:ManagementApiDomain not configured.");
-var clientId = configuration["Auth0:ManagementApiClientId"]
-?? throw new InvalidOperationException("Auth0:ManagementApiClientId not configured.");
-var clientSecret = configuration["Auth0:ManagementApiClientSecret"]
-?? throw new InvalidOperationException("Auth0:ManagementApiClientSecret not configured.");
+var domain = GetRequiredManagementSetting("Auth0Management:Domain", "Auth0:ManagementApiDomain");
+var clientId = GetRequiredManagementSetting("Auth0Management:ClientId", "Auth0:ManagementApiClientId");
+var clientSecret = GetRequiredManagementSetting("Auth0Management:ClientSecret", "Auth0:ManagementApiClientSecret");
+var audience = GetOptionalManagementSetting("Auth0Management:Audience", "Auth0:ManagementApiAudience")
+		?? $"https://{domain}/api/v2/";
 
-var httpClient = httpClientFactory.CreateClient();
+using var httpClient = httpClientFactory.CreateClient();
 var tokenResponse = await httpClient.PostAsJsonAsync(
 $"https://{domain}/oauth/token",
 new
 {
 client_id = clientId,
 client_secret = clientSecret,
-audience = $"https://{domain}/api/v2/",
+audience,
 grant_type = "client_credentials"
 }, cancellationToken).ConfigureAwait(false);
 tokenResponse.EnsureSuccessStatusCode();
@@ -186,6 +185,27 @@ var tokenData = await tokenResponse.Content.ReadFromJsonAsync<TokenResponse>(can
 return new ManagementApiClient(
 token: tokenData!.AccessToken,
 clientOptions: new ClientOptions { BaseUrl = $"https://{domain}/api/v2" });
+}
+
+private string GetRequiredManagementSetting(string primaryKey, string legacyKey)
+{
+	return GetOptionalManagementSetting(primaryKey, legacyKey)
+			?? throw new InvalidOperationException(
+				$"{primaryKey} not configured. {legacyKey} not configured.");
+}
+
+private string? GetOptionalManagementSetting(params string[] keys)
+{
+	foreach (var key in keys)
+	{
+		var value = configuration[key];
+		if (!string.IsNullOrWhiteSpace(value))
+		{
+			return value;
+		}
+	}
+
+	return null;
 }
 
 private sealed class TokenResponse
