@@ -70,6 +70,7 @@ builder.Services.AddAuth0WebAppAuthentication(opts =>
 	opts.Domain = auth0Domain;
 	opts.ClientId = auth0ClientId;
 	opts.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+	opts.Scope = "openid profile email";
 	opts.CallbackPath = "/signin-auth0";
 });
 

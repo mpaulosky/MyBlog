@@ -1,5 +1,6 @@
 @page "/profile"
 @using System.Security.Claims
+@using System.Text.Json
 @using MyBlog.Web.Security
 @attribute [Authorize]
 
@@ -139,7 +140,7 @@ else
 	private IReadOnlyList<string> _roles = [];
 	private IReadOnlyList<Claim> _claims = [];
 
-	private static readonly HashSet<string> _sensitiveClaimTypes = new(StringComparer.OrdinalIgnoreCase)
+	private static readonly HashSet<string> SensitiveClaimTypes = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"nonce", "c_hash", "at_hash", "aud", "azp", "auth_time", "iat", "exp", "nbf"
 	};
@@ -161,9 +162,7 @@ else
 			"nickname",
 			ClaimTypes.GivenName) ?? _user.Identity?.Name ?? "Unknown User";
 
-		_emailAddress = GetFirstClaimValue(_user,
-			ClaimTypes.Email,
-			"email") ?? "No email claim found";
+		_emailAddress = GetEmailAddress(_user) ?? "No email claim found";
 
 		_userId = GetFirstClaimValue(_user,
 			ClaimTypes.NameIdentifier,
@@ -178,10 +177,29 @@ else
 		_roles = RoleClaimsHelper.GetRoles(_user);
 		_isAdmin = _roles.Contains("Admin", StringComparer.OrdinalIgnoreCase);
 		_claims = _user.Claims
-			.Where(c => !_sensitiveClaimTypes.Contains(c.Type))
+			.Where(c => !SensitiveClaimTypes.Contains(c.Type))
 			.OrderBy(c => c.Type)
 			.ThenBy(c => c.Value)
 			.ToList();
+	}
+
+	private static string? GetEmailAddress(ClaimsPrincipal user)
+	{
+		string? directEmail = GetFirstClaimValueMatching(user,
+			static claim => claim.Type.Equals(ClaimTypes.Email, StringComparison.OrdinalIgnoreCase)
+				|| claim.Type.Equals("email", StringComparison.OrdinalIgnoreCase));
+
+		if (!string.IsNullOrWhiteSpace(directEmail))
+		{
+			return directEmail;
+		}
+
+		return GetFirstClaimValueMatching(user,
+			static claim => claim.Type.Equals(ClaimTypes.Upn, StringComparison.OrdinalIgnoreCase)
+				|| claim.Type.Equals("upn", StringComparison.OrdinalIgnoreCase)
+				|| claim.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)
+				|| claim.Type.Equals("emails", StringComparison.OrdinalIgnoreCase)
+				|| IsEmailClaimType(claim.Type));
 	}
 
 	private static string? GetFirstClaimValue(ClaimsPrincipal user, params string[] claimTypes)
@@ -199,6 +217,89 @@ else
 		return null;
 	}
 
+
+	private static string? GetFirstClaimValueMatching(ClaimsPrincipal user, Func<Claim, bool> predicate)
+	{
+		foreach (Claim claim in user.Claims.Where(predicate))
+		{
+			foreach (string value in GetClaimValues(claim.Value))
+			{
+				if (LooksLikeEmailAddress(value))
+				{
+					return value;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private static IReadOnlyList<string> GetClaimValues(string? claimValue)
+	{
+		if (string.IsNullOrWhiteSpace(claimValue))
+		{
+			return [];
+		}
+
+		string trimmed = claimValue.Trim();
+
+		if (trimmed.StartsWith("[", StringComparison.Ordinal))
+		{
+			try
+			{
+				using JsonDocument document = JsonDocument.Parse(trimmed);
+
+				if (document.RootElement.ValueKind == JsonValueKind.Array)
+				{
+					return document.RootElement
+						.EnumerateArray()
+						.Select(element => element.GetString())
+						.Where(value => !string.IsNullOrWhiteSpace(value))
+						.Cast<string>()
+						.ToArray();
+				}
+			}
+			catch (JsonException)
+			{
+				return [];
+			}
+		}
+
+		if (trimmed.Contains(',', StringComparison.Ordinal))
+		{
+			return trimmed.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+		}
+
+		return [trimmed];
+	}
+
+	private static bool IsEmailClaimType(string? claimType)
+	{
+		if (string.IsNullOrWhiteSpace(claimType))
+		{
+			return false;
+		}
+
+		string tail = GetClaimTypeTail(claimType);
+		return tail.Equals("email", StringComparison.OrdinalIgnoreCase)
+			|| tail.Equals("emails", StringComparison.OrdinalIgnoreCase);
+	}
+
+	private static string GetClaimTypeTail(string claimType)
+	{
+		int lastSlash = claimType.LastIndexOf('/');
+		int lastColon = claimType.LastIndexOf(':');
+		int separatorIndex = Math.Max(lastSlash, lastColon);
+
+		return separatorIndex >= 0 ? claimType[(separatorIndex + 1)..] : claimType;
+	}
+
+	private static bool LooksLikeEmailAddress(string? value)
+	{
+		return !string.IsNullOrWhiteSpace(value)
+			&& value.Contains('@', StringComparison.Ordinal)
+			&& !value.Contains(' ', StringComparison.Ordinal);
+	}
 
 	private static string GetInitials(string displayName, string emailAddress)
 	{

@@ -40,6 +40,52 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
+	public void ProfileUsesOpenIdEmailClaimWhenFrameworkMappedEmailClaimIsMissing()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|oidc-admin",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("email", "oidc-admin@example.com")
+				]);
+
+		// Act
+		var cut = RenderForUser(principal);
+		var emailLine = cut.Find("section.card div.space-y-2 > p");
+
+		// Assert
+		emailLine.TextContent.Trim().Should().Be("oidc-admin@example.com");
+	}
+
+	[Fact]
+	public void ProfileUsesPreferredUsernameAsEmailFallbackWhenDirectEmailClaimsAreMissing()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|preferred-username",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("preferred_username", "preferred-admin@example.com")
+				]);
+
+		// Act
+		var cut = RenderForUser(principal);
+		var emailLine = cut.Find("section.card div.space-y-2 > p");
+
+		// Assert
+		emailLine.TextContent.Trim().Should().Be("preferred-admin@example.com");
+	}
+
+	[Fact]
 	public void ProfileUsesFallbackValuesWhenOptionalClaimsAreMissing()
 	{
 		// Arrange
