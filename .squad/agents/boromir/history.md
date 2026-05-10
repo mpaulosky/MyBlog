@@ -1322,3 +1322,47 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
 
 - **Sam:** Implement actual MongoDB collection clearing logic inside the command handler (connect to the mongodb resource endpoint, enumerate collections, drop non-system collections, return per-collection counts)
 - **Gimli:** Write automated coverage for #247 AC4: verify (a) command annotation exists on mongodb resource in RunMode, (b) `ConfirmationMessage` is non-null, (c) `UpdateState` returns `Disabled` when `HealthStatus != Healthy`, (d) handler returns `Success = true` with zero-deletion message
+
+---
+
+## 2026-05-10 — Workflow Lints: Add Markdown & YAML Linting to CI
+
+**Issue:** #287 — [Feature] Add markdown lint and YAML lint GitHub Actions workflows  
+**PR:** #288  
+**Branch:** squad/287-lint-workflows  
+**Status:** ✅ Complete — PR ready for review
+
+### Work Completed
+
+Added two new GitHub Actions workflows to the `.github/workflows/` directory:
+
+1. **`lint-markdown.yml`**
+   - Uses `DavidAnson/markdownlint-cli2-action@v23`
+   - References existing `.markdownlint.json` (no duplication)
+   - Triggers: `push` to `[dev, insider]` + `pull_request` to `[dev, preview, main, insider]`
+   - Paths filtered to markdown files only
+
+2. **`lint-yaml.yml`**
+   - Uses `ibiqlik/action-yamllint@v3`
+   - **Inline config** (no separate `.yamllint.yml` file) tuned to MyBlog conventions:
+     - `line-length: max: 200` (GitHub Actions workflows are verbose)
+     - `truthy: allowed-values: ['true', 'false', 'on']` (GitHub event triggers use `on:`)
+     - `brackets: min-spaces-inside: 0, max-spaces-inside: 1`
+   - Same trigger pattern as markdown workflow
+
+### Design Decisions
+
+- **Markdown config reuse:** The repo already has `.markdownlint.json` (used by pre-commit hook). Referencing it in the workflow avoids duplication and maintains a single source of truth.
+- **YAML inline config:** No separate dotfile. The workflow is self-documenting and removes management overhead for a single linting rule set.
+- **Checkout version:** `actions/checkout@v6` — consistent with all other MyBlog workflows.
+- **Reference:** BlogApp workflows were consulted for pattern, but conventions adapted to MyBlog's branch model (`dev` + `insider` for push, expanded set for PR).
+
+### Reference Decision
+
+Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md`)
+
+### Next Steps
+
+- Review PR #288 for approval
+- Merge to `dev` branch
+- Workflows become active on next push/PR to dev, insider, or main
