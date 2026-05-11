@@ -1390,3 +1390,39 @@ Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md
 - Review PR #288 for approval
 - Merge to `dev` branch
 - Workflows become active on next push/PR to dev, insider, or main
+
+---
+
+## 2026-05-11 — Issue #299: Align Worktree Pre-Push Gate
+
+**PR:** squad/299-align-worktree-pre-push-gate  
+**Status:** ✅ Complete — PR opened
+
+### Work Done
+
+Reconciled the pre-push gate enforcement with the real test projects in the repo:
+
+1. **`.github/hooks/pre-push`** — Added `tests/AppHost.Tests/AppHost.Tests.csproj`
+   to Gate 5 `INTEGRATION_PROJECTS`.
+2. **`scripts/install-hooks.sh`** — Fixed banner text: accurate Gate 4/5 project
+   lists; replaced permissive `--no-verify` line with hard prohibition notice.
+3. **`.squad/playbooks/pre-push-process.md`** — Fixed `IssueTrackerApp.slnx` →
+   `MyBlog.slnx`; removed non-existent Persistence test projects from Gates 4 & 5;
+   corrected project counts; fixed Gate 5 Docker anti-pattern (was labelled Gate 4).
+4. **`docs/CONTRIBUTING.md`** — Rewrote gate table to match actual 6-gate hook;
+   replaced old `Unit.Tests`/`Integration.Tests` references with real project names;
+   replaced permissive bypass section with explicit prohibition block.
+
+### Learnings
+
+- The **source-of-truth ordering** is: hook implementation → installer banner →
+  playbook → CONTRIBUTING.md. Always update in that order to avoid stale docs.
+- `scripts/install-hooks.sh` copies the hook to `.git/hooks/` in the **root
+  worktree** (via `git rev-parse --git-path hooks`), not the worktree's `.git`.
+  Running it from a worktree correctly installs into the main repo's hooks dir.
+- Non-existent test projects in gate lists are silent security theatre — they
+  look enforced but never run. Always validate against `ls tests/` before
+  updating gate configuration.
+- `git push --no-verify` cannot be technically blocked from inside the hook;
+  the correct approach is to make the prohibition explicit in all docs and treat
+  undocumented bypasses as a retro action item.
