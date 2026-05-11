@@ -155,6 +155,10 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
 		// Assert
+		var heading = cut.Find("header h1");
+
+		heading.TextContent.Trim().Should().Be("Blog Posts");
+		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.Markup.Should().Contain("First");
 		cut.Markup.Should().Contain("Edit");
 		cut.Find("button").Click();
@@ -226,6 +230,25 @@ public class RazorSmokeTests : BunitContext
 
 		// Assert
 		cut.Markup.Should().Contain("No posts yet.");
+	}
+
+	[Fact]
+	public void BlogIndexShowsDismissibleErrorWhenInitialLoadFails()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<IReadOnlyList<BlogPostDto>>("Unable to load posts.")));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Unable to load posts.");
+		cut.Find("button.alert-dismiss").Click();
+		cut.Markup.Should().NotContain("Unable to load posts.");
 	}
 
 	[Fact]
@@ -301,7 +324,10 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		// Assert
-		cut.Markup.Should().Contain("Create Post");
+		var heading = cut.Find("header h1");
+
+		heading.TextContent.Trim().Should().Be("Create Post");
+		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(2);
 		cut.Find("textarea");
 	}
@@ -347,6 +373,29 @@ public class RazorSmokeTests : BunitContext
 				command.Author == "Alice" &&
 				command.Content == "Hello world"), Arg.Any<CancellationToken>());
 		navigation.Uri.Should().EndWith("/blog");
+	}
+
+	[Fact]
+	public void CreatePostShowsDismissibleErrorWhenCommandFails()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		sender.Send(Arg.Any<CreateBlogPostCommand>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<Guid>("Unable to create post.")));
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
+
+		cut.FindAll("input")[0].Change("My title");
+		cut.FindAll("input")[1].Change("Alice");
+		cut.Find("textarea").Change("Hello world");
+		cut.Find("form").Submit();
+
+		// Assert
+		cut.Markup.Should().Contain("Unable to create post.");
+		cut.Find("button.alert-dismiss").Click();
+		cut.Markup.Should().NotContain("Unable to create post.");
 	}
 
 	[Fact]
@@ -471,9 +520,59 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
 		// Assert
-		cut.Markup.Should().Contain("Manage User Roles");
+		var heading = cut.Find("header h1");
+
+		heading.TextContent.Trim().Should().Be("Manage User Roles");
+		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.Markup.Should().Contain("Available roles: Admin, Author");
 		cut.Markup.Should().Contain("admin@example.com");
+	}
+
+	[Fact]
+	public void ManageRolesShowsLoadingMessageWhileQueriesArePending()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var usersTask = new TaskCompletionSource<Result<IReadOnlyList<UserWithRolesDto>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var rolesTask = new TaskCompletionSource<Result<IReadOnlyList<RoleDto>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(usersTask.Task);
+		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(rolesTask.Task);
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Loading users...");
+
+		usersTask.SetResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(Array.Empty<UserWithRolesDto>()));
+		rolesTask.SetResult(Result.Ok<IReadOnlyList<RoleDto>>(Array.Empty<RoleDto>()));
+		cut.WaitForAssertion(() => cut.Markup.Should().Contain("Actions"));
+	}
+
+	[Fact]
+	public void ManageRolesShowsDismissibleErrorWhenUsersCannotLoad()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<IReadOnlyList<UserWithRolesDto>>("Unable to load users.")));
+		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(Array.Empty<RoleDto>())));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Unable to load users.");
+		cut.Find("button.alert-dismiss").Click();
+		cut.Markup.Should().NotContain("Unable to load users.");
 	}
 
 	[Fact]
