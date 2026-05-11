@@ -2231,3 +2231,38 @@ GitHub rejected `gh pr review --approve` (cannot approve own PR via same account
 1. Squash merge PR #272
 2. Tag `main` with `vX.Y.Z` after CI green
 3. Run `squad-mark-released` workflow
+
+---
+
+### 26. Lint Workflow Pattern for MyBlog
+
+**Date:** 2026-05-10  
+**Author:** Boromir (DevOps)  
+**Issue:** #287 | **PR:** #288  
+**Status:** ✅ Implemented
+
+#### Decision
+
+Added `lint-markdown.yml` and `lint-yaml.yml` to `.github/workflows/`.
+
+#### Conventions Established
+
+1. **Markdown linting** uses `DavidAnson/markdownlint-cli2-action@v23` + repo-root `.markdownlint.json` (already present). Config referenced via `config:` parameter — no duplication.
+
+2. **YAML linting** uses `ibiqlik/action-yamllint@v3` with **inline** `config_data` — no separate `.yamllint.yml` file. Rules tuned to MyBlog workflow style:
+   - `line-length: max: 200` (GitHub Actions workflows are verbose)
+   - `truthy: allowed-values: ['true', 'false', 'on']` (GitHub event triggers use `on:`)
+   - `brackets: min-spaces-inside: 0, max-spaces-inside: 1`
+
+3. **Trigger pattern** matches all existing MyBlog workflows:
+   - `push: branches: [dev, insider]`
+   - `pull_request: branches: [dev, preview, main, insider]`
+   - Path-filtered so they only run when relevant files change
+
+4. **checkout version:** `actions/checkout@v6` — consistent with all other MyBlog workflows.
+
+#### Rationale
+
+- BlogApp was used as a reference but conventions were adapted to MyBlog branch model.
+- Inline yamllint config avoids a proliferation of dotfiles; the workflow is self-documenting.
+- Reusing `.markdownlint.json` respects existing tooling (it's also used by the pre-commit hook via `markdownlint-cli2` in `package.json`).
