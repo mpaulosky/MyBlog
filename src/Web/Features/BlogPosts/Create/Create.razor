@@ -1,6 +1,10 @@
 @page "/blog/create"
+@using MyBlog.Domain.ValueObjects
+@using MyBlog.Web.Security
+@using System.Security.Claims
 @inject ISender Sender
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Author,Admin")]
 
@@ -14,6 +18,8 @@
 	</div>
 }
 
+<p class="form-label mb-4">Author: <span class="font-semibold">@_authorName</span></p>
+
 <div class="form-panel">
 	<EditForm Model="_model" OnValidSubmit="HandleSubmit">
 		<DataAnnotationsValidator />
@@ -22,10 +28,6 @@
 		<div class="form-group">
 			<label class="form-label">Title</label>
 			<InputText class="form-input" @bind-Value="_model.Title" />
-		</div>
-		<div class="form-group">
-			<label class="form-label">Author</label>
-			<InputText class="form-input" @bind-Value="_model.Author" />
 		</div>
 		<div class="form-group">
 			<label class="form-label">Content</label>
@@ -43,9 +45,25 @@
 	private readonly PostFormModel _model = new();
 	private string? _error;
 
+	private string _authorId = string.Empty;
+	private string _authorName = string.Empty;
+	private string _authorEmail = string.Empty;
+	private IReadOnlyList<string> _authorRoles = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		var state = await AuthStateProvider.GetAuthenticationStateAsync();
+		var user = state.User;
+		_authorId = user.FindFirst("sub")?.Value ?? string.Empty;
+		_authorName = user.FindFirst("name")?.Value ?? user.Identity?.Name ?? string.Empty;
+		_authorEmail = user.FindFirst("email")?.Value ?? string.Empty;
+		_authorRoles = RoleClaimsHelper.GetRoles(user);
+	}
+
 	private async Task HandleSubmit()
 	{
-		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
+		var author = new PostAuthor(_authorId, _authorName, _authorEmail, _authorRoles);
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author));
 		if (result.Success)
 			Navigation.NavigateTo("/blog");
 		else
@@ -56,9 +74,6 @@
 	{
 		[System.ComponentModel.DataAnnotations.Required]
 		public string Title { get; set; } = string.Empty;
-
-		[System.ComponentModel.DataAnnotations.Required]
-		public string Author { get; set; } = string.Empty;
 
 		[System.ComponentModel.DataAnnotations.Required]
 		public string Content { get; set; } = string.Empty;

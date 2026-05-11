@@ -11,11 +11,13 @@ namespace Unit.Data;
 
 public class BlogPostMappingsTests
 {
+	private static readonly PostAuthor TestAuthor = new("test-id", "Test Author", "test@example.com", ["Author"]);
+
 	[Fact]
 	public void ToDto_MapsAllFields_Correctly()
 	{
 		// Arrange
-		var post = BlogPost.Create("Test Title", "Test Content", "Test Author");
+		var post = BlogPost.Create("Test Title", "Test Content", TestAuthor);
 
 		// Act
 		var dto = post.ToDto();
@@ -24,7 +26,10 @@ public class BlogPostMappingsTests
 		dto.Id.Should().Be(post.Id);
 		dto.Title.Should().Be(post.Title);
 		dto.Content.Should().Be(post.Content);
-		dto.Author.Should().Be(post.Author);
+		dto.AuthorId.Should().Be(post.Author.Id);
+		dto.AuthorName.Should().Be(post.Author.Name);
+		dto.AuthorEmail.Should().Be(post.Author.Email);
+		dto.AuthorRoles.Should().BeEquivalentTo(post.Author.Roles);
 		dto.CreatedAt.Should().Be(post.CreatedAt);
 	}
 
@@ -32,7 +37,7 @@ public class BlogPostMappingsTests
 	public void ToDto_UpdatedAt_IsNullOnNewPost()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 
 		// Act
 		var dto = post.ToDto();
@@ -45,7 +50,7 @@ public class BlogPostMappingsTests
 	public void ToDto_UpdatedAt_IsSetAfterUpdate()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		post.Update("New Title", "New Content");
 
 		// Act
@@ -60,7 +65,7 @@ public class BlogPostMappingsTests
 	public void ToDto_IsPublished_FalseOnNewPost()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 
 		// Act
 		var dto = post.ToDto();
@@ -73,7 +78,7 @@ public class BlogPostMappingsTests
 	public void ToDto_IsPublished_TrueAfterPublish()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		post.Publish();
 
 		// Act
@@ -87,7 +92,7 @@ public class BlogPostMappingsTests
 	public void ToDto_IsPublished_FalseAfterUnpublish()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		post.Publish();
 		post.Unpublish();
 

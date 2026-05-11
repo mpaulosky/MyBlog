@@ -26,7 +26,7 @@ public class CreateBlogPostHandlerTests
 	public async Task Handle_Success_CreatesPostInvalidatesCacheAndReturnsGuid()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
 
 		// Act
 		var result = await _handler.Handle(command, CancellationToken.None);
@@ -42,7 +42,7 @@ public class CreateBlogPostHandlerTests
 	public async Task Handle_RepoThrows_ReturnsFailResult()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
 		_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
 		.ThrowsAsync(new InvalidOperationException("insert failed"));
 
@@ -58,7 +58,7 @@ public class CreateBlogPostHandlerTests
 	public async Task Handle_Success_DoesNotCallInvalidateById()
 	{
 		// Arrange — create should only bust the "all" list, not a specific post key
-		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
 
 		// Act
 		var result = await _handler.Handle(command, CancellationToken.None);
@@ -73,7 +73,7 @@ public class CreateBlogPostHandlerTests
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
 		_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
 			.ThrowsAsync(new OperationCanceledException());
 
@@ -88,7 +88,7 @@ public class CreateBlogPostHandlerTests
 	public async Task Handle_UnexpectedException_ReturnsUnexpectedErrorResult()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", "Author");
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
 		_repo.AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
 			.ThrowsAsync(new TimeoutException("db timeout"));
 

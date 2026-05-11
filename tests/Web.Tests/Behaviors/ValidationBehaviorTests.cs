@@ -31,7 +31,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new CreateBlogPostCommand("T", "C", "A"), next, CancellationToken.None);
+			new CreateBlogPostCommand("T", "C", PostAuthor.Empty), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -49,7 +49,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new CreateBlogPostCommand("Title", "Content", "Author"), next, CancellationToken.None);
+			new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", [])), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -66,7 +66,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new CreateBlogPostCommand("", "", ""), next, CancellationToken.None);
+			new CreateBlogPostCommand("", "", PostAuthor.Empty), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeFalse();
@@ -84,7 +84,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new CreateBlogPostCommand("", "Content", ""), next, CancellationToken.None);
+			new CreateBlogPostCommand("", "Content", PostAuthor.Empty), next, CancellationToken.None);
 
 		// Assert
 		result.Error.Should().NotBeNullOrEmpty();
@@ -102,7 +102,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new CreateBlogPostCommand("Title", "Content", "Author"), next, CancellationToken.None);
+			new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", [])), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -120,7 +120,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new CreateBlogPostCommand("", "", ""), next, CancellationToken.None);
+			new CreateBlogPostCommand("", "", PostAuthor.Empty), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeFalse();

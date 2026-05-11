@@ -23,7 +23,11 @@ internal sealed class CreateBlogPostCommandValidator : AbstractValidator<CreateB
 			.NotEmpty().WithMessage("Content is required.");
 
 		RuleFor(x => x.Author)
-			.NotEmpty().WithMessage("Author is required.")
-			.MaximumLength(100).WithMessage("Author must not exceed 100 characters.");
+			.NotNull()
+			.WithMessage("Author is required.");
+		RuleFor(x => x.Author.Name)
+			.NotEmpty()
+			.WithMessage("Author name is required.")
+			.When(x => x.Author is not null);
 	}
 }

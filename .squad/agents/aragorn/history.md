@@ -1148,3 +1148,31 @@ value object into the command.
 **EF Core MongoDB provider handles owned entities via `OwnsOne` — no BsonElement attributes needed.** The mapping is declared in `OnModelCreating` exactly like SQL EF Core. Primitive collection properties (e.g., `IReadOnlyList<string> Roles`) are supported on owned types.
 
 **String-to-embedded-object is a breaking MongoDB schema change.** Even in dev, existing documents will cause deserialization failures. Drop/recreate in dev; migration script required for any environment with live data.
+## 2026-05-11 — PR #297 Review + Merge: L1+L2 caching for UserManagement Auth0 API
+
+**Requested by:** Boromir (Ralph work-check cycle Round 2)
+**Issue:** #293 — Member roles page making N+1 Auth0 Management API calls on every page load
+**PR:** #297 `squad/293-member-roles-caching` → `dev`
+
+### Review Findings
+
+**Files reviewed:**
+
+- `UserManagementCacheKeys.cs` — const string keys `usermgmt:users` / `usermgmt:roles`. Clean, follows BlogPostCacheKeys pattern exactly.
+- `IUserManagementCacheService.cs` — interface with `GetOrFetchUsersAsync`, `GetOrFetchRolesAsync`, `InvalidateUsersAsync`, `InvalidateRolesAsync`. `ValueTask<T>` return type correct (L1 hits complete synchronously without heap allocation). `CancellationToken.None` on Redis removal post-mutation documented in XML remarks.
+- `UserManagementCacheService.cs` — L1 30s / L2 2min, JSON serialization with `JsonSerializerDefaults.Web`, corrupt-L2 catch block with fallthrough. Matches BlogPostCacheService implementation exactly.
+- `CachingServiceExtensions.cs` — `AddUserManagementCaching()` registers as `Singleton`. Correct: both `IMemoryCache` and `IDistributedCache` are singletons; no captive-dependency violation.
+- `Program.cs` — `AddUserManagementCaching()` called immediately after `AddBlogPostCaching()`. Clean placement.
+- `UserManagementHandler.cs` — `GetOrFetchUsersAsync` and `GetOrFetchRolesAsync` wrap Auth0 API calls. `InvalidateUsersAsync` called on `AssignRole` and `RemoveRole`. ✅ `InvalidateRolesAsync` NOT called on assign/remove — correct, because available roles in Auth0 are static; assigning/removing a user's role doesn't change which roles exist.
+- `UserManagementHandlerTests.cs` — `BuildPassThroughCache()` helper is well-designed: NSubstitute mock delegates `GetOrFetchUsersAsync`/`GetOrFetchRolesAsync` to the caller-supplied `Func<Task<...>>`, so all existing config-missing and HTTP-failure assertions still exercise the real fetch logic. All five static builder helpers threaded correctly.
+
+**CI status at review:** All 17 checks green (7 test suites, CodeQL, Codecov, markdownlint, build).
+
+**Verdict: ✅ APPROVED** — pattern conformance exact, cache invalidation semantically correct, DI registration clean.
+
+### Outcome
+
+- **GitHub approve** rejected (cannot approve own PR — established protocol).
+- Squash-merged to `dev`: "feat(app): add L1+L2 caching to UserManagement Auth0 API calls (#297)"
+- Branch `squad/293-member-roles-caching` deleted (local + remote).
+- Closes #293.

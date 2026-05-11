@@ -31,7 +31,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleEdit_Success_UpdatesPostAndInvalidatesBothCaches()
 	{
 		// Arrange
-		var post = BlogPost.Create("Old Title", "Old Content", "Author");
+		var post = BlogPost.Create("Old Title", "Old Content", new PostAuthor("", "Test Author", "", []));
 		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content");
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
 
@@ -71,7 +71,7 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var id = Guid.NewGuid();
-		var dto = new BlogPostDto(id, "T", "C", "A", DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
 		_cache.GetOrFetchByIdAsync(
 		Arg.Any<Guid>(),
 		Arg.Any<Func<Task<BlogPostDto?>>>(),
@@ -116,7 +116,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleGetById_CacheMissRepoReturnsPost_MapsToDtoAndPopulatesCache()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
 		_cache.GetOrFetchByIdAsync(
 		Arg.Any<Guid>(),
@@ -141,7 +141,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleEdit_ConcurrentUpdate_ReturnsConcurrencyErrorCode()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content");
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
 		_repo.UpdateAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
@@ -178,7 +178,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleEdit_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content");
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new OperationCanceledException());
@@ -194,7 +194,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleEdit_UnexpectedException_ReturnsUnexpectedErrorResult()
 	{
 		// Arrange
-		var post = BlogPost.Create("Title", "Content", "Author");
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
 		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content");
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new TimeoutException("db timeout"));

@@ -26,5 +26,12 @@ public sealed class BlogDbContext(DbContextOptions<BlogDbContext> options) : DbC
 		entity.ToCollection("blogposts");
 		entity.HasKey(p => p.Id);
 		entity.Property(p => p.Version).IsConcurrencyToken();
+		entity.OwnsOne(p => p.Author, a =>
+		{
+			a.Property(x => x.Id).HasElementName("AuthorId");
+			a.Property(x => x.Name).HasElementName("AuthorName");
+			a.Property(x => x.Email).HasElementName("AuthorEmail");
+			a.Property(x => x.Roles).HasElementName("AuthorRoles");
+		});
 	}
 }

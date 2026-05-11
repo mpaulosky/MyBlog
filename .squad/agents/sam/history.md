@@ -178,3 +178,51 @@ the field guards all three dev commands (Clear, Seed, Stats), not just Clear.
 - ✅ Architecture.Tests: 15/15, Domain.Tests: 42/42, Integration.Tests: 12/12
 
 ### PR: #267
+
+## 2026-05-xx — Issue #296: PostAuthor Value Object
+
+### Task
+
+Replace `string Author` on `BlogPost` with an immutable `PostAuthor` value object, per Aragorn's ADR (`aragorn-296-post-author-adr.md`).
+
+### Changes Made
+
+1. **`src/Domain/ValueObjects/PostAuthor.cs`** — New `sealed record PostAuthor(string Id, string Name, string Email, IReadOnlyList<string> Roles)` with `PostAuthor.Empty` helper
+2. **`src/Domain/Entities/BlogPost.cs`** — `Author` property changed from `string` to `PostAuthor`; `Create()` guards: `ArgumentNullException.ThrowIfNull(author)` then `ArgumentException.ThrowIfNullOrWhiteSpace(author.Name)`
+3. **`src/Web/Data/BlogDbContext.cs`** — Added `entity.OwnsOne(p => p.Author, ...)` with `HasElementName` for each field to control MongoDB sub-document field names
+4. **`src/Web/Data/BlogPostDto.cs`** — Replaced `string Author` with `string AuthorId, string AuthorName, string AuthorEmail, IReadOnlyList<string> AuthorRoles` (positional record — all call sites updated)
+5. **`src/Web/Data/BlogPostMappings.cs`** — Updated `ToDto()` to map flat author fields
+6. **`src/Web/Features/BlogPosts/Create/CreateBlogPostCommand.cs`** — `PostAuthor Author` replaces `string Author`
+7. **`src/Web/Features/BlogPosts/Create/CreateBlogPostCommandValidator.cs`** — `NotNull()` on Author + `NotEmpty().When(author not null)` on Author.Name
+8. **`src/Web/Features/BlogPosts/Create/Create.razor`** — Temporary stub builds `PostAuthor` from `_model.Author` string field; Legolas must replace with `AuthenticationStateProvider` injection
+9. **`src/Web/Features/BlogPosts/List/Index.razor`** — `@post.Author` → `@post.AuthorName`
+10. **All test projects** — GlobalUsings, entity construction, DTO construction updated
+
+### Build Validation
+
+- ✅ Release build: 0 errors, 0 warnings
+- ✅ Architecture.Tests: 16/16
+- ✅ Domain.Tests: 42/42
+- ✅ Web.Tests: 151/151
+- ✅ Integration.Tests: 12/12 (Docker)
+- ✅ All pre-push gates passed
+
+### PR: #298
+
+### Learnings
+
+#### `PostAuthor.Empty` is a testing convenience — not valid for `BlogPost.Create()`
+
+- `PostAuthor.Empty` has `Name = ""`. The `BlogPost.Create()` guard rejects empty Name.
+- Tests that exercise handler behavior (not null/empty author validation) must use `new PostAuthor("", "Test Author", "", [])`, not `PostAuthor.Empty`.
+- Only use `PostAuthor.Empty` in command/validator tests that specifically test the "empty author" failure path.
+
+#### Razor files need explicit `@using` for value objects
+
+- Razor components do not automatically inherit global usings from `GlobalUsings.cs` files in the same project for all scenarios.
+- Add `@using MyBlog.Domain.ValueObjects` explicitly at the top of any `.razor` file that references `PostAuthor`.
+
+#### Breaking schema changes need a migration note in the PR
+
+- MongoDB `OwnsOne` with `HasElementName` changes the stored field name from a flat `"Author"` string to a sub-document `{"AuthorId":...,"AuthorName":...}`.
+- Existing documents fail to deserialize; always document the migration strategy (drop/recreate in dev; script in prod) in the PR.
