@@ -7,8 +7,9 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-using Microsoft.Playwright;
 using System.Diagnostics;
+
+using Microsoft.Playwright;
 
 namespace AppHost.Tests.Infrastructure;
 

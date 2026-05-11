@@ -48,6 +48,30 @@
 
 ## Learnings
 
+### 2026-05-11 — Issue #289: dotnet format gate added to pre-push hook
+
+**What was done:** Added Gate 2 (`dotnet format --verify-no-changes`) to the pre-push hook between Gate 1 (untracked files) and the former Gate 2 (now Gate 3 — Release build). Gates 2–4 (build, unit tests, integration) renumbered to 3–5.
+
+**Key decisions:**
+
+- Gate uses `--verify-no-changes` (check mode, not mutating) so it always blocks on dirty formatting
+- On failure, hook offers interactive auto-fix (y/N via `/dev/tty`) — same pattern as Gate 1
+- If auto-fix is chosen, files are formatted in working tree but push is still blocked; user must stage, commit, and re-push (correct behavior — staged changes belong in a commit)
+- `dotnet format` exits with code **2** (not 1) when files would be changed; the hook checks `$FORMAT_EXIT -ne 0` which covers both non-zero codes
+
+**Files changed:**
+
+- `.github/hooks/pre-push` — added Gate 2, renumbered 2→3, 3→4, 4→5
+- `scripts/install-hooks.sh` — updated gate count (5→6) and summary list
+- `.squad/playbooks/pre-push-process.md` — updated pre-flight checklist, gate table, troubleshooting, and anti-patterns
+- `.squad/skills/pre-push-test-gate/SKILL.md` — updated gate summary
+
+**Validation:** Confirmed `dotnet format MyBlog.slnx --verify-no-changes` exits 2 when repo has formatting issues; exits 0 when clean. Bash syntax validated with `bash -n`.
+
+**Note:** Repo had pre-existing formatting violations (whitespace and import ordering in test files). These are out of scope for this issue and should be tracked separately.
+
+---
+
 ### 2026-05-08 — Sprint 18 Release PR #272
 
 **What was done:** Opened release PR #272 to promote `dev` → `main` for Sprint 18 (AppHost
@@ -1322,3 +1346,47 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
 
 - **Sam:** Implement actual MongoDB collection clearing logic inside the command handler (connect to the mongodb resource endpoint, enumerate collections, drop non-system collections, return per-collection counts)
 - **Gimli:** Write automated coverage for #247 AC4: verify (a) command annotation exists on mongodb resource in RunMode, (b) `ConfirmationMessage` is non-null, (c) `UpdateState` returns `Disabled` when `HealthStatus != Healthy`, (d) handler returns `Success = true` with zero-deletion message
+
+---
+
+## 2026-05-10 — Workflow Lints: Add Markdown & YAML Linting to CI
+
+**Issue:** #287 — [Feature] Add markdown lint and YAML lint GitHub Actions workflows  
+**PR:** #288  
+**Branch:** squad/287-lint-workflows  
+**Status:** ✅ Complete — PR ready for review
+
+### Work Completed
+
+Added two new GitHub Actions workflows to the `.github/workflows/` directory:
+
+1. **`lint-markdown.yml`**
+   - Uses `DavidAnson/markdownlint-cli2-action@v23`
+   - References existing `.markdownlint.json` (no duplication)
+   - Triggers: `push` to `[dev, insider]` + `pull_request` to `[dev, preview, main, insider]`
+   - Paths filtered to markdown files only
+
+2. **`lint-yaml.yml`**
+   - Uses `ibiqlik/action-yamllint@v3`
+   - **Inline config** (no separate `.yamllint.yml` file) tuned to MyBlog conventions:
+     - `line-length: max: 200` (GitHub Actions workflows are verbose)
+     - `truthy: allowed-values: ['true', 'false', 'on']` (GitHub event triggers use `on:`)
+     - `brackets: min-spaces-inside: 0, max-spaces-inside: 1`
+   - Same trigger pattern as markdown workflow
+
+### Design Decisions
+
+- **Markdown config reuse:** The repo already has `.markdownlint.json` (used by pre-commit hook). Referencing it in the workflow avoids duplication and maintains a single source of truth.
+- **YAML inline config:** No separate dotfile. The workflow is self-documenting and removes management overhead for a single linting rule set.
+- **Checkout version:** `actions/checkout@v6` — consistent with all other MyBlog workflows.
+- **Reference:** BlogApp workflows were consulted for pattern, but conventions adapted to MyBlog's branch model (`dev` + `insider` for push, expanded set for PR).
+
+### Reference Decision
+
+Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md`)
+
+### Next Steps
+
+- Review PR #288 for approval
+- Merge to `dev` branch
+- Workflows become active on next push/PR to dev, insider, or main

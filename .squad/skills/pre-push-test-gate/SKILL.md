@@ -66,9 +66,10 @@ chmod +x .git/hooks/pre-push
 
 - Gate 0: Block direct push to `main`
 - Gate 1: Warn on untracked `.razor`/`.cs` files
-- Gate 2: Release build (0 warnings, 0 errors)
-- Gate 3: Unit + bUnit + Architecture tests (6 projects, no Docker)
-- Gate 4: Integration + Playwright E2E — **AppHost.Tests included** (Docker required)
+- Gate 2: `dotnet format --verify-no-changes` (formatting check; offers auto-fix)
+- Gate 3: Release build (0 warnings, 0 errors)
+- Gate 4: Unit + bUnit + Architecture tests (6 projects, no Docker)
+- Gate 5: Integration + Playwright E2E — **AppHost.Tests included** (Docker required)
 
 **PowerShell (Windows):**
 
