@@ -448,7 +448,7 @@ public class RazorSmokeTests : BunitContext
 		cut.WaitForAssertion(() =>
 		{
 			cut.Markup.Should().Contain("+ Author");
-			cut.Markup.Should().Contain("<td class=\"px-4 py-3\">Admin</td>");
+			cut.Markup.Should().Contain("<td>Admin</td>");
 		});
 	}
 
