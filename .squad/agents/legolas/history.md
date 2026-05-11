@@ -666,6 +666,7 @@ Fix theme color selector persistence — selected color not surviving page reloa
 
 Then each variant only declares its colour-specific overrides. This is idiomatic Tailwind v4 component authoring.
 
+**Fixed vs theme-relative colour palette:** `.btn-primary` / `.btn-secondary` use `var(--primary-*)` theme tokens so they adapt to colour-theme switches. `.btn-warning` (amber) and `.btn-destructive` (red) use fixed Tailwind palette classes — these colours carry semantic meaning that should NOT shift when the user picks a different theme.
 **Fixed colour palette — all four variants:** All button variants use fixed Tailwind palette classes, not `var(--primary-*)` theme tokens. `.btn-primary` is green, `.btn-secondary` is blue, `.btn-warning` is amber, and `.btn-destructive` is red. None shift when the user picks a different colour theme — the palette is intentionally static to give each variant a clear, invariant semantic meaning.
 
 **Bootstrap-like interactive states checklist:**
@@ -703,6 +704,50 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 
 **Test results:** Architecture.Tests 16/16, Web.Tests.Bunit 74/74 — all green.
 
+---
+
+## 2025-07-24 — UI Regression Review (Sprint 16 — Boromir Fan-Out Request)
+
+## Learnings
+
+**Review scope:** 10 touched files reviewed against the rest of the UI surface for regressions.
+
+**Build + test status:** 0 compile errors. All 285 tests pass across Architecture, Web.Tests, Domain.Tests, and Web.Tests.Bunit.
+
+**Findings — BLOCKERS:**
+
+1. **Dark mode headings are invisible (`input.css` lines 36–45):**
+   - `h1`, `h2`, `h3` all set `dark:text-primary-950` as their dark mode text colour.
+   - In dark mode the body background is also `dark:bg-primary-950`, and the MainLayout wrapper is `dark:bg-primary-800` (lightness 72% vs 62%). The heading text is effectively black-on-near-black — very hard to read, invisible at worst.
+   - Affects `Home.razor` (`<h1>Hello, users!</h1>` — no override), `Error.razor`, and any loading state `<p>` tags that rely on the base layer.
+   - Pages using `PageHeadingComponent` with `TextColorClass="text-primary-900 dark:text-primary-50"` override this correctly, so those pages are fine. The regression is on *bare* h1/h2/h3 elements without an explicit dark-mode colour class.
+   - **Fix needed:** Change `dark:text-primary-950` to `dark:text-primary-50` (or similar light shade) in the `@layer base` h1/h2/h3 rules.
+
+2. **`p` tag global override (`input.css` line 48–49):**
+   - `p { @apply text-primary-800 dark:text-primary-950 font-semibold text-lg; }` applies to ALL `<p>` elements globally.
+   - `dark:text-primary-950` has the same invisibility problem as the heading issue above.
+   - `font-semibold text-lg` applied to every paragraph (loading states, Profile descriptions, error messages, claims table descriptions) is visually heavy-handed and almost certainly unintended.
+   - **Fix needed:** Either remove the base `p` rule entirely, or narrow it to `text-primary-800 dark:text-primary-200` and remove `font-semibold text-lg` from the base layer.
+
+**Findings — MINOR / NON-BLOCKING:**
+
+1. **`Edit.razor` loading state uses non-themed gray (`text-gray-600 dark:text-gray-400`):** Minor inconsistency — uses fixed Tailwind gray instead of `text-primary-*`. Pre-existing pattern, not a regression.
+
+2. **`ManageRoles.razor` role buttons use bespoke inline Tailwind instead of `btn-` system:** The
+   assign-role (green outline) and remove-role (red outline) buttons use full inline Tailwind strings
+   rather than `btn-primary`/`btn-destructive`. Inconsistent with the button design system but matches
+   the original intent of showing a coloured outline, not a solid button. Could be unified with
+   `btn-warning`/`btn-destructive` variants in a follow-up.
+
+3. **`Profile.razor` redundant `@using MyBlog.Web.Components.Shared`:** Already in `Features/_Imports.razor`. Harmless.
+
+4. **`ConfirmDeleteDialog.razor` uses `bg-white dark:bg-gray-800` (fixed palette):** Not in scope of these changes. Pre-existing, not a regression.
+
+5. **`Error.razor` uses Bootstrap-era `text-danger`:** Pre-existing orphan class. Not a regression from these changes.
+
+**Overall assessment:** The structural changes (layout, nav, component design system, imports cleanup) are sound. Two CSS bugs in `input.css` need fixing before these can be packaged — both relate to dark mode text visibility on `h1/h2/h3` and `p` base styles.
+
+**Rule reinforced:** Base layer `h*` and `p` rules must always pair a light-mode text colour with a visibly contrasting `dark:text-*` colour. Never set `dark:text-primary-950` (darkest shade) on a surface that is already `dark:bg-primary-950` or `dark:bg-primary-800`.
 ## Learnings
 
 ### 2025-07 — PR #295 Review (dark-mode colours + PageHeadingComponent)

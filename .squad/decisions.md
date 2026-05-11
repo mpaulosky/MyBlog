@@ -2266,3 +2266,170 @@ Added `lint-markdown.yml` and `lint-yaml.yml` to `.github/workflows/`.
 - BlogApp was used as a reference but conventions were adapted to MyBlog branch model.
 - Inline yamllint config avoids a proliferation of dotfiles; the workflow is self-documenting.
 - Reusing `.markdownlint.json` respects existing tooling (it's also used by the pre-commit hook via `markdownlint-cli2` in `package.json`).
+
+### 27. Button Variant Colour Palette Strategy
+
+**Date:** 2025-07  
+**Author:** Legolas (Frontend)  
+**Issue:** #292  
+**Status:** ✅ Implemented
+
+#### Decision
+
+`.btn-primary` and `.btn-secondary` use `var(--primary-*)` theme tokens so they adapt when the user switches colour themes. `.btn-warning` (amber) and `.btn-destructive` (red) use **fixed** Tailwind palette classes and do NOT adapt to the selected theme.
+
+#### Rationale
+
+Warning and destructive actions carry universal semantic meaning — amber = caution, red = danger. Allowing these to shift colour with the active palette (e.g., red theme → red primary → identical destructive) would break the semantic signal. Fixed colours preserve meaning across all theme combinations.
+
+#### Impact
+
+- Any future button variant with semantic colour meaning (success, info) should also use fixed palette colours.
+- Theme-adaptive variants are appropriate only for purely aesthetic / neutral actions (primary CTA, secondary/cancel).
+
+---
+
+### 28. `.btn-destructive` is the Only Permitted Styling for Delete Actions
+
+**Date:** 2026-05-07  
+**Author:** Legolas (Frontend)  
+**Issue:** #292  
+**Status:** ✅ Implemented
+
+#### Decision
+
+Any button or link that triggers an irreversible delete action **must** use the shared `.btn-destructive` CSS utility class. Inline Tailwind colour classes (`bg-red-*`, `hover:bg-red-*`, etc.) are forbidden on delete actions.
+
+#### Rationale
+
+- `ConfirmDeleteDialog` was already migrated to `.btn-destructive` in issue #292.
+- The inline Delete button in the blog-post list was still using raw Tailwind, causing visual inconsistency (different dark-mode, focus ring, and spacing behaviour).
+- Centralising through `.btn-destructive` means a single change to `input.css` controls all delete surfaces — colour, hover, dark-mode, focus ring, and active scale.
+
+#### Scope
+
+Applies to all Blazor pages and components in `src/Web/`. Architecture tests already enforce naming conventions; this rule should be enforced through bUnit assertions on each page that exposes a delete action.
+
+---
+
+### 29. Button Variant Test Seam: Rendered Markup Over CSS Files
+
+**Date:** 2026-05-11  
+**Author:** Gimli (Tester)  
+**Issue:** #292  
+**Status:** ✅ Implemented
+
+#### Decision
+
+For button styling regressions, prefer bUnit assertions against rendered Blazor UI surfaces that expose button variant classes. Do not add CSS-file snapshot tests for a variant unless there is no rendered consumer and the team explicitly wants asset-level guards.
+
+#### Rationale
+
+Rendered markup is the public UI contract callers and users actually experience. File-content checks against `input.css` or generated Tailwind output are more brittle and couple tests to implementation formatting instead of observable behaviour.
+
+#### Impact
+
+- Guard button styling through pages/components like `ConfirmDeleteDialog`, blog list, create, and edit views.
+- Leave `.btn-warning` untested at the UI level until a component renders it.
+- If a future variant has no rendered consumer but still needs protection, discuss whether an asset-level structural test is worth the brittleness.
+
+---
+
+### 30. Dark Mode Base Text Colours Must Contrast Against Dark Backgrounds
+
+**Date:** 2025-07-24
+**Author:** Legolas
+**Trigger:** Sprint 16 UI regression review (fan-out from Boromir)
+
+#### Context
+
+The recent `input.css` changes introduced `@layer base` rules that set global text colours on
+`h1`, `h2`, `h3`, and `p` elements. The dark-mode overrides on those rules all use
+`dark:text-primary-950` — the *darkest* shade in the primary palette — on surfaces whose dark mode
+background is also `dark:bg-primary-950` (body) or `dark:bg-primary-800` (MainLayout wrapper).
+
+This makes bare headings and paragraphs invisible or nearly invisible in dark mode on any page that
+does not apply an explicit text-colour override.
+
+#### Affected File
+
+`src/Web/Styles/input.css` — `@layer base` block.
+
+```css
+/* Current — BROKEN in dark mode */
+h1 { @apply text-2xl font-bold text-primary-950 dark:text-primary-950; }
+h2 { @apply text-xl font-semibold text-primary-950 dark:text-primary-950; }
+h3 { @apply text-lg font-semibold text-primary-950 dark:text-primary-950; }
+p  { @apply text-primary-800 dark:text-primary-950 font-semibold text-lg; }
+```
+
+#### Decision
+
+1. **Dark mode text on base heading/paragraph rules must use a light shade.**
+   Correct fix: replace `dark:text-primary-950` with `dark:text-primary-50` (or `dark:text-primary-100`).
+
+2. **The `p` base rule must not set `font-semibold text-lg` globally.**
+   These override every paragraph — loading states, form labels, profile descriptions, and more.
+   Either remove them from the base rule or limit to a narrower selector.
+
+#### Proposed Correct Rules
+
+```css
+h1 { @apply text-2xl font-bold   text-primary-950 dark:text-primary-50; }
+h2 { @apply text-xl  font-semibold text-primary-950 dark:text-primary-50; }
+h3 { @apply text-lg  font-semibold text-primary-950 dark:text-primary-50; }
+p  { @apply text-primary-800 dark:text-primary-200; }
+```
+
+#### Rule Going Forward
+
+> Base layer `h*` and `p` rules must always pair a dark light-mode text colour with a
+> visibly contrasting light `dark:text-*` colour. Never pair `dark:text-primary-950` with
+> a dark background that is also `dark:bg-primary-950` or `dark:bg-primary-800`.
+
+#### Status
+
+**✅ Implemented** — Regressions fixed in PR #295, branch `squad/291-input-css-fine-tuning`.
+
+---
+
+### 31. CSS Visual Regressions and Test/Visual Finding Arbitration
+
+**Date:** 2026-05-15
+**Author:** Aragorn
+**Context:** Branch `squad/291-input-css-fine-tuning`, PR #295, issues #291 and #292
+
+#### Decision
+
+When a UI specialist (Legolas) flags a CSS colour regression AND automated tests (Gimli) report green, both findings can be simultaneously correct. The correct arbitration process is:
+
+1. **Read the actual diff** — confirm whether the colour token change makes visual/semantic sense
+2. **Distinguish test scope** — bUnit tests verify class names and markup structure, not computed CSS colour values
+3. **Apply the dark-mode colour direction rule** (see Decision 30)
+4. **Fix the regression before pushing** — do not let a green gate override a legitimate visual blocker
+
+#### Dark-Mode Colour Direction Rule
+
+| Token range | Meaning | Dark mode text use |
+|---|---|---|
+| `primary-50` – `primary-200` | Lightest (near-white) | ✅ Visible on dark backgrounds |
+| `primary-400` – `primary-600` | Mid tones | ⚠️ Context-dependent |
+| `primary-800` – `primary-950` | Darkest (near-black) | ❌ Invisible on dark backgrounds |
+
+`dark:text-primary-950` on a `dark:bg-primary-950` or `dark:bg-primary-900` background = near-black on near-black = invisible. Always confirm that dark-mode text uses `primary-50` through `primary-200` for readability.
+
+#### Staging Rule (Reinforced)
+
+Feature branch commits **must never include `.squad/` files**. Stage explicitly by path, not with `git add -A` or `git add .`. The pre-push hook warns but does not block on unstaged `.squad/` changes — the agent must enforce this manually.
+
+#### Affected Issues
+
+- Closes #291 (input.css fine-tuning)
+- Closes #292 (button variants)
+- PR #295
+
+#### Status
+
+**✅ Implemented** — Both regressions fixed in PR #295. Process applied and documented.
+
+---

@@ -883,3 +883,69 @@ Integration tests run in ~26 seconds end-to-end.
 
 - `8a6e48c` — prior session (unit tests, MD lint fixes)
 - `6d13f93` — `fix: use WithDataVolume for MongoDB to set correct /data/db mount path`
+
+## 2026-05-11 — Issue #292 Button Variant Coverage
+
+### Task
+
+Add test coverage for the Bootstrap-like button variant work without changing production code unless a legitimate test seam required it.
+
+### Work Done
+
+- Added four bUnit assertions to `tests/Web.Tests.Bunit/Components/RazorSmokeTests.cs` covering the rendered button-class seams already exposed by the blog UI.
+- Covered destructive + secondary actions in `ConfirmDeleteDialog`.
+- Covered primary + secondary actions in the blog list, create page, and edit page.
+- Updated issue #292 title to include the Sprint 19 prefix so the branch work respected squad issue hygiene.
+- Re-ran `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj -c Release --nologo` before and after the change; final result: 73 passing tests.
+
+### Learnings
+
+1. For MyBlog Blazor styling work, the strongest non-brittle automated seam is the rendered Razor surface in `tests/Web.Tests.Bunit/Components/RazorSmokeTests.cs`, not raw CSS-file string matching.
+2. `src/Web/Features/BlogPosts/Delete/ConfirmDeleteDialog.razor`, `src/Web/Features/BlogPosts/List/Index.razor`, `src/Web/Features/BlogPosts/Create/Create.razor`, and `src/Web/Features/BlogPosts/Edit/Edit.razor` are the current button-variant consumers worth guarding.
+3. There is still no realistic rendered consumer for `.btn-warning`; for now the thinnest useful coverage is to protect actual consumers and explicitly document the warning-variant gap instead of adding brittle selector-snapshot tests.
+4. User preference confirmed again: stay inside testing scope, prefer behavior-first bUnit coverage, and only request production changes when the UI lacks a legitimate observable seam.
+
+## 2026-05-11 — Blazor UI Regression Review
+
+### Task
+
+Review the current branch's Blazor UI/CSS changes plus the touched
+`tests/Web.Tests.Bunit/Components/RazorSmokeTests.cs` coverage, run the
+relevant regression suites, and report whether the branch is push-ready without
+making production changes.
+
+### Work Done
+
+- Reviewed the current working tree diffs affecting layout, nav, blog pages,
+  profile/role-management pages, shared page-heading markup, and Tailwind input
+  styles.
+- Ran the focused bUnit regression suite:
+  `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj -c Release --nologo`
+  → 74 passed.
+- Ran the charter push-gate suites individually:
+  `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release --nologo`
+  → 16 passed, and
+  `dotnet test tests/Domain.Tests/Domain.Tests.csproj -c Release --nologo`
+  → 42 passed.
+- Ran the full Release validation gate:
+  `dotnet build MyBlog.slnx -c Release --nologo` → 0 warnings / 0 errors, then
+  `dotnet test MyBlog.slnx --no-build -c Release --nologo` → Architecture 16
+  passed, Domain 42 passed, Web 153 passed, Web.Tests.Bunit 74 passed,
+  Web.Tests.Integration 12 passed, AppHost 48 passed / 1 skipped.
+- Spot-checked existing automated coverage for the changed UI surfaces:
+  `RazorSmokeTests`, `NavMenuTests`, `ProfileTests`, architecture tests for
+  theme/render boundaries, and AppHost layout smoke coverage.
+
+### Learnings
+
+1. The current branch is green on both the focused bUnit suite and the full
+   solution-level Release gate, so there is no failing automated evidence
+   blocking packaging.
+2. The riskiest remaining gap is visual-only Tailwind/CSS drift:
+   `src/Web/Styles/input.css` and the new shared heading wrapper compile cleanly,
+   but most of that styling is only exercised through render/build seams rather
+   than pixel-level UI assertions.
+3. Coverage exists for the changed navigation, profile, blog list/create/edit,
+   and role-management flows, but `PageHeadingComponent` is still validated
+   indirectly through page renders rather than by its own focused component
+   tests.
