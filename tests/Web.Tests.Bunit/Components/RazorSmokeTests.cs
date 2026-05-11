@@ -90,6 +90,25 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
+	public void ConfirmDeleteDialogUsesDestructiveAndSecondaryButtonVariants()
+	{
+		// Arrange (none)
+		// Act
+		var cut = Render<ConfirmDeleteDialog>(parameters => parameters
+				.Add(p => p.IsVisible, true)
+				.Add(p => p.PostTitle, "My Post"));
+
+		var deleteButton = cut.FindAll("button")
+				.Single(button => string.Equals(button.TextContent.Trim(), "Delete", StringComparison.Ordinal));
+		var cancelButton = cut.FindAll("button")
+				.Single(button => string.Equals(button.TextContent.Trim(), "Cancel", StringComparison.Ordinal));
+
+		// Assert
+		deleteButton.GetAttribute("class").Should().Contain("btn-destructive");
+		cancelButton.GetAttribute("class").Should().Contain("btn-secondary");
+	}
+
+	[Fact]
 	public void RedirectToLoginNavigatesToLoginWithReturnUrl()
 	{
 		// Arrange
@@ -140,6 +159,56 @@ public class RazorSmokeTests : BunitContext
 		cut.Markup.Should().Contain("Edit");
 		cut.Find("button").Click();
 		cut.Markup.Should().Contain("Confirm Delete");
+	}
+
+	[Fact]
+	public void BlogIndexUsesPrimaryAndSecondaryButtonVariantsForAuthorActions()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var posts = new[]
+		{
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+				};
+
+		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
+		var createLink = cut.Find("a[href='/blog/create']");
+		var editLink = cut.Find($"a[href='/blog/edit/{posts[0].Id}']");
+
+		// Assert
+		createLink.GetAttribute("class").Should().Contain("btn-primary");
+		editLink.GetAttribute("class").Should().Contain("btn-secondary");
+	}
+
+	[Fact]
+	public void BlogIndexUsesBtnDestructiveForInlineDeleteButton()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var posts = new[]
+		{
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+				};
+
+		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
+
+		var deleteButton = cut.FindAll("button")
+				.Single(button => string.Equals(button.TextContent.Trim(), "Delete", StringComparison.Ordinal));
+
+		// Assert — inline delete must use the shared destructive variant, not raw Tailwind classes
+		deleteButton.GetAttribute("class").Should().Contain("btn-destructive");
 	}
 
 	[Fact]
@@ -238,6 +307,22 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
+	public void CreatePostUsesPrimaryAndSecondaryButtonVariants()
+	{
+		// Arrange
+		Services.AddSingleton(Substitute.For<ISender>());
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
+		var submitButton = cut.Find("button[type='submit']");
+		var cancelLink = cut.Find("a[href='/blog']");
+
+		// Assert
+		submitButton.GetAttribute("class").Should().Contain("btn-primary");
+		cancelLink.GetAttribute("class").Should().Contain("btn-secondary");
+	}
+
+	[Fact]
 	public void CreatePostSubmitsAndNavigatesToBlogWhenCommandSucceeds()
 	{
 		// Arrange
@@ -284,6 +369,29 @@ public class RazorSmokeTests : BunitContext
 		cut.Markup.Should().Contain("Edit Post");
 		cut.Markup.Should().Contain("Existing title");
 		cut.Markup.Should().Contain("Existing content");
+	}
+
+	[Fact]
+	public void EditPostUsesPrimaryAndSecondaryButtonVariants()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
+		var saveButton = cut.Find("button[type='submit']");
+		var cancelLink = cut.Find("a[href='/blog']");
+
+		// Assert
+		saveButton.GetAttribute("class").Should().Contain("btn-primary");
+		cancelLink.GetAttribute("class").Should().Contain("btn-secondary");
 	}
 
 	[Fact]
