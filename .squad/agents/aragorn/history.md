@@ -1107,3 +1107,44 @@ Always pop it into a branch and commit immediately; never rely on stash as long-
 **Sprint triage accelerates planning.** Pre-stamping issues with `[Sprint 19]` in the title, setting milestone, and removing `go:needs-research` when body is sufficient signals team readiness. Title format consistency (`[Sprint N] verb(area): description`) makes Sprint board scannable.
 
 **Self-approval gate workaround:** When branch author cannot approve own PR (GitHub policy), post the gate decision as a PR comment with clear gate status (✅ APPROVED). This makes the decision auditable and allows immediate merge without waiting for a second reviewer in fast-track scenarios like this one.
+
+## 2026-05-11 — Work-Check Cycle Round 2: Architecture ADR for Issue #296
+
+**Requested by:** Boromir
+**Task:** Investigate the PostAuthor feature and write an Architecture Decision Record for issue #296
+**Status:** ✅ Complete
+
+### Summary
+
+1. **Explored the full Create/Edit flow** — read `BlogPost.cs`, `CreateBlogPostCommand.cs`, `CreateBlogPostHandler.cs`, `Create.razor`, `Edit.razor`, `EditBlogPostCommand.cs`, `BlogDbContext.cs`, `MongoDbBlogPostRepository.cs`, `BlogPostDto.cs`, `BlogPostMappings.cs`, `RoleClaimsHelper.cs`, and key test files.
+
+2. **Key findings:**
+   - `BlogPost.Author` is currently a plain `string`; no auth context is wired into the Create handler
+   - `EditBlogPostCommand` already excludes Author (correct) — edit flow needs no changes
+   - MongoDB is accessed via EF Core `MongoDB.EntityFrameworkCore` provider (not raw driver); owned types supported via `OwnsOne`
+   - `RoleClaimsHelper.GetRoles(user)` already exists in `src/Web/Security/` and handles multi-format role claims
+   - `IHttpContextAccessor` is NOT registered and is unreliable post-handshake in Blazor Server interactive SignalR mode
+   - Existing documents have `Author` as a string → **breaking schema change**
+
+3. **Architectural decisions made:**
+   - `PostAuthor` value object in `MyBlog.Domain.ValueObjects` namespace
+   - Auth state read in the Blazor component (`AuthenticationStateProvider`), not the handler
+   - Command carries `PostAuthor`; handler stays infrastructure-agnostic
+   - `BlogPostDto` gets flat author fields (`AuthorId`, `AuthorName`, `AuthorEmail`, `AuthorRoles`)
+   - Author is immutable after creation; no edit-flow changes needed
+   - "Authors can only edit own posts" ACL check is out of scope → new issue
+
+4. **ADR written** to `.squad/decisions/inbox/aragorn-296-post-author-adr.md`
+
+5. **Issue #296 updated** — removed `go:needs-research` label; posted architecture summary comment with full implementation breakdown for Sam, Legolas, and Gimli.
+
+### Learnings
+
+**Blazor Server interactive components (SignalR) require auth state from `AuthenticationStateProvider`, not `IHttpContextAccessor`.**
+After the initial HTTP handshake, the connection switches to SignalR — `HttpContext` is no longer available on subsequent renders.
+The safe pattern is to read `AuthenticationStateProvider.GetAuthenticationStateAsync()` in the component and pass the populated
+value object into the command.
+
+**EF Core MongoDB provider handles owned entities via `OwnsOne` — no BsonElement attributes needed.** The mapping is declared in `OnModelCreating` exactly like SQL EF Core. Primitive collection properties (e.g., `IReadOnlyList<string> Roles`) are supported on owned types.
+
+**String-to-embedded-object is a breaking MongoDB schema change.** Even in dev, existing documents will cause deserialization failures. Drop/recreate in dev; migration script required for any environment with live data.
