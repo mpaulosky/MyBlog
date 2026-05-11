@@ -29,10 +29,13 @@ namespace Web.Components;
 
 public class RazorSmokeTests : BunitContext
 {
+	private readonly TestAuthenticationStateProvider _authProvider = new();
+
 	public RazorSmokeTests()
 	{
 		Services.AddAuthorizationCore();
 		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
+		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
 	}
 
 	[Fact]
@@ -328,7 +331,7 @@ public class RazorSmokeTests : BunitContext
 
 		heading.TextContent.Trim().Should().Be("Create Post");
 		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
-		cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(2);
+		cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(1);
 		cut.Find("textarea");
 	}
 
@@ -363,7 +366,6 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.FindAll("input")[0].Change("My title");
-		cut.FindAll("input")[1].Change("Alice");
 		cut.Find("textarea").Change("Hello world");
 		cut.Find("form").Submit();
 
@@ -388,7 +390,6 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.FindAll("input")[0].Change("My title");
-		cut.FindAll("input")[1].Change("Alice");
 		cut.Find("textarea").Change("Hello world");
 		cut.Find("form").Submit();
 
@@ -664,6 +665,7 @@ public class RazorSmokeTests : BunitContext
 			Action<ComponentParameterCollectionBuilder<TComponent>>? configure = null)
 			where TComponent : IComponent
 	{
+		_authProvider.SetUser(principal);
 		return Render<TComponent>(parameters =>
 		{
 			parameters.AddCascadingValue(Task.FromResult(new AuthenticationState(principal)));
