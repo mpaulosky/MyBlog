@@ -60,6 +60,8 @@ else if (_model is not null)
     private PostFormModel? _model;
     private string? _error;
     private bool _concurrencyError;
+    private string _callerUserId = string.Empty;
+    private bool _callerIsAdmin;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -70,11 +72,11 @@ else if (_model is not null)
             {
                 var authState = await AuthStateProvider.GetAuthenticationStateAsync();
                 var user = authState.User;
-                var userSub = user.FindFirst("sub")?.Value ?? string.Empty;
-                var isAdmin = user.IsInRole("Admin");
-                var isAuthor = result.Value.AuthorId == userSub;
+                _callerUserId = user.FindFirst("sub")?.Value ?? string.Empty;
+                _callerIsAdmin = user.IsInRole("Admin");
+                var isAuthor = result.Value.AuthorId == _callerUserId;
 
-                if (!isAdmin && !isAuthor)
+                if (!_callerIsAdmin && !isAuthor)
                 {
                     Navigation.NavigateTo("/blog");
                     return;
@@ -96,13 +98,15 @@ else if (_model is not null)
     private async Task HandleSubmit()
     {
         if (_model is null) return;
-        var result = await Sender.Send(new EditBlogPostCommand(Id, _model.Title, _model.Content));
+        var result = await Sender.Send(new EditBlogPostCommand(Id, _model.Title, _model.Content, _callerUserId, _callerIsAdmin));
         if (result.Success)
             Navigation.NavigateTo("/blog");
         else
         {
             if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Concurrency)
                 _concurrencyError = true;
+            else if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized)
+                Navigation.NavigateTo("/blog");
             _error = result.Error;
         }
     }
