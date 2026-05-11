@@ -112,6 +112,9 @@ builder.Services.AddMemoryCache();
 // BlogPost two-tier cache service (L1 + L2)
 builder.Services.AddBlogPostCaching();
 
+// UserManagement two-tier cache service (L1 30s + L2 2min)
+builder.Services.AddUserManagementCaching();
+
 // Repository: concrete + interface
 builder.Services.AddScoped<MongoDbBlogPostRepository>();
 builder.Services.AddScoped<IBlogPostRepository>(sp =>
