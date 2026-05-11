@@ -17,10 +17,12 @@ public class CreateBlogPostDomainCommandValidatorTests
 {
 	private readonly CreateBlogPostCommandValidator _validator = new();
 
+	private static readonly PostAuthor ValidAuthor = new("id", "Valid Author", "author@example.com", []);
+
 	[Fact]
 	public void Validate_ValidCommand_PassesValidation()
 	{
-		var command = new CreateBlogPostCommand("Valid Title", "Valid Content", "Valid Author");
+		var command = new CreateBlogPostCommand("Valid Title", "Valid Content", ValidAuthor);
 
 		var result = _validator.TestValidate(command);
 
@@ -32,7 +34,7 @@ public class CreateBlogPostDomainCommandValidatorTests
 	[InlineData(null!)]
 	public void Validate_EmptyTitle_FailsValidation(string? title)
 	{
-		var command = new CreateBlogPostCommand(title!, "Content", "Author");
+		var command = new CreateBlogPostCommand(title!, "Content", ValidAuthor);
 
 		var result = _validator.TestValidate(command);
 
@@ -42,7 +44,7 @@ public class CreateBlogPostDomainCommandValidatorTests
 	[Fact]
 	public void Validate_TitleExceedsMaxLength_FailsValidation()
 	{
-		var command = new CreateBlogPostCommand(new string('a', 201), "Content", "Author");
+		var command = new CreateBlogPostCommand(new string('a', 201), "Content", ValidAuthor);
 
 		var result = _validator.TestValidate(command);
 
@@ -54,19 +56,17 @@ public class CreateBlogPostDomainCommandValidatorTests
 	[InlineData(null!)]
 	public void Validate_EmptyContent_FailsValidation(string? content)
 	{
-		var command = new CreateBlogPostCommand("Title", content!, "Author");
+		var command = new CreateBlogPostCommand("Title", content!, ValidAuthor);
 
 		var result = _validator.TestValidate(command);
 
 		result.ShouldHaveValidationErrorFor(x => x.Content);
 	}
 
-	[Theory]
-	[InlineData("")]
-	[InlineData(null!)]
-	public void Validate_EmptyAuthor_FailsValidation(string? author)
+	[Fact]
+	public void Validate_NullAuthor_FailsValidation()
 	{
-		var command = new CreateBlogPostCommand("Title", "Content", author!);
+		var command = new CreateBlogPostCommand("Title", "Content", null!);
 
 		var result = _validator.TestValidate(command);
 
@@ -74,12 +74,12 @@ public class CreateBlogPostDomainCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_AuthorExceedsMaxLength_FailsValidation()
+	public void Validate_AuthorWithEmptyName_FailsValidation()
 	{
-		var command = new CreateBlogPostCommand("Title", "Content", new string('a', 101));
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "", "", []));
 
 		var result = _validator.TestValidate(command);
 
-		result.ShouldHaveValidationErrorFor(x => x.Author);
+		result.ShouldHaveValidationErrorFor(x => x.Author.Name);
 	}
 }

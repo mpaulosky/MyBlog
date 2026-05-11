@@ -30,8 +30,8 @@ public class BlogPostCacheServiceTests : IDisposable
 
 	private static List<BlogPostDto> MakeDtos() =>
 	[
-		new(Guid.NewGuid(), "Title1", "Content1", "Author1", DateTime.UtcNow, null, false),
-		new(Guid.NewGuid(), "Title2", "Content2", "Author2", DateTime.UtcNow, null, true),
+		new(Guid.NewGuid(), "Title1", "Content1", string.Empty, "Author1", string.Empty, [], DateTime.UtcNow, null, false),
+		new(Guid.NewGuid(), "Title2", "Content2", string.Empty, "Author2", string.Empty, [], DateTime.UtcNow, null, true),
 	];
 
 	// ── GetOrFetchAllAsync ────────────────────────────────────────────────
@@ -139,7 +139,7 @@ public class BlogPostCacheServiceTests : IDisposable
 		// Arrange
 		var id = Guid.NewGuid();
 		var key = BlogPostCacheKeys.ById(id);
-		var dto = new BlogPostDto(id, "T", "C", "A", DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
 		_realLocalCache.Set(key, dto);
 
 		// Act
@@ -157,7 +157,7 @@ public class BlogPostCacheServiceTests : IDisposable
 		// Arrange
 		var id = Guid.NewGuid();
 		var key = BlogPostCacheKeys.ById(id);
-		var dto = new BlogPostDto(id, "T", "C", "A", DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
 		var bytes = JsonSerializer.SerializeToUtf8Bytes(dto, JsonOpts);
 		_distributedCache.GetAsync(key, Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult<byte[]?>(bytes));
@@ -187,7 +187,7 @@ public class BlogPostCacheServiceTests : IDisposable
 			Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<DistributedCacheEntryOptions>(), Arg.Any<CancellationToken>())
 			.Returns(Task.CompletedTask);
 
-		var dto = new BlogPostDto(id, "T", "C", "A", DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
 		var fetchCalled = false;
 		Task<BlogPostDto?> fetch() { fetchCalled = true; return Task.FromResult<BlogPostDto?>(dto); }
 
@@ -212,7 +212,7 @@ public class BlogPostCacheServiceTests : IDisposable
 			Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<DistributedCacheEntryOptions>(), Arg.Any<CancellationToken>())
 			.Returns(Task.CompletedTask);
 
-		var dto = new BlogPostDto(id, "T", "C", "A", DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
 
 		// Act
 		var result = await _sut.GetOrFetchByIdAsync(id, () => Task.FromResult<BlogPostDto?>(dto), CancellationToken.None);
@@ -270,7 +270,7 @@ public class BlogPostCacheServiceTests : IDisposable
 		// Arrange — populate L1 so we can verify removal
 		var id = Guid.NewGuid();
 		var key = BlogPostCacheKeys.ById(id);
-		var dto = new BlogPostDto(id, "T", "C", "A", DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
 		_realLocalCache.Set(key, dto);
 		_distributedCache.RemoveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
 			.Returns(Task.CompletedTask);

@@ -13,7 +13,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_ValidCommand_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "Valid Title", "Valid Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "Valid Title", "Valid Content", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -26,7 +26,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_EmptyId_ReturnsError()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.Empty, "Title", "Content");
+		var command = new EditBlogPostCommand(Guid.Empty, "Title", "Content", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -40,7 +40,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_EmptyTitle_ReturnsError()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "", "Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "", "Content", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -54,7 +54,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_EmptyContent_ReturnsError()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", "");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", "", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -68,7 +68,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_TitleExceedsMaxLength_ReturnsError()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), new string('A', 201), "Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), new string('A', 201), "Content", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -82,7 +82,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_TitleAtMaxLength_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), new string('A', 200), "Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), new string('A', 200), "Content", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -95,7 +95,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_WhitespaceTitle_ReturnsError()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "   ", "Content");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "   ", "Content", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -109,7 +109,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_WhitespaceContent_ReturnsError()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", "   ");
+		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", "   ", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -123,7 +123,7 @@ public class EditBlogPostCommandValidatorTests
 	public void Validate_MultipleEmptyFields_ReturnsMultipleErrors()
 	{
 		// Arrange
-		var command = new EditBlogPostCommand(Guid.Empty, "", "");
+		var command = new EditBlogPostCommand(Guid.Empty, "", "", string.Empty, false);
 
 		// Act
 		var result = _sut.Validate(command);

@@ -2298,6 +2298,7 @@ The `squad-mark-released.yml` workflow uses `actions/github-script` to call the 
 ## Setup
 
 To configure the secret:
+
 1. Create a classic PAT at https://github.com/settings/tokens with `project` scope
 2. Add it as repository secret: Settings → Secrets and variables → Actions → `GH_PROJECT_TOKEN`
 
@@ -2331,3 +2332,45 @@ The workflow's "Commit updated README" step now uses `git push origin HEAD:dev` 
 - **Option B (PR from workflow):** Have the workflow open a PR to main. Rejected — requires `pull-requests: write`, adds noise, and needs the "Build Solution" check to pass before merge.
 - **Option C (push to dev) ← CHOSEN:** Simple one-line fix, no new permissions.
 
+---
+
+## Project Board Automation Repair (2026-05-11)
+
+### Context
+
+Project board automation was completely broken. Four workflows (`add-issues-to-project`, `project-board-automation`, `project-board-audit`, `squad-mark-released`) referenced a non-existent project ID (`PVT_kwHOA5k0b84BVFTy`), causing all sync operations to fail silently.
+
+### Decision
+
+Create new project board (MyBlog Project Board, https://github.com/users/mpaulosky/projects/5) and update workflows with correct IDs and authentication.
+
+### Technical Changes
+
+1. **New Project Board:** PVT_kwHOA5k0b84BXZpa (Status Field: PVTSSF_lAHOA5k0b84BXZpazhSmuGY)
+2. **GH_PROJECT_TOKEN Secret:** Created with 'project' scope (required for user-owned projects)
+3. **Workflow Updates:**
+   - All four workflows now use new PROJECT_ID and GH_PROJECT_TOKEN
+   - All workflows updated to use `secrets.GH_PROJECT_TOKEN` (not fallback to GITHUB_TOKEN)
+
+### Known Issue
+
+GitHub Actions caches workflow definitions on the `dev` branch. ENV variable updates committed to git are not picked up by workflow runs. **Workaround:** Test workflows on a fresh branch to bypass cache.
+
+### Next Steps
+
+1. Configure project board field options via UI (Backlog, In Sprint, In Review, Done, Released)
+2. Update workflow option IDs once obtained from project board
+3. Test workflows on fresh branch: `test-project-board-fix`
+4. Verify: Create [Sprint X] issue → should appear on board with correct status
+
+### Rationale
+
+- **Why new project?** Old project ID was invalid and inaccessible
+- **Why GH_PROJECT_TOKEN?** User-owned projects require 'project' scope; GITHUB_TOKEN lacks this
+- **Why auth escalation OK?** Token only has 'project' scope (no code access), no service escalation
+
+### Alternatives Considered
+
+- **Option A (Fix existing project):** Cannot — old project doesn't exist and can't be recovered
+- **Option B (Organization project):** Rejected — adds complexity, requires org changes
+- **Option C (User project + GH_PROJECT_TOKEN) ← CHOSEN:** Simpler, already functional

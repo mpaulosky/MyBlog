@@ -23,7 +23,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		// Arrange
 		var ct = TestContext.Current.CancellationToken;
 		var repo = CreateRepo();
-		var post = BlogPost.Create("Hello World", "Some content", "Author A");
+		var post = BlogPost.Create("Hello World", "Some content", new PostAuthor(string.Empty, "Author A", string.Empty, []));
 
 		// Act
 		await repo.AddAsync(post, ct);
@@ -55,7 +55,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		// Arrange
 		var ct = TestContext.Current.CancellationToken;
 		var repo = CreateRepo();
-		var post = BlogPost.Create("My Title", "My Content", "My Author");
+		var post = BlogPost.Create("My Title", "My Content", new PostAuthor(string.Empty, "My Author", string.Empty, []));
 		await repo.AddAsync(post, ct);
 
 		// Act
@@ -64,7 +64,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		// Assert
 		result.Should().NotBeNull();
 		result!.Title.Should().Be("My Title");
-		result.Author.Should().Be("My Author");
+		result.Author.Name.Should().Be("My Author");
 		result.Content.Should().Be("My Content");
 	}
 
@@ -74,12 +74,12 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		// Arrange
 		var ct = TestContext.Current.CancellationToken;
 		var repo = CreateRepo();
-		var older = BlogPost.Create("Older Post", "Content", "Author");
+		var older = BlogPost.Create("Older Post", "Content", new PostAuthor(string.Empty, "Author", string.Empty, []));
 		await repo.AddAsync(older, ct);
 
 		await Task.Delay(20, ct);
 
-		var newer = BlogPost.Create("Newer Post", "Content", "Author");
+		var newer = BlogPost.Create("Newer Post", "Content", new PostAuthor(string.Empty, "Author", string.Empty, []));
 		await repo.AddAsync(newer, ct);
 
 		// Act
@@ -97,7 +97,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		// Arrange
 		var ct = TestContext.Current.CancellationToken;
 		var repo = CreateRepo();
-		var post = BlogPost.Create("Original Title", "Original Content", "Author");
+		var post = BlogPost.Create("Original Title", "Original Content", new PostAuthor(string.Empty, "Author", string.Empty, []));
 		await repo.AddAsync(post, ct);
 
 		post.Update("Updated Title", "Updated Content");
@@ -117,7 +117,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		// Arrange
 		var ct = TestContext.Current.CancellationToken;
 		var repo = CreateRepo();
-		var post = BlogPost.Create("To Delete", "Content", "Author");
+		var post = BlogPost.Create("To Delete", "Content", new PostAuthor(string.Empty, "Author", string.Empty, []));
 		await repo.AddAsync(post, ct);
 
 		// Act
@@ -164,7 +164,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo1 = CreateRepo(dbName);
 		var repo2 = CreateRepo(dbName);
-		var post = BlogPost.Create("Original", "Content", "Author");
+		var post = BlogPost.Create("Original", "Content", new PostAuthor(string.Empty, "Author", string.Empty, []));
 		await repo1.AddAsync(post, ct);
 
 		var winner = await repo2.GetByIdAsync(post.Id, ct) ?? throw new InvalidOperationException("post not found");

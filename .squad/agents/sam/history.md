@@ -178,3 +178,110 @@ the field guards all three dev commands (Clear, Seed, Stats), not just Clear.
 - ✅ Architecture.Tests: 15/15, Domain.Tests: 42/42, Integration.Tests: 12/12
 
 ### PR: #267
+
+## 2026-05-xx — Issue #296: PostAuthor Value Object
+
+### Task
+
+Replace `string Author` on `BlogPost` with an immutable `PostAuthor` value object, per Aragorn's ADR (`aragorn-296-post-author-adr.md`).
+
+### Changes Made
+
+1. **`src/Domain/ValueObjects/PostAuthor.cs`** — New `sealed record PostAuthor(string Id, string Name, string Email, IReadOnlyList<string> Roles)` with `PostAuthor.Empty` helper
+2. **`src/Domain/Entities/BlogPost.cs`** — `Author` property changed from `string` to `PostAuthor`; `Create()` guards: `ArgumentNullException.ThrowIfNull(author)` then `ArgumentException.ThrowIfNullOrWhiteSpace(author.Name)`
+3. **`src/Web/Data/BlogDbContext.cs`** — Added `entity.OwnsOne(p => p.Author, ...)` with `HasElementName` for each field to control MongoDB sub-document field names
+4. **`src/Web/Data/BlogPostDto.cs`** — Replaced `string Author` with `string AuthorId, string AuthorName, string AuthorEmail, IReadOnlyList<string> AuthorRoles` (positional record — all call sites updated)
+5. **`src/Web/Data/BlogPostMappings.cs`** — Updated `ToDto()` to map flat author fields
+6. **`src/Web/Features/BlogPosts/Create/CreateBlogPostCommand.cs`** — `PostAuthor Author` replaces `string Author`
+7. **`src/Web/Features/BlogPosts/Create/CreateBlogPostCommandValidator.cs`** — `NotNull()` on Author + `NotEmpty().When(author not null)` on Author.Name
+8. **`src/Web/Features/BlogPosts/Create/Create.razor`** — Temporary stub builds `PostAuthor` from `_model.Author` string field; Legolas must replace with `AuthenticationStateProvider` injection
+9. **`src/Web/Features/BlogPosts/List/Index.razor`** — `@post.Author` → `@post.AuthorName`
+10. **All test projects** — GlobalUsings, entity construction, DTO construction updated
+
+### Build Validation
+
+- ✅ Release build: 0 errors, 0 warnings
+- ✅ Architecture.Tests: 16/16
+- ✅ Domain.Tests: 42/42
+- ✅ Web.Tests: 151/151
+- ✅ Integration.Tests: 12/12 (Docker)
+- ✅ All pre-push gates passed
+
+### PR: #298
+
+### Learnings
+
+#### `PostAuthor.Empty` is a testing convenience — not valid for `BlogPost.Create()`
+
+- `PostAuthor.Empty` has `Name = ""`. The `BlogPost.Create()` guard rejects empty Name.
+- Tests that exercise handler behavior (not null/empty author validation) must use `new PostAuthor("", "Test Author", "", [])`, not `PostAuthor.Empty`.
+- Only use `PostAuthor.Empty` in command/validator tests that specifically test the "empty author" failure path.
+
+#### Razor files need explicit `@using` for value objects
+
+- Razor components do not automatically inherit global usings from `GlobalUsings.cs` files in the same project for all scenarios.
+- Add `@using MyBlog.Domain.ValueObjects` explicitly at the top of any `.razor` file that references `PostAuthor`.
+
+#### Breaking schema changes need a migration note in the PR
+
+- MongoDB `OwnsOne` with `HasElementName` changes the stored field name from a flat `"Author"` string to a sub-document `{"AuthorId":...,"AuthorName":...}`.
+- Existing documents fail to deserialize; always document the migration strategy (drop/recreate in dev; script in prod) in the PR.
+
+## 2026-06-11 — Issue #300: Audit — Restrict Blog Post Editing to Author or Admin
+
+### Task
+
+Audit and confirm correctness of the backend server-side authorization
+for issue #300 (restrict blog post editing to post author or Admin).
+
+### Findings
+
+The backend implementation was already complete in commit `ee0aafb`:
+
+1. **`EditBlogPostCommand`** carries `CallerUserId` (Auth0 sub claim) and `CallerIsAdmin`.
+2. **`EditBlogPostHandler`** enforces the rule before calling `repo.UpdateAsync`:
+
+   ```csharp
+   if (!request.CallerIsAdmin && post.Author.Id != request.CallerUserId)
+       return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
+   ```
+
+3. **`tests/Web.Tests/Handlers/EditBlogPostHandlerTests.cs`** covers all three
+   scenarios: author edits own post (success), admin edits any post (success),
+   non-admin non-author returns `ResultErrorCode.Unauthorized`.
+4. All 154 `Web.Tests` pass.
+
+### Authorization placement decision
+
+The check belongs in the **handler**, not in the FluentValidation validator,
+because the rule requires the persisted `post.Author.Id` — unavailable at
+validation time. Putting it in the handler makes it impossible to bypass via
+alternative command dispatchers.
+
+### Inbox notes written
+
+- `.squad/decisions/inbox/sam-issue300-authorization.md`
+- `.squad/decisions/inbox/sam-issue300-tests.md`
+
+### Learnings
+
+#### Handler is the correct home for post-load authorization checks
+
+- If an authorization rule depends on persisted entity state (e.g., "does the
+  caller own this record?"), enforce it inside the handler after loading the
+  entity — not in a validator, not in the UI layer.
+- This keeps the rule on every code path and keeps validators focused on
+  data shape.
+
+#### `CallerUserId` should NOT be validated in FluentValidation
+
+- An empty `CallerUserId` with `CallerIsAdmin = false` will still fail the
+  handler's auth check (`"" != post.Author.Id`), so no separate validator rule
+  is required.
+- Only validate command properties that can be wrong regardless of persisted state.
+
+#### Test files written with implementation commit are still Gimli's long-term property
+
+- For atomic commits, writing handler tests alongside the implementation is
+  acceptable. Note the crossing in an inbox file so Gimli can audit or extend
+  coverage as needed.

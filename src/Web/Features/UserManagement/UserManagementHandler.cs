@@ -13,12 +13,14 @@ using Auth0.ManagementApi;
 using Auth0.ManagementApi.Users;
 
 using MyBlog.Domain.Abstractions;
+using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.UserManagement;
 
 internal sealed class UserManagementHandler(
 IConfiguration configuration,
-IHttpClientFactory httpClientFactory)
+IHttpClientFactory httpClientFactory,
+IUserManagementCacheService cache)
 : IRequestHandler<GetUsersWithRolesQuery, Result<IReadOnlyList<UserWithRolesDto>>>,
 IRequestHandler<AssignRoleCommand, Result>,
 IRequestHandler<RemoveRoleCommand, Result>,
@@ -29,25 +31,29 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 	{
 		try
 		{
-			var client = await GetManagementClientAsync(cancellationToken).ConfigureAwait(false);
-			var usersPager = await client.Users.ListAsync(new ListUsersRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
-			var result = new List<UserWithRolesDto>();
-			await foreach (var user in usersPager.ConfigureAwait(false))
+			var users = await cache.GetOrFetchUsersAsync(async () =>
 			{
-				var rolesPager = await client.Users.Roles.ListAsync(
-				user.UserId ?? string.Empty, new ListUserRolesRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
-				var roles = new List<string>();
-				await foreach (var role in rolesPager.ConfigureAwait(false))
+				var client = await GetManagementClientAsync(cancellationToken).ConfigureAwait(false);
+				var usersPager = await client.Users.ListAsync(new ListUsersRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
+				var result = new List<UserWithRolesDto>();
+				await foreach (var user in usersPager.ConfigureAwait(false))
 				{
-					roles.Add(role.Name ?? string.Empty);
+					var rolesPager = await client.Users.Roles.ListAsync(
+					user.UserId ?? string.Empty, new ListUserRolesRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
+					var roles = new List<string>();
+					await foreach (var role in rolesPager.ConfigureAwait(false))
+					{
+						roles.Add(role.Name ?? string.Empty);
+					}
+					result.Add(new UserWithRolesDto(
+					user.UserId ?? string.Empty,
+					user.Email ?? string.Empty,
+					user.Name ?? user.Email ?? string.Empty,
+					roles));
 				}
-				result.Add(new UserWithRolesDto(
-				user.UserId ?? string.Empty,
-				user.Email ?? string.Empty,
-				user.Name ?? user.Email ?? string.Empty,
-				roles));
-			}
-			return Result.Ok<IReadOnlyList<UserWithRolesDto>>(result);
+				return result;
+			}, cancellationToken).ConfigureAwait(false);
+			return Result.Ok<IReadOnlyList<UserWithRolesDto>>(users);
 		}
 		catch (OperationCanceledException)
 		{
@@ -78,6 +84,7 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 			request.UserId,
 			new AssignUserRolesRequestContent { Roles = [request.RoleId] },
 			cancellationToken: cancellationToken).ConfigureAwait(false);
+			await cache.InvalidateUsersAsync(CancellationToken.None).ConfigureAwait(false);
 			return Result.Ok();
 		}
 		catch (OperationCanceledException)
@@ -109,6 +116,7 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 			request.UserId,
 			new DeleteUserRolesRequestContent { Roles = [request.RoleId] },
 			cancellationToken: cancellationToken).ConfigureAwait(false);
+			await cache.InvalidateUsersAsync(CancellationToken.None).ConfigureAwait(false);
 			return Result.Ok();
 		}
 		catch (OperationCanceledException)
@@ -135,13 +143,17 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 	{
 		try
 		{
-			var client = await GetManagementClientAsync(cancellationToken).ConfigureAwait(false);
-			var rolesPager = await client.Roles.ListAsync(new ListRolesRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
-			var roles = new List<RoleDto>();
-			await foreach (var role in rolesPager.ConfigureAwait(false))
+			var roles = await cache.GetOrFetchRolesAsync(async () =>
 			{
-				roles.Add(new RoleDto(role.Id ?? string.Empty, role.Name ?? string.Empty));
-			}
+				var client = await GetManagementClientAsync(cancellationToken).ConfigureAwait(false);
+				var rolesPager = await client.Roles.ListAsync(new ListRolesRequestParameters(), cancellationToken: cancellationToken).ConfigureAwait(false);
+				var result = new List<RoleDto>();
+				await foreach (var role in rolesPager.ConfigureAwait(false))
+				{
+					result.Add(new RoleDto(role.Id ?? string.Empty, role.Name ?? string.Empty));
+				}
+				return result;
+			}, cancellationToken).ConfigureAwait(false);
 			return Result.Ok<IReadOnlyList<RoleDto>>(roles);
 		}
 		catch (OperationCanceledException)

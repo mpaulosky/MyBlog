@@ -16,7 +16,8 @@ public enum ResultErrorCode
 	Concurrency = 1,
 	NotFound = 2,
 	Validation = 3,
-	Conflict = 4
+	Conflict = 4,
+	Unauthorized = 5
 }
 
 public class Result

@@ -18,6 +18,7 @@ global using Microsoft.Extensions.Caching.Memory;
 
 global using MyBlog.Domain.Entities;
 global using MyBlog.Domain.Interfaces;
+global using MyBlog.Domain.ValueObjects;
 global using MyBlog.Web.Data;
 global using MyBlog.Web.Infrastructure.Caching;
 

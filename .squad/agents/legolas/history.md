@@ -748,6 +748,7 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 **Overall assessment:** The structural changes (layout, nav, component design system, imports cleanup) are sound. Two CSS bugs in `input.css` need fixing before these can be packaged — both relate to dark mode text visibility on `h1/h2/h3` and `p` base styles.
 
 **Rule reinforced:** Base layer `h*` and `p` rules must always pair a light-mode text colour with a visibly contrasting `dark:text-*` colour. Never set `dark:text-primary-950` (darkest shade) on a surface that is already `dark:bg-primary-950` or `dark:bg-primary-800`.
+
 ## Learnings
 
 ### 2025-07 — PR #295 Review (dark-mode colours + PageHeadingComponent)
@@ -776,3 +777,77 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 6. **`form-input`/`form-label` bump to `text-lg font-semibold`** — Unusually large/bold for form field text; worth a visual QA check.
 
 **Verdict:** Approved with concerns (items 1, 2, 3 are the meaningful ones for follow-up).
+
+### 2025-07 — Issue #296: Auto-fill Author on Create Post page
+
+**What I implemented:**
+
+- Replaced the manual `Author` text input in `Create.razor` with auto-population from `AuthenticationStateProvider`
+- Injected `AuthenticationStateProvider` + `RoleClaimsHelper` (via `@using MyBlog.Web.Security`)
+- `OnInitializedAsync` reads `sub`, `name`, `email`, and roles from claims; `_authorName` displayed as read-only above the form
+- `HandleSubmit` builds `PostAuthor` from the private fields and passes it to `CreateBlogPostCommand`
+- `PostFormModel` has no `Author` property; Title + Content only
+
+**bUnit test fixes:**
+
+- Created `TestAuthenticationStateProvider` (implements `AuthenticationStateProvider`) in `tests/Web.Tests.Bunit/Testing/` to satisfy the DI injection that `Create.razor` requires
+- Registered it as a singleton in `RazorSmokeTests` constructor
+- Updated `RenderWithUser` to call `_authProvider.SetUser(principal)` before rendering
+- Updated Create tests: removed `FindAll("input")[1]` stale references (Author input no longer exists); adjusted `BeGreaterThanOrEqualTo(2)` → `(1)`
+
+**Key patterns to remember:**
+
+- When a Blazor component injects `AuthenticationStateProvider` directly (not just cascading state), bUnit tests need it registered as a DI service — the cascading `Task<AuthenticationState>` alone is not enough
+- `RoleClaimsHelper.GetRoles(user)` handles all Auth0 role claim namespace variations automatically; always prefer it over manual `ClaimTypes.Role` filtering
+- Auth0 `name` claim is "name" (not `ClaimTypes.Name`); fallback to `user.Identity?.Name` handles standard auth
+
+---
+
+### 2025-07 — Issue #300: Restrict blog post editing to post author or Admin
+
+**What I implemented:**
+
+- Injected `AuthenticationStateProvider` into `Edit.razor` alongside existing `ISender` and `NavigationManager`
+- In `OnParametersSetAsync`, after loading the post successfully, extracted the Auth0 `sub` claim with null-safe fallback: `user.FindFirst("sub")?.Value ?? string.Empty`
+- Compared `sub` against `post.AuthorId`; also checked `user.IsInRole("Admin")` for unrestricted admin access
+- Non-authorized users are redirected to `/blog` immediately; no UI changes needed
+
+**bUnit tests added (`tests/Web.Tests.Bunit/Features/EditAclTests.cs`):**
+
+- `EditRedirectsToBlogWhenAuthorIsNotPostOwner` — non-owner Author role → redirected to `/blog`
+- `EditAllowsAccessWhenAuthorIsPostOwner` — matching sub/AuthorId → form rendered
+- `EditAllowsAdminToEditAnyPost` — Admin role → form rendered regardless of AuthorId
+
+**Key patterns to remember:**
+
+- The ACL check must come AFTER `Sender.Send()` completes (post must be loaded before checking `AuthorId`)
+- Existing tests used `AuthorId = string.Empty` and no `sub` claim → `"" == ""` → still pass without modification
+- New dedicated ACL tests use `CreatePrincipalWithSub` helper with an explicit "sub" claim
+- `_Imports.razor` already imports `Microsoft.AspNetCore.Components.Authorization`; no extra `@using` needed in razor files
+- `TestAuthenticationStateProvider.SetUser()` must be called before `Render<>()` so the injected provider returns the right user
+
+**PR:** #302
+
+---
+
+### 2025-07 — Issue #300 (Session 2): Fix Unauthorized UX + server-side bUnit test
+
+**What I fixed:**
+
+- `Edit.razor` `HandleSubmit` had a bug: on `ResultErrorCode.Unauthorized`, it called `Navigation.NavigateTo("/blog")` but then **also** set `_error = result.Error` unconditionally — the error message would never be seen since navigation happens first
+- Changed to: show user-friendly inline error `"You don't have permission to edit this post."` with no navigation (ternary on `Unauthorized` check); consistent with how NotFound and other errors are displayed
+- Rationale: the load-time redirect already prevents most unauthorized access; server-side Unauthorized is an edge case (race condition, token expiry, etc.) where the user deserves to see a message
+
+**bUnit test added:**
+
+- `EditShowsErrorWhenServerReturnsUnauthorized` — mocks `ISender.Send` to return `Result.Fail("...", ResultErrorCode.Unauthorized)`; verifies the permission-denied message appears in the DOM and navigation does NOT fire
+
+**Key patterns to remember:**
+
+- When a result has `ErrorCode == Unauthorized`, show an inline message rather than auto-navigating; the user can click Cancel if they want to leave
+- `ResultErrorCode.Unauthorized = 5` was added to `src/Domain/Abstractions/Result.cs` by Aragorn (Sam) as part of the backend change in this same issue
+- The command `EditBlogPostCommand` now has 5 params: `(Guid Id, string Title, string Content, string CallerUserId, bool CallerIsAdmin)` — all test constructors need updating when this command is referenced
+- NSubstitute: `sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(Result.Fail(...)))` works correctly for typed MediatR requests
+- `cut.WaitForAssertion(...)` is required after `button[type='submit'].Click()` to await the async handler
+
+**Branch:** `squad/300-restrict-blog-post-edit-to-author-or-admin`

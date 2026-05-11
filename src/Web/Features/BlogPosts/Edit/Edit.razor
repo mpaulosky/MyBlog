@@ -1,6 +1,7 @@
 @page "/blog/edit/{Id:guid}"
 @inject ISender Sender
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Author,Admin")]
 
@@ -59,29 +60,54 @@ else if (_model is not null)
     private PostFormModel? _model;
     private string? _error;
     private bool _concurrencyError;
+    private string _callerUserId = string.Empty;
+    private bool _callerIsAdmin;
 
     protected override async Task OnParametersSetAsync()
     {
         var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
         if (result.Success)
-            _model = result.Value is not null
-                ? new PostFormModel { Title = result.Value.Title, Content = result.Value.Content }
-                : null;
+        {
+            if (result.Value is not null)
+            {
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+                _callerUserId = user.FindFirst("sub")?.Value ?? string.Empty;
+                _callerIsAdmin = user.IsInRole("Admin");
+                var isAuthor = result.Value.AuthorId == _callerUserId;
+
+                if (!_callerIsAdmin && !isAuthor)
+                {
+                    Navigation.NavigateTo("/blog");
+                    return;
+                }
+
+                _model = new PostFormModel { Title = result.Value.Title, Content = result.Value.Content };
+            }
+            else
+            {
+                _model = null;
+            }
+        }
         else
+        {
             _error = result.Error;
+        }
     }
 
     private async Task HandleSubmit()
     {
         if (_model is null) return;
-        var result = await Sender.Send(new EditBlogPostCommand(Id, _model.Title, _model.Content));
+        var result = await Sender.Send(new EditBlogPostCommand(Id, _model.Title, _model.Content, _callerUserId, _callerIsAdmin));
         if (result.Success)
             Navigation.NavigateTo("/blog");
         else
         {
             if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Concurrency)
                 _concurrencyError = true;
-            _error = result.Error;
+            _error = result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized
+                ? "You don't have permission to edit this post."
+                : result.Error;
         }
     }
 

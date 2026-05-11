@@ -28,17 +28,18 @@ gate stays current as the repo evolves.
 ### What the Pre-Push Gate Enforces
 
 The pre-push hook automatically runs before every `git push` and enforces
-**5 sequential gates**:
+**6 sequential gates**:
 
 | Gate | Rule | Enforced Behavior |
 |------|------|--------|
 | **0** | Squad branch naming | Rejects pushes on non-`squad/{issue}-{slug}` branches; blocks `main` and `dev` |
 | **1** | Untracked source files | Warns if `.razor` or `.cs` files exist but are not staged; prompts to confirm before proceeding |
-| **2** | Release build | Runs `dotnet build MyBlog.slnx --configuration Release`; zero warnings or errors required |
-| **3** | Unit & architecture tests | Runs `tests/Architecture.Tests` and `tests/Unit.Tests` (Release configuration) |
-| **4** | Integration tests | Runs `tests/Integration.Tests` (Release configuration; Docker daemon required) |
+| **2** | dotnet format | Runs `dotnet format --verify-no-changes`; prompts to auto-fix if formatting issues found |
+| **3** | Release build | Runs `dotnet build MyBlog.slnx --configuration Release`; zero warnings or errors required |
+| **4** | Unit & architecture tests | Runs `Architecture.Tests`, `Domain.Tests`, `Web.Tests`, `Web.Tests.Bunit` (Release configuration) |
+| **5** | Integration tests | Runs `Web.Tests.Integration`, `AppHost.Tests` (Release configuration; Docker daemon required) |
 
-**Retry logic:** Gates 2–4 allow up to **3 attempts**. Between failures, the
+**Retry logic:** Gates 3–5 allow up to **3 attempts**. Between failures, the
 hook pauses and prompts you to fix errors, then retries automatically.
 
 ### Branch Naming (Strict)
@@ -55,22 +56,20 @@ pattern, or from `main`/`dev`.
 
 ### Bypassing the Gate (Emergency Only)
 
-In rare cases where you need to push despite failures:
-
 ```bash
 git push --no-verify
 ```
 
-**Use sparingly.** The hook only blocks clearly broken code. Pushing broken code
-to a `squad/*` branch still allows CI to catch it and blocks merge to `dev`, but
-wasting CI cycles is not ideal. Fix locally first.
+⚠️ **PROHIBITED without prior written approval** from Ralph + Aragorn documented
+in a GitHub issue comment. The hook blocks clearly broken code; skipping it
+wastes CI cycles and bypasses team quality gates. Fix locally first.
 
 ## Development Workflow
 
 ### Prerequisites
 
 - **.NET 10 SDK** — [Download](https://dotnet.microsoft.com/en-us/download)
-- **Docker daemon** — Required for `tests/Integration.Tests` (Gates 4)
+- **Docker daemon** — Required for integration tests (Gate 5: `tests/Web.Tests.Integration`, `tests/AppHost.Tests`)
 - **Auth0 account** — See [AUTH0_SETUP.md](AUTH0_SETUP.md) for Auth0 configuration
 
 ### Building and Testing Locally
@@ -79,10 +78,10 @@ wasting CI cycles is not ideal. Fix locally first.
 # Restore dependencies
 dotnet restore MyBlog.slnx
 
-# Build the solution (Release config, as Gate 2 does)
+# Build the solution (Release config, as Gate 3 does)
 dotnet build MyBlog.slnx --configuration Release
 
-# Run all tests (as Gates 3 and 4 do)
+# Run all tests (as Gates 4 and 5 do)
 dotnet test MyBlog.slnx --configuration Release
 
 # Run the application (via Aspire AppHost)
@@ -123,11 +122,14 @@ git symbolic-ref --short HEAD
 2. Run the pre-push gates locally to catch errors early:
 
 ```bash
-# The hook runs automatically on git push, but you can test manually:
-dotnet build MyBlog.slnx --configuration Release
+# Run unit/architecture tests (Gate 4)
 dotnet test tests/Architecture.Tests --configuration Release --no-build
-dotnet test tests/Unit.Tests --configuration Release --no-build
-dotnet test tests/Integration.Tests --configuration Release --no-build  # requires Docker
+dotnet test tests/Domain.Tests --configuration Release --no-build
+dotnet test tests/Web.Tests --configuration Release --no-build
+dotnet test tests/Web.Tests.Bunit --configuration Release --no-build
+# Run integration tests (Gate 5 — requires Docker)
+dotnet test tests/Web.Tests.Integration --configuration Release --no-build
+dotnet test tests/AppHost.Tests --configuration Release --no-build
 ```
 
 1. Push:
@@ -235,7 +237,7 @@ on a new issue branch keeps the repository clean and your work tracking obvious.
 
 ## Troubleshooting
 
-### Build Failures (Gate 2)
+### Build Failures (Gate 3)
 
 - **Warnings treated as errors:** The Release config enforces
   `TreatWarningsAsErrors=true`. Fix warnings first.
@@ -243,14 +245,14 @@ on a new issue branch keeps the repository clean and your work tracking obvious.
   `git add`, then retry.
 - **NuGet restore failure:** Run `dotnet restore` manually and retry.
 
-### Test Failures (Gates 3 & 4)
+### Test Failures (Gates 4 & 5)
 
 - **Architecture test failure:** Check naming conventions (commands →
   `Command`, queries → `Query`, handlers → `Handler`, validators →
   `Validator`).
 - **DateTime equality failures:** Assert individual fields instead of
   whole-record equality; `UtcNow` changes between calls.
-- **Docker not running (Gate 4):** Start Docker Desktop and retry.
+- **Docker not running (Gate 5):** Start Docker Desktop and retry.
 - **Container startup timeout:** Increase Docker resources and verify
   images are pulled.
 
