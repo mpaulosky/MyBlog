@@ -776,3 +776,26 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 6. **`form-input`/`form-label` bump to `text-lg font-semibold`** — Unusually large/bold for form field text; worth a visual QA check.
 
 **Verdict:** Approved with concerns (items 1, 2, 3 are the meaningful ones for follow-up).
+
+### 2025-07 — Issue #296: Auto-fill Author on Create Post page
+
+**What I implemented:**
+
+- Replaced the manual `Author` text input in `Create.razor` with auto-population from `AuthenticationStateProvider`
+- Injected `AuthenticationStateProvider` + `RoleClaimsHelper` (via `@using MyBlog.Web.Security`)
+- `OnInitializedAsync` reads `sub`, `name`, `email`, and roles from claims; `_authorName` displayed as read-only above the form
+- `HandleSubmit` builds `PostAuthor` from the private fields and passes it to `CreateBlogPostCommand`
+- `PostFormModel` has no `Author` property; Title + Content only
+
+**bUnit test fixes:**
+
+- Created `TestAuthenticationStateProvider` (implements `AuthenticationStateProvider`) in `tests/Web.Tests.Bunit/Testing/` to satisfy the DI injection that `Create.razor` requires
+- Registered it as a singleton in `RazorSmokeTests` constructor
+- Updated `RenderWithUser` to call `_authProvider.SetUser(principal)` before rendering
+- Updated Create tests: removed `FindAll("input")[1]` stale references (Author input no longer exists); adjusted `BeGreaterThanOrEqualTo(2)` → `(1)`
+
+**Key patterns to remember:**
+
+- When a Blazor component injects `AuthenticationStateProvider` directly (not just cascading state), bUnit tests need it registered as a DI service — the cascading `Task<AuthenticationState>` alone is not enough
+- `RoleClaimsHelper.GetRoles(user)` handles all Auth0 role claim namespace variations automatically; always prefer it over manual `ClaimTypes.Role` filtering
+- Auth0 `name` claim is "name" (not `ClaimTypes.Name`); fallback to `user.Identity?.Name` handles standard auth
