@@ -17,12 +17,14 @@ public class UserManagementHandlerTests
 
 	private readonly IConfiguration _config = Substitute.For<IConfiguration>();
 	private readonly IHttpClientFactory _httpFactory = Substitute.For<IHttpClientFactory>();
+	private readonly IUserManagementCacheService _cache;
 	private readonly UserManagementHandler _handler;
 
 	public UserManagementHandlerTests()
 	{
 		_config["Auth0:ManagementApiDomain"].Returns((string?)null);
-		_handler = new UserManagementHandler(_config, _httpFactory);
+		_cache = BuildPassThroughCache();
+		_handler = new UserManagementHandler(_config, _httpFactory, _cache);
 	}
 
 	// ── Domain missing ──────────────────────────────────────────────────────────────
@@ -338,6 +340,22 @@ public class UserManagementHandlerTests
 
 	// ── helpers ───────────────────────────────────────────────────────────────────────────────
 
+	private static IUserManagementCacheService BuildPassThroughCache()
+	{
+		var cache = Substitute.For<IUserManagementCacheService>();
+		cache.GetOrFetchUsersAsync(
+				Arg.Any<Func<Task<IReadOnlyList<UserWithRolesDto>>>>(),
+				Arg.Any<CancellationToken>())
+			.Returns(ci => new ValueTask<IReadOnlyList<UserWithRolesDto>>(
+				ci.Arg<Func<Task<IReadOnlyList<UserWithRolesDto>>>>()()));
+		cache.GetOrFetchRolesAsync(
+				Arg.Any<Func<Task<IReadOnlyList<RoleDto>>>>(),
+				Arg.Any<CancellationToken>())
+			.Returns(ci => new ValueTask<IReadOnlyList<RoleDto>>(
+				ci.Arg<Func<Task<IReadOnlyList<RoleDto>>>>()()));
+		return cache;
+	}
+
 	private static UserManagementHandler BuildHandlerWithPrimaryKeys(IHttpClientFactory httpFactory, string audience)
 	{
 		var config = Substitute.For<IConfiguration>();
@@ -348,7 +366,7 @@ public class UserManagementHandlerTests
 		config["Auth0:ManagementApiDomain"].Returns("legacy.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("legacy-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns("legacy-client-secret");
-		return new UserManagementHandler(config, httpFactory);
+		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
 	}
 
 	private static UserManagementHandler BuildHandlerWithLegacyFallback(IHttpClientFactory httpFactory)
@@ -361,7 +379,7 @@ public class UserManagementHandlerTests
 		config["Auth0:ManagementApiDomain"].Returns("legacy.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("legacy-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns("legacy-client-secret");
-		return new UserManagementHandler(config, httpFactory);
+		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
 	}
 
 	private static UserManagementHandler BuildHandlerClientIdMissing()
@@ -369,7 +387,7 @@ public class UserManagementHandlerTests
 		var config = Substitute.For<IConfiguration>();
 		config["Auth0:ManagementApiDomain"].Returns("test.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns((string?)null);
-		return new UserManagementHandler(config, Substitute.For<IHttpClientFactory>());
+		return new UserManagementHandler(config, Substitute.For<IHttpClientFactory>(), BuildPassThroughCache());
 	}
 
 	private static UserManagementHandler BuildHandlerClientSecretMissing()
@@ -378,7 +396,7 @@ public class UserManagementHandlerTests
 		config["Auth0:ManagementApiDomain"].Returns("test.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("test-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns((string?)null);
-		return new UserManagementHandler(config, Substitute.For<IHttpClientFactory>());
+		return new UserManagementHandler(config, Substitute.For<IHttpClientFactory>(), BuildPassThroughCache());
 	}
 
 	private static UserManagementHandler BuildHandlerHttpFail(IHttpClientFactory httpFactory)
@@ -387,7 +405,7 @@ public class UserManagementHandlerTests
 		config["Auth0:ManagementApiDomain"].Returns("test.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("test-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns("test-client-secret");
-		return new UserManagementHandler(config, httpFactory);
+		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
 	}
 
 	private sealed class StubHttpHandler(HttpStatusCode statusCode) : HttpMessageHandler
