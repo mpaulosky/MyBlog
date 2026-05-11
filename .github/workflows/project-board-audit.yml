@@ -11,7 +11,7 @@ permissions:
   repository-projects: read
 
 env:
-  PROJECT_ID: PVT_kwHOA5k0b84BVFTy
+  PROJECT_ID: PVT_kwHOA5k0b84BXZpa
 
 jobs:
   audit:
@@ -21,7 +21,7 @@ jobs:
       - name: Audit project board status drift
         uses: actions/github-script@v9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_PROJECT_TOKEN }}
           script: |
             const getAllProjectItems = async () => {
               const items = [];

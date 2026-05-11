@@ -9,8 +9,8 @@ permissions:
   repository-projects: write
 
 env:
-  PROJECT_ID: PVT_kwHOA5k0b84BVFTy
-  STATUS_FIELD_ID: PVTSSF_lAHOA5k0b84BVFTyzhQjgPk
+  PROJECT_ID: PVT_kwHOA5k0b84BXZpa
+  STATUS_FIELD_ID: PVTSSF_lAHOA5k0b84BXZpazhSmuGY
   BACKLOG_OPTION_ID: f75ad846
 
 jobs:
