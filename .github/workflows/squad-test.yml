@@ -462,7 +462,7 @@ jobs:
           ls -la ~/.cache/ms-playwright/ 2>/dev/null || echo "No playwright cache found"
           echo "dotnet version:"
           dotnet --version
-          
+
           dotnet test tests/AppHost.Tests \
             --configuration Release \
             --no-build \
