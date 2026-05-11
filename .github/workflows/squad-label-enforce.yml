@@ -35,7 +35,7 @@ jobs:
 
             // Handle go: namespace (mutual exclusivity)
             if (appliedLabel.startsWith('go:')) {
-              const otherGoLabels = allLabels.filter(l => 
+              const otherGoLabels = allLabels.filter(l =>
                 l.startsWith('go:') && l !== appliedLabel
               );
 
@@ -97,7 +97,7 @@ jobs:
 
             // Handle release: namespace (mutual exclusivity)
             if (appliedLabel.startsWith('release:')) {
-              const otherReleaseLabels = allLabels.filter(l => 
+              const otherReleaseLabels = allLabels.filter(l =>
                 l.startsWith('release:') && l !== appliedLabel
               );
 
@@ -123,7 +123,7 @@ jobs:
 
             // Handle type: namespace (mutual exclusivity)
             if (appliedLabel.startsWith('type:')) {
-              const otherTypeLabels = allLabels.filter(l => 
+              const otherTypeLabels = allLabels.filter(l =>
                 l.startsWith('type:') && l !== appliedLabel
               );
 
@@ -149,7 +149,7 @@ jobs:
 
             // Handle priority: namespace (mutual exclusivity)
             if (appliedLabel.startsWith('priority:')) {
-              const otherPriorityLabels = allLabels.filter(l => 
+              const otherPriorityLabels = allLabels.filter(l =>
                 l.startsWith('priority:') && l !== appliedLabel
               );
 
