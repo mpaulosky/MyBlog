@@ -98,7 +98,7 @@
 		focus-visible:ring-primary-500;
 	}
 
-	/* Secondary — outline style for neutral / cancel actions. */
+	/* Secondary — solid blue fill for secondary / cancel actions (fixed palette). */
 	.btn-secondary {
 		@apply text-white border border-transparent
 		bg-blue-500 dark:bg-blue-500
@@ -124,7 +124,7 @@
 
 	/* ─── Container / page wrapper ─────────────────────────────────────────── */
 	.container-card {
-		@apply max-w-7xl;
+		@apply mx-auto max-w-7xl px-4;
 	}
 
 	/* ─── Cards / Surfaces ────────────────────────────────────────────────── */
