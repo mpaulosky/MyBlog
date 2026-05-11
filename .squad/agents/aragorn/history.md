@@ -1,3 +1,38 @@
+## 2026-05-11 — PR #302 Gate: reject UI-only edit ACL, route fix to Gandalf
+
+Reviewed PR #302 (`feat(ui): restrict blog post editing to post author or Admin`) against issue #300,
+Copilot feedback, Codecov, and the PR head commit `1dfd970`.
+
+**Verdict:** **CHANGES_REQUESTED.** The PR adds a Blazor-page ownership check in `Edit.razor`, but
+the actual server-side edit contract at PR head still exposes
+`EditBlogPostCommand(Guid Id, string Title, string Content)` and the handler updates the post without
+checking caller identity. Any future or alternate call path that sends the command can bypass the UI
+gate and edit another author's post. The redirect path also fails the acceptance criterion requiring
+an error message or 403 because it silently navigates to `/blog`.
+
+**Action:** Posted a rejection on PR #302 and enforced reviewer lockout. Original authors Legolas and
+Sam are locked out of the next revision cycle for this artifact. **Gandalf** is the named revision
+owner for the fix cycle because the defect is an authorization-boundary failure, not a UI polish
+issue. Codecov showed **+0.10% project coverage** (acceptable; not a blocker).
+
+### Learnings
+
+**PR head is the only truth for the gate.** Local worktree state had later, unpushed fixes that add
+`CallerUserId` / `CallerIsAdmin` and enforce handler-level authorization, but the live PR still
+pointed at `1dfd970` without those commits. Gate decisions must be made from the PR head SHA, never
+from newer local commits on the same branch.
+
+**UI-only ownership checks are never sufficient for edit authorization.** In MyBlog's Blazor +
+MediatR architecture, page-level `[Authorize]` and component-side redirects only protect that route.
+The write path must independently enforce ownership/admin rights in the command handler (or a shared
+authorization pipeline), with tests at the handler boundary.
+
+**Silent redirects do not satisfy auth UX acceptance criteria.** When an issue says "redirect with an
+error or show 403," a bare `NavigateTo("/blog")` is incomplete even if the ACL decision itself is
+correct. The user must get explicit denial feedback.
+
+---
+
 ## 2026-05-15 — PR #295: Arbitrate Legolas/Gimli findings; push branch squad/291-input-css-fine-tuning
 
 Boromir requested review of whether branch changes affected tests or other functionality, then stage/push/create PR if clean.
