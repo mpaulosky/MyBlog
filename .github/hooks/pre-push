@@ -152,6 +152,7 @@ fi
 # Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
   "tests/Web.Tests.Integration/Web.Tests.Integration.csproj"
+  "tests/AppHost.Tests/AppHost.Tests.csproj"
 )
 
 echo -e "\n${CYAN}🐋 Checking Docker availability for integration tests...${RESET}"

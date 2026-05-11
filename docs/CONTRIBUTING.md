@@ -28,17 +28,18 @@ gate stays current as the repo evolves.
 ### What the Pre-Push Gate Enforces
 
 The pre-push hook automatically runs before every `git push` and enforces
-**5 sequential gates**:
+**6 sequential gates**:
 
 | Gate | Rule | Enforced Behavior |
 |------|------|--------|
 | **0** | Squad branch naming | Rejects pushes on non-`squad/{issue}-{slug}` branches; blocks `main` and `dev` |
 | **1** | Untracked source files | Warns if `.razor` or `.cs` files exist but are not staged; prompts to confirm before proceeding |
-| **2** | Release build | Runs `dotnet build MyBlog.slnx --configuration Release`; zero warnings or errors required |
-| **3** | Unit & architecture tests | Runs `tests/Architecture.Tests` and `tests/Unit.Tests` (Release configuration) |
-| **4** | Integration tests | Runs `tests/Integration.Tests` (Release configuration; Docker daemon required) |
+| **2** | Code formatting | Runs `dotnet format MyBlog.slnx --verify-no-changes`; offers auto-fix |
+| **3** | Release build | Runs `dotnet build MyBlog.slnx --configuration Release`; zero warnings or errors required |
+| **4** | Unit & architecture tests | Runs `Architecture.Tests`, `Domain.Tests`, `Web.Tests`, `Web.Tests.Bunit` (Release, no Docker) |
+| **5** | Integration & E2E tests | Runs `Web.Tests.Integration`, `AppHost.Tests` (Release configuration; Docker daemon required) |
 
-**Retry logic:** Gates 2–4 allow up to **3 attempts**. Between failures, the
+**Retry logic:** Gates 3–5 allow up to **3 attempts**. Between failures, the
 hook pauses and prompts you to fix errors, then retries automatically.
 
 ### Branch Naming (Strict)
@@ -53,24 +54,23 @@ git checkout -b squad/103-add-blog-search-feature
 The pre-push hook rejects any push from a branch that does not match this
 pattern, or from `main`/`dev`.
 
-### Bypassing the Gate (Emergency Only)
+### Bypassing the Gate
 
-In rare cases where you need to push despite failures:
+> ⛔ **`git push --no-verify` is prohibited** without prior written approval
+> from Ralph + Aragorn documented in a GitHub issue comment.
 
-```bash
-git push --no-verify
-```
-
-**Use sparingly.** The hook only blocks clearly broken code. Pushing broken code
-to a `squad/*` branch still allows CI to catch it and blocks merge to `dev`, but
-wasting CI cycles is not ideal. Fix locally first.
+The hook cannot technically block a bypass from inside the hook itself, but
+undocumented bypasses are a retro action item. If you are genuinely blocked by
+a transient environment issue (Docker unavailable, SDK mismatch), see the
+[Pre-Push Process Playbook](../.squad/playbooks/pre-push-process.md) for
+approved workarounds. Fix the root cause — do not bypass the gate.
 
 ## Development Workflow
 
 ### Prerequisites
 
 - **.NET 10 SDK** — [Download](https://dotnet.microsoft.com/en-us/download)
-- **Docker daemon** — Required for `tests/Integration.Tests` (Gates 4)
+- **Docker daemon** — Required for `Web.Tests.Integration` and `AppHost.Tests` (Gate 5)
 - **Auth0 account** — See [AUTH0_SETUP.md](AUTH0_SETUP.md) for Auth0 configuration
 
 ### Building and Testing Locally
@@ -126,8 +126,11 @@ git symbolic-ref --short HEAD
 # The hook runs automatically on git push, but you can test manually:
 dotnet build MyBlog.slnx --configuration Release
 dotnet test tests/Architecture.Tests --configuration Release --no-build
-dotnet test tests/Unit.Tests --configuration Release --no-build
-dotnet test tests/Integration.Tests --configuration Release --no-build  # requires Docker
+dotnet test tests/Domain.Tests --configuration Release --no-build
+dotnet test tests/Web.Tests --configuration Release --no-build
+dotnet test tests/Web.Tests.Bunit --configuration Release --no-build
+dotnet test tests/Web.Tests.Integration --configuration Release --no-build  # requires Docker
+dotnet test tests/AppHost.Tests --configuration Release --no-build           # requires Docker
 ```
 
 1. Push:
@@ -243,14 +246,14 @@ on a new issue branch keeps the repository clean and your work tracking obvious.
   `git add`, then retry.
 - **NuGet restore failure:** Run `dotnet restore` manually and retry.
 
-### Test Failures (Gates 3 & 4)
+### Test Failures (Gates 4 & 5)
 
 - **Architecture test failure:** Check naming conventions (commands →
   `Command`, queries → `Query`, handlers → `Handler`, validators →
   `Validator`).
 - **DateTime equality failures:** Assert individual fields instead of
   whole-record equality; `UtcNow` changes between calls.
-- **Docker not running (Gate 4):** Start Docker Desktop and retry.
+- **Docker not running (Gate 5):** Start Docker Desktop and retry.
 - **Container startup timeout:** Increase Docker resources and verify
   images are pulled.
 

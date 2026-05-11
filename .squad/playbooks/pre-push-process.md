@@ -58,20 +58,18 @@ Before running `git push`, verify:
 4. **Release build passes locally** — Gate 3 runs Release (not Debug)
 
    ```bash
-   dotnet build IssueTrackerApp.slnx --configuration Release
+   dotnet build MyBlog.slnx --configuration Release
    ```
 
    If build fails, run `.github/prompts/build-repair.prompt.md` to fix.
 
-5. **Unit tests pass** — Gate 4 runs 6 test projects
+5. **Unit tests pass** — Gate 4 runs 4 test projects
 
    ```bash
    dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build
    dotnet test tests/Domain.Tests/Domain.Tests.csproj --configuration Release --no-build
    dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build
-   dotnet test tests/Persistence.MongoDb.Tests/Persistence.MongoDb.Tests.csproj --configuration Release --no-build
    dotnet test tests/Web.Tests/Web.Tests.csproj --configuration Release --no-build
-   dotnet test tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.csproj --configuration Release --no-build
    ```
 
 6. **Docker is running** — Gate 5 requires Docker for integration tests
@@ -90,8 +88,8 @@ When you execute `git push`, the hook runs automatically:
 | **1** | Untracked source files | `.razor`/`.cs` files not staged (prompts y/N)                            |
 | **2** | dotnet format          | Any file requires formatting changes (prompts auto-fix y/N)              |
 | **3** | Release build          | `dotnet build --configuration Release` fails (3 attempts)                |
-| **4** | Unit/Arch/bUnit tests  | Any of 6 test projects fail (3 attempts)                                 |
-| **5** | Integration tests      | Any of 4 integration test projects fail; Docker not running (3 attempts) |
+| **4** | Unit/Arch/bUnit tests  | Any of 4 test projects fail (3 attempts)                                 |
+| **5** | Integration tests      | Any of 2 integration test projects fail; Docker not running (3 attempts) |
 
 ### Gate 4 — Test Projects (Unit)
 
@@ -99,21 +97,17 @@ When you execute `git push`, the hook runs automatically:
 tests/Architecture.Tests/Architecture.Tests.csproj
 tests/Domain.Tests/Domain.Tests.csproj
 tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj
-tests/Persistence.MongoDb.Tests/Persistence.MongoDb.Tests.csproj
 tests/Web.Tests/Web.Tests.csproj
-tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.csproj
 ```
 
 ### Gate 5 — Integration Test Projects (Docker Required)
 
 ```text
-tests/Persistence.MongoDb.Tests.Integration/Persistence.MongoDb.Tests.Integration.csproj
 tests/Web.Tests.Integration/Web.Tests.Integration.csproj
-tests/Persistence.AzureStorage.Tests.Integration/Persistence.AzureStorage.Tests.Integration.csproj
 tests/AppHost.Tests/AppHost.Tests.csproj
 ```
 
-These use Testcontainers (mongo:7.0, Azurite) and Aspire DCP. Docker daemon MUST be running.
+These use Testcontainers and Aspire DCP. Docker daemon MUST be running.
 
 ## Retry Behavior
 
@@ -173,7 +167,7 @@ chmod +x .git/hooks/pre-push
 - ❌ **Bypassing the hook** with `git push --no-verify` — CI will catch it, wasting time
 - ❌ **Committing unformatted code** — Gate 2 blocks the push; run `dotnet format MyBlog.slnx` first
 - ❌ **Running Debug build only** — CI uses Release; Debug hides missing files
-- ❌ **Pushing without Docker** — Gate 4 will block; start Docker first
+- ❌ **Pushing without Docker** — Gate 5 will block; start Docker first
 - ❌ **Ignoring untracked files** — They're invisible to CI and will cause failures
 - ❌ **Committing to `main` directly** — Gate 0 blocks this; use `squad/{issue}-{slug}` branches
 
