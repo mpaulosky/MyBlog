@@ -13,7 +13,7 @@
 /* @theme inline generates utility classes (bg-primary-400, text-primary-50,  */
 /* etc.) whose values resolve from CSS vars at runtime.                       */
 @theme inline {
-	--color-primary-50:  var(--primary-50);
+	--color-primary-50: var(--primary-50);
 	--color-primary-100: var(--primary-100);
 	--color-primary-200: var(--primary-200);
 	--color-primary-300: var(--primary-300);
@@ -29,7 +29,7 @@
 @layer base {
 	/* ─── Common element standardization ──────────────────────────────────── */
 	body {
-		@apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50;
+		@apply bg-primary-50 dark:bg-primary-950 text-primary-900 dark:text-primary-50;
 	}
 
 	h1 {
@@ -50,15 +50,21 @@
 }
 
 @layer components {
+	/* ─── Nav ──────────────────────────────────────────────────────--------- */
+	nav {
+		@apply fixed top-0 left-0 right-0 z-50
+		bg-primary-500 dark:bg-primary-900
+		border-b-2 border-primary-300 dark:border-primary-700;
+	}
+
 	/* ─── Nav Links ───────────────────────────────────────────────────────── */
 	.nav-link {
-		@apply text-primary-900 dark:text-primary-500
-		hover:text-primary-700 dark:hover:text-primary-200
-		transition-colors;
+		@apply text-primary-950 dark:text-primary-50
+		hover:text-primary-700 dark:hover:text-primary-200;
 	}
 
 	.nav-link.active {
-		@apply font-bold border-b-2 border-primary-900 dark:border-primary-500;
+		@apply font-bold border-b-2 border-primary-950 dark:border-primary-500;
 	}
 
 	/* ─── Footer ─────────────────────────────────────────────────────────── */
@@ -70,33 +76,75 @@
 	}
 
 	/* ─── Buttons ─────────────────────────────────────────────────────────── */
+	/* Base shape, spacing, and interactive states shared across all variants. */
+	.btn-primary,
+	.btn-secondary,
+	.btn-warning,
+	.btn-destructive {
+		@apply inline-flex items-center gap-2
+		px-4 py-2 rounded-md font-medium
+		cursor-pointer select-none
+		transition-colors
+		focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1
+		disabled:opacity-50 disabled:cursor-not-allowed
+		active:scale-[0.98];
+	}
+
+	/* Primary — themed solid fill (Bootstrap btn-primary feel). */
 	.btn-primary {
 		@apply bg-primary-600 dark:bg-primary-500
 		text-white
 		hover:bg-primary-700 dark:hover:bg-primary-400
-		rounded-md px-4 py-2 font-medium transition-colors;
+		focus-visible:ring-primary-500;
+	}
+
+	/* Secondary — outline style for neutral / cancel actions. */
+	.btn-secondary {
+		@apply bg-transparent
+		border border-primary-400 dark:border-primary-500
+		text-primary-900 dark:text-primary-50
+		hover:bg-primary-100 dark:hover:bg-primary-700
+		focus-visible:ring-primary-400;
+	}
+
+	/* Warning — amber fixed palette for caution actions (not theme-dependent). */
+	.btn-warning {
+		@apply bg-amber-400 dark:bg-amber-500
+		text-amber-950
+		hover:bg-amber-500 dark:hover:bg-amber-400
+		focus-visible:ring-amber-400
+		border border-transparent;
+	}
+
+	/* Destructive — red fixed palette for irreversible / delete actions. */
+	.btn-destructive {
+		@apply bg-red-600 dark:bg-red-500
+		text-white
+		hover:bg-red-700 dark:hover:bg-red-400
+		focus-visible:ring-red-500
+		border border-transparent;
 	}
 
 	/* ─── Cards / Surfaces ────────────────────────────────────────────────── */
 	.card {
-		@apply bg-white
-		dark:bg-gray-900
+		@apply bg-primary-500 dark:bg-primary-500
 		border border-primary-200 dark:border-primary-800
 		rounded-lg shadow;
 	}
 
 	/* ─── Tables ──────────────────────────────────────────────────────────── */
 	.table-wrapper {
-		@apply rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden;
+		@apply rounded-lg shadow bg-primary-50 dark:bg-primary-800 overflow-hidden;
 	}
 
 	.data-table {
-		@apply w-full text-sm text-left text-gray-900 dark:text-gray-50;
+		@apply w-full text-sm text-left text-primary-900 dark:text-primary-50;
 
 		& thead {
-			@apply bg-primary-500 dark:bg-primary-900
-			text-primary-900 dark:text-primary-500
-			border-b border-primary-300 dark:border-primary-700;
+			@apply border-b
+			bg-primary-500 dark:bg-primary-900
+			text-primary-900 dark:text-primary-50
+			border-primary-900 dark:border-primary-50;
 		}
 
 		& thead th {
@@ -104,9 +152,11 @@
 		}
 
 		& tbody tr {
-			@apply odd:bg-white odd:dark:bg-gray-800 even:bg-gray-50 even:dark:bg-gray-900
-			border-b border-gray-200 dark:border-gray-700
-			hover:bg-primary-100 dark:hover:bg-primary-800 transition;
+			@apply border-b
+			odd:bg-primary-300 odd:dark:bg-primary-800
+			even:bg-primary-100 even:dark:bg-primary-900
+			border-primary-900 dark:border-primary-50
+			hover:bg-primary-400 dark:hover:bg-primary-800 transition;
 		}
 
 		& tbody td {
@@ -116,7 +166,7 @@
 
 	/* ─── Forms ───────────────────────────────────────────────────────────── */
 	.form-panel {
-		@apply rounded-lg shadow p-6 bg-white dark:bg-gray-800 max-w-2xl;
+		@apply rounded-lg shadow p-6 bg-primary-50 dark:bg-primary-800 max-w-2xl;
 	}
 
 	.form-group {
@@ -124,23 +174,15 @@
 	}
 
 	.form-label {
-		@apply block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1;
+		@apply block text-sm font-medium text-primary-900 dark:text-primary-50 mb-1;
 	}
 
 	.form-input {
-		@apply w-full rounded border border-gray-300 dark:border-gray-600
-		bg-white dark:bg-gray-700
-		text-gray-900 dark:text-gray-50
+		@apply w-full rounded border border-primary-300 dark:border-primary-600
+		bg-primary-50 dark:bg-primary-700
+		text-primary-900 dark:text-primary-50
 		px-3 py-2 text-sm
 		focus:outline-none focus:ring-2 focus:ring-primary-400;
-	}
-
-	/* ─── Secondary button (Cancel / neutral action) ──────────────────────── */
-	.btn-secondary {
-		@apply px-4 py-2 rounded font-medium
-		border border-gray-300 dark:border-gray-600
-		text-gray-900 dark:text-gray-50
-		hover:bg-gray-100 dark:hover:bg-gray-700 transition;
 	}
 
 	/* ─── Alert banners ───────────────────────────────────────────────────── */
@@ -159,7 +201,7 @@
 	}
 
 	/* ─── Blazor form validation ──────────────────────────────────────────── */
-	.valid.modified:not([type=checkbox]) {
+	.valid.modified:not([type="checkbox"]) {
 		@apply outline-1 outline-green-500;
 	}
 
