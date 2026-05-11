@@ -2298,6 +2298,7 @@ The `squad-mark-released.yml` workflow uses `actions/github-script` to call the 
 ## Setup
 
 To configure the secret:
+
 1. Create a classic PAT at https://github.com/settings/tokens with `project` scope
 2. Add it as repository secret: Settings → Secrets and variables → Actions → `GH_PROJECT_TOKEN`
 
