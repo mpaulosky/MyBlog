@@ -46,12 +46,13 @@ public class EditAclTests : BunitContext
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
 		// Act
-		RenderWithUser<Edit>(
+		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub("auth0|some-user", ["Author"]),
 				parameters => parameters.Add(p => p.Id, postId));
 
 		// Assert
 		navigation.Uri.Should().EndWith("/blog");
+		cut.Markup.Should().NotContain("Loading...");
 	}
 
 	[Fact]
