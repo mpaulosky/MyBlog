@@ -196,7 +196,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new EditBlogPostCommand(Guid.NewGuid(), "Title", "Content"), next, CancellationToken.None);
+			new EditBlogPostCommand(Guid.NewGuid(), "Title", "Content", string.Empty, false), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -213,7 +213,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new EditBlogPostCommand(Guid.Empty, "", ""), next, CancellationToken.None);
+			new EditBlogPostCommand(Guid.Empty, "", "", string.Empty, false), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeFalse();

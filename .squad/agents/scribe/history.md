@@ -81,3 +81,45 @@ None — no new patterns or conventions introduced this session. This was a rele
 
 - **Boromir:** Fix CI issues #268 (add `PROJECT_TOKEN` secret, update `squad-mark-released.yml`) and #269 (PR-based sync workflow for `main`)
 - **PR #267:** Awaiting reviewer merge to `dev`
+
+---
+
+## Session: Sprint 19 Feature Delivery (Round 2 + 3) — 2026-05-11
+
+### Session Summary
+
+Ralph activated for continuous board monitoring. Sprint 19 issues triaged and fully delivered across 3 work-check rounds.
+
+**Issues Resolved:** #293, #296, #299, #300 (all Sprint 19)
+**PRs Merged:** #297, #298, #301, #302
+
+### Agents & Issues
+
+- **Sam + Legolas (#293 → PR #297):** ✅ L1+L2 caching for UserManagement Auth0 API calls. `IUserManagementCacheService` + `UserManagementCacheService` (30s L1 / 2min L2). Aragorn squash-merged after all 17 CI checks green.
+- **Sam (#296 → PR #298):** ✅ `PostAuthor` value object in `src/Domain/ValueObjects/`. `BlogPost.Author: PostAuthor`, `BlogPostDto` flattened (AuthorId/Name/Email/Roles), `CreateBlogPostCommand` carries PostAuthor. All 221 tests pass.
+- **Legolas (#296 → PR #298):** ✅ `Create.razor` removes manual Author input; `AuthenticationStateProvider` injected; auto-populates PostAuthor from Auth0 claims (sub/name/email/roles via `RoleClaimsHelper`). 84 bUnit tests pass.
+- **Boromir (#299 → PR #301):** ✅ Pre-push gate source hook + docs alignment. Added `AppHost.Tests` to Gate 5 in `.github/hooks/pre-push`. Updated `CONTRIBUTING.md` gate table. Playbook already correct. Closed duplicate PR #303.
+- **Legolas + Sam (#300 → PR #302):** ✅ Edit.razor author ACL. `AuthenticationStateProvider` injected; after loading post, checks user's sub claim vs `post.AuthorId`. Non-owners (non-Admin) redirect to `/blog`. 3 new bUnit tests cover owner/non-owner/Admin scenarios.
+- **Aragorn:** Reviewed and merged PRs #297, #298, #301, #302. Authorized issue #300 for Sprint 19 by removing `go:needs-research`. Created follow-up issue #300 from ADR notes. Posted Sprint 19 delivery summary on issue #291.
+
+### Cross-Team Decisions
+
+- **PostAuthor**: Breaking schema change — existing MongoDB blogposts collection needs drop/recreate in dev. Prod migration deferred.
+- **AppHost.Tests in pre-push Gate 5**: Source hook already had the fix; installed hook was stale. Running `scripts/install-hooks.sh` refreshes automatically.
+- **Edit.razor ACL**: UI-level check for Sprint 19; server-side handler ACL deferred to future sprint.
+
+### Board State at Session End
+
+| Item | Status |
+|------|--------|
+| Issue #293 | ✅ Closed — PR #297 squash-merged |
+| Issue #296 | ✅ Closed — PR #298 squash-merged |
+| Issue #299 | ✅ Closed — PR #301 squash-merged |
+| Issue #300 | ✅ Closed — PR #302 squash-merged |
+| PR #303 | ❌ Closed as duplicate (superceded by PR #301) |
+
+### Blockers & Next Steps
+
+- None — board clear. Sprint 19 complete.
+- Follow-up for future sprint: server-side ACL enforcement in `EditBlogPostHandler`.
+- PostAuthor schema migration script needed before production deployment.

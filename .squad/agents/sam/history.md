@@ -226,3 +226,62 @@ Replace `string Author` on `BlogPost` with an immutable `PostAuthor` value objec
 
 - MongoDB `OwnsOne` with `HasElementName` changes the stored field name from a flat `"Author"` string to a sub-document `{"AuthorId":...,"AuthorName":...}`.
 - Existing documents fail to deserialize; always document the migration strategy (drop/recreate in dev; script in prod) in the PR.
+
+## 2026-06-11 — Issue #300: Audit — Restrict Blog Post Editing to Author or Admin
+
+### Task
+
+Audit and confirm correctness of the backend server-side authorization
+for issue #300 (restrict blog post editing to post author or Admin).
+
+### Findings
+
+The backend implementation was already complete in commit `ee0aafb`:
+
+1. **`EditBlogPostCommand`** carries `CallerUserId` (Auth0 sub claim) and `CallerIsAdmin`.
+2. **`EditBlogPostHandler`** enforces the rule before calling `repo.UpdateAsync`:
+
+   ```csharp
+   if (!request.CallerIsAdmin && post.Author.Id != request.CallerUserId)
+       return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
+   ```
+
+3. **`tests/Web.Tests/Handlers/EditBlogPostHandlerTests.cs`** covers all three
+   scenarios: author edits own post (success), admin edits any post (success),
+   non-admin non-author returns `ResultErrorCode.Unauthorized`.
+4. All 154 `Web.Tests` pass.
+
+### Authorization placement decision
+
+The check belongs in the **handler**, not in the FluentValidation validator,
+because the rule requires the persisted `post.Author.Id` — unavailable at
+validation time. Putting it in the handler makes it impossible to bypass via
+alternative command dispatchers.
+
+### Inbox notes written
+
+- `.squad/decisions/inbox/sam-issue300-authorization.md`
+- `.squad/decisions/inbox/sam-issue300-tests.md`
+
+### Learnings
+
+#### Handler is the correct home for post-load authorization checks
+
+- If an authorization rule depends on persisted entity state (e.g., "does the
+  caller own this record?"), enforce it inside the handler after loading the
+  entity — not in a validator, not in the UI layer.
+- This keeps the rule on every code path and keeps validators focused on
+  data shape.
+
+#### `CallerUserId` should NOT be validated in FluentValidation
+
+- An empty `CallerUserId` with `CallerIsAdmin = false` will still fail the
+  handler's auth check (`"" != post.Author.Id`), so no separate validator rule
+  is required.
+- Only validate command properties that can be wrong regardless of persisted state.
+
+#### Test files written with implementation commit are still Gimli's long-term property
+
+- For atomic commits, writing handler tests alongside the implementation is
+  acceptable. Note the crossing in an inbox file so Gimli can audit or extend
+  coverage as needed.

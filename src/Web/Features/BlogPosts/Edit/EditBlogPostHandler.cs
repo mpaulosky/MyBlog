@@ -25,6 +25,10 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 			var post = await repo.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 			if (post is null)
 				return Result.Fail($"BlogPost {request.Id} not found.");
+
+			if (!request.CallerIsAdmin && post.Author.Id != request.CallerUserId)
+				return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
+
 			post.Update(request.Title, request.Content);
 			await repo.UpdateAsync(post, cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
