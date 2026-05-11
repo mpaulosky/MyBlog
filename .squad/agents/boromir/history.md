@@ -1425,3 +1425,31 @@ Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md
 
 - `docs/CONTRIBUTING.md` is a third maintenance surface beyond the hook and playbook. All three must be checked on hook changes.
 - Gate numbering in docs must match the hook source exactly (0–5, not 0–4).
+
+### Issue #305 — PR #306 Blocker: Released Option Did Not Exist on Project Board (2026-05-11)
+
+**Root cause:** `RELEASED_OPTION_ID: 98236657` on the `squad/305-sync-board-option-ids` branch was
+identical to `DONE_OPTION_ID`. The "Released" status option did not exist on the MyBlog project board —
+the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`).
+
+**Changes made:**
+
+- Added "Released" (BLUE) option to the project board Status field via `updateProjectV2Field` GraphQL
+  mutation. New ID: `90af7f3b`.
+- Updated `RELEASED_OPTION_ID` to `90af7f3b` in both:
+  - `.github/workflows/project-board-automation.yml`
+  - `.github/workflows/squad-mark-released.yml`
+- `DONE_OPTION_ID` (`98236657`) left untouched.
+- Committed and pushed to `origin/squad/305-sync-board-option-ids`; all 6 pre-push gates passed
+  (49 tests, 0 failures).
+
+**Learnings:**
+
+- **Verify board options exist before hardcoding option IDs** — A phantom ID causes silent no-ops or
+  runtime GraphQL errors. Always query `field(name: "Status") { options { id name } }` to confirm IDs.
+- **Unset `GH_TOKEN` for board GraphQL** — The environment `GH_TOKEN` may lack `read:org`/`project`
+  scopes. The keyring token (set via `gh auth login`) carries full project scopes.
+- **`updateProjectV2Field` mutation: no `projectId` argument** — Input only takes `fieldId` +
+  `singleSelectOptions`. Pass all existing option IDs to preserve them; omit `id` for new options.
+- **Cherry-pick workflow for PR fixes:** stash → checkout origin branch → cherry-pick fix commit →
+  rename to `squad/{issue}-{slug}` → push. Cleaner than diverging 8 commits onto the remote.
