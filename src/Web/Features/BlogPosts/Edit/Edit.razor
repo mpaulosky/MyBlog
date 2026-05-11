@@ -26,9 +26,9 @@
     </div>
 }
 
-@if (_model is null && _error is null)
+@if (_isLoading)
 {
-    <p class="text-gray-600 dark:text-gray-400">Loading...</p>
+    <p class="text-gray-600 dark:text-gray-400" role="status">Loading...</p>
 }
 else if (_model is not null)
 {
@@ -60,38 +60,47 @@ else if (_model is not null)
     private PostFormModel? _model;
     private string? _error;
     private bool _concurrencyError;
+    private bool _isLoading = true;
     private string _callerUserId = string.Empty;
     private bool _callerIsAdmin;
 
     protected override async Task OnParametersSetAsync()
     {
-        var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
-        if (result.Success)
+        try
         {
-            if (result.Value is not null)
+            var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
+            if (result.Success)
             {
-                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-                var user = authState.User;
-                _callerUserId = user.FindFirst("sub")?.Value ?? string.Empty;
-                _callerIsAdmin = user.IsInRole("Admin");
-                var isAuthor = result.Value.AuthorId == _callerUserId;
+                if (result.Value is not null)
+                {
+                    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                    var user = authState.User;
+                    _callerUserId = user.FindFirst("sub")?.Value ?? string.Empty;
+                    _callerIsAdmin = user.IsInRole("Admin");
+                    var isAuthor = result.Value.AuthorId == _callerUserId;
 
-                if (!_callerIsAdmin && !isAuthor)
+                    if (!_callerIsAdmin && !isAuthor)
+                    {
+                        Navigation.NavigateTo("/blog");
+                        return;
+                    }
+
+                    _model = new PostFormModel { Title = result.Value.Title, Content = result.Value.Content };
+                }
+                else
                 {
                     Navigation.NavigateTo("/blog");
                     return;
                 }
-
-                _model = new PostFormModel { Title = result.Value.Title, Content = result.Value.Content };
             }
             else
             {
-                _model = null;
+                _error = result.Error;
             }
         }
-        else
+        finally
         {
-            _error = result.Error;
+            _isLoading = false;
         }
     }
 

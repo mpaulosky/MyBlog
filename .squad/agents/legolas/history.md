@@ -851,3 +851,33 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 - `cut.WaitForAssertion(...)` is required after `button[type='submit'].Click()` to await the async handler
 
 **Branch:** `squad/300-restrict-blog-post-edit-to-author-or-admin`
+
+---
+
+## 2025-07-19 — Issue #307: Edit Page Loading State Fix
+
+### Problem
+
+`Edit.razor` used `_model is null && _error is null` as the "Loading..." condition. When a post is not found, `OnParametersSetAsync` calls `NavigateTo("/blog")` and `return`s early — never setting `_model` or `_error`. In bUnit (and briefly in real Blazor before circuit navigation completes), the page was permanently stuck on "Loading...".
+
+### Fix Applied
+
+- Added `private bool _isLoading = true;` field
+- Changed template condition from `_model is null && _error is null` to `_isLoading`
+- Added `role="status"` ARIA attribute to the loading paragraph
+- Wrapped `OnParametersSetAsync` body in `try/finally { _isLoading = false; }` to guarantee clearing on ALL exit paths (including early `return` via `NavigateTo`)
+- Updated `EditRedirectsToBlogWhenPostNotFound` bUnit test to assert `cut.Markup.Should().NotContain("Loading...")` after null-post result
+
+### Learnings
+
+**Pattern: `_isLoading` flag for async-loaded Blazor pages**
+
+- Never derive "is loading" from `_model is null && _error is null` — it fails on early-return paths
+- Always use a dedicated `_isLoading` flag with `try/finally` in `OnParametersSetAsync` / `OnInitializedAsync`
+- This pattern must be applied to all async-loaded pages in the codebase (List, Create, ManageRoles, Profile)
+
+**bUnit behaviour**
+
+- `NavigationManager.NavigateTo` in bUnit changes `.Uri` but does NOT unmount the component — so loading states must be explicitly cleared, not relied on navigation to resolve them
+
+**Filed:** `.squad/decisions/inbox/legolas-issue307-ui.md`
