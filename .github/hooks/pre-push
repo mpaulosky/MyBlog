@@ -2,6 +2,8 @@
 # Pre-push gate: mirrors CI checks to catch failures before they reach GitHub
 # Runs: branch protection → untracked-file check → dotnet format → Release build → unit/architecture tests → integration tests
 # NOTE: git provides refspecs on stdin; interactive prompts must use /dev/tty.
+# ⚠️  BYPASS POLICY: git push --no-verify is PROHIBITED without prior written
+# approval from Ralph + Aragorn documented in a GitHub issue comment.
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
@@ -152,6 +154,7 @@ fi
 # Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
   "tests/Web.Tests.Integration/Web.Tests.Integration.csproj"
+  "tests/AppHost.Tests/AppHost.Tests.csproj"
 )
 
 echo -e "\n${CYAN}🐋 Checking Docker availability for integration tests...${RESET}"
