@@ -32,6 +32,29 @@ public class EditAclTests : BunitContext
 	}
 
 	[Fact]
+	public void EditRedirectsToBlogWhenPostNotFound()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(null)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		RenderWithUser<Edit>(
+				CreatePrincipalWithSub("auth0|some-user", ["Author"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Assert
+		navigation.Uri.Should().EndWith("/blog");
+	}
+
+	[Fact]
 	public void EditRedirectsToBlogWhenAuthorIsNotPostOwner()
 	{
 		// Arrange
