@@ -1,69 +1,66 @@
 @page "/blog/create"
-@using MyBlog.Web.Features.BlogPosts.Create
 @inject ISender Sender
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Author,Admin")]
 
-<PageTitle>Create Post</PageTitle>
-
-<h1 class="text-3xl font-bold mb-6">Create Post</h1>
+<PageHeadingComponent HeaderText="Create Post" Level="1" TextColorClass="text-primary-900 dark:text-primary-50" />
 
 @if (_error is not null)
 {
-    <div class="alert-error" role="alert">
-        <span>@_error</span>
-        <button type="button" class="alert-dismiss" @onclick="() => _error = null">&times;</button>
-    </div>
+	<div class="alert-error" role="alert">
+		<span>@_error</span>
+		<button type="button" class="alert-dismiss" @onclick="() => _error = null">&times;</button>
+	</div>
 }
 
 <div class="form-panel">
-    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="mb-4" />
+	<EditForm Model="_model" OnValidSubmit="HandleSubmit">
+		<DataAnnotationsValidator />
+		<ValidationSummary class="mb-4" />
 
-        <div class="form-group">
-            <label class="form-label">Title</label>
-            <InputText class="form-input" @bind-Value="_model.Title" />
-        </div>
-        <div class="form-group">
-            <label class="form-label">Author</label>
-            <InputText class="form-input" @bind-Value="_model.Author" />
-        </div>
-        <div class="form-group">
-            <label class="form-label">Content</label>
-            <InputTextArea class="form-input" rows="8" @bind-Value="_model.Content" />
-        </div>
+		<div class="form-group">
+			<label class="form-label">Title</label>
+			<InputText class="form-input" @bind-Value="_model.Title" />
+		</div>
+		<div class="form-group">
+			<label class="form-label">Author</label>
+			<InputText class="form-input" @bind-Value="_model.Author" />
+		</div>
+		<div class="form-group">
+			<label class="form-label">Content</label>
+			<InputTextArea class="form-input" rows="8" @bind-Value="_model.Content" />
+		</div>
 
-        <div class="flex gap-2">
-            <button type="submit" class="btn-primary">Create</button>
-            <a href="/blog" class="btn-secondary">Cancel</a>
-        </div>
-    </EditForm>
+		<div class="flex gap-2">
+			<button type="submit" class="btn-primary">Create</button>
+			<a href="/blog" class="btn-secondary">Cancel</a>
+		</div>
+	</EditForm>
 </div>
 
 @code {
-    private readonly PostFormModel _model = new();
-    private string? _error;
+	private readonly PostFormModel _model = new();
+	private string? _error;
 
-    private async Task HandleSubmit()
-    {
-        var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
-        if (result.Success)
-            Navigation.NavigateTo("/blog");
-        else
-            _error = result.Error;
-    }
+	private async Task HandleSubmit()
+	{
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
+		if (result.Success)
+			Navigation.NavigateTo("/blog");
+		else
+			_error = result.Error;
+	}
 
-    private sealed class PostFormModel
-    {
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Title { get; set; } = string.Empty;
+	private sealed class PostFormModel
+	{
+		[System.ComponentModel.DataAnnotations.Required]
+		public string Title { get; set; } = string.Empty;
 
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Author { get; set; } = string.Empty;
+		[System.ComponentModel.DataAnnotations.Required]
+		public string Author { get; set; } = string.Empty;
 
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Content { get; set; } = string.Empty;
-    }
+		[System.ComponentModel.DataAnnotations.Required]
+		public string Content { get; set; } = string.Empty;
+	}
 }

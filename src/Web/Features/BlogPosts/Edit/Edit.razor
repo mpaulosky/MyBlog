@@ -1,13 +1,10 @@
 @page "/blog/edit/{Id:guid}"
-@using MyBlog.Web.Features.BlogPosts.Edit
 @inject ISender Sender
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Author,Admin")]
 
-<PageTitle>Edit Post</PageTitle>
-
-<h1 class="text-3xl font-bold mb-6">Edit Post</h1>
+<PageHeadingComponent HeaderText="Edit Post" Level="1" TextColorClass="text-primary-900 dark:text-primary-50" />
 
 @if (_error is not null)
 {
@@ -21,7 +18,7 @@
 {
     <div class="alert-warning" role="alert">
         <div>
-            <strong class="font-semibold">Concurrency Conflict:</strong> This post was modified by another user. 
+            <strong class="font-semibold">Concurrency Conflict:</strong> This post was modified by another user.
             Please reload the page to get the latest version.
         </div>
         <button type="button" class="alert-dismiss" @onclick="() => _concurrencyError = false">&times;</button>
