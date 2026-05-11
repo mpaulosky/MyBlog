@@ -90,6 +90,25 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
+	public void ConfirmDeleteDialogUsesDestructiveAndSecondaryButtonVariants()
+	{
+		// Arrange (none)
+		// Act
+		var cut = Render<ConfirmDeleteDialog>(parameters => parameters
+				.Add(p => p.IsVisible, true)
+				.Add(p => p.PostTitle, "My Post"));
+
+		var deleteButton = cut.FindAll("button")
+				.Single(button => string.Equals(button.TextContent.Trim(), "Delete", StringComparison.Ordinal));
+		var cancelButton = cut.FindAll("button")
+				.Single(button => string.Equals(button.TextContent.Trim(), "Cancel", StringComparison.Ordinal));
+
+		// Assert
+		deleteButton.GetAttribute("class").Should().Contain("btn-destructive");
+		cancelButton.GetAttribute("class").Should().Contain("btn-secondary");
+	}
+
+	[Fact]
 	public void RedirectToLoginNavigatesToLoginWithReturnUrl()
 	{
 		// Arrange
@@ -136,10 +155,64 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
 		// Assert
+		var heading = cut.Find("header h1");
+
+		heading.TextContent.Trim().Should().Be("Blog Posts");
+		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.Markup.Should().Contain("First");
 		cut.Markup.Should().Contain("Edit");
 		cut.Find("button").Click();
 		cut.Markup.Should().Contain("Confirm Delete");
+	}
+
+	[Fact]
+	public void BlogIndexUsesPrimaryAndSecondaryButtonVariantsForAuthorActions()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var posts = new[]
+		{
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+				};
+
+		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
+		var createLink = cut.Find("a[href='/blog/create']");
+		var editLink = cut.Find($"a[href='/blog/edit/{posts[0].Id}']");
+
+		// Assert
+		createLink.GetAttribute("class").Should().Contain("btn-primary");
+		editLink.GetAttribute("class").Should().Contain("btn-secondary");
+	}
+
+	[Fact]
+	public void BlogIndexUsesBtnDestructiveForInlineDeleteButton()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var posts = new[]
+		{
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+				};
+
+		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
+
+		var deleteButton = cut.FindAll("button")
+				.Single(button => string.Equals(button.TextContent.Trim(), "Delete", StringComparison.Ordinal));
+
+		// Assert — inline delete must use the shared destructive variant, not raw Tailwind classes
+		deleteButton.GetAttribute("class").Should().Contain("btn-destructive");
 	}
 
 	[Fact]
@@ -157,6 +230,25 @@ public class RazorSmokeTests : BunitContext
 
 		// Assert
 		cut.Markup.Should().Contain("No posts yet.");
+	}
+
+	[Fact]
+	public void BlogIndexShowsDismissibleErrorWhenInitialLoadFails()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<IReadOnlyList<BlogPostDto>>("Unable to load posts.")));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Unable to load posts.");
+		cut.Find("button.alert-dismiss").Click();
+		cut.Markup.Should().NotContain("Unable to load posts.");
 	}
 
 	[Fact]
@@ -232,9 +324,28 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		// Assert
-		cut.Markup.Should().Contain("Create Post");
+		var heading = cut.Find("header h1");
+
+		heading.TextContent.Trim().Should().Be("Create Post");
+		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(2);
 		cut.Find("textarea");
+	}
+
+	[Fact]
+	public void CreatePostUsesPrimaryAndSecondaryButtonVariants()
+	{
+		// Arrange
+		Services.AddSingleton(Substitute.For<ISender>());
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
+		var submitButton = cut.Find("button[type='submit']");
+		var cancelLink = cut.Find("a[href='/blog']");
+
+		// Assert
+		submitButton.GetAttribute("class").Should().Contain("btn-primary");
+		cancelLink.GetAttribute("class").Should().Contain("btn-secondary");
 	}
 
 	[Fact]
@@ -265,6 +376,29 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
+	public void CreatePostShowsDismissibleErrorWhenCommandFails()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		sender.Send(Arg.Any<CreateBlogPostCommand>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<Guid>("Unable to create post.")));
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
+
+		cut.FindAll("input")[0].Change("My title");
+		cut.FindAll("input")[1].Change("Alice");
+		cut.Find("textarea").Change("Hello world");
+		cut.Find("form").Submit();
+
+		// Assert
+		cut.Markup.Should().Contain("Unable to create post.");
+		cut.Find("button.alert-dismiss").Click();
+		cut.Markup.Should().NotContain("Unable to create post.");
+	}
+
+	[Fact]
 	public void EditPostLoadsExistingPost()
 	{
 		// Arrange
@@ -284,6 +418,29 @@ public class RazorSmokeTests : BunitContext
 		cut.Markup.Should().Contain("Edit Post");
 		cut.Markup.Should().Contain("Existing title");
 		cut.Markup.Should().Contain("Existing content");
+	}
+
+	[Fact]
+	public void EditPostUsesPrimaryAndSecondaryButtonVariants()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
+		var saveButton = cut.Find("button[type='submit']");
+		var cancelLink = cut.Find("a[href='/blog']");
+
+		// Assert
+		saveButton.GetAttribute("class").Should().Contain("btn-primary");
+		cancelLink.GetAttribute("class").Should().Contain("btn-secondary");
 	}
 
 	[Fact]
@@ -363,9 +520,59 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
 		// Assert
-		cut.Markup.Should().Contain("Manage User Roles");
+		var heading = cut.Find("header h1");
+
+		heading.TextContent.Trim().Should().Be("Manage User Roles");
+		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.Markup.Should().Contain("Available roles: Admin, Author");
 		cut.Markup.Should().Contain("admin@example.com");
+	}
+
+	[Fact]
+	public void ManageRolesShowsLoadingMessageWhileQueriesArePending()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var usersTask = new TaskCompletionSource<Result<IReadOnlyList<UserWithRolesDto>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var rolesTask = new TaskCompletionSource<Result<IReadOnlyList<RoleDto>>>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(usersTask.Task);
+		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(rolesTask.Task);
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Loading users...");
+
+		usersTask.SetResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(Array.Empty<UserWithRolesDto>()));
+		rolesTask.SetResult(Result.Ok<IReadOnlyList<RoleDto>>(Array.Empty<RoleDto>()));
+		cut.WaitForAssertion(() => cut.Markup.Should().Contain("Actions"));
+	}
+
+	[Fact]
+	public void ManageRolesShowsDismissibleErrorWhenUsersCannotLoad()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<IReadOnlyList<UserWithRolesDto>>("Unable to load users.")));
+		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(Array.Empty<RoleDto>())));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Unable to load users.");
+		cut.Find("button.alert-dismiss").Click();
+		cut.Markup.Should().NotContain("Unable to load users.");
 	}
 
 	[Fact]

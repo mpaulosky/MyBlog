@@ -8,8 +8,8 @@
                 <p class="text-red-600 dark:text-red-400 text-sm">This action cannot be undone.</p>
             </div>
             <div class="flex gap-2 justify-end">
-                <button class="px-4 py-2 rounded font-medium bg-red-600 text-white hover:bg-red-700 transition" @onclick="OnConfirm">Delete</button>
-                <button class="px-4 py-2 rounded font-medium border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition" @onclick="OnCancel">Cancel</button>
+                <button class="btn-destructive" @onclick="OnConfirm">Delete</button>
+                <button class="btn-secondary" @onclick="OnCancel">Cancel</button>
             </div>
         </div>
     </div>

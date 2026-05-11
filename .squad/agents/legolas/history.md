@@ -667,6 +667,7 @@ Fix theme color selector persistence — selected color not surviving page reloa
 Then each variant only declares its colour-specific overrides. This is idiomatic Tailwind v4 component authoring.
 
 **Fixed vs theme-relative colour palette:** `.btn-primary` / `.btn-secondary` use `var(--primary-*)` theme tokens so they adapt to colour-theme switches. `.btn-warning` (amber) and `.btn-destructive` (red) use fixed Tailwind palette classes — these colours carry semantic meaning that should NOT shift when the user picks a different theme.
+**Fixed colour palette — all four variants:** All button variants use fixed Tailwind palette classes, not `var(--primary-*)` theme tokens. `.btn-primary` is green, `.btn-secondary` is blue, `.btn-warning` is amber, and `.btn-destructive` is red. None shift when the user picks a different colour theme — the palette is intentionally static to give each variant a clear, invariant semantic meaning.
 
 **Bootstrap-like interactive states checklist:**
 
@@ -747,3 +748,31 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 **Overall assessment:** The structural changes (layout, nav, component design system, imports cleanup) are sound. Two CSS bugs in `input.css` need fixing before these can be packaged — both relate to dark mode text visibility on `h1/h2/h3` and `p` base styles.
 
 **Rule reinforced:** Base layer `h*` and `p` rules must always pair a light-mode text colour with a visibly contrasting `dark:text-*` colour. Never set `dark:text-primary-950` (darkest shade) on a surface that is already `dark:bg-primary-950` or `dark:bg-primary-800`.
+## Learnings
+
+### 2025-07 — PR #295 Review (dark-mode colours + PageHeadingComponent)
+
+**What I reviewed:**
+
+- `input.css` centralised button variants, fixed dark-mode heading/paragraph contrast, migrated body/table/form colours to primary palette
+- New `PageHeadingComponent.razor` (shared heading + PageTitle wrapper)
+- All feature pages (Create, Edit, Index, ManageRoles, Profile) adopt the new component
+- `NavMenu.razor` switched from inline Tailwind utility string on `<nav>` to `class="nav"`
+- `_Imports.razor` adds `@using MyBlog.Web.Components.Shared` for Features
+- bUnit tests updated to match new colour classes
+
+**Key findings (for future work):**
+
+1. **`TextColorClass` is dead code** — All call sites pass `text-primary-900 dark:text-primary-50`. The `h1/h2/h3` base rules in `input.css` already apply exactly those colours. The parameter never overrides anything meaningful. Future components should omit it or give it a genuinely different default.
+
+2. **`<header>` in `PageHeadingComponent` degrades accessibility** — Every page gets a second `<header>` landmark. Screen readers present all landmarks in a navigation shortcut list; multiple anonymous `<header>` elements create noise. Should use a plain `<div>` or `<section>` instead.
+
+3. **`class="nav"` in NavMenu is misleading** — CSS uses `nav {}` element selector, not `.nav` class rule. The `class="nav"` attribute is redundant/dead code. Either rename the CSS to `.nav {}` or remove the class attribute from the element.
+
+4. **`Profile.razor` still has explicit `@using MyBlog.Web.Components.Shared`** — Redundant after `_Imports.razor` was updated. Small but noisy.
+
+5. **`btn-primary` is always green** — Decoupled from the theme's primary palette. May be intentional (semantic: success/action = green) but breaks the expectation that primary buttons track the selected colour theme.
+
+6. **`form-input`/`form-label` bump to `text-lg font-semibold`** — Unusually large/bold for form field text; worth a visual QA check.
+
+**Verdict:** Approved with concerns (items 1, 2, 3 are the meaningful ones for follow-up).
