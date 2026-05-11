@@ -1,6 +1,7 @@
 @page "/blog/edit/{Id:guid}"
 @inject ISender Sender
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Author,Admin")]
 
@@ -64,11 +65,32 @@ else if (_model is not null)
     {
         var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
         if (result.Success)
-            _model = result.Value is not null
-                ? new PostFormModel { Title = result.Value.Title, Content = result.Value.Content }
-                : null;
+        {
+            if (result.Value is not null)
+            {
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+                var userSub = user.FindFirst("sub")?.Value ?? string.Empty;
+                var isAdmin = user.IsInRole("Admin");
+                var isAuthor = result.Value.AuthorId == userSub;
+
+                if (!isAdmin && !isAuthor)
+                {
+                    Navigation.NavigateTo("/blog");
+                    return;
+                }
+
+                _model = new PostFormModel { Title = result.Value.Title, Content = result.Value.Content };
+            }
+            else
+            {
+                _model = null;
+            }
+        }
         else
+        {
             _error = result.Error;
+        }
     }
 
     private async Task HandleSubmit()
