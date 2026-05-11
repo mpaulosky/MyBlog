@@ -11,31 +11,52 @@ namespace Web;
 
 public class BlogPostTests
 {
+	private static readonly PostAuthor TestAuthor = new("test-id", "Test Author", "test@example.com", []);
+
 	[Fact]
 	public void Create_WithValidArgs_ReturnsBlogPost()
 	{
 		// Arrange (none)
 
 		// Act
-		var post = BlogPost.Create("Test Title", "Test Content", "Test Author");
+		var post = BlogPost.Create("Test Title", "Test Content", TestAuthor);
 
 		// Assert
 		post.Id.Should().NotBeEmpty();
 		post.Title.Should().Be("Test Title");
 		post.Content.Should().Be("Test Content");
-		post.Author.Should().Be("Test Author");
+		post.Author.Name.Should().Be("Test Author");
 		post.IsPublished.Should().BeFalse();
 		post.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
 	}
 
 	[Theory]
-	[InlineData("", "content", "author")]
-	[InlineData("title", "", "author")]
-	[InlineData("title", "content", "")]
-	public void Create_WithBlankArgs_ThrowsArgumentException(string title, string content, string author)
+	[InlineData("", "content")]
+	[InlineData("title", "")]
+	public void Create_WithBlankTitleOrContent_ThrowsArgumentException(string title, string content)
 	{
 		// Arrange
-		var act = () => BlogPost.Create(title, content, author);
+		var act = () => BlogPost.Create(title, content, TestAuthor);
+
+		// Act & Assert
+		act.Should().Throw<ArgumentException>();
+	}
+
+	[Fact]
+	public void Create_WithNullAuthor_ThrowsArgumentNullException()
+	{
+		// Arrange
+		var act = () => BlogPost.Create("title", "content", null!);
+
+		// Act & Assert
+		act.Should().Throw<ArgumentNullException>();
+	}
+
+	[Fact]
+	public void Create_WithEmptyAuthorName_ThrowsArgumentException()
+	{
+		// Arrange
+		var act = () => BlogPost.Create("title", "content", new PostAuthor("", "", "", []));
 
 		// Act & Assert
 		act.Should().Throw<ArgumentException>();
@@ -45,7 +66,7 @@ public class BlogPostTests
 	public void Update_ChangesTitle_AndContent()
 	{
 		// Arrange
-		var post = BlogPost.Create("Old Title", "Old Content", "Author");
+		var post = BlogPost.Create("Old Title", "Old Content", TestAuthor);
 
 		// Act
 		post.Update("New Title", "New Content");
@@ -60,7 +81,7 @@ public class BlogPostTests
 	public void Publish_SetsIsPublished_True()
 	{
 		// Arrange
-		var post = BlogPost.Create("T", "C", "A");
+		var post = BlogPost.Create("T", "C", TestAuthor);
 
 		// Act
 		post.Publish();
@@ -73,7 +94,7 @@ public class BlogPostTests
 	public void Unpublish_SetsIsPublished_False()
 	{
 		// Arrange
-		var post = BlogPost.Create("T", "C", "A");
+		var post = BlogPost.Create("T", "C", TestAuthor);
 		post.Publish();
 
 		// Act

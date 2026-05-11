@@ -7,6 +7,8 @@
 //Project Name :  Domain
 //=======================================================
 
+using MyBlog.Domain.ValueObjects;
+
 namespace MyBlog.Domain.Entities;
 
 public sealed class BlogPost
@@ -14,7 +16,7 @@ public sealed class BlogPost
 	public Guid Id { get; private set; }
 	public string Title { get; private set; } = string.Empty;
 	public string Content { get; private set; } = string.Empty;
-	public string Author { get; private set; } = string.Empty;
+	public PostAuthor Author { get; private set; } = PostAuthor.Empty;
 	public DateTime CreatedAt { get; private set; }
 	public DateTime? UpdatedAt { get; private set; }
 	public bool IsPublished { get; private set; }
@@ -22,11 +24,12 @@ public sealed class BlogPost
 
 	private BlogPost() { }
 
-	public static BlogPost Create(string title, string content, string author)
+	public static BlogPost Create(string title, string content, PostAuthor author)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(title);
 		ArgumentException.ThrowIfNullOrWhiteSpace(content);
-		ArgumentException.ThrowIfNullOrWhiteSpace(author);
+		ArgumentNullException.ThrowIfNull(author);
+		ArgumentException.ThrowIfNullOrWhiteSpace(author.Name);
 
 		return new BlogPost
 		{

@@ -143,7 +143,7 @@ public class RazorSmokeTests : BunitContext
 		var sender = Substitute.For<ISender>();
 		var posts = new[]
 		{
-						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false)
 				};
 
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
@@ -172,7 +172,7 @@ public class RazorSmokeTests : BunitContext
 		var sender = Substitute.For<ISender>();
 		var posts = new[]
 		{
-						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false)
 				};
 
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
@@ -197,7 +197,7 @@ public class RazorSmokeTests : BunitContext
 		var sender = Substitute.For<ISender>();
 		var posts = new[]
 		{
-						new BlogPostDto(Guid.NewGuid(), "First", "Content", "Alice", DateTime.UtcNow, null, false)
+						new BlogPostDto(Guid.NewGuid(), "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false)
 				};
 
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
@@ -259,7 +259,7 @@ public class RazorSmokeTests : BunitContext
 		var postId = Guid.NewGuid();
 		var posts = new[]
 		{
-						new BlogPostDto(postId, "First", "Content", "Alice", DateTime.UtcNow, null, false)
+						new BlogPostDto(postId, "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false)
 				};
 
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
@@ -290,7 +290,7 @@ public class RazorSmokeTests : BunitContext
 		var postId = Guid.NewGuid();
 		var posts = new[]
 		{
-						new BlogPostDto(postId, "First", "Content", "Alice", DateTime.UtcNow, null, false)
+						new BlogPostDto(postId, "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false)
 				};
 
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
@@ -370,7 +370,7 @@ public class RazorSmokeTests : BunitContext
 		// Assert
 		sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
 				command.Title == "My title" &&
-				command.Author == "Alice" &&
+				command.Author.Name == "Alice" &&
 				command.Content == "Hello world"), Arg.Any<CancellationToken>());
 		navigation.Uri.Should().EndWith("/blog");
 	}
@@ -404,7 +404,7 @@ public class RazorSmokeTests : BunitContext
 		// Arrange
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
-		var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
+		var post = new BlogPostDto(postId, "Existing title", "Existing content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -426,7 +426,7 @@ public class RazorSmokeTests : BunitContext
 		// Arrange
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
-		var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
+		var post = new BlogPostDto(postId, "Existing title", "Existing content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -449,7 +449,7 @@ public class RazorSmokeTests : BunitContext
 		// Arrange
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
-		var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
+		var post = new BlogPostDto(postId, "Existing title", "Existing content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -473,7 +473,7 @@ public class RazorSmokeTests : BunitContext
 		// Arrange
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
-		var post = new BlogPostDto(postId, "Existing title", "Existing content", "Alice", DateTime.UtcNow, null, false);
+		var post = new BlogPostDto(postId, "Existing title", "Existing content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));

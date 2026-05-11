@@ -1,4 +1,5 @@
 @page "/blog/create"
+@using MyBlog.Domain.ValueObjects
 @inject ISender Sender
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -45,7 +46,8 @@
 
 	private async Task HandleSubmit()
 	{
-		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
+		var author = new PostAuthor(string.Empty, _model.Author, string.Empty, []);
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author));
 		if (result.Success)
 			Navigation.NavigateTo("/blog");
 		else

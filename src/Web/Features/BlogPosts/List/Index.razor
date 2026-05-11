@@ -61,7 +61,7 @@ else
 				{
 					<tr>
 						<td>@post.Title</td>
-						<td>@post.Author</td>
+						<td>@post.AuthorName</td>
 						<td>@(post.IsPublished ? "Yes" : "No")</td>
 						<td>@post.CreatedAt.ToShortDateString()</td>
 						<AuthorizeView Roles="Author,Admin">

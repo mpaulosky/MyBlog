@@ -13,7 +13,10 @@ internal sealed record BlogPostDto(
 		Guid Id,
 		string Title,
 		string Content,
-		string Author,
+		string AuthorId,
+		string AuthorName,
+		string AuthorEmail,
+		IReadOnlyList<string> AuthorRoles,
 		DateTime CreatedAt,
 		DateTime? UpdatedAt,
 		bool IsPublished);

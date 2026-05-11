@@ -17,5 +17,6 @@ global using MediatR;
 global using MyBlog.Domain.Abstractions;
 global using MyBlog.Domain.Behaviors;
 global using MyBlog.Domain.Entities;
+global using MyBlog.Domain.ValueObjects;
 
 global using NSubstitute;

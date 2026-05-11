@@ -24,8 +24,8 @@ public class GetBlogPostsHandlerTests
 
 	private static List<BlogPostDto> MakeDtos() =>
 	[
-	new(Guid.NewGuid(), "T1", "C1", "A1", DateTime.UtcNow, null, false),
-	new(Guid.NewGuid(), "T2", "C2", "A2", DateTime.UtcNow, null, true),
+	new(Guid.NewGuid(), "T1", "C1", string.Empty, "A1", string.Empty, [], DateTime.UtcNow, null, false),
+	new(Guid.NewGuid(), "T2", "C2", string.Empty, "A2", string.Empty, [], DateTime.UtcNow, null, true),
 	];
 
 	[Fact]
@@ -70,8 +70,8 @@ public class GetBlogPostsHandlerTests
 	public async Task Handle_CacheMiss_CallsRepoAndPopulatesBothCaches()
 	{
 		// Arrange
-		var post1 = BlogPost.Create("T1", "C1", "A1");
-		var post2 = BlogPost.Create("T2", "C2", "A2");
+		var post1 = BlogPost.Create("T1", "C1", new PostAuthor("", "Test Author", "", []));
+		var post2 = BlogPost.Create("T2", "C2", new PostAuthor("", "Test Author", "", []));
 		_repo.GetAllAsync(Arg.Any<CancellationToken>())
 		.Returns(new List<BlogPost> { post1, post2 });
 		_cache.GetOrFetchAllAsync(
