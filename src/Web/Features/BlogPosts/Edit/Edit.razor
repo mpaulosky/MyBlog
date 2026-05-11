@@ -105,9 +105,9 @@ else if (_model is not null)
         {
             if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Concurrency)
                 _concurrencyError = true;
-            else if (result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized)
-                Navigation.NavigateTo("/blog");
-            _error = result.Error;
+            _error = result.ErrorCode == global::MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized
+                ? "You don't have permission to edit this post."
+                : result.Error;
         }
     }
 

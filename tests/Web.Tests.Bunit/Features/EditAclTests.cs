@@ -84,9 +84,40 @@ public class EditAclTests : BunitContext
 	}
 
 	[Fact]
-	public void EditAllowsAdminToEditAnyPost()
+	public void EditShowsErrorWhenServerReturnsUnauthorized()
 	{
 		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Act
+		cut.Find("button[type='submit']").Click();
+
+		// Assert
+		cut.WaitForAssertion(() =>
+				cut.Markup.Should().Contain("You don't have permission to edit this post."));
+		navigation.Uri.Should().NotEndWith("/blog");
+	}
+
+	[Fact]
+	public void EditAllowsAdminToEditAnyPost()
+	{
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
 		const string OwnerSub = "auth0|some-author";
