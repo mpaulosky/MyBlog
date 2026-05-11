@@ -118,6 +118,7 @@ public class EditAclTests : BunitContext
 	[Fact]
 	public void EditAllowsAdminToEditAnyPost()
 	{
+		// Arrange
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
 		const string OwnerSub = "auth0|some-author";
