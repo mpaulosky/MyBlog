@@ -1390,3 +1390,38 @@ Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md
 - Review PR #288 for approval
 - Merge to `dev` branch
 - Workflows become active on next push/PR to dev, insider, or main
+
+## Learnings
+
+### Issue #299 — Pre-Push Gate: AppHost.Tests Was Missing from Live Hook (2026-05-11)
+
+**Root cause:** The playbook and SKILL.md documented `AppHost.Tests` as mandatory in Gate 5, but the live `.github/hooks/pre-push` `INTEGRATION_PROJECTS` array only contained `Web.Tests.Integration`. The hook and docs were out of sync.
+
+**Changes made:**
+
+- `.github/hooks/pre-push` — Added `AppHost.Tests` to `INTEGRATION_PROJECTS` (Gate 5)
+- `.squad/playbooks/pre-push-process.md` — Removed 4 non-existent test projects from Gate 4/5 lists; fixed `IssueTrackerApp.slnx` → `MyBlog.slnx`; corrected counts in the gate table
+- `scripts/install-hooks.sh` — Corrected Gate 4/5 descriptions in echo summary; replaced informal `--no-verify` tip with the policy statement
+
+**Learnings:**
+
+- Hook arrays and playbook project lists are a dual-maintenance surface. Any future test project addition must land in BOTH the hook array and the playbook simultaneously.
+- Use this quick alignment check: `grep -r "csproj" .github/hooks/pre-push .squad/playbooks/pre-push-process.md scripts/install-hooks.sh`
+- Stale playbook content (6 test projects, Azurite-backed projects) can mislead agents into believing gates exist that don't — documentation debt has real enforcement consequences.
+- The `--no-verify` policy must be stated consistently across all three surfaces (hook comment, playbook, install script); having a permissive "skip in an emergency" line in `install-hooks.sh` while the playbook hard-blocks it created a contradiction.
+
+### Issue #299 — Round 3: docs/CONTRIBUTING.md alignment + bypass policy doc (2026-05-11)
+
+**Context:** Ralph's work-check cycle Round 3 confirmed the source hook and installed hook were already in sync. This round focused on the remaining documentation drift.
+
+**Changes made (PR squad/299-prepush-gate-alignment):**
+
+- `.github/hooks/pre-push` — Added `⚠️ BYPASS POLICY` comment at header (prohibits --no-verify without approval)
+- `docs/CONTRIBUTING.md` — Corrected gate table from 5→6 gates; fixed Gate 3 as "dotnet format", Gate 3 as "Release build", Gate 4 as unit tests (4 projects), Gate 5 as integration tests (2 projects); removed references to non-existent `tests/Unit.Tests` and `tests/Integration.Tests`; updated bypass policy language
+- `scripts/install-hooks.sh` — Already had correct descriptions from prior round
+- `.squad/playbooks/pre-push-process.md` — Already had correct content from prior round
+
+**Learnings:**
+
+- `docs/CONTRIBUTING.md` is a third maintenance surface beyond the hook and playbook. All three must be checked on hook changes.
+- Gate numbering in docs must match the hook source exactly (0–5, not 0–4).
