@@ -1006,3 +1006,39 @@ when a post ID was not found. The fix redirects to `/blog` instead.
 2. **The stale-content test pattern is behavior-first** — asserting `Markup.Should().Contain("Second Post Title")` and `Markup.Should().NotContain("First Post Title")` verifies what the user sees, not internal state. Survives any refactor of `_model` or `_isLoading` that preserves visible output.
 3. **`Render(...)` in bUnit 2.x waits for async lifecycle** — `OnParametersSetAsync` completes before `Render` returns, so synchronous markup assertions after `Render` are safe; `WaitForAssertion` is not needed here.
 4. **View tool can show stale snapshots** — always verify actual file content with `bash`/`cat` before concluding a file needs editing.
+
+---
+
+## Test Runs
+
+### 2025 — PR #313: fix(blogposts): align author claims, publish checkbox, and seed schema
+
+**Requested by:** Ralph (via coordinator)
+
+#### Task
+
+Run the full local test suite against PR #313 changes and report results.
+
+#### Test Results
+
+| Suite | Passed | Failed | Skipped | Duration |
+|-------|--------|--------|---------|----------|
+| Architecture.Tests | 16 | 0 | 0 | 93 ms |
+| Domain.Tests | 42 | 0 | 0 | 91 ms |
+| Web.Tests | 158 | 0 | 0 | 180 ms |
+| Web.Tests.Bunit | 92 | 0 | 0 | 514 ms |
+| **Total** | **308** | **0** | **0** | |
+
+✅ **All 308 tests pass. Zero failures. Zero skips.**
+
+#### Failures
+
+None. No failures to triage.
+
+#### Production Code Issues Flagged
+
+None. No production code issues surfaced by the test suite.
+
+#### Decisions File
+
+Not created — no failures, no handoff required.

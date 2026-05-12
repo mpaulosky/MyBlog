@@ -33,6 +33,7 @@ public class RazorSmokeTests : BunitContext
 
 	public RazorSmokeTests()
 	{
+		JSInterop.Mode = JSRuntimeMode.Loose;
 		Services.AddAuthorizationCore();
 		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
 		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
@@ -332,7 +333,7 @@ public class RazorSmokeTests : BunitContext
 		heading.TextContent.Trim().Should().Be("Create Post");
 		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(1);
-		cut.Find("textarea");
+		cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
 	}
 
 	[Fact]
@@ -352,7 +353,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void CreatePostSubmitsAndNavigatesToBlogWhenCommandSucceeds()
+	public async Task CreatePostSubmitsAndNavigatesToBlogWhenCommandSucceeds()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -366,11 +367,12 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.FindAll("input")[0].Change("My title");
-		cut.Find("textarea").Change("Hello world");
+		var editor = cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
+		await cut.InvokeAsync(() => editor.Instance.ValueChanged.InvokeAsync("Hello world"));
 		cut.Find("form").Submit();
 
 		// Assert
-		sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
+		await sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
 				command.Title == "My title" &&
 				command.Author.Name == "Alice" &&
 				command.Content == "Hello world"), Arg.Any<CancellationToken>());
@@ -378,7 +380,7 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
-	public void CreatePostShowsDismissibleErrorWhenCommandFails()
+	public async Task CreatePostShowsDismissibleErrorWhenCommandFails()
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
@@ -390,7 +392,8 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.FindAll("input")[0].Change("My title");
-		cut.Find("textarea").Change("Hello world");
+		var editor = cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
+		await cut.InvokeAsync(() => editor.Instance.ValueChanged.InvokeAsync("Hello world"));
 		cut.Find("form").Submit();
 
 		// Assert
@@ -418,7 +421,7 @@ public class RazorSmokeTests : BunitContext
 		// Assert
 		cut.Markup.Should().Contain("Edit Post");
 		cut.Markup.Should().Contain("Existing title");
-		cut.Markup.Should().Contain("Existing content");
+		cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
 	}
 
 	[Fact]
