@@ -10,7 +10,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var mongo = builder.AddMongoDB("mongodb")
-	.WithDataVolume("mongo-data");
+	.WithDataVolume("mongo-data").WithMongoExpress();
 var mongoDb = mongo.AddDatabase("myblog");
 var redis = builder.AddRedis("redis");
 

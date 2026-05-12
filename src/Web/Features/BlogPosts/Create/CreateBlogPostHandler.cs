@@ -21,6 +21,11 @@ IBlogPostCacheService cache) : IRequestHandler<CreateBlogPostCommand, Result<Gui
 		try
 		{
 			var post = BlogPost.Create(request.Title, request.Content, request.Author);
+			if (request.IsPublished)
+			{
+				post.Publish();
+			}
+
 			await repo.AddAsync(post, cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
 			return Result.Ok<Guid>(post.Id);
