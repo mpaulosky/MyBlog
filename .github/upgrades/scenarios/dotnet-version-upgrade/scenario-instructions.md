@@ -14,3 +14,7 @@
 
 ### Strategy
 - Upgrade Strategy: All-at-Once
+
+## User Preferences
+### Execution Style
+- Temporarily suppress style diagnostics to complete the .NET 11 upgrade quickly (user-selected option 3).
