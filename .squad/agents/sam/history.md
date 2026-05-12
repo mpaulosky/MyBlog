@@ -285,3 +285,23 @@ alternative command dispatchers.
 - For atomic commits, writing handler tests alongside the implementation is
   acceptable. Note the crossing in an inbox file so Gimli can audit or extend
   coverage as needed.
+
+## Learnings
+
+### `_isLoading` field initializers only run at construction — not on reuse
+
+- Blazor Server components are reused across navigation when the router keeps the same component instance (same page, different route params). `OnParametersSetAsync` fires but the constructor does not.
+- Any UI state that should reset per parameter change (`_isLoading`, `_error`, `_concurrencyError`) must be explicitly reset at the **top** of `OnParametersSetAsync`, before any `try` block.
+- Pattern: `_isLoading = true;` as the first statement ensures every fetch — initial and reuse — shows the loading indicator and hides stale content.
+
+### bUnit cannot easily assert intermediate async state
+
+- In bUnit 2.x, `IRenderedComponent<TComponent>` does NOT have `SetParametersAndRender`. The correct method for re-rendering with new parameters is `cut.Render(parameters => ...)` (extension from `RenderedComponentRenderExtensions`).
+- `cut.Render(...)` waits for the full async lifecycle to complete before returning. There is no built-in way to pause at `_isLoading = true` and then check markup.
+- The practical test strategy for parameter-change behavior: verify the **final state** shows the new data (not stale old data). This proves the lifecycle ran correctly without requiring thread hacks.
+
+### PR #309 review findings (Aragorn)
+
+- Always check whether a boolean flag initialized at field level is ever *reset* in `OnParametersSetAsync` before the async work begins.
+- File: `src/Web/Features/BlogPosts/Edit/Edit.razor`
+- Test: `tests/Web.Tests.Bunit/Features/EditAclTests.cs` → `EditShowsNewPostContentAfterParameterChange`

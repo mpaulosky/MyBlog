@@ -1453,3 +1453,28 @@ the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`
   `singleSelectOptions`. Pass all existing option IDs to preserve them; omit `id` for new options.
 - **Cherry-pick workflow for PR fixes:** stash → checkout origin branch → cherry-pick fix commit →
   rename to `squad/{issue}-{slug}` → push. Cleaner than diverging 8 commits onto the remote.
+### PR #306 Post-Triage Review: Project Board Automation Token/Option ID Sync (2026-05-11)
+
+**Context:** Aragorn triaged PR #306 with recommendation to route to Boromir for DevOps review. PR bundles three concerns: merge conflict resolution, CI/infra fixes (token + option IDs), and a Blazor redirect fix.
+
+**Assessment:**
+
+- ✅ **CI/Infra gate clear:** All 21 checks passing (linting, tests, coverage, CodeQL). Issue #305 linked. No merge conflicts. Branch naming correct.
+- ✅ **Workflow logic sound:** Token change (GITHUB_TOKEN → GH_PROJECT_TOKEN) fixes 403 auth errors on project board mutations. Option ID updates (IN_SPRINT, IN_REVIEW, RELEASED) are consistent across 4 workflows.
+- ✅ **No regressions:** Documentation added to project-board-audit.yml. markdownlint fix in decisions.md. Secondary UI changes out of scope (routed to Legolas/Gimli).
+- ⚠️ **Dependency:** `GH_PROJECT_TOKEN` secret must be configured in repo settings. Already documented in `.squad/decisions/decisions.md`.
+
+**Routing:**
+
+- PR author is Boromir (me), so I cannot self-approve per GitHub policy. However, DevOps verification is complete.
+- Required parallel reviewers: **Aragorn** (architecture), **Legolas** (Blazor UI), **Gimli** (tests).
+- Decision: **READY FOR REVIEWER SPAWN** per playbook.
+
+**Learnings:**
+
+- The PR merge process enforces strict separation: PR author cannot approve own changes, even if the changes are infra-only. This is a healthy gate to ensure at least one independent human review.
+- Workflow option IDs are a runtime dependency that must be kept in sync across multiple files. A single outdated ID can silently fail board mutations. This PR shows the fix pattern: grep all workflows, update consistently, test in CI.
+- The "secondary review" layer (Copilot automated review) is effective at flagging missing tests and logic errors, but does not substitute for domain reviewer verdict. Always route to domain specialist after Copilot.
+
+**Related Decision:** `.squad/decisions/inbox/boromir-pr306-review.md` (assessment + routing recommendation)
+
