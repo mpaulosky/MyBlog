@@ -949,3 +949,60 @@ making production changes.
    and role-management flows, but `PageHeadingComponent` is still validated
    indirectly through page renders rather than by its own focused component
    tests.
+
+## 2026-05-11 — Issue #307 null-post redirect coverage
+
+### Task
+
+Verify and validate bUnit test coverage for the missing-post (`Result.Ok(null)`)
+path in `Edit.razor`. The bug caused the page to stay on "Loading..." forever
+when a post ID was not found. The fix redirects to `/blog` instead.
+
+### Work Done
+
+- Confirmed Boromir's fix is already committed on `squad/307-fix-edit-null-post-redirect`:
+  `Edit.razor` null-value branch now calls `Navigation.NavigateTo("/blog")` instead of
+  leaving `_model = null`.
+- Confirmed `EditRedirectsToBlogWhenPostNotFound` test exists in
+  `tests/Web.Tests.Bunit/Features/EditAclTests.cs` — asserts `navigation.Uri`
+  ends with `/blog` when the sender returns `Result.Ok<BlogPostDto?>(null)`.
+- Validated red/green cycle: test **fails** against unfixed code (stays at
+  `http://localhost/`), **passes** after fix.
+- All 5 `EditAclTests` pass (including auth/redirect coverage for non-owner,
+  admin, unauthorized submit).
+- Full bUnit suite: 88/88 passed after rebuild.
+
+### Learnings
+
+1. Always rebuild (`dotnet build`) before running targeted test filters with
+   `--no-build` — stale binaries can hide real failures or produce false passes.
+2. The `NavigationManager.Uri` assertion pattern (`.Should().EndWith("/blog")`)
+   is reliable for verifying redirects in bUnit without `WaitForAssertion`,
+   provided the async lifecycle method completes synchronously enough in test
+   rendering.
+3. bUnit correctly handles `NavigateTo` calls from `OnParametersSetAsync` —
+   the navigation state is observable immediately after `Render<T>()` returns.
+4. When another squad member lands a fix before your verification pass, your
+   role shifts to: confirm the test red/green cycle, verify no existing coverage
+   was weakened, and document the outcome.
+
+---
+
+## Session: EditShowsNewPostContentAfterParameterChange verification
+
+**Date:** 2025-07-10
+**Task:** Verify the `EditShowsNewPostContentAfterParameterChange` test is behavior-first and catches the stale UI bug on component parameter reuse.
+
+### Work Done
+
+- Read `tests/Web.Tests.Bunit/Features/EditAclTests.cs` and `src/Web/Features/BlogPosts/Edit/Edit.razor`.
+- Confirmed the test as written uses `cut.Render(parameters => ...)` (bUnit 2.x API) — the correct method on `IRenderedComponent<T>`.
+- The view tool initially displayed a stale version showing `SetParametersAndRender`; the actual file already had `Render`. No production or test code changes were needed.
+- All 6 `EditAclTests` pass. Full suite green: Domain 42, Web 154, Web.Tests.Bunit 90, Architecture 16.
+
+### Learnings
+
+1. **bUnit 2.x re-render API is `Render`, not `SetParametersAndRender`** — `RenderedComponentRenderExtensions.Render(IRenderedComponent<T>, Action<ComponentParameterCollectionBuilder<T>>)` is the correct overload for parameter-driven re-renders.
+2. **The stale-content test pattern is behavior-first** — asserting `Markup.Should().Contain("Second Post Title")` and `Markup.Should().NotContain("First Post Title")` verifies what the user sees, not internal state. Survives any refactor of `_model` or `_isLoading` that preserves visible output.
+3. **`Render(...)` in bUnit 2.x waits for async lifecycle** — `OnParametersSetAsync` completes before `Render` returns, so synchronous markup assertions after `Render` are safe; `WaitForAssertion` is not needed here.
+4. **View tool can show stale snapshots** — always verify actual file content with `bash`/`cat` before concluding a file needs editing.

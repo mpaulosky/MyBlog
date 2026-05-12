@@ -1323,3 +1323,96 @@ Posted delivery summary comment on issue #291 covering all 5 shipped items:
 **GitHub cannot self-approve PRs.** When the merging agent is also the PR author, `gh pr review --approve` fails. The correct path is to merge directly (if CI is green and you have maintainer authority) or request a human reviewer. Document this as an expected limitation in squad workflows — don't treat it as a blocking error.
 
 **`AuthenticationStateProvider` is the correct DI entry point for Blazor Server auth checks.** `IHttpContextAccessor` is available in the DI container but operates at the HTTP middleware layer — not reliable inside interactive Blazor component lifecycle methods. `AuthStateProvider.GetAuthenticationStateAsync()` is the canonical Blazor-safe way to access the current user inside a component.
+
+---
+
+## 2026-05-11 — Triage: PRs #306 and #308 — Merge conflict + DevOps + duplicate UI fix
+
+**Requested by:** Boromir (Ralph work-check cycle)
+
+### Triage Summary
+
+**Two squad-labeled PRs opened simultaneously, both authored by Boromir:**
+
+| PR | Title | Status | Decision |
+|----|-------|--------|----------|
+| #306 | Merge dev: resolve project board automation option IDs conflict (#305) | ✅ **READY FOR REVIEW** | **Route to Boromir (DevOps)** |
+| #308 | fix(ui): redirect to /blog when post not found in Edit page (#307) | ⚠️ **CLOSE AS DUPLICATE** | **Superseded by PR #306** |
+
+### PR #306 Analysis
+
+**Branch:** `squad/305-sync-board-option-ids` (correct naming convention)
+**CI Status:** ✅ All 21 checks passing (squad CI, linting, tests, codecov)
+**Copilot Review:** 3 comments; no flagged bugs or security issues
+
+**Content:** Bundles 3 concerns:
+1. **Merge conflict resolution** — local `dev` vs `origin/dev` (commit 7e15cdd); correctly retained board automation option IDs
+2. **DevOps/CI fix** — switches `GITHUB_TOKEN` → `GH_PROJECT_TOKEN`, updates stale project board option IDs (IN_SPRINT, IN_REVIEW, RELEASED)
+3. **UX bug fix** — Edit.razor redirect when `GetBlogPostByIdQuery` returns `Result.Ok(null)` + bUnit regression test
+
+**Triage decision:** ✅ **Route to Boromir** (owns DevOps + merge conflict; UI fix is secondary and pre-tested by CI)
+
+### PR #308 Analysis
+
+**Branch:** `squad/307-fix-edit-null-post-redirect` (correct naming convention)
+**Base commit:** 7e15cdd (BEFORE the merge conflict resolution in PR #306)
+**Content:** Only the Edit.razor redirect + bUnit test (identical to PR #306)
+
+**Problem:** Duplicate of PR #306 UI changes:
+- Commit hashes differ (8c7b15f vs 8cf7981) but content is identical
+- Based on old commit; separate merge creates conflicts
+- Prevents clean history and wastes reviewer time
+
+**Triage decision:** ⚠️ **Close without merge** (superseded by PR #306; both issues #305 and #307 resolved by PR #306)
+
+### Actions Taken
+
+1. ✅ Posted triage comment on PR #306: decision, CI status, routing to Boromir
+2. ✅ Posted triage comment on PR #308: duplicate explanation, closure recommendation
+3. ✅ Created decision record: `.squad/decisions/inbox/aragorn-triage-pr-306-308.md`
+
+### Learnings
+
+**Multiple squad-authored PRs from the same session can overlap.** When Boromir resolved the merge conflict for #305, the merge reintroduced Edit.razor redirect fix (from upstream PR #304 resolution). Boromir then filed a separate PR #308 for the same UI fix, not realizing it was already in #306. This is a normal situation — the remedy is triage-time duplicate detection + closure. **Do not suppress triage when multiple PRs land; always check for overlap.**
+
+**Merge conflicts can carry forward bugfixes from upstream.** When resolving `local dev` vs `origin/dev`, the merge commit inherited the Edit.razor UX fix that was in the upstream branch. This is correct — don't discard upstream bugfixes during conflict resolution. However, document it clearly in the PR body (as Boromir did) so reviewers understand what's being carried forward.
+
+**`squad:member` labels require GitHub API token with `read:org` scope.** The `gh` CLI edit command failed because the token was scoped to `['read:user', 'repo', 'user:email', 'workflow']` but `--add-label` requires `read:org` and `read:discussion` scopes. Workaround: post triage comments instead, and let squad members apply labels manually or via the GitHub UI. Consider requesting a broader token for future triage work.
+
+## 2026-07-12 — PR #310 Review: fix(ui): refresh Edit page loading state on post-ID changes
+
+**Requested by:** Boromir (Ralph). PR author: mpaulosky (squad/307-fix-edit-null-post-redirect → dev).
+
+**Verdict:** **CHANGES_REQUESTED** — 3 blocking issues.
+
+### Gate Check Summary
+
+| Gate | Result |
+|------|--------|
+| Closes #307 | ✅ |
+| Branch is squad/* | ✅ |
+| CI green (test suite) | ❌ — only Dependabot/auto-label checks ran; no build/test CI |
+| No conflicts | ❌ — CONFLICTING / DIRTY |
+| Copilot review addressed | ❌ — 1 flagged bug not yet fixed |
+
+### Blocking Issues
+
+1. **Merge conflict** — `mergeable: CONFLICTING`. Must rebase onto current `dev` before merge.
+2. **Test CI did not run** — Full test suite (build + unit + bUnit + architecture) never ran on this branch. No CI green signal.
+3. **Copilot-flagged stale state bug** — `OnParametersSetAsync` sets `_isLoading = true` but does NOT reset `_model`, `_error`, or `_concurrencyError`. When navigating between post IDs, if the new load fails with an error, the previous post's form still renders alongside the error banner. Fix: reset all three fields at the top of `OnParametersSetAsync`.
+
+### What Was Good
+
+- `try/finally` loading state pattern is correct Blazor idiom.
+- `role="status"` accessibility addition is good.
+- Two new tests (`EditRedirectsToBlogWhenPostNotFound`, `EditShowsNewPostContentAfterParameterChange`) cover real prior gaps.
+- Branch naming, PR template, and issue link are all compliant.
+
+**Routing:** Legolas owns the UI fix. Must also add a regression test for the stale-model-on-error path.
+
+### Learnings
+
+**GitHub cannot self-approve or self-request-changes.** `gh pr review --request-changes` fails when the reviewer is the PR author. Post a review comment instead. This is a known squad limitation.
+
+**`try/finally` is necessary but not sufficient for Blazor parameter reload.** A loading flag reset via `try/finally` correctly gates the loading indicator, but state fields like `_model`, `_error`, and `_concurrencyError` that survive from a previous render cycle must also be explicitly cleared at the top of `OnParametersSetAsync`. Copilot correctly flagged this pattern; it should be treated as a standard rule for all Blazor components using `OnParametersSetAsync` with cached state fields.
+

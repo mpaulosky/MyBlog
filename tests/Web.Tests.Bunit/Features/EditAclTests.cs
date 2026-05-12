@@ -46,12 +46,13 @@ public class EditAclTests : BunitContext
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
 		// Act
-		RenderWithUser<Edit>(
+		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub("auth0|some-user", ["Author"]),
 				parameters => parameters.Add(p => p.Id, postId));
 
 		// Assert
 		navigation.Uri.Should().EndWith("/blog");
+		cut.Markup.Should().NotContain("Loading...");
 	}
 
 	[Fact]
@@ -163,6 +164,111 @@ public class EditAclTests : BunitContext
 		// Assert
 		navigation.Uri.Should().NotEndWith("/blog");
 		cut.Markup.Should().Contain("Edit Post");
+	}
+
+	[Fact]
+	public void EditShowsNewPostContentAfterParameterChange()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+		var secondPost = new BlogPostDto(secondPostId, "Second Post Title", "Second Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(secondPost)));
+
+		Services.AddSingleton(sender);
+
+		// Act — first render
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+
+		// Act — change parameters to a different post
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — second post content shown, loading indicator gone, no stale first-post content
+		cut.Markup.Should().Contain("Second Post Title");
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+	}
+
+	[Fact]
+	public void EditClearsStaleContentOnErrorAfterSuccessfulLoad()
+	{
+		// Arrange: first load succeeds, second load fails
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<BlogPostDto?>("Post could not be loaded.")));
+
+		Services.AddSingleton(sender);
+
+		// Act — first render succeeds
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+
+		// Act — second render returns error
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — stale form content gone, error shown
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+		cut.Markup.Should().Contain("Post could not be loaded.");
+	}
+
+	[Fact]
+	public void EditClearsStaleContentOnNullAfterSuccessfulLoad()
+	{
+		// Arrange: first load succeeds, second returns null (post not found)
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(null)));
+
+		Services.AddSingleton(sender);
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act — first render succeeds
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+
+		// Act — second render: post not found → should redirect
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — redirected and no stale form content visible
+		navigation.Uri.Should().EndWith("/blog");
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
 	}
 
 	private IRenderedComponent<TComponent> RenderWithUser<TComponent>(
