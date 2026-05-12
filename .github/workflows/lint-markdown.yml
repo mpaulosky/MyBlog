@@ -4,10 +4,8 @@ name: Lint Markdown
 on:
   push:
     branches: [dev, insider]
-    paths: ['**.md', '.markdownlint.json', '.github/workflows/lint-markdown.yml']
   pull_request:
     branches: [dev, preview, main, insider]
-    paths: ['**.md', '.markdownlint.json', '.github/workflows/lint-markdown.yml']
 
 permissions:
   contents: read
@@ -24,6 +22,9 @@ jobs:
         with:
           globs: |
             **/*.md
+            !**/node_modules/**
+            !**/bin/**
+            !**/obj/**
             !.squad/**
             !.copilot/**
             !.github/agents/**
