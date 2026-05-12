@@ -12,5 +12,9 @@ using MyBlog.Domain.ValueObjects;
 
 namespace MyBlog.Web.Features.BlogPosts.Create;
 
-internal sealed record CreateBlogPostCommand(string Title, string Content, PostAuthor Author)
+internal sealed record CreateBlogPostCommand(
+	string Title,
+	string Content,
+	PostAuthor Author,
+	bool IsPublished = false)
 		: IRequest<Result<Guid>>;

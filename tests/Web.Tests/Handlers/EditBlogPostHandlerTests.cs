@@ -64,6 +64,41 @@ public class EditBlogPostHandlerTests
 	}
 
 	[Fact]
+	public async Task HandleEdit_IsPublishedTrue_PublishesPost()
+	{
+		// Arrange
+		var authorId = "auth0|author1";
+		var post = BlogPost.Create("Title", "Content", new PostAuthor(authorId, "Author 1", "", []));
+		var command = new EditBlogPostCommand(post.Id, "Updated Title", "Updated Content", authorId, false, true);
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		post.IsPublished.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task HandleEdit_IsPublishedFalse_UnpublishesPost()
+	{
+		// Arrange
+		var authorId = "auth0|author1";
+		var post = BlogPost.Create("Title", "Content", new PostAuthor(authorId, "Author 1", "", []));
+		post.Publish();
+		var command = new EditBlogPostCommand(post.Id, "Updated Title", "Updated Content", authorId, false, false);
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		post.IsPublished.Should().BeFalse();
+	}
+
+	[Fact]
 	public async Task HandleEdit_DifferentNonAdminUser_ReturnsUnauthorized()
 	{
 		// Arrange

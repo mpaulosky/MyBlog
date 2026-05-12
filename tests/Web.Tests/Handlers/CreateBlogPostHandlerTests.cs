@@ -99,4 +99,40 @@ public class CreateBlogPostHandlerTests
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Be("An unexpected error occurred.");
 	}
+
+	[Fact]
+	public async Task Handle_IsPublishedTrue_PersistsPublishedPost()
+	{
+		// Arrange
+		BlogPost? persistedPost = null;
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []), true);
+		_repo.AddAsync(Arg.Do<BlogPost>(post => persistedPost = post), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		persistedPost.Should().NotBeNull();
+		persistedPost!.IsPublished.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task Handle_DefaultIsPublishedFalse_PersistsUnpublishedPost()
+	{
+		// Arrange
+		BlogPost? persistedPost = null;
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
+		_repo.AddAsync(Arg.Do<BlogPost>(post => persistedPost = post), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		persistedPost.Should().NotBeNull();
+		persistedPost!.IsPublished.Should().BeFalse();
+	}
 }

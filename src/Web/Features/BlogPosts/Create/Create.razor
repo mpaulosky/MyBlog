@@ -33,6 +33,12 @@
 			<label class="form-label">Content</label>
 			<InputTextArea class="form-input" rows="8" @bind-Value="_model.Content" />
 		</div>
+		<div class="form-group">
+			<label class="form-label flex items-center gap-2">
+				<InputCheckbox @bind-Value="_model.IsPublished" />
+				<span>Published</span>
+			</label>
+		</div>
 
 		<div class="flex gap-2">
 			<button type="submit" class="btn-primary">Create</button>
@@ -54,16 +60,33 @@
 	{
 		var state = await AuthStateProvider.GetAuthenticationStateAsync();
 		var user = state.User;
-		_authorId = user.FindFirst("sub")?.Value ?? string.Empty;
-		_authorName = user.FindFirst("name")?.Value ?? user.Identity?.Name ?? string.Empty;
-		_authorEmail = user.FindFirst("email")?.Value ?? string.Empty;
+		
+		// Extract nameidentifier claim for AuthorId, with fallbacks for Development/Testing
+		_authorId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+			?? user.FindFirst("sub")?.Value
+			?? user.Identity?.Name
+			?? "dev-user";
+		_authorName = user.FindFirst("name")?.Value ?? user.Identity?.Name ?? "Author";
+		_authorEmail = user.FindFirst(ClaimTypes.Email)?.Value
+			?? user.FindFirst("email")?.Value
+			?? "no-email@example.com";
 		_authorRoles = RoleClaimsHelper.GetRoles(user);
+		
+		// If still empty, generate sensible defaults for Development mode
+		if (string.IsNullOrWhiteSpace(_authorId))
+		{
+			_authorId = $"auth0|dev-{Guid.NewGuid().ToString().Substring(0, 8)}";
+		}
+		if (string.IsNullOrWhiteSpace(_authorName))
+		{
+			_authorName = "Author";
+		}
 	}
 
 	private async Task HandleSubmit()
 	{
 		var author = new PostAuthor(_authorId, _authorName, _authorEmail, _authorRoles);
-		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author));
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished));
 		if (result.Success)
 			Navigation.NavigateTo("/blog");
 		else
@@ -77,5 +100,7 @@
 
 		[System.ComponentModel.DataAnnotations.Required]
 		public string Content { get; set; } = string.Empty;
+
+		public bool IsPublished { get; set; }
 	}
 }
