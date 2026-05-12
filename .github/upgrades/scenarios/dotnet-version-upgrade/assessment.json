@@ -1,0 +1,1962 @@
+{
+  "settings": {
+    "components": {
+      "code": true,
+      "binaries": false
+    },
+    "targetId": "net11.0",
+    "targetDisplayName": ".NETCoreApp,Version=v11.0"
+  },
+  "analysisStartTime": "2026-05-12T21:00:45.4979973Z",
+  "analysisEndTime": "2026-05-12T21:00:48.4640631Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 10,
+      "issues": 5,
+      "incidents": 61,
+      "effort": 61
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 11,
+        "Optional": 1,
+        "Potential": 49,
+        "Information": 0
+      },
+      "category": {
+        "Project": 10,
+        "NuGet": 1,
+        "Api": 50
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "MyBlog\\src\\AppHost\\AppHost.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "AppHost",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 2,
+        "numberOfCodeFiles": 2,
+        "linesTotal": 406,
+        "linesOfCode": 406,
+        "totalApiScanned": 596,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "e99bd397-ff46-4c23-85a5-7e3b33e0c08a",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\src\\AppHost\\AppHost.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\AppHost\\AppHost.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 22,
+      "properties": {
+        "appName": "AppHost.Tests",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 25,
+        "numberOfCodeFiles": 22,
+        "linesTotal": 5392,
+        "linesOfCode": 2751,
+        "totalApiScanned": 2830,
+        "minLinesOfCodeToChange": 21,
+        "maxLinesOfCodeToChange": 21
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "b9c5d328-28ac-4da5-8a06-64bf781f5e24",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        },
+        {
+          "incidentId": "cf61917c-f97d-45f7-b91a-17ae0b1333f9",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\ClearCommandAppFixture.cs",
+            "snippet": "using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Int64)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 52,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "3f9a5ab2-7f07-49ec-bb35-8f63ae8dbd24",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: Support for empty environment variables ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Environment.SetEnvironmentVariable(\u0022ASPNETCORE_ENVIRONMENT\u0022, \u0022Testing\u0022);",
+              "protected": "M:System.Environment.SetEnvironmentVariable(System.String,System.String)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\ClearCommandAppFixture.cs",
+            "snippet": "Environment.SetEnvironmentVariable(\u0022ASPNETCORE_ENVIRONMENT\u0022, \u0022Testing\u0022);",
+            "protectedSnippet": "M:System.Environment.SetEnvironmentVariable(System.String,System.String)",
+            "label": "M:System.Environment.SetEnvironmentVariable(System.String,System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/empty-env-variable.md",
+                "isCustom": false
+              }
+            ],
+            "line": 38,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "a1e787f0-0531-4166-bbde-07ae2a2ec596",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 166,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "9757ad79-5b93-4990-a8e0-8cebff9c20ac",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 141,
+            "column": 5
+          }
+        },
+        {
+          "incidentId": "781a62e1-48a9-4532-8a1b-cc6f5d143eb9",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+              "protected": "M:System.Uri.#ctor(System.String,System.UriKind)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String,System.UriKind)",
+            "label": "M:System.Uri.#ctor(System.String,System.UriKind)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 141,
+            "column": 5
+          }
+        },
+        {
+          "incidentId": "8881acea-418f-408c-862c-21dc0d8d3c57",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var client = new HttpClient(handler) { BaseAddress = endpoint };",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "using var client = new HttpClient(handler) { BaseAddress = endpoint };",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 123,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "1fa65888-6069-430a-910b-9e759500b1da",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "endpoint = App.GetEndpoint(\u0022web\u0022, \u0022https\u0022);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "endpoint = App.GetEndpoint(\u0022web\u0022, \u0022https\u0022);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 110,
+            "column": 3
+          }
+        },
+        {
+          "incidentId": "47b6f939-54ce-4968-8e04-fb31f6559127",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "await WaitForWebHealthyAsync(TimeSpan.FromSeconds(180));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "await WaitForWebHealthyAsync(TimeSpan.FromSeconds(180));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 90,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "c9b1d384-de8d-403f-a167-8201beec85e0",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: Support for empty environment variables ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Environment.SetEnvironmentVariable(\u0022ASPNETCORE_ENVIRONMENT\u0022, \u0022Testing\u0022);",
+              "protected": "M:System.Environment.SetEnvironmentVariable(System.String,System.String)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Infrastructure\\AspireManager.cs",
+            "snippet": "Environment.SetEnvironmentVariable(\u0022ASPNETCORE_ENVIRONMENT\u0022, \u0022Testing\u0022);",
+            "protectedSnippet": "M:System.Environment.SetEnvironmentVariable(System.String,System.String)",
+            "label": "M:System.Environment.SetEnvironmentVariable(System.String,System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/empty-env-variable.md",
+                "isCustom": false
+              }
+            ],
+            "line": 42,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "b3f0ec79-acc3-4820-9e9a-7ac45721adf2",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Tests\\Layout\\ThemeToggleInteractionTests.cs",
+            "snippet": "var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 124,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "c4a64b19-07f5-4847-936a-a69645e3af34",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\Tests\\Layout\\ThemeToggleInteractionTests.cs",
+            "snippet": "var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 101,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "0e54d00f-9bbe-4746-b618-fc253f2810ef",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "private static async Task WaitForWebReadyAsync(Uri endpoint, TimeSpan timeout)",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "private static async Task WaitForWebReadyAsync(Uri endpoint, TimeSpan timeout)",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 130,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "e4fd3703-75ef-4492-8ed3-20f063835b31",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 155,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "6305b86a-6f6a-41eb-b927-84de56bad902",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 146,
+            "column": 5
+          }
+        },
+        {
+          "incidentId": "6a003a55-9238-42b0-b24d-9ecbc1353cf8",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+              "protected": "M:System.Uri.#ctor(System.String,System.UriKind)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "var response = await client.GetAsync(new Uri(\u0022/alive\u0022, UriKind.Relative), cts.Token);",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String,System.UriKind)",
+            "label": "M:System.Uri.#ctor(System.String,System.UriKind)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 146,
+            "column": 5
+          }
+        },
+        {
+          "incidentId": "01a48b5a-5564-4920-9ebb-df8fc33a3a1b",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var client = new HttpClient(handler) { BaseAddress = endpoint };",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "using var client = new HttpClient(handler) { BaseAddress = endpoint };",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 136,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "00a22154-c02a-4ff3-8b80-e81528e98692",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "private async Task\u003CIPage\u003E CreatePageAsync(Uri uri, ViewportSize? size = null)",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "private async Task\u003CIPage\u003E CreatePageAsync(Uri uri, ViewportSize? size = null)",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 111,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "ca0e366a-d8df-4309-a12f-3c2533624bcb",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "private Uri GetEndpoint(string serviceName)",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "private Uri GetEndpoint(string serviceName)",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 107,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "28fbbdca-efc5-4ed1-ab26-5666e1922772",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": ".GetEndpoint(serviceName, \u0022https\u0022)",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": ".GetEndpoint(serviceName, \u0022https\u0022)",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 108,
+            "column": 20
+          }
+        },
+        {
+          "incidentId": "b367df6a-0d69-4295-9388-8590e23c9460",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var endpoint = GetEndpoint(serviceName);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "var endpoint = GetEndpoint(serviceName);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 88,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "a444ebea-3c34-4b49-b0a1-4031629bc04a",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\AppHost.Tests\\AppHost.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var endpoint = GetEndpoint(serviceName);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\AppHost.Tests\\BasePlaywrightTests.cs",
+            "snippet": "var endpoint = GetEndpoint(serviceName);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 40,
+            "column": 2
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\tests\\Architecture.Tests\\Architecture.Tests.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "Architecture.Tests",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 10,
+        "numberOfCodeFiles": 7,
+        "linesTotal": 3016,
+        "linesOfCode": 374,
+        "totalApiScanned": 405,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "0d47e5d9-eeaa-458a-b5be-2b6c67782cff",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\tests\\Architecture.Tests\\Architecture.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Architecture.Tests\\Architecture.Tests.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\src\\Domain\\Domain.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "Domain",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 6,
+        "numberOfCodeFiles": 6,
+        "linesTotal": 326,
+        "linesOfCode": 326,
+        "totalApiScanned": 254,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "7a4d9b90-79ab-4d2a-ae40-25b30faebbcf",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\src\\Domain\\Domain.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Domain\\Domain.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\tests\\Domain.Tests\\Domain.Tests.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "Domain.Tests",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 8,
+        "numberOfCodeFiles": 5,
+        "linesTotal": 3231,
+        "linesOfCode": 589,
+        "totalApiScanned": 724,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "7a5f5262-79d4-472f-8b17-4a5d28c86a5c",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\tests\\Domain.Tests\\Domain.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Domain.Tests\\Domain.Tests.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\src\\ServiceDefaults\\ServiceDefaults.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "ServiceDefaults",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 2,
+        "numberOfCodeFiles": 2,
+        "linesTotal": 143,
+        "linesOfCode": 143,
+        "totalApiScanned": 138,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "08c08110-61e3-4eff-a912-9125f7fffa9b",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\src\\ServiceDefaults\\ServiceDefaults.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\ServiceDefaults\\ServiceDefaults.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\src\\Web\\Web.csproj",
+      "startingProject": true,
+      "issues": 5,
+      "storyPoints": 20,
+      "properties": {
+        "appName": "Web",
+        "projectKind": "AspNetCore",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 61,
+        "numberOfCodeFiles": 33,
+        "linesTotal": 5746,
+        "linesOfCode": 1813,
+        "totalApiScanned": 5012,
+        "minLinesOfCodeToChange": 18,
+        "maxLinesOfCodeToChange": 18
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "251e5415-ff05-4832-a666-197fb4f4229b",
+          "ruleId": "NuGet.0005",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "FluentValidation.AspNetCore, 11.3.1\n\nRecommendation:\n\nShould be replaced.\nRemove FluentValidation.AspNetCore, and replace with new package FluentValidation.AspNetCore, 11.3.1",
+              "protected": "FluentValidation.AspNetCore, 11.3.1\n\nRecommendation:\n\nShould be replaced.\nRemove FluentValidation.AspNetCore, and replace with new package FluentValidation.AspNetCore, 11.3.1"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Web.csproj",
+            "snippet": "FluentValidation.AspNetCore, 11.3.1\n\nRecommendation:\n\nShould be replaced.\nRemove FluentValidation.AspNetCore, and replace with new package FluentValidation.AspNetCore, 11.3.1",
+            "protectedSnippet": "FluentValidation.AspNetCore, 11.3.1\n\nRecommendation:\n\nShould be replaced.\nRemove FluentValidation.AspNetCore, and replace with new package FluentValidation.AspNetCore, 11.3.1",
+            "label": "FluentValidation.AspNetCore 11.3.1",
+            "properties": {
+              "PackageId": "FluentValidation.AspNetCore",
+              "PackageVersion": "11.3.1",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "76c77120-8311-42b8-b406-431aedbbacf8",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Web.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        },
+        {
+          "incidentId": "c0eca2c4-442c-4cc7-96ac-82b828a9bc33",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var document = JsonDocument.Parse(trimmed);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Security\\RoleClaimsHelper.cs",
+            "snippet": "using var document = JsonDocument.Parse(trimmed);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 79,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "c31e18db-83a5-4971-89e5-fe7239254e2e",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var document = JsonDocument.Parse(trimmed);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Security\\RoleClaimsHelper.cs",
+            "snippet": "using var document = JsonDocument.Parse(trimmed);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 79,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "131cf7ce-36c8-4fec-a5f1-5211d07635ce",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var configured = configuration.GetSection(\u0022Auth0:RoleClaimTypes\u0022).Get\u003Cstring[]\u003E();",
+              "protected": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Security\\RoleClaimsHelper.cs",
+            "snippet": "var configured = configuration.GetSection(\u0022Auth0:RoleClaimTypes\u0022).Get\u003Cstring[]\u003E();",
+            "protectedSnippet": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 25,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "03cd0218-c7a7-4546-89f9-8b330b2994e4",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Navigation.NavigateTo($\u0022/Account/Login?returnUrl={Uri.EscapeDataString(Navigation.Uri)}\u0022, forceLoad: true);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\obj\\Debug\\net10.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/RedirectToLogin_razor.g.cs",
+            "snippet": "Navigation.NavigateTo($\u0022/Account/Login?returnUrl={Uri.EscapeDataString(Navigation.Uri)}\u0022, forceLoad: true);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 129,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "38333297-ac53-4846-b736-52fb59e01aa6",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using JsonDocument document = JsonDocument.Parse(trimmed);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\obj\\Debug\\net10.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Features/UserManagement/Profile_razor.g.cs",
+            "snippet": "using JsonDocument document = JsonDocument.Parse(trimmed);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 713,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "1c112860-348c-461a-b32b-de792de3fb2e",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using JsonDocument document = JsonDocument.Parse(trimmed);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\obj\\Debug\\net10.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Features/UserManagement/Profile_razor.g.cs",
+            "snippet": "using JsonDocument document = JsonDocument.Parse(trimmed);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 713,
+            "column": 4
+          }
+        },
+        {
+          "incidentId": "16425c3f-5904-4cc2-b569-d07939376a7e",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: C# overload resolution prefers \u0060params\u0060 span-type overloads ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "await Task.WhenAll(usersTask, rolesTask);",
+              "protected": "M:System.Threading.Tasks.Task.WhenAll(System.ReadOnlySpan{System.Threading.Tasks.Task})"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\obj\\Debug\\net10.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Features/UserManagement/ManageRoles_razor.g.cs",
+            "snippet": "await Task.WhenAll(usersTask, rolesTask);",
+            "protectedSnippet": "M:System.Threading.Tasks.Task.WhenAll(System.ReadOnlySpan{System.Threading.Tasks.Task})",
+            "label": "M:System.Threading.Tasks.Task.WhenAll(System.ReadOnlySpan{System.Threading.Tasks.Task})",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/params-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 423,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "b9fa54d3-4537-4019-b11b-49f0669c2c61",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var tokenData = await tokenResponse.Content.ReadFromJsonAsync\u003CTokenResponse\u003E(cancellationToken).ConfigureAwait(false);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Features\\UserManagement\\UserManagementHandler.cs",
+            "snippet": "var tokenData = await tokenResponse.Content.ReadFromJsonAsync\u003CTokenResponse\u003E(cancellationToken).ConfigureAwait(false);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 197,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "934546b6-5f3b-4965-b1ef-56e7b89f9df0",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var safeReturn = !string.IsNullOrEmpty(returnUrl)\r\n\t\t\t\u0026\u0026 Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)\r\n\t\t\t? returnUrl\r\n\t\t\t: \u0022/\u0022;",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "var safeReturn = !string.IsNullOrEmpty(returnUrl)\r\n\t\t\t\u0026\u0026 Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)\r\n\t\t\t? returnUrl\r\n\t\t\t: \u0022/\u0022;",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 163,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "cbd15bfe-7e92-43ec-bb4a-dfeb625c35cf",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: Exception diagnostics are suppressed when IExceptionHandler.TryHandleAsync returns true ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "app.UseExceptionHandler(\u0022/Error\u0022, createScopeForErrors: true);",
+              "protected": "M:Microsoft.AspNetCore.Builder.ExceptionHandlerExtensions.UseExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.String,System.Boolean)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "app.UseExceptionHandler(\u0022/Error\u0022, createScopeForErrors: true);",
+            "protectedSnippet": "M:Microsoft.AspNetCore.Builder.ExceptionHandlerExtensions.UseExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.String,System.Boolean)",
+            "label": "M:Microsoft.AspNetCore.Builder.ExceptionHandlerExtensions.UseExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.String,System.Boolean)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/aspnet-core/10/exception-handler-diagnostics-suppressed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 147,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "abe21902-a556-49cd-860d-dd6760fd55ee",
+          "ruleId": "Api.0003",
+          "description": "URI query redaction in IHttpClientFactory logs ",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "builder.Services.AddHttpClient();",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.HttpClientFactoryServiceCollectionExtensions.AddHttpClient(Microsoft.Extensions.DependencyInjection.IServiceCollection)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "builder.Services.AddHttpClient();",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.HttpClientFactoryServiceCollectionExtensions.AddHttpClient(Microsoft.Extensions.DependencyInjection.IServiceCollection)",
+            "label": "M:Microsoft.Extensions.DependencyInjection.HttpClientFactoryServiceCollectionExtensions.AddHttpClient(Microsoft.Extensions.DependencyInjection.IServiceCollection)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/9.0/query-redaction-logs.md",
+                "isCustom": false
+              }
+            ],
+            "line": 140,
+            "column": 0
+          }
+        },
+        {
+          "incidentId": "a21161cc-57c4-403f-9c24-8cd495c4dcbf",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.Events.OnTokenValidated = async context =\u003E\r\n\t{\r\n\t\tawait existingOnTokenValidated(context).ConfigureAwait(false);\r\n\r\n\t\tif (context.Principal?.Identity is not ClaimsIdentity identity)\r\n\t\t{\r\n\t\t\treturn;\r\n\t\t}\r\n\r\n\t\tRoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);\r\n\t};",
+              "protected": "T:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "options.Events.OnTokenValidated = async context =\u003E\r\n\t{\r\n\t\tawait existingOnTokenValidated(context).ConfigureAwait(false);\r\n\r\n\t\tif (context.Principal?.Identity is not ClaimsIdentity identity)\r\n\t\t{\r\n\t\t\treturn;\r\n\t\t}\r\n\r\n\t\tRoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);\r\n\t};",
+            "protectedSnippet": "T:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents",
+            "label": "T:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 83,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "95a480d9-96fd-42ab-8e23-9d769a1656a2",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.Events.OnTokenValidated = async context =\u003E\r\n\t{\r\n\t\tawait existingOnTokenValidated(context).ConfigureAwait(false);\r\n\r\n\t\tif (context.Principal?.Identity is not ClaimsIdentity identity)\r\n\t\t{\r\n\t\t\treturn;\r\n\t\t}\r\n\r\n\t\tRoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);\r\n\t};",
+              "protected": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Events"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "options.Events.OnTokenValidated = async context =\u003E\r\n\t{\r\n\t\tawait existingOnTokenValidated(context).ConfigureAwait(false);\r\n\r\n\t\tif (context.Principal?.Identity is not ClaimsIdentity identity)\r\n\t\t{\r\n\t\t\treturn;\r\n\t\t}\r\n\r\n\t\tRoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);\r\n\t};",
+            "protectedSnippet": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Events",
+            "label": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Events",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 83,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "f0376d42-5a2b-4be0-9f40-c66d7fbc790f",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.Events.OnTokenValidated = async context =\u003E\r\n\t{\r\n\t\tawait existingOnTokenValidated(context).ConfigureAwait(false);\r\n\r\n\t\tif (context.Principal?.Identity is not ClaimsIdentity identity)\r\n\t\t{\r\n\t\t\treturn;\r\n\t\t}\r\n\r\n\t\tRoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);\r\n\t};",
+              "protected": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents.OnTokenValidated"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "options.Events.OnTokenValidated = async context =\u003E\r\n\t{\r\n\t\tawait existingOnTokenValidated(context).ConfigureAwait(false);\r\n\r\n\t\tif (context.Principal?.Identity is not ClaimsIdentity identity)\r\n\t\t{\r\n\t\t\treturn;\r\n\t\t}\r\n\r\n\t\tRoleClaimsHelper.AddRoleClaims(identity, auth0RoleClaimTypes);\r\n\t};",
+            "protectedSnippet": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents.OnTokenValidated",
+            "label": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents.OnTokenValidated",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 83,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "5088b436-2f05-49d2-8ce5-db46a34fb803",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var existingOnTokenValidated = options.Events.OnTokenValidated;",
+              "protected": "T:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "var existingOnTokenValidated = options.Events.OnTokenValidated;",
+            "protectedSnippet": "T:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents",
+            "label": "T:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 82,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "478b7157-b7db-4b13-9b42-0c8e3466ceea",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var existingOnTokenValidated = options.Events.OnTokenValidated;",
+              "protected": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Events"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "var existingOnTokenValidated = options.Events.OnTokenValidated;",
+            "protectedSnippet": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Events",
+            "label": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.Events",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 82,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "c5cbdc8c-d619-4e46-9d01-6a72cd00e671",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var existingOnTokenValidated = options.Events.OnTokenValidated;",
+              "protected": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents.OnTokenValidated"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "var existingOnTokenValidated = options.Events.OnTokenValidated;",
+            "protectedSnippet": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents.OnTokenValidated",
+            "label": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents.OnTokenValidated",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 82,
+            "column": 1
+          }
+        },
+        {
+          "incidentId": "c552f86e-bc5b-465e-bd96-c970eca471e0",
+          "ruleId": "Api.0002",
+          "description": "API is available in package Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6. Add package reference to Microsoft.AspNetCore.Authentication.OpenIdConnect, 8.0.6",
+          "projectPath": "MyBlog\\src\\Web\\Web.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;",
+              "protected": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.TokenValidationParameters"
+            },
+            "kind": "File",
+            "path": "MyBlog\\src\\Web\\Program.cs",
+            "snippet": "options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;",
+            "protectedSnippet": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.TokenValidationParameters",
+            "label": "P:Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions.TokenValidationParameters",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Authentication.OpenIdConnect",
+              "PackageNewVersion": "8.0.6"
+            },
+            "line": 80,
+            "column": 1
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\tests\\Web.Tests.Bunit\\Web.Tests.Bunit.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "Web.Tests.Bunit",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 14,
+        "numberOfCodeFiles": 11,
+        "linesTotal": 4944,
+        "linesOfCode": 2302,
+        "totalApiScanned": 4629,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "f167be8f-b0a7-46b9-b0db-29115f1b63fb",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\tests\\Web.Tests.Bunit\\Web.Tests.Bunit.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests.Bunit\\Web.Tests.Bunit.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 12,
+      "properties": {
+        "appName": "Web.Tests",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 22,
+        "numberOfCodeFiles": 19,
+        "linesTotal": 5628,
+        "linesOfCode": 2986,
+        "totalApiScanned": 4660,
+        "minLinesOfCodeToChange": 11,
+        "maxLinesOfCodeToChange": 11
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "ba61d4be-8276-4255-91d1-4c9eb4766c78",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        },
+        {
+          "incidentId": "e8afb63c-09ec-4fb6-8795-b0a492fb0b84",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://legacy.auth0.com/oauth/token\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://legacy.auth0.com/oauth/token\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 314,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "c0d6dd42-d930-4f51-badf-3adbd9f36e55",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://legacy.auth0.com/oauth/token\u0022));",
+              "protected": "M:System.Uri.#ctor(System.String)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://legacy.auth0.com/oauth/token\u0022));",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String)",
+            "label": "M:System.Uri.#ctor(System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 314,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "737eebad-cf17-40c2-80fa-9ec4d5a70564",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://legacy.auth0.com/oauth/token\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://legacy.auth0.com/oauth/token\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 314,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "37608970-b744-4d48-abe8-9cdb82f6d357",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 309,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "e26ab806-2e71-4591-b28b-e6101acbd48a",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 309,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "2074b72e-179b-4c5f-90b1-beda7e929d5b",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://primary.auth0.com/oauth/token\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://primary.auth0.com/oauth/token\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 291,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "e096b69a-ae3f-4581-a9ab-4c2d4441629f",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://primary.auth0.com/oauth/token\u0022));",
+              "protected": "M:System.Uri.#ctor(System.String)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://primary.auth0.com/oauth/token\u0022));",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String)",
+            "label": "M:System.Uri.#ctor(System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 291,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "682937fe-eac1-4f4e-9abc-08d74710936a",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://primary.auth0.com/oauth/token\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "httpHandler.LastRequestUri.Should().Be(new Uri(\u0022https://primary.auth0.com/oauth/token\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 291,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "2557a1b9-7192-42ab-86e5-0a7ca4926a44",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 286,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "240e1b68-ad3f-41bd-a5c5-3f3e8e079de6",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\Handlers\\UserManagementHandlerTests.cs",
+            "snippet": "using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 286,
+            "column": 2
+          }
+        },
+        {
+          "incidentId": "7db60632-546f-4091-b781-513d9cb689fb",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "MyBlog\\tests\\Web.Tests\\Web.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "post.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Int64)"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests\\BlogPostTests.cs",
+            "snippet": "post.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Int64)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 29,
+            "column": 2
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "MyBlog\\tests\\Web.Tests.Integration\\Web.Tests.Integration.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "Web.Tests.Integration",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 10,
+        "numberOfCodeFiles": 7,
+        "linesTotal": 3104,
+        "linesOfCode": 463,
+        "totalApiScanned": 573,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "fb0f564a-59f4-4fe3-973d-e3feb4ac5b43",
+          "ruleId": "Project.0002",
+          "projectPath": "MyBlog\\tests\\Web.Tests.Integration\\Web.Tests.Integration.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net10.0\nRecommended target framework: net11.0",
+              "protected": "Current target framework: net10.0\nRecommended target framework: net11.0"
+            },
+            "kind": "File",
+            "path": "MyBlog\\tests\\Web.Tests.Integration\\Web.Tests.Integration.csproj",
+            "snippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "protectedSnippet": "Current target framework: net10.0\nRecommended target framework: net11.0",
+            "properties": {
+              "CurrentTargetFramework": "net10.0",
+              "RecommendedTargetFramework": "net11.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    }
+  ],
+  "rules": {
+    "Project.0002": {
+      "id": "Project.0002",
+      "isFeature": false,
+      "description": "Project\u0027s target framework(s) needs to be changed to the new target framework that you selected for this upgrade.\n\nDuring upgrade target framework will be adjusted to corresponding platform when applicable. In some cases project would result in multiple target frameworks after the upgrade if it was using features that now have their own platforms in modern .NET frameworks (windows, iOS, Android etc).",
+      "label": "Project\u0027s target framework(s) needs to be changed",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Overview of porting from .NET Framework to .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": ".NET project SDKs",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "NuGet.0005": {
+      "id": "NuGet.0005",
+      "isFeature": false,
+      "description": "NuGet package is deprecated.\n\nGo to its documentation and if there is a guidance for replacement of functionality provided by this package.",
+      "label": "NuGet package is deprecated",
+      "severity": "Optional",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262531",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0003": {
+      "id": "Api.0003",
+      "isFeature": false,
+      "description": "API has a behavioral change in selected .NET version: code and binaries may behave differently at runtime without needing recompilation, but the new behavior might be undesirable and require updates.",
+      "label": "Behavioral change in selected .NET version",
+      "severity": "Potential",
+      "effort": 1
+    },
+    "Api.0001": {
+      "id": "Api.0001",
+      "isFeature": false,
+      "description": "API is binary incompatible for selected .NET version: affects existing binaries, often requiring recompilation, because the API has changed in a way that prevents older binaries from loading or executing.",
+      "label": "Binary incompatible for selected .NET version",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Breaking changes in .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0002": {
+      "id": "Api.0002",
+      "isFeature": false,
+      "description": "API is source incompatible for selected .NET version: requires code changes to compile successfully when targeting a new version, such as removing obsolete APIs or changing method signatures.",
+      "label": "Source incompatible for selected .NET version",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Breaking changes in .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    }
+  }
+}

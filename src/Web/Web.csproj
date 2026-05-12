@@ -10,7 +10,6 @@
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Auth0.AspNetCore.Authentication" />
     <PackageReference Include="Auth0.ManagementApi" />
-    <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="MediatR" />
