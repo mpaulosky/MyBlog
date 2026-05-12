@@ -166,6 +166,42 @@ public class EditAclTests : BunitContext
 		cut.Markup.Should().Contain("Edit Post");
 	}
 
+	[Fact]
+	public void EditShowsNewPostContentAfterParameterChange()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+		var secondPost = new BlogPostDto(secondPostId, "Second Post Title", "Second Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(secondPost)));
+
+		Services.AddSingleton(sender);
+
+		// Act — first render
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+
+		// Act — change parameters to a different post
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — second post content shown, loading indicator gone, no stale first-post content
+		cut.Markup.Should().Contain("Second Post Title");
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+	}
+
 	private IRenderedComponent<TComponent> RenderWithUser<TComponent>(
 			ClaimsPrincipal principal,
 			Action<ComponentParameterCollectionBuilder<TComponent>>? configure = null)
