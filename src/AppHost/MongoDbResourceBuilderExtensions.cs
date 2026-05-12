@@ -209,18 +209,18 @@ internal static class MongoDbResourceBuilderExtensions
 				var database = client.GetDatabase(databaseName);
 				var collection = database.GetCollection<BsonDocument>("blogposts");
 
-			var now = DateTime.UtcNow;
-			var authorId = "auth0|author-matthew-paulosky";
-			var authorDocument = new BsonDocument
-			{
-				["AuthorId"] = authorId,
-				["AuthorName"] = "Matthew Paulosky",
-				["AuthorEmail"] = "matthew@paulosky.com",
-				["AuthorRoles"] = new BsonArray { "Author", "Admin" }
-			};
+				var now = DateTime.UtcNow;
+				var authorId = "auth0|author-matthew-paulosky";
+				var authorDocument = new BsonDocument
+				{
+					["AuthorId"] = authorId,
+					["AuthorName"] = "Matthew Paulosky",
+					["AuthorEmail"] = "matthew@paulosky.com",
+					["AuthorRoles"] = new BsonArray { "Author", "Admin" }
+				};
 
-			var seedDocuments = new BsonDocument[]
-	{
+				var seedDocuments = new BsonDocument[]
+		{
 new()
 {
 ["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
