@@ -66,6 +66,10 @@ else if (_model is not null)
 
     protected override async Task OnParametersSetAsync()
     {
+        _model = null;
+        _error = null;
+        _concurrencyError = false;
+        _isLoading = true;
         try
         {
             var result = await Sender.Send(new GetBlogPostByIdQuery(Id));

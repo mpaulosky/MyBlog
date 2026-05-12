@@ -881,3 +881,54 @@ Then each variant only declares its colour-specific overrides. This is idiomatic
 - `NavigationManager.NavigateTo` in bUnit changes `.Uri` but does NOT unmount the component — so loading states must be explicitly cleared, not relied on navigation to resolve them
 
 **Filed:** `.squad/decisions/inbox/legolas-issue307-ui.md`
+
+---
+
+## 2026-05-11 — PR #310 Unblock: Stale-State Fix on Route Parameter Changes
+
+### Task
+
+Resolve reviewer CHANGES_REQUESTED blockers on PR #310 (branch `squad/307-fix-edit-null-post-redirect`):
+
+1. Merge conflict with dev (caused by prior rebase/squash of PR #309)
+2. Stale-state bug: `_model`, `_error`, `_concurrencyError` not reset before each fetch cycle
+3. Missing regression tests for the stale-content paths
+
+### What Was Done
+
+**Merge conflict resolution:** rebased branch onto `origin/dev` using `git rebase`. Commits `8c7b15f` and `8076fc6` were already upstream (merged as `5e176dc` via PR #309); git skipped them cleanly. Only the new commit `e18b851` was replayed as `37f68a2`.
+
+**Stale-state fix in `Edit.razor`:** added three reset lines at the top of `OnParametersSetAsync` before `_isLoading = true`:
+
+```csharp
+_model = null;
+_error = null;
+_concurrencyError = false;
+```
+
+This guarantees all display state is clean before every fetch cycle, not just `_isLoading`.
+
+**New bUnit regression tests (EditAclTests.cs):**
+
+- `EditClearsStaleContentOnErrorAfterSuccessfulLoad` — first fetch succeeds (post A loaded), second fetch fails with error → old form content gone, error shown
+- `EditClearsStaleContentOnNullAfterSuccessfulLoad` — first fetch succeeds, second returns null (not found) → redirect to /blog, no stale form content
+
+### Test Counts
+
+- Before: 90 bUnit tests
+- After: 92 bUnit tests (all pass)
+- Full Gate 4 suite: Architecture (16), Domain (42), Web (154), bUnit (92) — all green
+
+### Learnings
+
+**Stale-state pattern in Blazor route pages:**
+
+- Resetting ONLY `_isLoading` is insufficient — ALL display state (`_model`, `_error`, `_concurrencyError`) must be cleared at the top of `OnParametersSetAsync` before the async operation
+- If only `_isLoading` is reset, previous successful load data remains and the UI renders stale content alongside new error messages during route parameter changes
+
+**Rebase vs merge for de-duplicating squash-merged commits:**
+
+- When upstream squash-merges commits from a branch, a later rebase will skip those commits automatically (`dropping ... patch contents already upstream`) — no manual conflict resolution needed for the already-merged commits
+- Use `git rebase --skip` when the first conflict is a commit already upstream
+
+**Filed:** `.squad/decisions/inbox/legolas-pr310-unblock.md`
