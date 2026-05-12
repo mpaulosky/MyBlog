@@ -2433,3 +2433,383 @@ Feature branch commits **must never include `.squad/` files**. Stage explicitly 
 **✅ Implemented** — Both regressions fixed in PR #295. Process applied and documented.
 
 ---
+
+---
+
+### 32. OnParametersSetAsync State Reset Pattern for Parameterized Blazor Pages
+
+**Author:** Aragorn (Lead / Architect)  
+**Date:** 2026-05-16  
+**Related Issue:** #312 ([Sprint 19] Fix Blog Posts page errors)  
+**Status:** Documented — Pattern applied to `Edit.razor` in PRs #307, #309, #310
+
+#### Context
+
+Comprehensive diagnosis of Blog Posts page errors (Issue #312) revealed that `Edit.razor` had three related UI bugs caused by missing state reset in `OnParametersSetAsync`. The bugs were already fixed on `origin/dev` (PRs #307, #309, #310), but the pattern violation is worth codifying as a team decision to prevent recurrence in future parameterized pages.
+
+#### Decision
+
+**All Blazor components that use `OnParametersSetAsync` with route parameters MUST follow this pattern:**
+
+```csharp
+protected override async Task OnParametersSetAsync()
+{
+    // 1. Reset ALL private state fields before async work
+    _model = null;
+    _error = null;
+    _isLoading = true;
+    // reset any other state fields...
+
+    try
+    {
+        // 2. Perform async work
+        var result = await Sender.Send(new MyQuery(Id));
+        // ... handle result
+    }
+    finally
+    {
+        // 3. ALWAYS clear loading state, even on navigation-away
+        _isLoading = false;
+    }
+}
+```
+
+**Required conditions:**
+
+- Any component handling a parameterized route (e.g., `/blog/edit/{Id:guid}`)
+- Must reset all private state fields at the TOP of `OnParametersSetAsync` before any awaits
+- Must use `try/finally` to ensure `_isLoading` is always cleared
+- The loading guard in markup must use a dedicated `_isLoading` boolean, NOT `_model is null && _error is null`
+
+#### Rationale
+
+Blazor reuses the same component instance when navigating between different IDs on the same parameterized route. Without a state reset:
+
+1. Previous post's data remains visible while the next post loads (stale content)
+2. Previous error messages persist into a clean new load
+3. If `NavigateTo()` is called (post not found) without a `finally` block, `_isLoading` stays `true` through the remaining render cycle, causing a visible stuck loading indicator
+
+#### Scope
+
+Applies to: **Legolas** (Frontend / Blazor) for all future parameterized page components.  
+Applies to: **Gimli** (Tester) — new parameterized page components must have bUnit regression tests covering the parameter-change scenario.
+
+#### Reference Implementation
+
+`src/Web/Features/BlogPosts/Edit/Edit.razor` (origin/dev HEAD, commit `dc34ce9`) is the canonical example.
+
+---
+
+### 33. Blazor OnParametersSetAsync must reset all cached state fields
+
+**Date:** 2026-07-12  
+**Author:** Aragorn (Lead)  
+**PR:** #310 — fix(ui): refresh Edit page loading state on post-ID changes  
+**Status:** Applied — Tests pass, documented in PR #310
+
+#### Context
+
+PR #310 introduced a `_isLoading` flag managed via `try/finally` to fix indefinite loading states in the Edit page. Copilot flagged, and Aragorn confirmed, that `_model`, `_error`, and `_concurrencyError` were not reset when route parameters change (i.e., `OnParametersSetAsync` re-runs with a new `Id`). This creates a stale UI regression: the previous post's form can render alongside a new error banner.
+
+#### Decision
+
+**In any Blazor component that loads data in `OnParametersSetAsync` and caches results in fields, ALL state fields derived from the previous load MUST be cleared at the top of the method before the async operation begins.**
+
+Standard reset pattern:
+
+```csharp
+protected override async Task OnParametersSetAsync()
+{
+    _isLoading = true;
+    _model = null;
+    _error = null;
+    _concurrencyError = false;
+    // ... (other cached state)
+    try
+    {
+        // load data
+    }
+    finally
+    {
+        _isLoading = false;
+    }
+}
+```
+
+#### Rationale
+
+In Blazor Server with `InteractiveServer` rendering, `NavigateTo` inside a component lifecycle method does NOT unmount the component (especially in bUnit). Any state from the previous render cycle persists. The `try/finally` pattern guards only the loading indicator; it does not protect other UI state fields. Failing to reset them causes stale content to bleed through on parameter changes.
+
+#### Scope
+
+This rule applies to all components in `src/Web/Features/` that load data in `OnParametersSetAsync`. Code reviews should flag any `OnParametersSetAsync` that omits this reset as a blocking defect.
+
+#### Review Note
+
+This decision was surfaced by Copilot's automated inline review on PR #310. Copilot's bug-detection comments should always be treated as first-class blocking signals during review.
+
+---
+
+### 34. PR #313 Follow-up — Shared UserIdClaimsHelper
+
+**Date:** 2026-05-12  
+**Author:** Aragorn  
+**PR:** #313 review  
+**Status:** Proposed for future work
+
+#### Decision
+
+Recommend creating a shared `UserIdClaimsHelper` (in `src/Web/Security/`) to unify `AuthorId` extraction across `Create.razor` and `Edit.razor`. The helper should implement a single fallback chain:
+
+```text
+ClaimTypes.NameIdentifier → "sub" → Identity.Name → (dev-only) auth0|dev-{guid}
+```
+
+The dev-only GUID generation should be gated behind `IHostEnvironment.IsDevelopment()`.
+
+#### Rationale
+
+PR #313 introduced an inconsistency (flagged by Copilot review comments 1 & 3):
+
+- `Create.razor` fallback chain: `NameIdentifier → sub → Identity.Name → "dev-user"` (then dead code for GUID)
+- `Edit.razor` fallback chain: `NameIdentifier → sub → empty`
+
+In development environments with non-standard auth (no Auth0), this inconsistency means a post created in Create could have an `AuthorId` that Edit can never reproduce, locking the author out of editing their own post.
+
+#### Routing
+
+Assign to **Legolas** (Blazor UI owner). Low priority — production environments are unaffected.
+
+---
+
+### 35. Rich Text Editor — Architectural Plan for Issue #314
+
+**Date:** 2026-05-23  
+**Decided by:** Aragorn (Lead / Architect)  
+**Status:** ✅ APPROVED — PR #315 merged. RTBlazorfied substitution accepted
+
+#### Context
+
+Issue #314 requests a rich text editor on the Create and Edit blog post pages. The original plan referenced [Blazored.TextEditor](https://github.com/Blazored/TextEditor) (Quill JS wrapper).
+
+#### Decisions
+
+##### Decision 35.1: Library Confirmed: Blazored.TextEditor v2.x (Quill JS v2.0.3)
+
+Blazored.TextEditor is confirmed as the correct choice. It targets Blazor Server (`InteractiveServer`), which matches our render mode. It is a NuGet package with CDN-served JS/CSS, requires no proprietary tooling, and is open-source under the MIT license.
+
+##### Decision 35.2: Content Storage Format: HTML String
+
+Store rich text content as an HTML string (output of `GetHTML()`). This is the simplest approach — no transformation layer, no new field, and MongoDB's document model handles arbitrary-length strings without schema changes. The `BlogPost.Content` field and `BlogPostDto.Content` field remain `string` with no type change.
+
+**Rejected alternative:** Storing Quill Delta JSON and converting to HTML at display time — adds complexity with no benefit at this scale.
+
+##### Decision 35.3: HTML Sanitization Required Before Storage
+
+Any HTML accepted from the rich editor MUST be sanitized server-side before storage. Quill produces relatively safe HTML, but XSS hygiene is non-negotiable. Use [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) (`Ganss.Xss` NuGet package) in the Create and Edit command handlers.
+
+##### Decision 35.4: Display: MarkupString Rendering Gated on Sanitization
+
+The list view does not currently display Content body. Any future post-detail page MUST render using `@((MarkupString)sanitizedHtml)` — never `@rawContent`. The sanitization in the write path (Decision 35.3) provides the guarantee.
+
+##### Decision 35.5: Validation: Custom Content-Present Check Required
+
+`BlazoredTextEditor` does not participate in Blazor's `EditForm` / `DataAnnotationsValidator` binding. Content must be retrieved via `await _editor.GetHTML()` during `HandleSubmit`, then checked manually before building the command. Quill's "empty" sentinel is `<p><br></p>` — the manual check must strip tags and whitespace before asserting non-empty.
+
+#### Impact
+
+- `Directory.Packages.props`: add `Blazored.TextEditor` and `Ganss.Xss` version pins
+- `App.razor`: add Quill CDN CSS (2 links) and 3 JS scripts to `<head>` / bottom of `<body>`
+- `Create.razor`, `Edit.razor`: replace `<InputTextArea>` with `<BlazoredTextEditor>`, manage content via ref calls
+- `CreateBlogPostHandler.cs`, `EditBlogPostHandler.cs`: inject `HtmlSanitizer`, sanitize content before `BlogPost.Create()` / `post.Update()`
+- No changes to `BlogPost.cs` entity, `BlogPostDto.cs`, MongoDB collection schema, or validators (validators already enforce `NotEmpty` on the command; the sanitized non-empty check is upstream)
+- bUnit tests for Create/Edit pages require `IJSRuntime` mock or JS interop stub
+
+#### Addendum: RTBlazorfied Substitution (PR #315 gate review — 2026-05-12)
+
+**Original plan:** Blazored.TextEditor (Quill JS wrapper)  
+**Actual implementation:** RTBlazorfied v2.0.20
+
+##### Why the substitution happened
+
+`Blazored.TextEditor` does not exist on NuGet under that package ID. The reference in the original issue was aspirational / a planning artifact. `RTBlazorfied` was selected as the closest viable alternative: 52K+ downloads, MIT license, actively maintained (last commit May 2026), shadow DOM isolated.
+
+##### Why the substitution is architecturally superior
+
+Decision 35.5 in the original plan identified a known complexity: `BlazoredTextEditor` does not participate in Blazor's `EditForm` / `DataAnnotationsValidator` binding and requires content retrieval via `await _editor.GetHTML()` in `HandleSubmit`. `RTBlazorfied` supports `@bind-Value` directly, meaning the string property on `PostFormModel` is kept in sync automatically.
+
+`DataAnnotationsValidator` and the `[Required]` annotation work without any workaround. The original plan's Decision 35.5 concern is fully resolved by this substitution.
+
+##### AngleSharp compatibility note
+
+`HtmlSanitizer 9.1.923-beta` was required because `9.0.x` pulled in `AngleSharp 0.17.1` which conflicts with `bUnit 2.7.2`. The beta pins `AngleSharp 1.4.0` (compatible). This is a documented, intentional dependency resolution. Consider upgrading to a stable `9.1.x` release when published.
+
+##### Architecture gate outcome
+
+- Security: ✅ `sanitizer.Sanitize()` called before persistence in BOTH handlers.
+- Binding: ✅ `@bind-Value` two-way binding correct. Content field remains `string`.
+- Tests: ✅ 7 sanitizer behavior tests (including XSS vectors) + 2 bUnit smoke tests. All CI green.
+- Coverage: ✅ `codecov/project` and `codecov/patch` both pass.
+
+**Verdict: APPROVED WITH NOTES.** See PR #315 review comment for minor notes.
+
+---
+
+### 36. bUnit 2.x re-render API for parameter-change tests
+
+**Author:** Gimli (Tester)  
+**Date:** 2025-07-10  
+**Status:** Documented — Used in `tests/Web.Tests.Bunit/Features/EditAclTests.cs`
+
+#### Context
+
+When writing bUnit tests that simulate Blazor component parameter reuse (e.g., navigating from one blog post edit page to another while the same component instance is kept alive), the test needs to trigger `OnParametersSetAsync` by supplying a new parameter value after initial render.
+
+#### Decision
+
+Use **`cut.Render(parameters => parameters.Add(p => p.Prop, value))`** — the `RenderedComponentRenderExtensions.Render` overload — for re-rendering a component with new parameters in bUnit 2.x.
+
+**Do NOT use `SetParametersAndRender`** — this method does not exist in bUnit 2.x (it was present in older beta releases). Using it causes a compile error:  
+`'IRenderedComponent<T>' does not contain a definition for 'SetParametersAndRender'`
+
+#### Rationale
+
+- `Render` is the canonical bUnit 2.x API for re-renders with new parameters (confirmed in bUnit 2.7.2 XML docs).
+- It waits for async lifecycle methods (`OnParametersSetAsync`) to complete before returning, so synchronous markup assertions after `Render` are safe.
+- The stale-content test pattern (`NotContain("First Post Title")` after re-render) correctly catches component-reuse bugs and is behavior-first.
+
+#### Scope
+
+Applies to all bUnit tests in `tests/Web.Tests.Bunit/` that test parameter-change behavior on reused component instances.
+
+---
+
+### 37. Reset All Display State Before Each Fetch Cycle in Route-Parameter Pages
+
+**Agent:** Legolas  
+**Date:** 2026-05-11  
+**Branch:** squad/307-fix-edit-null-post-redirect  
+**PR:** #310  
+**Status:** Applied — Tests cover both stale-content paths
+
+#### Context
+
+PR #310 reviewer identified a stale-state bug in `Edit.razor`: when the route `Id` parameter changes and the second fetch fails or returns null, the previous successful load's `_model` data remains visible because only `_isLoading` was reset.
+
+#### Decision
+
+**In any Blazor page that re-fetches on route parameter changes, ALL display state must be reset at the top of `OnParametersSetAsync` before the async operation begins:**
+
+```csharp
+protected override async Task OnParametersSetAsync()
+{
+    _model = null;
+    _error = null;
+    _concurrencyError = false;
+    _isLoading = true;
+    try { /* fetch */ }
+    finally { _isLoading = false; }
+}
+```
+
+Resetting only `_isLoading` is insufficient — `_model`, `_error`, and any alert flags must also be cleared to prevent stale content from leaking into the next render.
+
+#### Rationale
+
+Without resetting all state:
+
+- A successful load (post A) → failed second fetch shows old form + error simultaneously
+- A successful load (post A) → null second fetch navigates away but `_model` lingers in component state (visible in bUnit and potentially briefly in fast Blazor Server renders)
+
+#### Scope
+
+This pattern should be applied to any page using `OnParametersSetAsync` to load data based on route parameters: `Edit.razor`, and any future pages following the same pattern.
+
+#### Enforcement
+
+Two bUnit regression tests cover the stale-content paths:
+
+- `EditClearsStaleContentOnErrorAfterSuccessfulLoad`
+- `EditClearsStaleContentOnNullAfterSuccessfulLoad`
+
+---
+
+### 38. RTBlazorfied chosen as Rich Text Editor (Issue #314)
+
+**Author:** Legolas (Frontend Developer)  
+**Date:** 2026-05-12  
+**Issue:** #314  
+**Status:** ✅ Implemented in PR #315
+
+#### Context
+
+Aragorn's architectural plan for Issue #314 referenced `Blazored.TextEditor` as the rich text editor package. During implementation, it was discovered that **`Blazored.TextEditor` does not exist on NuGet** — there are no versions available for that package ID.
+
+#### Decision
+
+Use **RTBlazorfied** (v2.0.20) as the rich text editor component for the Create and Edit blog post pages.
+
+#### Rationale
+
+- `Blazored.TextEditor` does not exist on NuGet; the name was likely a fictional reference styled after the Blazored library ecosystem
+- `RTBlazorfied` supports `@bind-Value` two-way binding matching Aragorn's spec
+- 52K+ downloads; actively maintained (updated May 2026)
+- No external CSS/JS framework dependency — ships its own shadow DOM-isolated editor
+- Net 8/9/10 support
+
+#### Usage
+
+```razor
+<RTBlazorfied @bind-Value="_model.Content" Height="400px" />
+```
+
+Requires in `_Imports.razor`:
+
+```razor
+@using RichTextBlazorfied
+```
+
+Requires in `App.razor` before closing `</body>`:
+
+```html
+<script src="_content/RTBlazorfied/js/RTBlazorfied.js"></script>
+```
+
+#### Implications for Tests
+
+RTBlazorfied uses the shadow DOM and JSInterop. In bUnit tests:
+
+- Set `JSInterop.Mode = JSRuntimeMode.Loose` in the test class constructor
+- Use the fully qualified type `RichTextBlazorfied.RTBlazorfied` (the short name `RTBlazorfied` is ambiguous with the package's root namespace)
+- Simulate content entry via: `await cut.InvokeAsync(() => editor.Instance.ValueChanged.InvokeAsync("content"))`
+- Content passed to `@bind-Value` is not visible in `cut.Markup` (shadow DOM isolation)
+
+---
+
+### 39. Edit Page Loading-State Reset + bUnit Re-render API
+
+**Author:** Sam  
+**Date:** 2026-06-11  
+**Status:** Applied — All test suites pass
+
+#### Context
+
+PR review (Aragorn, PR #309) identified that `Edit.razor` could show stale post content when the router reuses the component instance and `Id` changes via parameter update. The fix was to reset `_isLoading = true` at the **top** of `OnParametersSetAsync`, before any `try` block.
+
+A bUnit test `EditShowsNewPostContentAfterParameterChange` was written to guard against regressions, but used `cut.SetParametersAndRender(...)` — an API that does not exist in bUnit 2.7.2.
+
+#### Decision
+
+1. **`Edit.razor`**: `_isLoading = true;` is the first statement in `OnParametersSetAsync`. This is the canonical pattern for all Blazor components that load data based on route parameters.
+
+2. **bUnit 2.x re-render API**: Use `cut.Render(parameters => ...)` (extension method on `IRenderedComponent<TComponent>` from `Bunit.RenderedComponentRenderExtensions`) to trigger a re-render with new parameters. `SetParametersAndRender` does not exist in bUnit 2.7.2.
+
+#### Impact
+
+- **`tests/Web.Tests.Bunit/Features/EditAclTests.cs`**: Line 197 changed from `cut.SetParametersAndRender(...)` → `cut.Render(...)`. All 6 `EditAclTests` pass.
+- All other test suites unaffected (Architecture 16/16, Web.Tests 154/154, Domain.Tests 42/42, Web.Tests.Bunit 6/6 filter).
+
+#### Team Notes
+
+- Any future bUnit tests that need to update parameters on a rendered component should use `cut.Render(parameters => ...)`, not `SetParametersAndRender`.
+- Gimli should be aware of this API difference when writing new bUnit tests.

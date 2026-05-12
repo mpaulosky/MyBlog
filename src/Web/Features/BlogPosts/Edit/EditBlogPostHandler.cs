@@ -7,21 +7,41 @@
 //Project Name :  Web
 //=======================================================
 
+using Ganss.Xss;
+
+using Microsoft.Extensions.Logging;
+
 using MyBlog.Domain.Abstractions;
 using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.BlogPosts.Edit;
 
-internal sealed class EditBlogPostHandler(
+internal sealed partial class EditBlogPostHandler(
 IBlogPostRepository repo,
-IBlogPostCacheService cache)
+IBlogPostCacheService cache,
+IHtmlSanitizer sanitizer,
+ILogger<EditBlogPostHandler> logger)
 : IRequestHandler<EditBlogPostCommand, Result>,
 IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 {
+	[LoggerMessage(Level = LogLevel.Warning, Message = "HTML sanitized on EditBlogPost — unsafe markup was removed. PostId: {PostId}")]
+	private static partial void LogHtmlSanitized(ILogger logger, Guid postId);
+
 	public async Task<Result> Handle(EditBlogPostCommand request, CancellationToken cancellationToken)
 	{
 		try
 		{
+			var sanitizedContent = sanitizer.Sanitize(request.Content);
+			if (sanitizedContent != request.Content)
+			{
+				LogHtmlSanitized(logger, request.Id);
+			}
+
+			if (string.IsNullOrWhiteSpace(sanitizedContent))
+			{
+				return Result.Fail("Content is empty after sanitization. Please provide valid content.");
+			}
+
 			var post = await repo.GetByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
 			if (post is null)
 				return Result.Fail($"BlogPost {request.Id} not found.");
@@ -29,7 +49,7 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 			if (!request.CallerIsAdmin && post.Author.Id != request.CallerUserId)
 				return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
 
-			post.Update(request.Title, request.Content);
+			post.Update(request.Title, sanitizedContent);
 			if (request.IsPublished is true)
 			{
 				post.Publish();

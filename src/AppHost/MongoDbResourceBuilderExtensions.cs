@@ -254,7 +254,7 @@ new()
 ["IsPublished"] = false,
 ["Version"] = 1,
 },
-		};
+	};
 
 				await collection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken);
 

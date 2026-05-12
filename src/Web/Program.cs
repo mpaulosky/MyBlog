@@ -14,6 +14,8 @@ using Auth0.AspNetCore.Authentication;
 
 using FluentValidation;
 
+using Ganss.Xss;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
@@ -128,6 +130,9 @@ builder.Services.AddMediatR(cfg =>
 
 // FluentValidation — scans Web assembly for all validators
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+// HtmlSanitizer — singleton: thread-safe, shared across requests
+builder.Services.AddSingleton<IHtmlSanitizer, HtmlSanitizer>();
 
 // Register ValidationBehavior pipeline
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));

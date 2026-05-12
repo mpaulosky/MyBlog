@@ -12,7 +12,9 @@
     <PackageReference Include="Auth0.ManagementApi" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="MediatR" />
+    <PackageReference Include="RTBlazorfied" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" />
     <PackageReference Include="Snappier" />

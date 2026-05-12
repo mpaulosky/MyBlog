@@ -1346,6 +1346,7 @@ Posted delivery summary comment on issue #291 covering all 5 shipped items:
 **Copilot Review:** 3 comments; no flagged bugs or security issues
 
 **Content:** Bundles 3 concerns:
+
 1. **Merge conflict resolution** — local `dev` vs `origin/dev` (commit 7e15cdd); correctly retained board automation option IDs
 2. **DevOps/CI fix** — switches `GITHUB_TOKEN` → `GH_PROJECT_TOKEN`, updates stale project board option IDs (IN_SPRINT, IN_REVIEW, RELEASED)
 3. **UX bug fix** — Edit.razor redirect when `GetBlogPostByIdQuery` returns `Result.Ok(null)` + bUnit regression test
@@ -1359,6 +1360,7 @@ Posted delivery summary comment on issue #291 covering all 5 shipped items:
 **Content:** Only the Edit.razor redirect + bUnit test (identical to PR #306)
 
 **Problem:** Duplicate of PR #306 UI changes:
+
 - Commit hashes differ (8c7b15f vs 8cf7981) but content is identical
 - Based on old commit; separate merge creates conflicts
 - Prevents clean history and wastes reviewer time
@@ -1373,11 +1375,15 @@ Posted delivery summary comment on issue #291 covering all 5 shipped items:
 
 ### Learnings
 
-**Multiple squad-authored PRs from the same session can overlap.** When Boromir resolved the merge conflict for #305, the merge reintroduced Edit.razor redirect fix (from upstream PR #304 resolution). Boromir then filed a separate PR #308 for the same UI fix, not realizing it was already in #306. This is a normal situation — the remedy is triage-time duplicate detection + closure. **Do not suppress triage when multiple PRs land; always check for overlap.**
+**Multiple squad-authored PRs from the same session can overlap.** When Boromir resolved the merge conflict for #305, the merge reintroduced Edit.razor redirect fix
+(from upstream PR #304 resolution). Boromir then filed a separate PR #308 for the same UI fix, not realizing it was already in #306.
+This is a normal situation — the remedy is triage-time duplicate detection + closure. **Do not suppress triage when multiple PRs land; always check for overlap.**
 
 **Merge conflicts can carry forward bugfixes from upstream.** When resolving `local dev` vs `origin/dev`, the merge commit inherited the Edit.razor UX fix that was in the upstream branch. This is correct — don't discard upstream bugfixes during conflict resolution. However, document it clearly in the PR body (as Boromir did) so reviewers understand what's being carried forward.
 
-**`squad:member` labels require GitHub API token with `read:org` scope.** The `gh` CLI edit command failed because the token was scoped to `['read:user', 'repo', 'user:email', 'workflow']` but `--add-label` requires `read:org` and `read:discussion` scopes. Workaround: post triage comments instead, and let squad members apply labels manually or via the GitHub UI. Consider requesting a broader token for future triage work.
+**`squad:member` labels require GitHub API token with `read:org` scope.** The `gh` CLI edit command failed because the token was scoped to
+`['read:user', 'repo', 'user:email', 'workflow']` but `--add-label` requires `read:org` and `read:discussion` scopes.
+Workaround: post triage comments instead, and let squad members apply labels manually or via the GitHub UI. Consider requesting a broader token for future triage work.
 
 ## 2026-07-12 — PR #310 Review: fix(ui): refresh Edit page loading state on post-ID changes
 
@@ -1414,5 +1420,38 @@ Posted delivery summary comment on issue #291 covering all 5 shipped items:
 
 **GitHub cannot self-approve or self-request-changes.** `gh pr review --request-changes` fails when the reviewer is the PR author. Post a review comment instead. This is a known squad limitation.
 
-**`try/finally` is necessary but not sufficient for Blazor parameter reload.** A loading flag reset via `try/finally` correctly gates the loading indicator, but state fields like `_model`, `_error`, and `_concurrencyError` that survive from a previous render cycle must also be explicitly cleared at the top of `OnParametersSetAsync`. Copilot correctly flagged this pattern; it should be treated as a standard rule for all Blazor components using `OnParametersSetAsync` with cached state fields.
+**`try/finally` is necessary but not sufficient for Blazor parameter reload.** A loading flag reset via `try/finally` correctly gates the loading indicator,
+but state fields like `_model`, `_error`, and `_concurrencyError` that survive from a previous render cycle must also be explicitly cleared at the top of `OnParametersSetAsync`.
+Copilot correctly flagged this pattern; it should be treated as a standard rule for all Blazor components using `OnParametersSetAsync` with cached state fields.
 
+---
+
+## PR #313 Review — fix(blogposts): align author claims, publish checkbox, and seed schema
+
+**Date:** 2026-05-12  
+**PR Author:** Boromir (DevOps/Infra) + Copilot  
+**Verdict:** ✅ APPROVED (gate comment posted; GitHub self-approval blocked — comment used instead)
+
+### What Was Reviewed
+
+- **Author claim extraction:** Aligned to `ClaimTypes.NameIdentifier` with `sub` fallback — correct and consistent with `Program.cs` line 198.
+- **IsPublished tri-state on EditBlogPostCommand:** `bool? IsPublished = null` correctly distinguishes "no change intent" from explicit true/false. Clean CQRS design.
+- **Domain model usage:** `post.Publish()` / `post.Unpublish()` called in handlers — no domain logic leaked.
+- **Seed schema fix:** `Author` as embedded `BsonDocument` matches Mongo EF owned-type mapping.
+- **Test gate:** All 375 tests pass (Domain, Architecture, Web.Tests, Web.Tests.Bunit, Web.Tests.Integration, AppHost.Tests).
+
+### Copilot Comments Disposition
+
+| # | Comment | Disposition |
+|---|---------|-------------|
+| 1 | Fallback inconsistency Create vs Edit (NameIdentifier → sub → Identity.Name → "dev-user") | Follow-up issue — production Auth0 always provides NameIdentifier; dev-only concern |
+| 2 | Dead code: `IsNullOrWhiteSpace` block unreachable after `?? "dev-user"` | Follow-up cleanup — no functional regression |
+| 3 | Edit only falls back to empty string; Create may persist "dev-user" | Same as comment 1 — follow-up |
+
+### Follow-Up Recommended
+
+Extract a shared `UserIdClaimsHelper` to unify AuthorId extraction across Create/Edit Razor pages. Assign to **Legolas**.
+
+### Learnings
+
+GitHub prevents self-approval on PRs. Use `gh pr comment` as the gate signal when `gh pr review --approve` is blocked.
