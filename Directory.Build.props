@@ -8,8 +8,6 @@
 		<CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisMode>All</AnalysisMode>
-		<!-- Temporary for .NET 11 upgrade (user-approved fast path): defer style-enforcement cleanup -->
-		<EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
-		<NoWarn>$(NoWarn);CS1591;IDE0004;IDE0039;IDE0055;IDE0090;IDE0160;IDE0305;IDE0370</NoWarn>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 	</PropertyGroup>
 </Project>

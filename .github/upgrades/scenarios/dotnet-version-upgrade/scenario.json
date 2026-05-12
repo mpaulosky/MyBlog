@@ -3,7 +3,7 @@
   "operationId": "34bf44c6-10ef-4ac6-b9b9-a2fd7e904967",
   "description": "Upgrade .NET projects to newer .NET versions",
   "startTime": "2026-05-12T20:59:44.4596536Z",
-  "lastUpdateTime": "2026-05-12T22:14:36.7666507Z",
+  "lastUpdateTime": "2026-05-12T22:15:58.3341213Z",
   "properties": {
     "UpgradeTargetFramework": "net11.0",
     "taskStates": {
@@ -12,7 +12,7 @@
       "02.01-retarget-projects": "Completed",
       "02.02-remove-deprecated-package": "Completed",
       "02.03-build-and-validate": "Completed",
-      "03-final-validation": "InProgress"
+      "03-final-validation": "Completed"
     }
   },
   "folderPath": ""
