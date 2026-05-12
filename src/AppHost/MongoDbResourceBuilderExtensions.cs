@@ -209,15 +209,24 @@ internal static class MongoDbResourceBuilderExtensions
 				var database = client.GetDatabase(databaseName);
 				var collection = database.GetCollection<BsonDocument>("blogposts");
 
-				var now = DateTime.UtcNow;
-				var seedDocuments = new BsonDocument[]
-		{
+			var now = DateTime.UtcNow;
+			var authorId = "auth0|author-matthew-paulosky";
+			var authorDocument = new BsonDocument
+			{
+				["AuthorId"] = authorId,
+				["AuthorName"] = "Matthew Paulosky",
+				["AuthorEmail"] = "matthew@paulosky.com",
+				["AuthorRoles"] = new BsonArray { "Author", "Admin" }
+			};
+
+			var seedDocuments = new BsonDocument[]
+	{
 new()
 {
 ["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
 ["Title"] = "Welcome to MyBlog",
 ["Content"] = "This is the first post on MyBlog. Welcome!",
-["Author"] = "Matthew Paulosky",
+["Author"] = authorDocument.DeepClone(),
 ["CreatedAt"] = now,
 ["UpdatedAt"] = now,
 ["IsPublished"] = true,
@@ -228,7 +237,7 @@ new()
 ["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
 ["Title"] = "Getting Started with .NET Aspire",
 ["Content"] = "Learn how to build cloud-native apps with .NET Aspire.",
-["Author"] = "Matthew Paulosky",
+["Author"] = authorDocument.DeepClone(),
 ["CreatedAt"] = now,
 ["UpdatedAt"] = now,
 ["IsPublished"] = true,
@@ -239,13 +248,13 @@ new()
 ["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
 ["Title"] = "Draft: MongoDB Performance Tips",
 ["Content"] = "Work in progress — tips for optimising MongoDB queries.",
-["Author"] = "Matthew Paulosky",
+["Author"] = authorDocument.DeepClone(),
 ["CreatedAt"] = now,
 ["UpdatedAt"] = now,
 ["IsPublished"] = false,
 ["Version"] = 1,
 },
-		};
+	};
 
 				await collection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken);
 

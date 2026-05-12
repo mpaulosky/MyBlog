@@ -30,6 +30,15 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 				return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
 
 			post.Update(request.Title, request.Content);
+			if (request.IsPublished is true)
+			{
+				post.Publish();
+			}
+			else if (request.IsPublished is false)
+			{
+				post.Unpublish();
+			}
+
 			await repo.UpdateAsync(post, cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
