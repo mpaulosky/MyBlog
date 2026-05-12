@@ -7,7 +7,10 @@
 //Project Name :  Web.Tests
 //=======================================================
 
+using Ganss.Xss;
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using MyBlog.Domain.Abstractions;
 using MyBlog.Web.Features.BlogPosts.Edit;
@@ -18,11 +21,13 @@ public class EditBlogPostHandlerTests
 {
 	private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
 	private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
+	private readonly IHtmlSanitizer _sanitizer = Substitute.For<IHtmlSanitizer>();
 	private readonly EditBlogPostHandler _handler;
 
 	public EditBlogPostHandlerTests()
 	{
-		_handler = new EditBlogPostHandler(_repo, _cache);
+		_sanitizer.Sanitize(Arg.Any<string>()).Returns(ci => ci.ArgAt<string>(0));
+		_handler = new EditBlogPostHandler(_repo, _cache, _sanitizer, NullLogger<EditBlogPostHandler>.Instance);
 	}
 
 	// ── Edit tests ────────────────────────────────────────────────────────────
