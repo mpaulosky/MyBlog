@@ -286,7 +286,47 @@ alternative command dispatchers.
   acceptable. Note the crossing in an inbox file so Gimli can audit or extend
   coverage as needed.
 
+## 2026-06-xx — dotnet-version-upgrade: Pre-Push Build Validation
+
+### Task
+
+Verify the `.csproj` and `global.json` changes on the `dotnet-version-upgrade` branch build correctly before opening a PR.
+
+### Findings & Fixes
+
+1. **`ServiceDefaults.csproj` and `Web.Tests.Integration.csproj` were 0-byte** — the upgrade commit accidentally zeroed them out. Restored both from git history (`git show 0c8e6af:...`).
+2. **`<GenerateDocumentationFile>true</GenerateDocumentationFile>` was accidentally added to `Web.csproj`** — this was not present pre-upgrade and caused 12 CS1591 "Missing XML comment" errors on public Blazor/EF types (`ThemeProvider`, `BlogDbContext`, `partial class Program`). Removed the setting; Web is an application, not a library.
+3. **`dotnet test` with multiple project paths on Windows** — `dotnet test tests\A tests\B` fails with MSB1008; must run each `.csproj` separately.
+
+### Build Validation
+
+- ✅ `dotnet restore` — clean, 0 errors
+- ✅ `dotnet build -c Release` — 0 errors (3 pre-existing CA1848 warnings in AppHost)
+- ✅ Domain.Tests: 42/42
+- ✅ Architecture.Tests: 16/16
+- ✅ Web.Tests: 165/165
+- ✅ Web.Tests.Bunit: 94/94
+
+### Commit
+
+`fix(build): restore zeroed csproj files and remove accidental GenerateDocumentationFile`
+
 ## Learnings
+
+### Zeroed csproj files during version upgrade
+
+- Git-based upgrade scripts or search-replace tooling can accidentally zero out `.csproj` files. Always verify file sizes after an upgrade commit with `Get-Item *.csproj | Select Length`.
+- Recovery: `git show <pre-upgrade-sha>:"path/to/file.csproj"` restores the original content.
+
+### `GenerateDocumentationFile` belongs on libraries, not application projects
+
+- Adding `<GenerateDocumentationFile>true</GenerateDocumentationFile>` to an application `.csproj` with `TreatWarningsAsErrors>true` will cause CS1591 errors for every public type that lacks XML docs.
+- Application projects (Blazor apps, API hosts) should never have this setting; only library/package projects need it.
+
+### `dotnet test` on Windows does not support multiple project paths
+
+- `dotnet test tests\A tests\B` fails with MSB1008 "only one project can be specified" on Windows.
+- Run tests one `.csproj` at a time, or use the solution file: `dotnet test MyBlog.slnx -c Release`.
 
 ### `_isLoading` field initializers only run at construction — not on reuse
 
