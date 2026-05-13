@@ -30,6 +30,7 @@ public class EditAclTests : BunitContext
 		Services.AddAuthorizationCore();
 		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
 		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
+		Services.AddSingleton(Substitute.For<IFileStorage>());
 	}
 
 	[Fact]

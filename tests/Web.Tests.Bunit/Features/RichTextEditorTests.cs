@@ -14,8 +14,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 
 using MyBlog.Domain.Abstractions;
+using MyBlog.Web.Components.Shared;
 using MyBlog.Web.Features.BlogPosts.Create;
 using MyBlog.Web.Features.BlogPosts.Edit;
+using MyBlog.Web.Infrastructure.FileStorage;
 
 using Web.Testing;
 
@@ -31,6 +33,7 @@ public class RichTextEditorTests : BunitContext
 		Services.AddAuthorizationCore();
 		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
 		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
+		Services.AddSingleton(Substitute.For<IFileStorage>());
 	}
 
 	[Fact]
@@ -46,7 +49,7 @@ public class RichTextEditorTests : BunitContext
 				Task.FromResult(new AuthenticationState(CreatePrincipal("Alice", ["Author"])))));
 
 		// Assert
-		cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
+		cut.FindComponent<TextEditor>();
 	}
 
 	[Fact]
@@ -72,7 +75,7 @@ public class RichTextEditorTests : BunitContext
 		});
 
 		// Assert
-		cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
+		cut.FindComponent<TextEditor>();
 	}
 
 	private static ClaimsPrincipal CreatePrincipal(string name, string[] roles)

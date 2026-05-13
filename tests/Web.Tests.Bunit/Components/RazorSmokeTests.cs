@@ -37,6 +37,7 @@ public class RazorSmokeTests : BunitContext
 		Services.AddAuthorizationCore();
 		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
 		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
+		Services.AddSingleton(Substitute.For<IFileStorage>());
 	}
 
 	[Fact]
@@ -333,7 +334,7 @@ public class RazorSmokeTests : BunitContext
 		heading.TextContent.Trim().Should().Be("Create Post");
 		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
 		cut.FindAll("input").Count.Should().BeGreaterThanOrEqualTo(1);
-		cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
+		cut.FindComponent<TextEditor>();
 	}
 
 	[Fact]
@@ -367,8 +368,8 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.FindAll("input")[0].Change("My title");
-		var editor = cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
-		await cut.InvokeAsync(() => editor.Instance.ValueChanged.InvokeAsync("Hello world"));
+		var textEditor = cut.FindComponent<TextEditor>();
+		await cut.InvokeAsync(() => textEditor.Instance.ContentChanged.InvokeAsync("Hello world"));
 		cut.Find("form").Submit();
 
 		// Assert
@@ -392,8 +393,8 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.FindAll("input")[0].Change("My title");
-		var editor = cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
-		await cut.InvokeAsync(() => editor.Instance.ValueChanged.InvokeAsync("Hello world"));
+		var textEditor = cut.FindComponent<TextEditor>();
+		await cut.InvokeAsync(() => textEditor.Instance.ContentChanged.InvokeAsync("Hello world"));
 		cut.Find("form").Submit();
 
 		// Assert
@@ -421,7 +422,7 @@ public class RazorSmokeTests : BunitContext
 		// Assert
 		cut.Markup.Should().Contain("Edit Post");
 		cut.Markup.Should().Contain("Existing title");
-		cut.FindComponent<RichTextBlazorfied.RTBlazorfied>();
+		cut.FindComponent<TextEditor>().Instance.Content.Should().Be("Existing content");
 	}
 
 	[Fact]
