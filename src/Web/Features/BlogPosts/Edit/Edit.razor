@@ -43,8 +43,8 @@ else if (_model is not null)
                 <InputText class="form-input" @bind-Value="_model.Title" />
             </div>
             <div class="form-group">
-                <label class="form-label">Content</label>
-                <InputTextArea class="form-input" rows="8" @bind-Value="_model.Content" />
+                <label class="form-label">Content <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Markdown)</span></label>
+                <TextEditor @bind-Content="_model.Content" AlignmentOptionsEnabled="false" />
             </div>
             <div class="form-group">
                 <label class="form-label flex items-center gap-2">

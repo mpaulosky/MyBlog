@@ -26,9 +26,11 @@ public class EditAclTests : BunitContext
 
 	public EditAclTests()
 	{
+		JSInterop.Mode = JSRuntimeMode.Loose;
 		Services.AddAuthorizationCore();
 		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
 		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
+		Services.AddSingleton(Substitute.For<IFileStorage>());
 	}
 
 	[Fact]
