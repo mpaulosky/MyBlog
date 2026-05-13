@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pre-push gate: mirrors CI checks to catch failures before they reach GitHub
-# Runs: branch protection → untracked-file check → dotnet format → Release build → unit/architecture tests → integration tests
+# Runs: branch protection → untracked-file check → markdownlint → dotnet format → Release build → unit/architecture tests → integration tests
 # NOTE: git provides refspecs on stdin; interactive prompts must use /dev/tty.
 # ⚠️  BYPASS POLICY: git push --no-verify is PROHIBITED without prior written
 # approval from Ralph + Aragorn documented in a GitHub issue comment.
@@ -51,7 +51,34 @@ if [[ -n "$UNTRACKED_SRC" ]]; then
   fi
 fi
 
-# ── Gate 2: dotnet format check ────────────────────────────────────────────
+# ── Gate 2: markdownlint check ─────────────────────────────────────────────
+echo -e "\n${CYAN}📝 Checking Markdown lint (markdownlint-cli2)...${RESET}"
+if [[ -x "$ROOT/node_modules/.bin/markdownlint-cli2" ]]; then
+  "$ROOT/node_modules/.bin/markdownlint-cli2" "**/*.md" \
+    "!**/node_modules/**" \
+    "!**/bin/**" \
+    "!**/obj/**" \
+    "!.squad/**" \
+    "!.copilot/**" \
+    "!.github/agents/**" \
+    "!.github/skills/**" \
+    "!.github/copilot-instructions.md" \
+    --config "$ROOT/.markdownlint.json"
+  MD_EXIT=$?
+else
+  echo -e "${YELLOW}⚠️  markdownlint-cli2 not found at node_modules/.bin — run 'npm install'.${RESET}"
+  exit 1
+fi
+
+if [[ $MD_EXIT -ne 0 ]]; then
+  echo -e "${RED}❌  Markdownlint violations detected.${RESET}"
+  echo -e "${YELLOW}    Fix:  npx markdownlint-cli2 \"**/*.md\"${RESET}"
+  echo -e "${YELLOW}    Then: git add -u && git commit (or --amend), then re-push.${RESET}"
+  exit 1
+fi
+echo -e "${GREEN}✅  Markdown lint OK.${RESET}"
+
+# ── Gate 3: dotnet format check ────────────────────────────────────────────
 echo -e "\n${CYAN}🎨 Checking code formatting (dotnet format --verify-no-changes)...${RESET}"
 dotnet format MyBlog.slnx --verify-no-changes 2>&1
 FORMAT_EXIT=$?
@@ -78,7 +105,7 @@ if [[ $FORMAT_EXIT -ne 0 ]]; then
 fi
 echo -e "${GREEN}✅  Formatting OK.${RESET}"
 
-# ── Gate 3: Release build (mirrors CI exactly) ─────────────────────────────
+# ── Gate 4: Release build (mirrors CI exactly) ─────────────────────────────
 MAX_ATTEMPTS=3
 BUILD_ATTEMPT=0
 BUILD_OK=false
@@ -114,7 +141,7 @@ if [[ "$BUILD_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 4: Unit + Architecture tests ──────────────────────────────────────
+# ── Gate 5: Unit + Architecture tests ──────────────────────────────────────
 TEST_PROJECTS=(
   "tests/Architecture.Tests/Architecture.Tests.csproj"
   "tests/Domain.Tests/Domain.Tests.csproj"
@@ -150,7 +177,7 @@ if [[ "$TESTS_OK" != true ]]; then
   exit 1
 fi
 
-# ── Gate 5: Docker-backed integration tests ────────────────────────────────
+# ── Gate 6: Docker-backed integration tests ────────────────────────────────
 # Requires Docker daemon for Testcontainers-backed dependencies.
 INTEGRATION_PROJECTS=(
   "tests/Web.Tests.Integration/Web.Tests.Integration.csproj"

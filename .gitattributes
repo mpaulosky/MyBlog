@@ -3,3 +3,9 @@
 .squad/agents/*/history.md merge=union
 .squad/log/** merge=union
 .squad/orchestration-log/** merge=union
+
+# Line ending normalization — keep LF everywhere to match dotnet format expectations
+* text=auto eol=lf
+*.sh text eol=lf
+.github/hooks/* text eol=lf
+*.cs text eol=lf
