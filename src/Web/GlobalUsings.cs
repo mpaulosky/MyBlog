@@ -17,3 +17,4 @@ global using MyBlog.Domain.Entities;
 global using MyBlog.Domain.Interfaces;
 global using MyBlog.Web.Data;
 global using MyBlog.Web.Infrastructure.Caching;
+global using MyBlog.Web.Infrastructure.FileStorage;

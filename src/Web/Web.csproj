@@ -12,9 +12,11 @@
     <PackageReference Include="Auth0.ManagementApi" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Markdig" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" />
+    <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" />
     <PackageReference Include="Snappier" />
   </ItemGroup>
 
