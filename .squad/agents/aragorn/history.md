@@ -1,3 +1,69 @@
+## 2026-06-03 — Issue #320: Sprint 19 Markdown Editor Completion & Verification
+
+Closed issue #320 as Aragorn (Lead/Architect) after verifying all Sprint 19 implementation slices
+for the markdown editor migration. The PRD organized six implementation issues (#323–#327) plus
+execution rails (#322), all of which have been successfully merged to `dev` with full test coverage
+and acceptance criteria met.
+
+**Completion Verification:**
+
+- ✅ All 7 sprint slices merged to `dev` (PRs #328–#333)
+- ✅ Full test suite passes locally: Architecture (16), Domain (42), Web (158), bUnit (92),
+  Integration (12), AppHost/Playwright (48/49, 1 skip)
+- ✅ Release build: 0 errors, 89 pre-existing warnings (baseline)
+- ✅ Coverage maintained ≥89% line threshold across all projects
+- ✅ Scope enforcement validated: image-upload pipeline blocked, Markdown-to-HTML rendering deferred
+- ✅ VSA + CQRS patterns intact (Architecture tests enforce naming conventions)
+
+**Slice Summary:**
+
+| Issue | Slice | Owner | PR | Status |
+|-------|-------|-------|----|----|
+| #323 | Restore compile path | Sam/Legolas | #329 | ✅ |
+| #324 | Create flow markdown authoring | Legolas | #330 | ✅ |
+| #325 | Edit flow markdown authoring | Legolas | #331 | ✅ |
+| #326 | UX parity + hardening | Legolas | #332 | ✅ |
+| #327 | Test/interop/lifecycle validation | Gimli | #333 | ✅ |
+
+**Team Coordination:**
+
+- **Legolas:** Delivered consistent Create/Edit markdown editor component with toolbar, CSS integration,
+  and lifecycle stability
+- **Sam:** Wired asset loading, NuGet package reference, and verified no schema migrations needed
+- **Gimli:** Added comprehensive bUnit lifecycle tests, JS interop mocks, and navigation state validation
+- **Aragorn:** Approved all PRs, verified scope lock enforcement, coordinated parallel worktree strategy
+
+**Learnings:**
+
+**Worktree isolation prevents cross-branch contamination.** The execution rails playbook (#322) prescribed issue-scoped
+worktrees (`git worktree add ../MyBlog-{N}`), which prevented merge conflicts between parallel slices (#324 and #325).
+Developers could iterate independently on Create and Edit flows, then merge both in sequence without rebasing/resolving conflicts.
+
+**Staged `.squad/` files survive checkout in some contexts.** When switching branches with uncommitted `.squad/` changes,
+git may not carry them over if target branch HEAD differs. Lesson from #322: verify `git status` after checkout and
+re-apply `.squad/decisions/` changes if needed before committing.
+
+**Test baseline captures pre-existing analysis warnings.** The 89 warnings in Release build are all scoped to test projects
+via `NoWarn` suppressions. Comparing against this baseline helps distinguish new violations from legacy suppressions—good signal
+for architecture integrity checks.
+
+**Markdown editor feature is now shippable:**
+
+- All acceptance criteria met
+- Authorization model unchanged (existing `EditACL` checks still in place)
+- Content validation re-enabled (required field check on editor value)
+- Previous post markdown content round-trips correctly through edit → save → load cycle
+- Next sprint can plan image-upload API and rendering surfaces independently
+
+**Next Sprint (20) Candidates:**
+
+1. Backend image-upload REST API + MongoDB schema extension
+2. Markdown-to-HTML rendering surface for post list/details views
+3. Editor preview pane (markdown preview sidebar)
+4. Syntax highlighting for code blocks in editor
+
+---
+
 ## 2026-05-18 — Pre-push Review: .NET 9 → .NET 10 upgrade (PR #317)
 
 Performed **full pre-push validation** on `dotnet-version-upgrade` branch before opening PR #317. Task requested by mpaulosky. Verified scope, breaking changes, file consistency, architecture integrity, and test health.
@@ -5,17 +71,20 @@ Performed **full pre-push validation** on `dotnet-version-upgrade` branch before
 **Pre-push Findings:**
 
 ✅ **Scope (Clean):** Only version-related files modified:
+
 - global.json: SDK 11.0.100-preview → 10.0.203 (production stable)
 - Directory.Build.props: Removed temporary .NET 11 suppressions, re-enabled EnforceCodeStyleInBuild
 - All .csproj files retargeted to net10.0: AppHost, Domain, ServiceDefaults, Web, all 5 test projects
 - Documentation updated: execution-log.md, scenario.json, tasks.md, gimli/history.md
 
 ✅ **Breaking Changes (None Detected):**
+
 - No deprecated APIs in source code
 - No C# language feature updates required
 - Build succeeded Release mode: 0 errors, 12 pre-existing warnings (suppressions intact)
 
 ✅ **File Consistency (Complete):**
+
 - All main projects: net10.0 ✓
 - All test projects: net10.0 ✓
 - ServiceDefaults & Web (not staged): already at net10.0 ✓
@@ -23,6 +92,7 @@ Performed **full pre-push validation** on `dotnet-version-upgrade` branch before
 - Prerelease flag: false (production-ready) ✓
 
 ✅ **Architecture Rules (Enforced):**
+
 - Architecture.Tests: 16/16 passing → VSA + CQRS patterns intact
 - Domain.Tests: ~42 passing
 - Web.Tests: ~94 passing (plus Bunit)
@@ -30,6 +100,7 @@ Performed **full pre-push validation** on `dotnet-version-upgrade` branch before
 - Test Collection attribute: Verified on integration tests
 
 ✅ **Readiness for GitHub CI:**
+
 - Branch pushed to origin/dotnet-version-upgrade
 - PR #317 created against dev
 - All pre-push checks passed → CI should succeed
@@ -38,11 +109,21 @@ Performed **full pre-push validation** on `dotnet-version-upgrade` branch before
 
 ### Learnings
 
-**SDK version strategy in enterprise .NET:** global.json using `rollForward: latestMinor` with explicit stable version ensures the team stays on a known .NET version (10.0.203 LTS) while accepting patch updates automatically. Switching from `latestMajor: true` + `allowPrerelease: true` to `latestMinor: false` + `allowPrerelease: false` locks the team to major version 10.x and requires explicit approval for 11.x. This is the right posture for production codebases.
+**SDK version strategy in enterprise .NET:** global.json using `rollForward: latestMinor` with explicit
+stable version ensures the team stays on a known .NET version (10.0.203 LTS) while accepting patch updates
+automatically. Switching from `latestMajor: true` + `allowPrerelease: true` to `latestMinor: false` +
+`allowPrerelease: false` locks the team to major version 10.x and requires explicit approval for 11.x. This is
+the right posture for production codebases.
 
-**Build warnings are project-scoped, not global:** The 12 warnings after .NET 10 upgrade are all pre-existing (CA1014, CA1307, CA1711, CA2007) and scoped to test projects via `NoWarn` in `.csproj` files. Re-running the build on the same code always produces the same warning count. This is a good signal that the upgrade did not introduce *new* rule violations; it's a baseline we can compare against.
+**Build warnings are project-scoped, not global:** The 12 warnings after .NET 10 upgrade are all pre-existing
+(CA1014, CA1307, CA1711, CA2007) and scoped to test projects via `NoWarn` in `.csproj` files. Re-running the
+build on the same code always produces the same warning count. This is a good signal that the upgrade did not
+introduce *new* rule violations; it's a baseline we can compare against.
 
-**Staged changes should be pushed immediately, not held locally.** PR gates rely on PR head SHA, not local uncommitted state. After staging changes, always push before requesting review. Learned this lesson again (see PR #302 history) — the only truth is what's on the branch.
+**Staged changes should be pushed immediately, not held locally.** PR gates rely on PR head SHA, not local
+uncommitted state. After staging changes, always push before requesting review. Learned this lesson again
+(see PR #302 history) — the only truth is what's on the branch.
+
 ## 2026-05-12 — Issue #322: Sprint 19 execution rails for markdown migration
 
 Closed issue #322 as Aragorn (Lead/Architect). Deliverable was a playbook documenting the
