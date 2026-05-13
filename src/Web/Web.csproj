@@ -14,7 +14,6 @@
     <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Markdig" />
     <PackageReference Include="MediatR" />
-    <PackageReference Include="RTBlazorfied" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" />
     <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" />
