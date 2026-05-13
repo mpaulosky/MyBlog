@@ -9,17 +9,20 @@ Verify .NET SDK compatibility with the target framework. Check that the developm
 **Projects affected**: All 10 projects depend on the toolchain configuration
 
 **Distinct concerns**:
+
 1. .NET SDK verification (.NET 11 availability)
 2. `global.json` update (SDK version pinning)
 3. Baseline validation (tests pass on current framework before any upgrade)
 
 **Change signals**:
+
 - Current SDK: 10.0.200 (latest for .NET 10)
 - Available SDKs: 8.0, 9.0 (x3), 10.0 (x3), 10.0.300-preview
 - Target: .NET 11.0 (Preview) — no preview SDK found yet
 - Current `global.json`: pinned to 10.0.200 with rollForward: latestMinor, allowPrerelease: false
 
 **Research findings**:
+
 - .NET 11 SDK is not currently installed. Check `dotnet --list-sdks` — only 10.0 (and preview) available
 - `global.json` prevents prerelease SDKs with `allowPrerelease: false`
 - Need to update `global.json` to allow prerelease and possibly adjust rollForward

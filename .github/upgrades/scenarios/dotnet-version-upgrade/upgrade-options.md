@@ -5,6 +5,7 @@ Assessment: 10 projects, all targeting modern .NET (net10.0), SDK-style, low str
 ## Strategy
 
 ### Upgrade Strategy
+
 All projects are already on modern .NET with a shallow dependency graph, so a single atomic upgrade is the best fit.
 
 | Value | Description |

@@ -152,6 +152,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart LR
     P1["<b>📦&nbsp;AppHost.csproj</b><br/><small>net10.0</small>"]
     P2["<b>📦&nbsp;Domain.csproj</b><br/><small>net10.0</small>"]
@@ -217,6 +218,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (2)"]
         P5["<b>📦&nbsp;AppHost.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -275,6 +277,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (6)"]
         P4["<b>📦&nbsp;Web.csproj</b><br/><small>net10.0</small>"]
@@ -337,6 +340,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (2)"]
         P1["<b>📦&nbsp;AppHost.csproj</b><br/><small>net10.0</small>"]
@@ -387,6 +391,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (5)"]
         P1["<b>📦&nbsp;AppHost.csproj</b><br/><small>net10.0</small>"]
@@ -454,6 +459,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["AppHost.Tests.csproj"]
         MAIN["<b>📦&nbsp;AppHost.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -501,6 +507,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Architecture.Tests.csproj"]
         MAIN["<b>📦&nbsp;Architecture.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -551,6 +558,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Domain.Tests.csproj"]
         MAIN["<b>📦&nbsp;Domain.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -598,6 +606,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Web.Tests.Bunit.csproj"]
         MAIN["<b>📦&nbsp;Web.Tests.Bunit.csproj</b><br/><small>net10.0</small>"]
@@ -648,6 +657,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Web.Tests.Integration.csproj"]
         MAIN["<b>📦&nbsp;Web.Tests.Integration.csproj</b><br/><small>net10.0</small>"]
@@ -701,6 +711,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Web.Tests.csproj"]
         MAIN["<b>📦&nbsp;Web.Tests.csproj</b><br/><small>net10.0</small>"]

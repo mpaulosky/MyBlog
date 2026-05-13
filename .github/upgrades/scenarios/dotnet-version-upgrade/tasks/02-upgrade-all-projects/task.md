@@ -9,6 +9,7 @@ Update all NuGet package references across the solution. Address the one depreca
 ## Scope Inventory
 
 **Projects affected**:
+
 - src/AppHost/AppHost.csproj
 - src/Domain/Domain.csproj
 - src/ServiceDefaults/ServiceDefaults.csproj
@@ -21,6 +22,7 @@ Update all NuGet package references across the solution. Address the one depreca
 - tests/Web.Tests.Integration/Web.Tests.Integration.csproj
 
 **Distinct concerns**:
+
 1. Retarget all projects from net10.0 to net11.0
 2. Resolve deprecated package usage (FluentValidation.AspNetCore)
 3. Address assessment API compatibility findings in Web and test projects
@@ -28,6 +30,7 @@ Update all NuGet package references across the solution. Address the one depreca
 5. Run full test suite on net11.0
 
 **Dependency/context signals**:
+
 - Project graph depth: 4 levels (Domain/ServiceDefaults foundational, Web mid-tier, AppHost upper-tier, tests at top)
 - Package management: CPM enabled via Directory.Packages.props
 - Known package issue: FluentValidation.AspNetCore deprecated
