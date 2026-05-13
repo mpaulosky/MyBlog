@@ -1,15 +1,18 @@
 # Task 02.02-remove-deprecated-package: Progress Details
 
 ## Summary
+
 Successfully removed deprecated FluentValidation.AspNetCore 11.3.1 package from Web project using Central Package Management (CPM).
 
 ## Changes Applied
 
 ### 1. src/Web/Web.csproj (line 13)
+
 - **Removed**: `<PackageReference Include="FluentValidation.AspNetCore" />`
 - **Reason**: Deprecated package; functionality provided by FluentValidation.DependencyInjectionExtensions
 
 ### 2. Directory.Packages.props (line 23)
+
 - **Removed**: `<PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.1" />`
 - **Reason**: CPM requires removal from both project and central version file
 
@@ -28,6 +31,7 @@ Successfully removed deprecated FluentValidation.AspNetCore 11.3.1 package from 
 - No code changes required — the package was never directly referenced in source files
 
 ## Done-When Check
+
 - ✅ FluentValidation.AspNetCore removed from Web.csproj
 - ✅ FluentValidation.AspNetCore removed from Directory.Packages.props
 - ✅ Build succeeds with 0 errors

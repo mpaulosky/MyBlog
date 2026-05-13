@@ -43,6 +43,36 @@ Performed **full pre-push validation** on `dotnet-version-upgrade` branch before
 **Build warnings are project-scoped, not global:** The 12 warnings after .NET 10 upgrade are all pre-existing (CA1014, CA1307, CA1711, CA2007) and scoped to test projects via `NoWarn` in `.csproj` files. Re-running the build on the same code always produces the same warning count. This is a good signal that the upgrade did not introduce *new* rule violations; it's a baseline we can compare against.
 
 **Staged changes should be pushed immediately, not held locally.** PR gates rely on PR head SHA, not local uncommitted state. After staging changes, always push before requesting review. Learned this lesson again (see PR #302 history) — the only truth is what's on the branch.
+## 2026-05-12 — Issue #322: Sprint 19 execution rails for markdown migration
+
+Closed issue #322 as Aragorn (Lead/Architect). Deliverable was a playbook documenting the
+execution order, branch map, worktree setup, per-slice validation gates, and merge sequencing
+for Sprint 19 markdown editor migration issues #323–#327.
+
+**Actions:**
+
+- Created `.squad/playbooks/sprint-19-execution-rails.md` with full dependency graph,
+  worktree setup/teardown commands, and per-slice validation gates.
+- Created `.squad/decisions/inbox/aragorn-sprint-19-execution-rails.md` (local-only; Scribe merges).
+- Opened PR on `squad/322-milestone-worktree-execution-rails` → `dev`.
+
+### Learnings
+
+**Branch confusion can persist when checkout and commit run in separate bash invocations.**
+`git checkout squad/322-...` succeeded in one bash call but `git symbolic-ref HEAD` in the next
+call still showed `squad/323-restore-markdown-editor-compile-path`. The commit landed on the
+wrong branch. Fix: run checkout verification (`git symbolic-ref HEAD`) and the commit in the
+same bash invocation, or use `&&` chaining to confirm HEAD before committing.
+
+**Cherry-pick is the cleanest recovery after a commit lands on the wrong branch.**
+Rather than resetting or rebasing (which can disturb other branches), cherry-picking the rogue
+commit onto the intended branch and reverting it from the wrong branch is the surgical approach —
+especially when the wrong branch already has pre-existing commits from another issue's work.
+
+**Staged `.squad/` changes are not branch-specific and carry over on checkout.**
+Staged changes survive `git checkout` if the files do not conflict with the target branch HEAD.
+When switching branches with staged `.squad/` files, verify `git status` on the new branch before
+committing. If they did not carry over, re-apply the changes manually.
 
 ---
 
@@ -1432,6 +1462,19 @@ This is a normal situation — the remedy is triage-time duplicate detection + c
 **`squad:member` labels require GitHub API token with `read:org` scope.** The `gh` CLI edit command failed because the token was scoped to
 `['read:user', 'repo', 'user:email', 'workflow']` but `--add-label` requires `read:org` and `read:discussion` scopes.
 Workaround: post triage comments instead, and let squad members apply labels manually or via the GitHub UI. Consider requesting a broader token for future triage work.
+**Multiple squad-authored PRs from the same session can overlap.** When Boromir resolved the
+merge conflict for #305, the merge reintroduced Edit.razor redirect fix (from upstream PR #304
+resolution). Boromir then filed a separate PR #308 for the same UI fix, not realizing it was
+already in #306. This is a normal situation — the remedy is triage-time duplicate detection +
+closure. **Do not suppress triage when multiple PRs land; always check for overlap.**
+
+**Merge conflicts can carry forward bugfixes from upstream.** When resolving `local dev` vs `origin/dev`, the merge commit inherited the Edit.razor UX fix that was in the upstream branch. This is correct — don't discard upstream bugfixes during conflict resolution. However, document it clearly in the PR body (as Boromir did) so reviewers understand what's being carried forward.
+
+**`squad:member` labels require GitHub API token with `read:org` scope.** The `gh` CLI edit
+command failed because the token was scoped to `['read:user', 'repo', 'user:email', 'workflow']`
+but `--add-label` requires `read:org` and `read:discussion` scopes. Workaround: post triage
+comments instead, and let squad members apply labels manually or via the GitHub UI. Consider
+requesting a broader token for future triage work.
 
 ## 2026-07-12 — PR #310 Review: fix(ui): refresh Edit page loading state on post-ID changes
 
@@ -1503,3 +1546,9 @@ Extract a shared `UserIdClaimsHelper` to unify AuthorId extraction across Create
 ### Learnings
 
 GitHub prevents self-approval on PRs. Use `gh pr comment` as the gate signal when `gh pr review --approve` is blocked.
+**`try/finally` is necessary but not sufficient for Blazor parameter reload.** A loading flag
+reset via `try/finally` correctly gates the loading indicator, but state fields like `_model`,
+`_error`, and `_concurrencyError` that survive from a previous render cycle must also be
+explicitly cleared at the top of `OnParametersSetAsync`. Copilot correctly flagged this pattern;
+it should be treated as a standard rule for all Blazor components using `OnParametersSetAsync`
+with cached state fields.

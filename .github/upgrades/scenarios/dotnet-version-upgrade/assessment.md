@@ -4,7 +4,7 @@ This document provides a comprehensive overview of the projects and their depend
 
 ## Table of Contents
 
-- [Executive Summary](#executive-Summary)
+- [Executive Summary](#executive-summary)
   - [Highlevel Metrics](#highlevel-metrics)
   - [Projects Compatibility](#projects-compatibility)
   - [Package Compatibility](#package-compatibility)
@@ -26,7 +26,6 @@ This document provides a comprehensive overview of the projects and their depend
   - [MyBlog\tests\Web.Tests.Bunit\Web.Tests.Bunit.csproj](#myblogtestswebtestsbunitwebtestsbunitcsproj)
   - [MyBlog\tests\Web.Tests.Integration\Web.Tests.Integration.csproj](#myblogtestswebtestsintegrationwebtestsintegrationcsproj)
   - [MyBlog\tests\Web.Tests\Web.Tests.csproj](#myblogtestswebtestswebtestscsproj)
-
 
 ## Executive Summary
 
@@ -153,6 +152,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart LR
     P1["<b>📦&nbsp;AppHost.csproj</b><br/><small>net10.0</small>"]
     P2["<b>📦&nbsp;Domain.csproj</b><br/><small>net10.0</small>"]
@@ -195,6 +195,7 @@ flowchart LR
 ## Project Details
 
 <a id="myblogsrcapphostapphostcsproj"></a>
+
 ### MyBlog\src\AppHost\AppHost.csproj
 
 #### Project Info
@@ -217,6 +218,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (2)"]
         P5["<b>📦&nbsp;AppHost.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -252,6 +254,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***596*** |  |
 
 <a id="myblogsrcdomaindomaincsproj"></a>
+
 ### MyBlog\src\Domain\Domain.csproj
 
 #### Project Info
@@ -274,6 +277,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (6)"]
         P4["<b>📦&nbsp;Web.csproj</b><br/><small>net10.0</small>"]
@@ -313,6 +317,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***254*** |  |
 
 <a id="myblogsrcservicedefaultsservicedefaultscsproj"></a>
+
 ### MyBlog\src\ServiceDefaults\ServiceDefaults.csproj
 
 #### Project Info
@@ -335,6 +340,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (2)"]
         P1["<b>📦&nbsp;AppHost.csproj</b><br/><small>net10.0</small>"]
@@ -362,6 +368,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***138*** |  |
 
 <a id="myblogsrcwebwebcsproj"></a>
+
 ### MyBlog\src\Web\Web.csproj
 
 #### Project Info
@@ -384,6 +391,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph upstream["Dependants (5)"]
         P1["<b>📦&nbsp;AppHost.csproj</b><br/><small>net10.0</small>"]
@@ -428,6 +436,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***5012*** |  |
 
 <a id="myblogtestsapphosttestsapphosttestscsproj"></a>
+
 ### MyBlog\tests\AppHost.Tests\AppHost.Tests.csproj
 
 #### Project Info
@@ -450,6 +459,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["AppHost.Tests.csproj"]
         MAIN["<b>📦&nbsp;AppHost.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -474,6 +484,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***2830*** |  |
 
 <a id="myblogtestsarchitecturetestsarchitecturetestscsproj"></a>
+
 ### MyBlog\tests\Architecture.Tests\Architecture.Tests.csproj
 
 #### Project Info
@@ -496,6 +507,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Architecture.Tests.csproj"]
         MAIN["<b>📦&nbsp;Architecture.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -523,6 +535,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***405*** |  |
 
 <a id="myblogtestsdomaintestsdomaintestscsproj"></a>
+
 ### MyBlog\tests\Domain.Tests\Domain.Tests.csproj
 
 #### Project Info
@@ -545,6 +558,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Domain.Tests.csproj"]
         MAIN["<b>📦&nbsp;Domain.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -569,6 +583,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***724*** |  |
 
 <a id="myblogtestswebtestsbunitwebtestsbunitcsproj"></a>
+
 ### MyBlog\tests\Web.Tests.Bunit\Web.Tests.Bunit.csproj
 
 #### Project Info
@@ -591,6 +606,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Web.Tests.Bunit.csproj"]
         MAIN["<b>📦&nbsp;Web.Tests.Bunit.csproj</b><br/><small>net10.0</small>"]
@@ -618,6 +634,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***4629*** |  |
 
 <a id="myblogtestswebtestsintegrationwebtestsintegrationcsproj"></a>
+
 ### MyBlog\tests\Web.Tests.Integration\Web.Tests.Integration.csproj
 
 #### Project Info
@@ -640,6 +657,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Web.Tests.Integration.csproj"]
         MAIN["<b>📦&nbsp;Web.Tests.Integration.csproj</b><br/><small>net10.0</small>"]
@@ -670,6 +688,7 @@ flowchart TB
 | ***Total APIs Analyzed*** | ***573*** |  |
 
 <a id="myblogtestswebtestswebtestscsproj"></a>
+
 ### MyBlog\tests\Web.Tests\Web.Tests.csproj
 
 #### Project Info
@@ -692,6 +711,7 @@ Legend:
 ⚙️ Classic project
 
 ```mermaid
+
 flowchart TB
     subgraph current["Web.Tests.csproj"]
         MAIN["<b>📦&nbsp;Web.Tests.csproj</b><br/><small>net10.0</small>"]
@@ -717,4 +737,3 @@ flowchart TB
 | 🔵 Behavioral change | 10 | Low - Behavioral changes that may require testing at runtime |
 | ✅ Compatible | 4649 |  |
 | ***Total APIs Analyzed*** | ***4660*** |  |
-
