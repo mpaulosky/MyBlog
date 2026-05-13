@@ -8,10 +8,10 @@ and acceptance criteria met.
 **Completion Verification:**
 
 - ✅ All 7 sprint slices merged to `dev` (PRs #328–#333)
-- ✅ Full test suite passes locally: Architecture (16), Domain (42), Web (158), bUnit (92),
+- ✅ Full test suite passes locally: Architecture (16), Domain (42), Web (158), bUnit (101),
   Integration (12), AppHost/Playwright (48/49, 1 skip)
 - ✅ Release build: 0 errors, 89 pre-existing warnings (baseline)
-- ✅ Coverage maintained ≥89% line threshold across all projects
+- ✅ Coverage maintained: CI gate 80% enforced, achieved 84.9%; Codecov reports 81.66%
 - ✅ Scope enforcement validated: image-upload pipeline blocked, Markdown-to-HTML rendering deferred
 - ✅ VSA + CQRS patterns intact (Architecture tests enforce naming conventions)
 
