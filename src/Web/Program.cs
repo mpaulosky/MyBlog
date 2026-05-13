@@ -137,6 +137,9 @@ builder.Services.AddSingleton<IHtmlSanitizer, HtmlSanitizer>();
 // Register ValidationBehavior pipeline
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+// File storage (local disk — baseline for image uploads in the markdown editor)
+builder.Services.AddFileStorage();
+
 // HttpClient for Auth0 Management API
 builder.Services.AddHttpClient();
 
