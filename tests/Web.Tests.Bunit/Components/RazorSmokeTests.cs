@@ -338,6 +338,20 @@ public class RazorSmokeTests : BunitContext
 	}
 
 	[Fact]
+	public void CreatePostShowsMarkdownContentLabel()
+	{
+		// Arrange
+		Services.AddSingleton(Substitute.For<ISender>());
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
+
+		// Assert — label text and Markdown hint must be present (UX parity with Edit page)
+		cut.Markup.Should().Contain("Content");
+		cut.Markup.Should().Contain("(Markdown)");
+	}
+
+	[Fact]
 	public void CreatePostUsesPrimaryAndSecondaryButtonVariants()
 	{
 		// Arrange
@@ -423,6 +437,27 @@ public class RazorSmokeTests : BunitContext
 		cut.Markup.Should().Contain("Edit Post");
 		cut.Markup.Should().Contain("Existing title");
 		cut.FindComponent<TextEditor>().Instance.Content.Should().Be("Existing content");
+	}
+
+	[Fact]
+	public void EditPostShowsMarkdownContentLabel()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		var post = new BlogPostDto(postId, "Test Post", "Some content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId));
+
+		// Assert — label text and Markdown hint must be present (UX parity with Create page)
+		cut.Markup.Should().Contain("Content");
+		cut.Markup.Should().Contain("(Markdown)");
 	}
 
 	[Fact]
