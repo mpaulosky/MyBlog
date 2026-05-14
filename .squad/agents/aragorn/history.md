@@ -1637,3 +1637,17 @@ reset via `try/finally` correctly gates the loading indicator, but state fields 
 explicitly cleared at the top of `OnParametersSetAsync`. Copilot correctly flagged this pattern;
 it should be treated as a standard rule for all Blazor components using `OnParametersSetAsync`
 with cached state fields.
+
+## 2026-05-14 — PR #336 Gate Review and Merge
+
+Completed Aragorn gate for PR #336 (`squad/335-upgrade-aspire-markdown-packages`) requested by Boromir.
+
+- Verified all CI checks were green, including `AppHost.Tests`, CodeQL, and Codecov gates.
+- Read Copilot automated review (no actionable defects) and Codecov bot output (0.00% project coverage delta).
+- Ran parallel specialist reviews (Aragorn + Boromir perspectives) and merged with squash into `dev`.
+- Synced local `dev`, pruned merged `squad/*` branches, and removed the merged remote branch.
+
+## Learnings
+
+- For self-authored PRs, GitHub blocks `APPROVE` reviews from the same account (`422: Can not approve your own pull request`). Aragorn gate can still proceed by documenting independent reviewer findings plus CI/Copilot/Codecov checks before merge.
+- If PR template placeholders remain (for example `Closes #<!-- issue number -->`), patch the PR body before merge so issue automation and gate audits remain reliable.
