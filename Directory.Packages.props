@@ -5,11 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Aspire Packages -->
-    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.3.1" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.3.1" />
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.1" />
-    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.3.1" />
-    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.3.1" />
+    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.3.2" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.3.2" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.2" />
+    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.3.2" />
+    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.3.2" />
     <!-- Auth0 Packages -->
     <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
     <PackageVersion Include="Auth0.ManagementApi" Version="8.3.0" />
@@ -22,8 +22,8 @@
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <!-- Markdown editor -->
-    <PackageVersion Include="Markdig" Version="0.44.0" />
-    <PackageVersion Include="PSC.Blazor.Components.MarkdownEditor" Version="10.0.7" />
+    <PackageVersion Include="Markdig" Version="1.2.0" />
+    <PackageVersion Include="PSC.Blazor.Components.MarkdownEditor" Version="10.0.8" />
     <!-- CQRS/Mediator -->
     <PackageVersion Include="MediatR" Version="14.1.0" />
     <!-- Database -->
