@@ -1647,7 +1647,22 @@ Completed Aragorn gate for PR #336 (`squad/335-upgrade-aspire-markdown-packages`
 - Ran parallel specialist reviews (Aragorn + Boromir perspectives) and merged with squash into `dev`.
 - Synced local `dev`, pruned merged `squad/*` branches, and removed the merged remote branch.
 
-## Learnings
+### Learnings
 
 - For self-authored PRs, GitHub blocks `APPROVE` reviews from the same account (`422: Can not approve your own pull request`). Aragorn gate can still proceed by documenting independent reviewer findings plus CI/Copilot/Codecov checks before merge.
 - If PR template placeholders remain (for example `Closes #<!-- issue number -->`), patch the PR body before merge so issue automation and gate audits remain reliable.
+
+## 2026-05-15 — PR #338 Gate Execution
+
+Ran the full PR gate for #338 (issue #337 linkage, CI/check health, mergeability, branch naming, Copilot review, and Codecov signal review).
+
+- Verified gate prerequisites are green: `Closes #337`, `MERGEABLE`, `squad/337-...` branch, and all required checks passing (including codecov/project and codecov/patch).
+- Read Copilot review summary and inline comments, then collected detailed review context via REST endpoints.
+- Determined PR is **not review-ready** due unresolved Copilot findings affecting skill metadata compliance and gate-policy wording clarity.
+- Posted a blocking gate comment on PR #338 with required fix actions.
+- Removed `squad` inbox label from issue #337 after triage progression.
+
+### Learnings
+
+- `gh pr view --comments` can fail on older GitHub CLI/GraphQL combinations due deprecated `projectCards`; use `gh api repos/{owner}/{repo}/issues/{pr}/comments` and `.../pulls/{pr}/comments` as the reliable fallback for gate evidence.
+- For PR gates, Copilot comments that impact repo process contracts (skill front-matter schema, gate semantics wording) should be treated as blockers until resolved or explicitly dispositioned.
