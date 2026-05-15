@@ -36,9 +36,20 @@
 		</div>
 		<div class="form-group">
 			<label class="form-label">
-				Category <span class="text-xs text-red-500">*</span>
+				Category
+				@if (_model.IsPublished)
+				{
+					<span class="text-xs text-red-500"> *</span>
+				}
+				<span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">(required when publishing)</span>
 			</label>
-			@if (!_categories.Any())
+			@if (_categoriesLoadFailed)
+			{
+				<p class="text-sm text-red-600 dark:text-red-400">
+					Categories could not be loaded. You may save as a draft; publishing requires categories to be available.
+				</p>
+			}
+			else if (!_categories.Any())
 			{
 				<p class="text-sm text-gray-500 dark:text-gray-400">
 					No categories available.
@@ -76,6 +87,7 @@
 	private readonly PostFormModel _model = new();
 	private string? _error;
 	private IReadOnlyList<CategoryDto> _categories = [];
+	private bool _categoriesLoadFailed;
 
 	private string _authorId = string.Empty;
 	private string _authorName = string.Empty;
@@ -111,13 +123,20 @@
 		var categoriesResult = await Sender.Send(new GetCategoriesQuery());
 		if (categoriesResult is { Success: true })
 			_categories = categoriesResult.Value!;
+		else
+		{
+			_categoriesLoadFailed = true;
+			_error = "Failed to load categories. You may save as a draft, but cannot publish until categories are available.";
+		}
 	}
 
 	private async Task HandleSubmit()
 	{
-		if (_categories.Any() && _model.CategoryId is null)
+		if (_model.IsPublished && (_categoriesLoadFailed || _model.CategoryId is null))
 		{
-			_error = "Please select a category.";
+			_error = _categoriesLoadFailed
+				? "Categories failed to load. Cannot publish until categories are available."
+				: "Please select a category before publishing.";
 			return;
 		}
 

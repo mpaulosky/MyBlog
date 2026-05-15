@@ -132,8 +132,16 @@ else
 	{
 		_loading = true;
 		var result = await Sender.Send(new GetCategoriesQuery());
-		if (result.Success) _categories = result.Value!;
-		else _error = result.Error;
+		if (result.Success)
+		{
+			_categories = result.Value!;
+			_error = null;
+		}
+		else
+		{
+			_categories = [];
+			_error = result.Error;
+		}
 		_loading = false;
 	}
 
