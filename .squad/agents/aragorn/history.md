@@ -1,3 +1,37 @@
+## 2026-06-04 — Issue #339: Triage Categories CRUD Feature for Sprint 19
+
+**Triage Summary:** Performed lead triage hygiene on Categories CRUD issue (squad inbox cleanup).
+
+**Actions Completed:**
+
+- ✅ Updated title from `[Feature]` → `[Sprint 19] Build Categories CRUD and blog post category assignment` (sprint prefix convention)
+
+- ✅ Removed base `squad` label (inbox-only, triage complete)
+- ✅ Kept `squad:sam` + `squad:legolas`, added `squad:gimli` (tests required per acceptance criteria)
+- ✅ Left kickoff comment indicating Sam (domain), Legolas (UI), Gimli (testing) own delivery
+- ✅ Verified milestone is set to Sprint 19
+
+**Route Assignments:**
+
+| Member | Domain | Responsibility |
+| --- | --- | --- |
+| Sam | Backend | Category entity, repository, CRUD handlers, validation |
+| Legolas | UI | Categories management page, category dropdown, author read-only field |
+| Gimli | Testing | Unit, integration, architecture tests; seed data validation |
+
+**Key Design Notes:**
+
+- Category.Name must be unique; Category.Description required
+- Blog post category is required; default category migrates existing posts
+- Category deletion blocked if posts reference it (referential integrity)
+- AppHost seed data must include default category
+
+**Blockers:** None identified. Issue is well-specified with clear acceptance criteria.
+
+**Decision:** Routed to three-member team (Sam + Legolas + Gimli) due to cross-domain complexity: domain model, Blazor UI integration, and comprehensive test coverage required. This is standard vertical-slice decomposition.
+
+---
+
 ## 2026-06-03 — Issue #320: Sprint 19 Markdown Editor Completion & Verification
 
 Closed issue #320 as Aragorn (Lead/Architect) after verifying all Sprint 19 implementation slices

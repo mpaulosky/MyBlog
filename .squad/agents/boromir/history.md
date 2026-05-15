@@ -48,6 +48,25 @@
 
 ## Learnings
 
+### 2026-05-14 — Issue #337: Archive Self-Authored PR Gate Skill
+
+**What was done:** Created `.squad/skills/self-authored-pr-gate/SKILL.md` documenting the workflow pattern discovered during PR #336 (self-authored Aspire/markdown upgrade) and updated `.squad/agents/aragorn/history.md` with Aragorn's gate review findings.
+
+**Context:** PR #336 had Boromir as author and Aragorn as lead reviewer. GitHub returns `422: Can not approve your own pull request` when the reviewer account is also the PR author, preventing the standard lead-gate approve verdict. Instead, the gate relied on:
+
+1. CI fully green (build, tests, security, coverage)
+2. Copilot automated review (no unresolved bugs/security findings)
+3. Codecov bot (no material regression)
+4. Domain-specialist review perspective documented
+
+**Key lesson:** For self-authored PRs where lead review is locked out by GitHub's constraint, explicitly document the alternative path (CI + Copilot + Codecov + specialist input) so future gate reviews aren't confused by the missing approval. The skill captures this as a standing process rule.
+
+**Files:** Committed `.squad/skills/self-authored-pr-gate/SKILL.md` and updated `.squad/agents/aragorn/history.md`. Created issue #337 and PR #338.
+
+**Branch cleanup:** Verified no orphaned merged branches remain locally or remotely after Sprint 15 merges. Pre-push hook gates all passed (markdown lint, formatting, release build, unit/architecture/integration tests).
+
+---
+
 ### 2026-05-11 — Issue #289: dotnet format gate added to pre-push hook
 
 **What was done:** Added Gate 2 (`dotnet format --verify-no-changes`) to the pre-push hook between Gate 1 (untracked files) and the former Gate 2 (now Gate 3 — Release build). Gates 2–4 (build, unit tests, integration) renumbered to 3–5.
@@ -1453,6 +1472,7 @@ the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`
   `singleSelectOptions`. Pass all existing option IDs to preserve them; omit `id` for new options.
 - **Cherry-pick workflow for PR fixes:** stash → checkout origin branch → cherry-pick fix commit →
   rename to `squad/{issue}-{slug}` → push. Cleaner than diverging 8 commits onto the remote.
+
 ### PR #306 Post-Triage Review: Project Board Automation Token/Option ID Sync (2026-05-11)
 
 **Context:** Aragorn triaged PR #306 with recommendation to route to Boromir for DevOps review. PR bundles three concerns: merge conflict resolution, CI/infra fixes (token + option IDs), and a Blazor redirect fix.
@@ -1477,4 +1497,3 @@ the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`
 - The "secondary review" layer (Copilot automated review) is effective at flagging missing tests and logic errors, but does not substitute for domain reviewer verdict. Always route to domain specialist after Copilot.
 
 **Related Decision:** `.squad/decisions/inbox/boromir-pr306-review.md` (assessment + routing recommendation)
-

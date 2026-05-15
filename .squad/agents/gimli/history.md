@@ -1056,6 +1056,7 @@ build + all test suites before opening PR.
 ### Context
 
 Working directory modifications vs. git HEAD:
+
 - `global.json`: SDK reverted to `10.0.203`, `allowPrerelease: false`, `rollForward: latestMinor`
 - `Directory.Build.props`: removed `NoWarn CS1591/IDE0xxx` suppression; re-enabled `EnforceCodeStyleInBuild=true`
 - All `.csproj` files: `TargetFramework` changed from `net11.0` → `net10.0`
@@ -1112,3 +1113,62 @@ well above 89% (previous sessions showed 91.64% with a similar test set).
 3. **Test count growth since last recorded run**: +7 Web.Tests (165 vs 158), +2 Web.Tests.Bunit (94 vs 92). New coverage added in recent sprints.
 4. **AppHost.Tests takes ~2.5 minutes** due to Testcontainers Docker startup. Schedule accordingly in local gates.
 5. **CS1591 in committed net11.0 branch was suppressed globally** via `Directory.Build.props`. The net10.0 working directory removes that suppression. The code compiles cleanly regardless, meaning all public types already carry XML doc comments.
+
+---
+
+## Session: Issue #339 — Category CRUD Tests (2026)
+
+### Task
+
+Implement and extend tests for Issue #339 (Category CRUD feature) across unit, integration, and handler levels, following behavior-first TDD principles.
+
+### Work Done
+
+**Fixed pre-existing build break from Sam's BlogPostDto schema change:**
+
+Sam added `Guid? CategoryId` as the 11th positional parameter to `BlogPostDto`. Fixed 7 test files by appending `, null` to old 10-parameter constructor calls:
+
+- `tests/Web.Tests/Handlers/GetBlogPostsHandlerTests.cs`
+- `tests/Web.Tests/Handlers/EditBlogPostHandlerTests.cs`
+- `tests/Web.Tests/Infrastructure/Caching/BlogPostCacheServiceTests.cs`
+- `tests/Web.Tests.Bunit/Components/RazorSmokeTests.cs`
+- `tests/Web.Tests.Bunit/Features/RichTextEditorTests.cs`
+- `tests/Web.Tests.Bunit/Features/EditAclTests.cs`
+- `tests/Web.Tests.Integration/Caching/BlogPostCacheServiceTests.cs`
+
+**New test files (all passing):**
+
+- `tests/Domain.Tests/Entities/CategoryTests.cs` — 12 unit tests (Create/Update trim, validation)
+- `tests/Domain.Tests/Entities/BlogPostCategoryTests.cs` — 9 unit tests (AssignCategory, RemoveCategory, author immutability)
+- `tests/Web.Tests/Features/Categories/Commands/CreateCategoryCommandValidatorTests.cs` — 9 passing
+- `tests/Web.Tests/Features/Categories/Commands/DeleteCategoryCommandValidatorTests.cs` — 3 passing
+- `tests/Web.Tests/Features/Categories/Commands/UpdateCategoryCommandValidatorTests.cs` — 6 passing (uses `EditCategoryCommandValidator`)
+- `tests/Web.Tests/Features/Categories/Handlers/GetCategoriesHandlerTests.cs` — 5 passing
+- `tests/Web.Tests/Features/Categories/Handlers/GetCategoryByIdHandlerTests.cs` — 5 passing
+- `tests/Web.Tests/Features/Categories/Handlers/CreateCategoryHandlerTests.cs` — 4 passing
+- `tests/Web.Tests/Features/Categories/Handlers/DeleteCategoryHandlerTests.cs` — 5 passing (includes "cannot delete if in use" AC)
+- `tests/Web.Tests/Features/Categories/Handlers/EditCategoryHandlerTests.cs` — 5 passing
+- `tests/Web.Tests.Integration/Infrastructure/CategoryIntegrationCollection.cs` — collection definition
+- `tests/Web.Tests.Integration/Categories/MongoDbCategoryRepositoryTests.cs` — 12 integration tests
+- `tests/Web.Tests.Integration/Categories/MongoDbBlogPostCategoryTests.cs` — 4 integration tests
+
+### Test Count (post-session)
+
+| Suite               | Passed | Notes                                  |
+|---------------------|--------|----------------------------------------|
+| Domain.Tests        | 67     | ✅ +21 new Category/BlogPost tests     |
+| Web.Tests           | 210    | ✅ +45 new Category handler/validator  |
+| Web.Tests.Bunit     | 101    | ✅ (8 transient failures on first run cleared) |
+| Web.Tests.Integration | TBD  | Builds ✅; requires Docker/Testcontainers |
+
+### Key Learnings
+
+1. **`UpdateCategoryCommandValidatorTests.cs` tests `EditCategoryCommandValidator`** — Sam named the command `EditCategoryCommand` but the test file was staged as `UpdateCategoryCommandValidatorTests`. File kept for continuity; class named accordingly.
+
+2. **`DeleteCategoryHandler` takes two repository dependencies**: `ICategoryRepository` + `IBlogPostRepository` — verify both are mocked in unit tests.
+
+3. **Staged tests pattern** — When production code hasn't landed yet, use `[Fact(Skip = "Staged #NNN: reason")]` with empty bodies. Replace with real tests as soon as code lands; don't let stubs rot.
+
+4. **`ExistsByNameExcludingAsync`** — the correct update-uniqueness guard; used in `EditCategoryHandler` to allow a category to keep its own name unchanged while still preventing collisions with other categories.
+
+5. **`IBlogPostRepository.ExistsByCategoryAsync`** is the guard for "cannot delete category in use" — always assert that `DeleteAsync` is NOT called when this returns true.
