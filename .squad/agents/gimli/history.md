@@ -1205,3 +1205,42 @@ All 210 `Web.Tests` tests passed after rename (0 failures).
 ### Key Learning
 
 When a test file has a `Update*` vs `Edit*` mismatch with its production counterpart, git detects the rename automatically (96% similarity) — no `.csproj` edit needed because the file is included by glob. Always verify with a full test run before committing.
+
+---
+
+## Session: Category Regression Tests — Issue #341 / PR #342 Blockers (2026)
+
+### Task
+
+Add focused bUnit regression tests for two PR #342 blocker bugs in `Edit.razor`:
+
+1. `_categoriesLoadFailed` not reset in `OnParametersSetAsync` on re-navigation (stale state).
+2. Publish guard `_model.IsPublished && (_categoriesLoadFailed || _model.CategoryId is null)`
+   incorrectly blocks already-categorized published posts when category list fails.
+
+### Work Done
+
+- Created `tests/Web.Tests.Bunit/Features/EditCategoryRegressionTests.cs` with 3 tests:
+  - `EditClearsCategoryLoadFailureAfterRenavigationToPostWhoseCategoriesLoad` — sequential NSubstitute returns (fail then success) across two renders; asserts banner disappears on re-navigation.
+  - `EditAllowsSaveOfPublishedPostThatAlreadyHasCategoryEvenWhenCategoryListFails` — `.Change(true)` on checkbox before submit; asserts guard error does NOT appear and command IS sent.
+  - `EditBlocksPublishWhenCategoryIdIsNullAndCategoryListFailed` — same pattern; asserts guard error DOES appear and command is NOT sent (guard rail).
+- Both production fixes were already in place (Sam committed them); tests serve as regression guards.
+- Full suite: 104 bUnit + 210 unit + 16 architecture = all green.
+
+### Validation
+
+All 330 tests pass (0 failures). `dotnet test` clean on Web.Tests.Bunit, Web.Tests, and Architecture.Tests.
+
+### Key Learning
+
+bUnit's `.Change(true)` on a rendered `InputCheckbox` fires the `onchange` event and updates the
+Blazor model binding — this is the correct way to explicitly set `_model.IsPublished = true` before
+a form submit, making the publish guard test a true red-green regression test. Without it, bUnit
+form submission may not preserve the IsPublished=true binding if it was set only via C# model
+initialization (not through a DOM event).
+
+`bUnit 2.7.2`: `WaitForAssertion` has no `because:` parameter — use positional string overload in
+FluentAssertions instead.
+
+`cut.Render(p => p.Add(...))` cannot include `AddCascadingValue` — throws `InvalidOperationException`.
+Set cascading values only in the initial `Render<T>()` call.
