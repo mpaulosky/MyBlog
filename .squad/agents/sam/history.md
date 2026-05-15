@@ -449,3 +449,28 @@ Verify the `.csproj` and `global.json` changes on the `dotnet-version-upgrade` b
 - Always check whether a boolean flag initialized at field level is ever *reset* in `OnParametersSetAsync` before the async work begins.
 - File: `src/Web/Features/BlogPosts/Edit/Edit.razor`
 - Test: `tests/Web.Tests.Bunit/Features/EditAclTests.cs` → `EditShowsNewPostContentAfterParameterChange`
+
+## Issue #339 Category CRUD — Backend Implementation (2026-05-15)
+
+Implemented full backend slice for Category CRUD: entity, repository, MediatR handlers, validators with unique name enforcement, safe-delete guard.
+Added nullable CategoryId FK to BlogPost with domain methods AssignCategory/RemoveCategory.
+Seeded default "General" category with stable Guid. All handlers follow existing Result pattern.
+Backend complete; Gimli's tests passing; decision documented in decisions/inbox.
+
+## PR #338 Skill Template Compliance (2026-05-15)
+
+Fixed three blockers in `.squad/skills/self-authored-pr-gate/SKILL.md`: added `domain` and `source: "earned"` YAML fields per repo skill template,
+clarified Codecov gating language from "hard block" to "investigate-and-explain" to align with squad practice,
+fixed related heading hierarchy. Minimal two-line change preserving intent while improving alignment with squad conventions.
+
+## Issue #341 Seed Log Wording Fix (2026-05-15)
+
+Corrected three log strings in `MongoDbResourceBuilderExtensions.cs` to match the actual upsert behavior of the General category seed.
+The category is seeded via `ReplaceOneAsync` with `IsUpsert=true`, so "inserted" was inaccurate.
+Changed to "upserted" in the invocation log, completion log, and result message string.
+Blog posts (seeded via `InsertManyAsync`) correctly retain "inserted".
+AppHost.Tests: 48/48 passed. Scope: log wording only; no logic changes.
+
+### Learning: Log wording must match the actual DB operation semantics
+
+When upsert (`ReplaceOneAsync + IsUpsert=true`) is the behavior, log strings must say "upserted" or "inserted/updated" — not "inserted". Future seed operations: always audit log strings against the actual driver call used.

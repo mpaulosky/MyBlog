@@ -12,7 +12,7 @@ tools:
 
 ## Context
 
-During PR gate work, `gh pr view --comments` may fail due GraphQL field deprecations (for example, classic project card access). Gate flow still requires Copilot/Codecov and reviewer-comment evidence.
+During PR gate work, `gh pr view --comments` may fail due to GraphQL field deprecations (for example, classic project card access). Gate flow still requires Copilot/Codecov and reviewer-comment evidence.
 
 ## Patterns
 
@@ -33,4 +33,4 @@ During PR gate work, `gh pr view --comments` may fail due GraphQL field deprecat
 ## Anti-Patterns
 
 - Assuming no review comments exist just because `gh pr view --comments` failed.
-- Merging without reading Copilot inline comments due CLI query failures.
+- Merging without reading Copilot inline comments due to CLI query failures.

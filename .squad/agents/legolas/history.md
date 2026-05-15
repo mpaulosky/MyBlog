@@ -935,7 +935,7 @@ This guarantees all display state is clean before every fetch cycle, not just `_
 
 ---
 
-## 2025-07-XX — Issue #339 Category Frontend (branch `squad/339-category-backend`)
+## 2026-05-15 — Issue #339 Category Frontend (branch `squad/339-category-backend`)
 
 ### What I Implemented
 
@@ -973,3 +973,33 @@ if (_categories.Any() && _model.CategoryId is null)
 Always rebuild (`dotnet build tests/Web.Tests.Bunit`) after changing razor files before running `--no-build` tests. Razor compilation is part of the build step.
 
 **Filed:** `.squad/decisions/inbox/legolas-issue339-frontend.md`
+
+## Issue #341 Category Polish — Required-vs-Draft, Load-Failure Guard, Stale State (2026-05-15)
+
+### What I Learned
+
+**Category required-vs-draft semantics:**
+
+- Decided: `CategoryId` is required only when `IsPublished == true`. Drafts may be saved without a category.
+- This matches the existing "before publishing a post" hint copy in the UI — making the intent explicit.
+- Conditional asterisk (`<span class="text-xs text-red-500"> *</span>`) and `(required when publishing)` hint text rendered only when `_model.IsPublished` is true.
+
+**GetCategoriesQuery failure guard:**
+
+- Introduced `_categoriesLoadFailed` bool flag in both Create and Edit pages.
+- On failure: set `_error` immediately (surface to user) and set `_categoriesLoadFailed = true`.
+- In `HandleSubmit`: when `IsPublished && (_categoriesLoadFailed || CategoryId is null)` → block submit with an appropriate error message.
+- This prevents the silent "no categories" UI path masking a real load error.
+- Category section renders a distinct red error message when `_categoriesLoadFailed`, vs the grey "no categories" message for the genuinely-empty case.
+
+**Stale state in LoadAsync (Categories/List/Index.razor):**
+
+- `_error = null` on success to clear a prior load-failure message.
+- `_categories = []` on failure to reset any previously loaded data (avoids stale list being shown alongside a new error banner).
+- Pattern: always reset the "opposite" field in both success and failure branches of a load method.
+
+**Validation:**
+
+- Architecture.Tests: 16/16 passed.
+- Web.Tests.Bunit: 101/101 passed.
+- No new tests required — existing smoke tests cover the render paths; no behaviour-breaking changes to existing test contracts.

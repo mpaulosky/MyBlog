@@ -1,4 +1,19 @@
 
+## 2026-05-16 — Issue #341 Documentation Polish
+
+**Work:** Fixed grammar and placeholder date in .squad documentation.
+
+**Changes:**
+
+- `.squad/skills/gh-pr-comments-fallback/SKILL.md`: Corrected "due" to "due to" (2 instances)
+- `.squad/agents/legolas/history.md`: Fixed placeholder date `2025-07-XX` to `2026-05-15` (commit date for PR #340)
+
+**Key Learning:** When updating placeholder dates, cross-reference git log with related issues to find the actual commit date. Used `git log --format="%h %ad %s" --date=short` to locate commit `ec92657` (2026-05-15) for "feat(categories): Categories CRUD UI + blog post category assignment (#340)".
+
+**Validation:** ✅ All changes passed markdownlint; committed to branch `squad/341-category-polish`.
+
+**Status:** ✅ Completed — PR ready for review.
+
 ## 2026-04-18 — Admin Role Claim Namespace Fix (Cross-Agent with Legolas)
 
 **Work:** Diagnosed and fixed admin role claim mismatch between Auth0 and app configuration.

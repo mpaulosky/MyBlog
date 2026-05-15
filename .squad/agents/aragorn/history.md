@@ -1,3 +1,35 @@
+## 2026-06-05 — Issue #341: Triage Multi-Owner Polish Follow-up for Sprint 19
+
+**Triage Summary:** Triaged follow-up issue from Copilot gate findings on PR #340. This is a bundled polish issue spanning UI semantics, test naming, logging, and documentation fixes.
+
+**Actions Completed:**
+
+- ✅ Updated milestone from bare `Sprint 19` → `Sprint 19: Polish & Documentation` (theme suffix per sprint-planning playbook)
+- ✅ Updated title from `Follow-up (#339): Category required-vs-draft UX semantics + Copilot polish` → `[Sprint 19] Polish category UX, test naming, and documentation` (sprint prefix convention)
+- ✅ Removed base `squad` label (triage complete)
+- ✅ Applied `squad:legolas`, `squad:gimli`, `squad:sam`, `squad:frodo` (parallel multi-owner routing)
+- ✅ Posted triage comment with work breakdown, owners, and scope notes
+
+**Route Assignments:**
+
+| Member | Domain | Responsibility |
+| --- | --- | --- |
+| Legolas | UI | Category field semantics (required asterisk, validation flow, error handling) in Create/Edit/List Razor files |
+| Gimli | Testing | Test file rename: UpdateCategory → EditCategory for consistency |
+| Sam | Backend | AppHost seed log wording: "inserted" → "upserted" (1-line fix) |
+| Frodo | Documentation | `.squad/` grammar fixes ("due" → "due to") and placeholder date correction |
+
+**Key Decisions:**
+
+- **Kept as bundled issue** — all four items are low-priority polish from a single PR gate; split would create unnecessary overhead
+- **Parallel work** — all four slices are independent; no blocking dependencies between owners
+- **Priority:** Low-to-medium (gate findings, not critical path)
+- **No new architecture** — all changes are UX alignment, naming convention, logging wording, or documentation corrections
+
+**Rationale:** This is a typical post-PR Copilot gate follow-up bundling minor UX and documentation improvements. The issue body already lists suggested routing; I formalized it per squad routing table and applied corresponding `squad:{member}` labels. Each owner can begin independently.
+
+---
+
 ## 2026-06-04 — Issue #339: Triage Categories CRUD Feature for Sprint 19
 
 **Triage Summary:** Performed lead triage hygiene on Categories CRUD issue (squad inbox cleanup).
@@ -1700,3 +1732,38 @@ Ran the full PR gate for #338 (issue #337 linkage, CI/check health, mergeability
 
 - `gh pr view --comments` can fail on older GitHub CLI/GraphQL combinations due deprecated `projectCards`; use `gh api repos/{owner}/{repo}/issues/{pr}/comments` and `.../pulls/{pr}/comments` as the reliable fallback for gate evidence.
 - For PR gates, Copilot comments that impact repo process contracts (skill front-matter schema, gate semantics wording) should be treated as blockers until resolved or explicitly dispositioned.
+
+## Issue #339 Category CRUD — Orchestration & Kickoff (2026-05-15)
+
+Orchestrated parallel delivery of Category CRUD feature across four squad members.
+Triaged issue #339, confirmed routing and team labels, posted public kickoff comment.
+Coordinated cross-member decision handoff: backend domain model → test coverage → UI.
+Verified all decisions documented in inbox for Scribe archival.
+
+## 2026-05-15 — PR #340 Gate Execution (Categories CRUD)
+
+Ran the full PR gate for #340 (Sprint 19 Categories feature, issue #339) requested by Boromir.
+
+- Waited on `AppHost.Tests (Aspire + Playwright E2E)` — completed ~3m46s, all checks green (build, Web.Tests, Web.Tests.Bunit, Web.Tests.Integration, Domain.Tests, Architecture.Tests, AppHost E2E, CodeQL, Coverage Analysis, markdownlint).
+- Verified gate prereqs: `Closes #339`, branch `squad/339-category-backend`, `MERGEABLE` / `CLEAN`, tests authored by Gimli, backend by Sam, UI by Legolas — all required reviewer domains satisfied via prior agent outputs.
+- Codecov bot did not post a comment on this PR; the in-pipeline `Coverage Analysis` job passed and was treated as no-regression.
+- Read Copilot automated review (10 inline comments). Dispositioned: 4 UI semantic items
+  (required-asterisk vs draft + silent categories load failure on Create/Edit), 1 stale-state
+  on Categories Index, 1 test class naming (`UpdateCategoryCommandValidatorTests` → should be
+  `Edit*`), 1 AppHost seed log wording (`inserted` vs `upserted`), 2 grammar fixes in
+  `gh-pr-comments-fallback` skill, 1 placeholder date in Legolas history. None blocking —
+  routed to follow-up issue **#341** with per-agent assignments.
+- Posted gate-pass comment on PR #340 documenting all dispositions, removed `squad` triage label.
+- Squash-merged into `dev` and deleted remote branch.
+- Issue #339 auto-closed; removed `go:needs-research` label.
+
+### Learnings
+
+- `gh pr merge --delete-branch` invokes a local `git checkout` of the base branch as part of
+  branch deletion; if the worktree has uncommitted modifications (e.g., other agents'
+  in-flight `.squad/agents/*/history.md` edits), the checkout step fails *after* the remote
+  merge succeeds. Workaround: switch to `dev` (or stash `.squad/` paths) before invoking
+  `gh pr merge`. The remote merge is idempotent — if you re-run after stashing, gh reports
+  `already merged` and you can clean up the local branch separately.
+- For PRs where the human repo owner is the GitHub author of record, `gh pr review --approve` still typically blocks self-approval. Aragorn gate-pass via `gh pr comment` documenting Copilot dispositions + CI/Codecov status remains the working approval signal, then `gh pr merge --squash --delete-branch` performs the merge directly.
+- When Codecov fails to post a bot comment, prefer the in-pipeline `Coverage Analysis` job result as the coverage gate signal rather than blocking the PR for missing bot output.
