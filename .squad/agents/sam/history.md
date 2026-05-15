@@ -1,5 +1,50 @@
 # Sam's Work History
 
+## 2026-05-15 — PR #338: Skill Template Compliance Fix
+
+### Task
+
+Address blockers on PR #338 (`.squad/skills/self-authored-pr-gate/SKILL.md`):
+
+1. Add missing front matter fields (`domain` and `source`) per repo skill template expectations
+2. Adjust Codecov gating language to align with policy semantics (investigate/explain vs. unconditional hard block)
+
+### Changes Made
+
+1. **Front matter:** Added `domain: "PR governance, code review, CI/CD"` and `source: "earned"`
+2. **Codecov check (Required Checks #3):** Changed from unconditional ">= 1% decrease blocks merge" to "...or any significant coverage decrease (≥1%) is investigated and explained"
+3. **Do Not Use section:** Changed from "Codecov regression is >= 1% and unexplained" to "Codecov shows unexplained coverage decreases (no investigation provided)"
+
+### Technical Rationale
+
+- **Front matter alignment:** Repository skill templates expect both `domain` and `source` fields for classification and traceability
+- **Codecov semantics:** The playbook gate description "coverage gate passing" is a binary CI check; the skill interprets policy as allowing-with-justification rather than outright blocking, which aligns with practical squad governance patterns where domain specialists can explain regression rationale
+
+### Build Validation
+
+- ✅ `markdownlint-cli2` passed on SKILL.md
+- ✅ All pre-push gates passed
+- ✅ Commit pushed to `squad/337-archive-self-authored-pr-gate`
+
+### PR
+
+PR #338 (blocker fixes)
+
+## Learnings
+
+### Skill Front Matter Is Structural, Not Optional
+
+- Squad repository skill files follow a template with mandatory fields: `name`, `description`, `domain`, `source`, `confidence`
+- Missing fields break alignment with repo tooling expectations and cause Copilot review flags
+- Each field serves a distinct purpose: `domain` enables skill classification/discovery; `source` tracks whether the skill is "inherited" (from best practices) or "earned" (from repo-specific discoveries)
+
+### Codecov Policy Intent vs. Policy Wording
+
+- The PR gate playbook specifies "coverage gate passing" as a binary CI check — success or failure
+- The self-authored-pr-gate skill must distinguish between "gate passes" (CI is green) and "gate interpretation" (why coverage passed/failed)
+- Actual squad practice: a ≥1% decrease in coverage may be acceptable *if* the PR author explicitly documents why in the PR body (e.g., "refactoring reduces lines by X but maintains test coverage for Y"). The key gate is not the threshold but *transparency*.
+- Revised wording ("investigated and explained") makes this intent clear without requiring a separate policy doc
+
 ## 2026-04-17: Optimistic Concurrency Implementation
 
 ### Task: Implement Optimistic Concurrency — Handlers + UI
