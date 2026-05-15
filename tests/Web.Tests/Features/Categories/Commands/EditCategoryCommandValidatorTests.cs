@@ -1,6 +1,6 @@
 //=======================================================
 //Copyright (c) 2026. All rights reserved.
-//File Name :     UpdateCategoryCommandValidatorTests.cs
+//File Name :     EditCategoryCommandValidatorTests.cs
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
@@ -11,7 +11,7 @@ using MyBlog.Web.Features.Categories.Edit;
 
 namespace Web.Features.Categories.Commands;
 
-public class UpdateCategoryCommandValidatorTests
+public class EditCategoryCommandValidatorTests
 {
 	private readonly EditCategoryCommandValidator _validator = new();
 
