@@ -24,8 +24,8 @@ public class GetBlogPostsHandlerTests
 
 	private static List<BlogPostDto> MakeDtos() =>
 	[
-	new(Guid.NewGuid(), "T1", "C1", string.Empty, "A1", string.Empty, [], DateTime.UtcNow, null, false),
-	new(Guid.NewGuid(), "T2", "C2", string.Empty, "A2", string.Empty, [], DateTime.UtcNow, null, true),
+	new(Guid.NewGuid(), "T1", "C1", string.Empty, "A1", string.Empty, [], DateTime.UtcNow, null, false, null),
+	new(Guid.NewGuid(), "T2", "C2", string.Empty, "A2", string.Empty, [], DateTime.UtcNow, null, true, null),
 	];
 
 	[Fact]

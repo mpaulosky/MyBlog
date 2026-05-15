@@ -1,6 +1,7 @@
 @page "/blog/create"
 @using MyBlog.Domain.ValueObjects
 @using MyBlog.Web.Security
+@using MyBlog.Web.Features.Categories.List
 @using System.Security.Claims
 @inject ISender Sender
 @inject NavigationManager Navigation
@@ -34,6 +35,30 @@
 			<TextEditor @bind-Content="_model.Content" AlignmentOptionsEnabled="false" />
 		</div>
 		<div class="form-group">
+			<label class="form-label">
+				Category <span class="text-xs text-red-500">*</span>
+			</label>
+			@if (!_categories.Any())
+			{
+				<p class="text-sm text-gray-500 dark:text-gray-400">
+					No categories available.
+					<a href="/admin/categories" class="text-primary-600 dark:text-primary-400 underline">Create categories</a>
+					before publishing a post.
+				</p>
+			}
+			else
+			{
+				<InputSelect class="form-select" @bind-Value="_model.CategoryId">
+					<option value="">-- Select a category --</option>
+					@foreach (var cat in _categories)
+					{
+						<option value="@cat.Id">@cat.Name</option>
+					}
+				</InputSelect>
+				<ValidationMessage For="() => _model.CategoryId" />
+			}
+		</div>
+		<div class="form-group">
 			<label class="form-label flex items-center gap-2">
 				<InputCheckbox @bind-Value="_model.IsPublished" />
 				<span>Published</span>
@@ -50,6 +75,7 @@
 @code {
 	private readonly PostFormModel _model = new();
 	private string? _error;
+	private IReadOnlyList<CategoryDto> _categories = [];
 
 	private string _authorId = string.Empty;
 	private string _authorName = string.Empty;
@@ -81,12 +107,22 @@
 		{
 			_authorName = "Author";
 		}
+
+		var categoriesResult = await Sender.Send(new GetCategoriesQuery());
+		if (categoriesResult is { Success: true })
+			_categories = categoriesResult.Value!;
 	}
 
 	private async Task HandleSubmit()
 	{
+		if (_categories.Any() && _model.CategoryId is null)
+		{
+			_error = "Please select a category.";
+			return;
+		}
+
 		var author = new PostAuthor(_authorId, _authorName, _authorEmail, _authorRoles);
-		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished));
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished, _model.CategoryId));
 		if (result.Success)
 			Navigation.NavigateTo("/blog");
 		else
@@ -102,5 +138,7 @@
 		public string Content { get; set; } = string.Empty;
 
 		public bool IsPublished { get; set; }
+
+		public Guid? CategoryId { get; set; }
 	}
 }

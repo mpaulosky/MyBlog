@@ -59,6 +59,11 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 				post.Unpublish();
 			}
 
+			if (request.CategoryId is not null)
+			{
+				post.AssignCategory(request.CategoryId.Value);
+			}
+
 			await repo.UpdateAsync(post, cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateByIdAsync(request.Id, cancellationToken).ConfigureAwait(false);

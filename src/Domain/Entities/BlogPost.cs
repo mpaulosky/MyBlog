@@ -21,6 +21,7 @@ public sealed class BlogPost
 	public DateTime? UpdatedAt { get; private set; }
 	public bool IsPublished { get; private set; }
 	public int Version { get; private set; }
+	public Guid? CategoryId { get; private set; }
 
 	private BlogPost() { }
 
@@ -53,4 +54,16 @@ public sealed class BlogPost
 
 	public void Publish() => IsPublished = true;
 	public void Unpublish() => IsPublished = false;
+
+	public void AssignCategory(Guid categoryId)
+	{
+		CategoryId = categoryId;
+		Version++;
+	}
+
+	public void RemoveCategory()
+	{
+		CategoryId = null;
+		Version++;
+	}
 }

@@ -1,5 +1,6 @@
 @page "/blog/edit/{Id:guid}"
 @using System.Security.Claims
+@using MyBlog.Web.Features.Categories.List
 @inject ISender Sender
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
@@ -33,6 +34,8 @@
 }
 else if (_model is not null)
 {
+    <p class="form-label mb-4">Author: <span class="font-semibold">@_authorName</span></p>
+
     <div class="form-panel">
         <EditForm Model="_model" OnValidSubmit="HandleSubmit">
             <DataAnnotationsValidator />
@@ -45,6 +48,30 @@ else if (_model is not null)
             <div class="form-group">
                 <label class="form-label">Content <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Markdown)</span></label>
                 <TextEditor @bind-Content="_model.Content" AlignmentOptionsEnabled="false" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    Category <span class="text-xs text-red-500">*</span>
+                </label>
+                @if (!_categories.Any())
+                {
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        No categories available.
+                        <a href="/admin/categories" class="text-primary-600 dark:text-primary-400 underline">Create categories</a>
+                        before publishing a post.
+                    </p>
+                }
+                else
+                {
+                    <InputSelect class="form-select" @bind-Value="_model.CategoryId">
+                        <option value="">-- Select a category --</option>
+                        @foreach (var cat in _categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => _model.CategoryId" />
+                }
             </div>
             <div class="form-group">
                 <label class="form-label flex items-center gap-2">
@@ -70,6 +97,8 @@ else if (_model is not null)
     private bool _isLoading = true;
     private string _callerUserId = string.Empty;
     private bool _callerIsAdmin;
+    private string _authorName = string.Empty;
+    private IReadOnlyList<CategoryDto> _categories = [];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -79,7 +108,14 @@ else if (_model is not null)
         _isLoading = true;
         try
         {
-            var result = await Sender.Send(new GetBlogPostByIdQuery(Id));
+            var categoriesTask = Sender.Send(new GetCategoriesQuery());
+            var postTask = Sender.Send(new GetBlogPostByIdQuery(Id));
+            await Task.WhenAll(categoriesTask, postTask);
+
+            var categoriesResult = await categoriesTask;
+            if (categoriesResult is { Success: true }) _categories = categoriesResult.Value!;
+
+            var result = await postTask;
             if (result.Success)
             {
                 if (result.Value is not null)
@@ -98,11 +134,13 @@ else if (_model is not null)
                         return;
                     }
 
+                    _authorName = result.Value.AuthorName;
                     _model = new PostFormModel
                     {
                         Title = result.Value.Title,
                         Content = result.Value.Content,
-                        IsPublished = result.Value.IsPublished
+                        IsPublished = result.Value.IsPublished,
+                        CategoryId = result.Value.CategoryId,
                     };
                 }
                 else
@@ -125,13 +163,20 @@ else if (_model is not null)
     private async Task HandleSubmit()
     {
         if (_model is null) return;
+        if (_categories.Any() && _model.CategoryId is null)
+        {
+            _error = "Please select a category.";
+            return;
+        }
+
         var result = await Sender.Send(new EditBlogPostCommand(
             Id,
             _model.Title,
             _model.Content,
             _callerUserId,
             _callerIsAdmin,
-            _model.IsPublished));
+            _model.IsPublished,
+            _model.CategoryId));
         if (result.Success)
             Navigation.NavigateTo("/blog");
         else
@@ -153,5 +198,7 @@ else if (_model is not null)
         public string Content { get; set; } = string.Empty;
 
         public bool IsPublished { get; set; }
+
+        public Guid? CategoryId { get; set; }
     }
 }

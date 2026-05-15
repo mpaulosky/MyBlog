@@ -46,6 +46,11 @@ ILogger<CreateBlogPostHandler> logger) : IRequestHandler<CreateBlogPostCommand, 
 				post.Publish();
 			}
 
+			if (request.CategoryId is not null)
+			{
+				post.AssignCategory(request.CategoryId.Value);
+			}
+
 			await repo.AddAsync(post, cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
 			return Result.Ok<Guid>(post.Id);

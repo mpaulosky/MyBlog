@@ -932,3 +932,44 @@ This guarantees all display state is clean before every fetch cycle, not just `_
 - Use `git rebase --skip` when the first conflict is a commit already upstream
 
 **Filed:** `.squad/decisions/inbox/legolas-pr310-unblock.md`
+
+---
+
+## 2025-07-XX — Issue #339 Category Frontend (branch `squad/339-category-backend`)
+
+### What I Implemented
+
+- **Categories CRUD admin page** at `/admin/categories` (`src/Web/Features/Categories/List/Index.razor`) — inline create, inline edit, inline delete with confirmation modal, Admin-only
+- **Categories nav link** in `NavMenu.razor` (Admin-only, desktop + mobile)
+- **Blog post Create form**: category dropdown with null-safe loading; `GetCategoriesQuery` result checked with `is { Success: true }` pattern
+- **Blog post Edit form**: category dropdown pre-populated from `BlogPostDto.CategoryId`; author name shown read-only; parallel task loading via `Task.WhenAll`
+
+### Key Patterns Learned
+
+**NSubstitute + MediatR generic ISender:**
+
+When tests use `Substitute.For<ISender>()` without configuring `GetCategoriesQuery`, `await Sender.Send(new GetCategoriesQuery())` returns `null` (NSubstitute default for generic method returning `Task<ReferenceType>` is `Task.FromResult(null)`).
+
+Always guard with: `if (categoriesResult is { Success: true }) _categories = categoriesResult.Value!;`
+
+**[Required] on Guid? in EditForm blocks submission:**
+
+`DataAnnotationsValidator` validates the full model — `[Required] Guid? CategoryId` causes `OnValidSubmit` to never fire when CategoryId is null, even if the dropdown doesn't render. Replace with manual guard in `HandleSubmit`:
+
+```csharp
+if (_categories.Any() && _model.CategoryId is null)
+{
+    _error = "Please select a category.";
+    return;
+}
+```
+
+**Cross-feature namespace reference (BlogPosts → Categories):**
+
+`Create.razor` and `Edit.razor` now `@using MyBlog.Web.Features.Categories.List` to access `GetCategoriesQuery`. The architecture test `Features_Should_Not_Reference_Each_Other` only checks BlogPosts→UserManagement; this cross-reference is intentional and documented.
+
+**Build vs test --no-build:**
+
+Always rebuild (`dotnet build tests/Web.Tests.Bunit`) after changing razor files before running `--no-build` tests. Razor compilation is part of the build step.
+
+**Filed:** `.squad/decisions/inbox/legolas-issue339-frontend.md`
