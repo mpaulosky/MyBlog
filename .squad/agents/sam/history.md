@@ -1,5 +1,64 @@
 # Sam's Work History
 
+## 2026-05-15 — Issue #339: Category Backend (branch squad/339-category-backend)
+
+### Task
+
+Implement the full backend for the Category feature (domain, data, CQRS handlers, seed data).
+
+### Changes Made
+
+**Domain:**
+
+- `Category.cs` entity — Name/Description, `Create` + `Update` with whitespace trimming
+- `ICategoryRepository.cs` — GetById, GetAll, ExistsByName, ExistsByNameExcluding, Add, Update, Delete
+- `IBlogPostRepository.cs` — added `ExistsByCategoryAsync` for safe-delete guard
+- `BlogPost.cs` — added `CategoryId (Guid?)`, `AssignCategory`, `RemoveCategory`
+
+**Web/Data:**
+
+- `MongoDbCategoryRepository.cs` — EF Core LINQ over `BlogDbContext.Categories`
+- `BlogDbContext.cs` — Categories DbSet + unique index on Name; CategoryId element on BlogPost
+- `BlogPostDto.cs` / `BlogPostMappings.cs` — include `CategoryId`
+- `CategoryDto.cs` / `CategoryMappings.cs`
+
+**Features/Categories:**
+
+- List / GetById / Create / Edit / Delete — all following CQRS + Result<T> + FluentValidation pattern
+- `DeleteCategoryHandler` checks `ExistsByCategoryAsync` before deleting; returns `ResultErrorCode.Conflict`
+- `CreateCategoryHandler` / `EditCategoryHandler` check name uniqueness; return `ResultErrorCode.Conflict`
+
+**Program.cs:** Registered `MongoDbCategoryRepository` / `ICategoryRepository`
+
+**AppHost seed:** Seeds `General` category (stable Guid `00000000-...-0001`) and assigns all seeded posts
+
+**Tests:** Updated `BlogPostDto` construction in all test fixtures to pass `null` for new `CategoryId` param
+
+### Build Validation
+
+- ✅ `dotnet build MyBlog.slnx --configuration Release` — 0 errors
+- ✅ `dotnet format --verify-no-changes` — clean
+- ✅ `Architecture.Tests` — 16/16 passed
+- ✅ `Domain.Tests` — 67/67 passed (includes CategoryTests + BlogPostCategoryTests)
+- ✅ `Web.Tests` — 187/187 passed (includes all Category handler/validator tests)
+- ✅ `Web.Tests.Bunit` — 101/101 passed
+
+### Decision filed
+
+`.squad/decisions/inbox/sam-issue339-backend.md`
+
+## Learnings
+
+### Pre-existing untracked test files stay out of the commit if not relevant to scope
+
+Some test and skill files in the working tree (aragorn/boromir history files, a gh-pr-comments skill) had lint violations and were pre-staged when `git add -A` was run. The commit hook blocked the commit. Pattern: always `git status` before `git add -A` and selectively stage only backend-scope files, or unstage non-scope files after `git add -A`.
+
+### Nullable CategoryId is the right additive pattern for optional FK on existing entities
+
+Adding `Guid? CategoryId` with explicit `AssignCategory`/`RemoveCategory` domain methods preserves existing behavior (tests pass with `null`) while giving Legolas and the UI a clean optional-becomes-required upgrade path without a breaking API change.
+
+---
+
 ## 2026-05-15 — PR #338: Skill Template Compliance Fix
 
 ### Task
