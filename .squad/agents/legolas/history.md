@@ -935,7 +935,7 @@ This guarantees all display state is clean before every fetch cycle, not just `_
 
 ---
 
-## 2025-07-XX — Issue #339 Category Frontend (branch `squad/339-category-backend`)
+## 2026-05-15 — Issue #339 Category Frontend (branch `squad/339-category-backend`)
 
 ### What I Implemented
 
