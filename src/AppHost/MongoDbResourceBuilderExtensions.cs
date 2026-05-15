@@ -224,7 +224,11 @@ internal static class MongoDbResourceBuilderExtensions
 					["Name"] = "General",
 					["Description"] = "Default category for blog posts.",
 				};
-				await categoriesCollection.InsertOneAsync(generalCategory, cancellationToken: context.CancellationToken);
+				await categoriesCollection.ReplaceOneAsync(
+					Builders<BsonDocument>.Filter.Eq("_id", generalCategoryId),
+					generalCategory,
+					new ReplaceOptions { IsUpsert = true },
+					cancellationToken: context.CancellationToken);
 
 				var authorId = "auth0|author-matthew-paulosky";
 				var authorDocument = new BsonDocument
