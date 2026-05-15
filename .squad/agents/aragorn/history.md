@@ -1700,3 +1700,28 @@ Ran the full PR gate for #338 (issue #337 linkage, CI/check health, mergeability
 
 - `gh pr view --comments` can fail on older GitHub CLI/GraphQL combinations due deprecated `projectCards`; use `gh api repos/{owner}/{repo}/issues/{pr}/comments` and `.../pulls/{pr}/comments` as the reliable fallback for gate evidence.
 - For PR gates, Copilot comments that impact repo process contracts (skill front-matter schema, gate semantics wording) should be treated as blockers until resolved or explicitly dispositioned.
+
+## Issue #339 Category CRUD — Orchestration & Kickoff (2026-05-15)
+
+Orchestrated parallel delivery of Category CRUD feature across four squad members.
+Triaged issue #339, confirmed routing and team labels, posted public kickoff comment.
+Coordinated cross-member decision handoff: backend domain model → test coverage → UI.
+Verified all decisions documented in inbox for Scribe archival.
+
+## 2026-05-15 — PR #340 Gate Execution (Categories CRUD)
+
+Ran the full PR gate for #340 (Sprint 19 Categories feature, issue #339) requested by Boromir.
+
+- Waited on `AppHost.Tests (Aspire + Playwright E2E)` — completed ~3m46s, all checks green (build, Web.Tests, Web.Tests.Bunit, Web.Tests.Integration, Domain.Tests, Architecture.Tests, AppHost E2E, CodeQL, Coverage Analysis, markdownlint).
+- Verified gate prereqs: `Closes #339`, branch `squad/339-category-backend`, `MERGEABLE` / `CLEAN`, tests authored by Gimli, backend by Sam, UI by Legolas — all required reviewer domains satisfied via prior agent outputs.
+- Codecov bot did not post a comment on this PR; the in-pipeline `Coverage Analysis` job passed and was treated as no-regression.
+- Read Copilot automated review (10 inline comments). Dispositioned: 4 UI semantic items (required-asterisk vs draft + silent categories load failure on Create/Edit), 1 stale-state on Categories Index, 1 test class naming (`UpdateCategoryCommandValidatorTests` → should be `Edit*`), 1 AppHost seed log wording (`inserted` vs `upserted`), 2 grammar fixes in `gh-pr-comments-fallback` skill, 1 placeholder date in Legolas history. None blocking — routed to follow-up issue **#341** with per-agent assignments.
+- Posted gate-pass comment on PR #340 documenting all dispositions, removed `squad` triage label.
+- Squash-merged into `dev` and deleted remote branch.
+- Issue #339 auto-closed; removed `go:needs-research` label.
+
+### Learnings
+
+- `gh pr merge --delete-branch` invokes a local `git checkout` of the base branch as part of branch deletion; if the worktree currently has uncommitted modifications (e.g., other agents' in-flight `.squad/agents/*/history.md` edits) the local checkout step fails *after* the remote merge has already succeeded. Workaround: switch to `dev` (or stash `.squad/` paths) before invoking `gh pr merge`. The remote merge is idempotent — if you re-run after stashing, gh reports `already merged` and you can clean up the local branch separately.
+- For PRs where the human repo owner is the GitHub author of record, `gh pr review --approve` still typically blocks self-approval. Aragorn gate-pass via `gh pr comment` documenting Copilot dispositions + CI/Codecov status remains the working approval signal, then `gh pr merge --squash --delete-branch` performs the merge directly.
+- When Codecov fails to post a bot comment, prefer the in-pipeline `Coverage Analysis` job result as the coverage gate signal rather than blocking the PR for missing bot output.

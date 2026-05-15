@@ -1172,3 +1172,11 @@ Sam added `Guid? CategoryId` as the 11th positional parameter to `BlogPostDto`. 
 4. **`ExistsByNameExcludingAsync`** — the correct update-uniqueness guard; used in `EditCategoryHandler` to allow a category to keep its own name unchanged while still preventing collisions with other categories.
 
 5. **`IBlogPostRepository.ExistsByCategoryAsync`** is the guard for "cannot delete category in use" — always assert that `DeleteAsync` is NOT called when this returns true.
+
+## Issue #339 Category CRUD — Test Coverage (2026-05-15)
+
+Completed test suite for Category CRUD feature using staged test pattern for unfinished production code.
+Covered CreateCategoryValidator, EditCategoryValidator, DeleteCategoryValidator handlers with unit + integration tests via Testcontainers.
+Verified safe-delete guard at handler level (mocked) and integration level (real MongoDB).
+Fixed BlogPostDto positional constructor breaking changes across seven test files.
+All Domain/Web/BUnit tests passing. Decision documented in decisions/inbox.

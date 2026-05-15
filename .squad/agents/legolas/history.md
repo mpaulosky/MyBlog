@@ -973,3 +973,10 @@ if (_categories.Any() && _model.CategoryId is null)
 Always rebuild (`dotnet build tests/Web.Tests.Bunit`) after changing razor files before running `--no-build` tests. Razor compilation is part of the build step.
 
 **Filed:** `.squad/decisions/inbox/legolas-issue339-frontend.md`
+
+## Issue #339 Category CRUD — Frontend Implementation (2026-05-15)
+
+Completed frontend slice for Category CRUD: Create/Edit/Delete/List Razor pages following VSA patterns.
+Added Categories nav link. Enhanced BlogPosts Create/Edit with category dropdown (populated from GetCategoriesQuery).
+Fixed AppHost DI conflicts and cross-feature namespace dependencies. Added @using for Categories.List in BlogPosts pages (documented as intentional UI-layer cross-feature read-only dependency).
+All components compile and hot-reload. PR #340 opened for team review. Decision on cross-feature dependency documented in decisions/inbox.
