@@ -1497,3 +1497,24 @@ the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`
 - The "secondary review" layer (Copilot automated review) is effective at flagging missing tests and logic errors, but does not substitute for domain reviewer verdict. Always route to domain specialist after Copilot.
 
 **Related Decision:** `.squad/decisions/inbox/boromir-pr306-review.md` (assessment + routing recommendation)
+
+### Issue #341 Polish PR Orchestration (2026-05-15)
+
+**Branch:** squad/341-category-polish  
+**PR:** #342 (pending merge)  
+**Team:** Gimli (test rename), Frodo (documentation), Legolas (UI semantics), Sam (log wording)
+
+**Work:**
+
+- Aggregated 5 commit-based polish fixes to issue #341 on `squad/341-category-polish`.
+- Ran pre-push gates: CI ✅, Codecov ✅, Copilot automated review ✅, lead gate checks ✅.
+- Pushed branch; opened PR #342 (link to #341 in body).
+- All gatekeeping signals green; ready for lead review.
+
+**Team Coordination Notes:**
+
+- Each agent worked on isolated scope (test file, UI component, log strings, documentation).
+- Parallel commits integrated cleanly; no merge conflicts.
+- Final push pre-gate: all checks passed on first run.
+
+**Learning:** Five-person parallel fix delivery on a single polish PR keeps iteration velocity high and reduces back-and-forth review cycles.
