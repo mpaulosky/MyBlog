@@ -1180,3 +1180,28 @@ Covered CreateCategoryValidator, EditCategoryValidator, DeleteCategoryValidator 
 Verified safe-delete guard at handler level (mocked) and integration level (real MongoDB).
 Fixed BlogPostDto positional constructor breaking changes across seven test files.
 All Domain/Web/BUnit tests passing. Decision documented in decisions/inbox.
+
+---
+
+## Session: Category Test Rename — Issue #341 (2026)
+
+### Task
+
+Rename `UpdateCategoryCommandValidatorTests.cs` to `EditCategoryCommandValidatorTests.cs` to align with production `EditCategoryCommand` / `EditCategoryCommandValidator` naming.
+
+### Work Done
+
+- Deleted `tests/Web.Tests/Features/Categories/Commands/UpdateCategoryCommandValidatorTests.cs`
+- Created `tests/Web.Tests/Features/Categories/Commands/EditCategoryCommandValidatorTests.cs` with:
+  - Updated file header (`File Name : EditCategoryCommandValidatorTests.cs`)
+  - Renamed class `UpdateCategoryCommandValidatorTests` → `EditCategoryCommandValidatorTests`
+  - All 6 behavior assertions preserved unchanged
+- Committed on branch `squad/341-category-polish` — git treated as a 96% rename
+
+### Validation
+
+All 210 `Web.Tests` tests passed after rename (0 failures).
+
+### Key Learning
+
+When a test file has a `Update*` vs `Edit*` mismatch with its production counterpart, git detects the rename automatically (96% similarity) — no `.csproj` edit needed because the file is included by glob. Always verify with a full test run before committing.
