@@ -207,9 +207,25 @@ internal static class MongoDbResourceBuilderExtensions
 
 				var client = new MongoClient(connectionString);
 				var database = client.GetDatabase(databaseName);
-				var collection = database.GetCollection<BsonDocument>("blogposts");
+
+				var categoriesCollection = database.GetCollection<BsonDocument>("categories");
+				var postsCollection = database.GetCollection<BsonDocument>("blogposts");
 
 				var now = DateTime.UtcNow;
+
+				// Seed the default "General" category with a stable, well-known id.
+				var generalCategoryId = new BsonBinaryData(
+					new Guid("00000000-0000-0000-0000-000000000001"),
+					GuidRepresentation.Standard);
+
+				var generalCategory = new BsonDocument
+				{
+					["_id"] = generalCategoryId,
+					["Name"] = "General",
+					["Description"] = "Default category for blog posts.",
+				};
+				await categoriesCollection.InsertOneAsync(generalCategory, cancellationToken: context.CancellationToken);
+
 				var authorId = "auth0|author-matthew-paulosky";
 				var authorDocument = new BsonDocument
 				{
@@ -231,6 +247,7 @@ new()
 ["UpdatedAt"] = now,
 ["IsPublished"] = true,
 ["Version"] = 1,
+["CategoryId"] = generalCategoryId,
 },
 new()
 {
@@ -242,6 +259,7 @@ new()
 ["UpdatedAt"] = now,
 ["IsPublished"] = true,
 ["Version"] = 1,
+["CategoryId"] = generalCategoryId,
 },
 new()
 {
@@ -253,19 +271,20 @@ new()
 ["UpdatedAt"] = now,
 ["IsPublished"] = false,
 ["Version"] = 1,
+["CategoryId"] = generalCategoryId,
 },
 	};
 
-				await collection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken);
+				await postsCollection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken);
 
 				context.Logger.LogInformation(
-		"Seed MyBlog data complete: {Count} blog post(s) inserted.",
+		"Seed MyBlog data complete: 1 category + {Count} blog post(s) inserted.",
 		seedDocuments.Length);
 
 				return new ExecuteCommandResult
 				{
 					Success = true,
-					Message = $"blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
+					Message = $"categories: 1 inserted (General); blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
 				};
 			}
 			finally

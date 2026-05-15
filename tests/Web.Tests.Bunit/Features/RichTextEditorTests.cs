@@ -58,7 +58,7 @@ public class RichTextEditorTests : BunitContext
 		// Arrange
 		var sender = Substitute.For<ISender>();
 		var postId = Guid.NewGuid();
-		var post = new BlogPostDto(postId, "Test title", "<p>Test content</p>", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false);
+		var post = new BlogPostDto(postId, "Test title", "<p>Test content</p>", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));

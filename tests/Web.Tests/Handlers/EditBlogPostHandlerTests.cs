@@ -160,7 +160,7 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var id = Guid.NewGuid();
-		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		_cache.GetOrFetchByIdAsync(
 		Arg.Any<Guid>(),
 		Arg.Any<Func<Task<BlogPostDto?>>>(),

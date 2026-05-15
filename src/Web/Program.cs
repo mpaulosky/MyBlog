@@ -122,6 +122,10 @@ builder.Services.AddScoped<MongoDbBlogPostRepository>();
 builder.Services.AddScoped<IBlogPostRepository>(sp =>
 		sp.GetRequiredService<MongoDbBlogPostRepository>());
 
+builder.Services.AddScoped<MongoDbCategoryRepository>();
+builder.Services.AddScoped<ICategoryRepository>(sp =>
+		sp.GetRequiredService<MongoDbCategoryRepository>());
+
 // MediatR — scans Web assembly for all handlers
 builder.Services.AddMediatR(cfg =>
 {

@@ -27,6 +27,13 @@ internal sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext>
 				.ToListAsync(ct).ConfigureAwait(false);
 	}
 
+	public async Task<bool> ExistsByCategoryAsync(Guid categoryId, CancellationToken ct = default)
+	{
+		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+		return await ctx.BlogPosts.AsNoTracking()
+				.AnyAsync(p => p.CategoryId == categoryId, ct).ConfigureAwait(false);
+	}
+
 	public async Task AddAsync(BlogPost post, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);

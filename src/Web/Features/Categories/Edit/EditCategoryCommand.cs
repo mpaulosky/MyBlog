@@ -1,6 +1,6 @@
 //=======================================================
 //Copyright (c) 2026. All rights reserved.
-//File Name :     EditBlogPostCommand.cs
+//File Name :     EditCategoryCommand.cs
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
@@ -9,13 +9,9 @@
 
 using MyBlog.Domain.Abstractions;
 
-namespace MyBlog.Web.Features.BlogPosts.Edit;
+namespace MyBlog.Web.Features.Categories.Edit;
 
-internal sealed record EditBlogPostCommand(
+internal sealed record EditCategoryCommand(
 	Guid Id,
-	string Title,
-	string Content,
-	string CallerUserId,
-	bool CallerIsAdmin,
-	bool? IsPublished = null,
-	Guid? CategoryId = null) : IRequest<Result>;
+	string Name,
+	string Description) : IRequest<Result>;

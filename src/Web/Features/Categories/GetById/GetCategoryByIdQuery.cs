@@ -1,6 +1,6 @@
 //=======================================================
 //Copyright (c) 2026. All rights reserved.
-//File Name :     EditBlogPostCommand.cs
+//File Name :     GetCategoryByIdQuery.cs
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
 //Solution Name : MyBlog
@@ -9,13 +9,6 @@
 
 using MyBlog.Domain.Abstractions;
 
-namespace MyBlog.Web.Features.BlogPosts.Edit;
+namespace MyBlog.Web.Features.Categories.GetById;
 
-internal sealed record EditBlogPostCommand(
-	Guid Id,
-	string Title,
-	string Content,
-	string CallerUserId,
-	bool CallerIsAdmin,
-	bool? IsPublished = null,
-	Guid? CategoryId = null) : IRequest<Result>;
+internal sealed record GetCategoryByIdQuery(Guid Id) : IRequest<Result<CategoryDto?>>;

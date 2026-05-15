@@ -19,4 +19,5 @@ internal sealed record BlogPostDto(
 		IReadOnlyList<string> AuthorRoles,
 		DateTime CreatedAt,
 		DateTime? UpdatedAt,
-		bool IsPublished);
+		bool IsPublished,
+		Guid? CategoryId);
