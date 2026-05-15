@@ -54,6 +54,16 @@ public sealed class BlogPost
 
 	public void Publish() => IsPublished = true;
 	public void Unpublish() => IsPublished = false;
-	public void AssignCategory(Guid categoryId) => CategoryId = categoryId;
-	public void RemoveCategory() => CategoryId = null;
+
+	public void AssignCategory(Guid categoryId)
+	{
+		CategoryId = categoryId;
+		Version++;
+	}
+
+	public void RemoveCategory()
+	{
+		CategoryId = null;
+		Version++;
+	}
 }
