@@ -4,6 +4,8 @@ confidence: high
 description: >
   Lead-gate workflow for PRs where the reviewer account is also the PR author
   and GitHub blocks self-approval.
+domain: "PR governance, code review, CI/CD"
+source: "earned"
 ---
 
 ## Self-Authored PR Gate
@@ -14,7 +16,7 @@ Use this when GitHub returns `422: Can not approve your own pull request` during
 
 1. CI is fully green (build, tests, security, coverage checks).
 2. Copilot automated review has no unresolved bug/security findings.
-3. Codecov shows no material regression (>= 1% decrease blocks merge).
+3. Codecov shows no material regression, or any significant coverage decrease (≥1%) is investigated and explained.
 4. At least one domain-specialist review perspective is documented.
 
 ### Workflow
@@ -28,5 +30,5 @@ Use this when GitHub returns `422: Can not approve your own pull request` during
 
 - Any CI check is failing or pending.
 - Copilot flags unresolved logic/security defects.
-- Codecov regression is >= 1% and unexplained.
+- Codecov shows unexplained coverage decreases (no investigation provided).
 - Required domain reviewer perspective is missing.
