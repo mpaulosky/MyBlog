@@ -191,7 +191,7 @@ internal static class MongoDbResourceBuilderExtensions
 					await afterMutexAcquired(context.CancellationToken);
 
 				context.Logger.LogInformation(
-		"Seed MyBlog data invoked on {ResourceName} — inserting seed data into '{Database}'.",
+		"Seed MyBlog data invoked on {ResourceName} — upserting General category and inserting blog posts into '{Database}'.",
 		context.ResourceName, databaseName);
 
 				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
@@ -282,13 +282,13 @@ new()
 				await postsCollection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken);
 
 				context.Logger.LogInformation(
-		"Seed MyBlog data complete: 1 category + {Count} blog post(s) inserted.",
+		"Seed MyBlog data complete: 1 category upserted + {Count} blog post(s) inserted.",
 		seedDocuments.Length);
 
 				return new ExecuteCommandResult
 				{
 					Success = true,
-					Message = $"categories: 1 inserted (General); blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
+					Message = $"categories: 1 upserted (General); blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
 				};
 			}
 			finally
