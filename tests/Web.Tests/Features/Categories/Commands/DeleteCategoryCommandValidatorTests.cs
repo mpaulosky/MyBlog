@@ -7,31 +7,51 @@
 //Project Name :  Web.Tests
 //=======================================================
 
-// Staged #339 — awaiting DeleteCategoryCommand + DeleteCategoryCommandValidator from Sam.
-// Remove [Skip] attributes and reference types once the Delete slice lands.
+using MyBlog.Web.Features.Categories.Delete;
 
 namespace Web.Features.Categories.Commands;
 
 public class DeleteCategoryCommandValidatorTests
 {
-	// ── Staged: validator for Delete command ─────────────────────────────
-	// Unblock once MyBlog.Web.Features.Categories.Delete types are committed.
+	private readonly DeleteCategoryCommandValidator _validator = new();
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryCommand + DeleteCategoryCommandValidator")]
+	[Fact]
 	public void Validate_ValidId_ReturnsNoErrors()
 	{
-		// Will verify: DeleteCategoryCommand(Guid.NewGuid()) → IsValid == true
+		// Arrange
+		var command = new DeleteCategoryCommand(Guid.NewGuid());
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeTrue();
 	}
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryCommand + DeleteCategoryCommandValidator")]
+	[Fact]
 	public void Validate_EmptyGuid_ReturnsIdError()
 	{
-		// Will verify: DeleteCategoryCommand(Guid.Empty) → IsValid == false, error on "Id"
+		// Arrange
+		var command = new DeleteCategoryCommand(Guid.Empty);
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Id");
 	}
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryCommand + DeleteCategoryCommandValidator")]
+	[Fact]
 	public void Validate_EmptyGuid_ReturnsRequiredMessage()
 	{
-		// Will verify: error message is "Id is required."
+		// Arrange
+		var command = new DeleteCategoryCommand(Guid.Empty);
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.Errors.Should().Contain(e => e.ErrorMessage == "Id is required.");
 	}
 }

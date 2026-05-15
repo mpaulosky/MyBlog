@@ -7,51 +7,120 @@
 //Project Name :  Web.Tests
 //=======================================================
 
-// Staged #339 — awaiting DeleteCategoryHandler from Sam.
-// This handler MUST check IBlogPostRepository.ExistsByCategoryAsync before deleting
-// and return ResultErrorCode.Conflict when posts are still assigned to the category.
+using MyBlog.Domain.Abstractions;
+using MyBlog.Domain.Interfaces;
+using MyBlog.Web.Features.Categories.Delete;
 
 namespace Web.Features.Categories.Handlers;
 
 public class DeleteCategoryHandlerTests
 {
-	// ── Staged: DeleteCategoryHandler ─────────────────────────────────────
+	private readonly ICategoryRepository _categoryRepo = Substitute.For<ICategoryRepository>();
+	private readonly IBlogPostRepository _blogPostRepo = Substitute.For<IBlogPostRepository>();
+	private readonly DeleteCategoryHandler _handler;
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryHandler")]
-	public async Task Handle_CategoryWithNoPosts_DeletesAndReturnsSuccess()
+	public DeleteCategoryHandlerTests()
 	{
-		// Will verify: IBlogPostRepository.ExistsByCategoryAsync returns false
-		// → repo.DeleteAsync called, result.Success == true
-		await Task.CompletedTask;
+		_handler = new DeleteCategoryHandler(_categoryRepo, _blogPostRepo);
 	}
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryHandler")]
+	[Fact]
+	public async Task Handle_CategoryWithNoPosts_DeletesAndReturnsSuccess()
+	{
+		// Arrange
+		var category = Category.Create("Technology", "All about tech.");
+		_categoryRepo.GetByIdAsync(category.Id, Arg.Any<CancellationToken>())
+			.Returns(category);
+		_blogPostRepo.ExistsByCategoryAsync(category.Id, Arg.Any<CancellationToken>())
+			.Returns(false);
+
+		var command = new DeleteCategoryCommand(category.Id);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		await _categoryRepo.Received(1).DeleteAsync(category.Id, Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
 	public async Task Handle_CategoryInUseByPosts_ReturnsConflictFailResult()
 	{
 		// AC: "cannot delete category in use"
-		// Will verify: IBlogPostRepository.ExistsByCategoryAsync returns true
-		// → result.Failure == true, ResultErrorCode.Conflict
-		await Task.CompletedTask;
+		// Arrange
+		var category = Category.Create("Technology", "All about tech.");
+		_categoryRepo.GetByIdAsync(category.Id, Arg.Any<CancellationToken>())
+			.Returns(category);
+		_blogPostRepo.ExistsByCategoryAsync(category.Id, Arg.Any<CancellationToken>())
+			.Returns(true);
+
+		var command = new DeleteCategoryCommand(category.Id);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.ErrorCode.Should().Be(ResultErrorCode.Conflict);
+		result.Error.Should().Contain("Technology");
+		await _categoryRepo.DidNotReceive().DeleteAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
 	}
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryHandler")]
+	[Fact]
 	public async Task Handle_CategoryNotFound_ReturnsNotFoundFailResult()
 	{
-		// Will verify: repo.GetByIdAsync returns null → Result.Fail with NotFound code
-		await Task.CompletedTask;
+		// Arrange
+		var id = Guid.NewGuid();
+		_categoryRepo.GetByIdAsync(id, Arg.Any<CancellationToken>())
+			.Returns((Category?)null);
+
+		var command = new DeleteCategoryCommand(id);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.ErrorCode.Should().Be(ResultErrorCode.NotFound);
 	}
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryHandler")]
+	[Fact]
 	public async Task Handle_RepoThrows_ReturnsFailResult()
 	{
-		// Will verify: unexpected exception → Result.Fail("An unexpected error occurred.")
-		await Task.CompletedTask;
+		// Arrange
+		var category = Category.Create("Technology", "All about tech.");
+		_categoryRepo.GetByIdAsync(category.Id, Arg.Any<CancellationToken>())
+			.Returns(category);
+		_blogPostRepo.ExistsByCategoryAsync(category.Id, Arg.Any<CancellationToken>())
+			.Returns(false);
+		_categoryRepo.DeleteAsync(category.Id, Arg.Any<CancellationToken>())
+			.ThrowsAsync(new InvalidOperationException("db error"));
+
+		var command = new DeleteCategoryCommand(category.Id);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Contain("db error");
 	}
 
-	[Fact(Skip = "Staged #339: awaiting DeleteCategoryHandler")]
+	[Fact]
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
-		// Will verify: OperationCanceledException propagates
-		await Task.CompletedTask;
+		// Arrange
+		var id = Guid.NewGuid();
+		_categoryRepo.GetByIdAsync(id, Arg.Any<CancellationToken>())
+			.ThrowsAsync(new OperationCanceledException());
+
+		var command = new DeleteCategoryCommand(id);
+
+		// Act
+		Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		await act.Should().ThrowAsync<OperationCanceledException>();
 	}
 }

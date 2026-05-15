@@ -7,49 +7,98 @@
 //Project Name :  Web.Tests
 //=======================================================
 
-// Staged #339 — awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator from Sam.
-// Remove [Skip] attributes and reference types once the Edit slice lands.
+using MyBlog.Web.Features.Categories.Edit;
 
 namespace Web.Features.Categories.Commands;
 
 public class UpdateCategoryCommandValidatorTests
 {
-	// ── Staged: validator for Update command ─────────────────────────────
-	// Unblock once MyBlog.Web.Features.Categories.Edit types are committed.
+	private readonly EditCategoryCommandValidator _validator = new();
 
-	[Fact(Skip = "Staged #339: awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator")]
+	[Fact]
 	public void Validate_ValidCommand_ReturnsNoErrors()
 	{
-		// Will verify: UpdateCategoryCommand(Guid.NewGuid(), "Tech", "Description.") → IsValid == true
+		// Arrange
+		var command = new EditCategoryCommand(Guid.NewGuid(), "Technology", "All about tech.");
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeTrue();
 	}
 
-	[Fact(Skip = "Staged #339: awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator")]
+	[Fact]
 	public void Validate_EmptyId_ReturnsIdError()
 	{
-		// Will verify: UpdateCategoryCommand(Guid.Empty, "Tech", "Desc.") → error on "Id"
+		// Arrange
+		var command = new EditCategoryCommand(Guid.Empty, "Technology", "All about tech.");
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Id");
 	}
 
-	[Fact(Skip = "Staged #339: awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator")]
+	[Fact]
 	public void Validate_EmptyName_ReturnsNameError()
 	{
-		// Will verify: UpdateCategoryCommand(id, "", "Desc.") → error on "Name"
+		// Arrange
+		var command = new EditCategoryCommand(Guid.NewGuid(), "", "All about tech.");
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Name");
 	}
 
-	[Fact(Skip = "Staged #339: awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator")]
+	[Fact]
 	public void Validate_EmptyDescription_ReturnsDescriptionError()
 	{
-		// Will verify: UpdateCategoryCommand(id, "Tech", "") → error on "Description"
+		// Arrange
+		var command = new EditCategoryCommand(Guid.NewGuid(), "Technology", "");
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Description");
 	}
 
-	[Fact(Skip = "Staged #339: awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator")]
+	[Fact]
 	public void Validate_NameExceedsMaxLength_ReturnsNameError()
 	{
-		// Will verify: name > 100 chars → error on "Name"
+		// Arrange
+		var longName = new string('x', 101);
+		var command = new EditCategoryCommand(Guid.NewGuid(), longName, "All about tech.");
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Name"
+			&& e.ErrorMessage == "Name must not exceed 100 characters.");
 	}
 
-	[Fact(Skip = "Staged #339: awaiting UpdateCategoryCommand + UpdateCategoryCommandValidator")]
+	[Fact]
 	public void Validate_DescriptionExceedsMaxLength_ReturnsDescriptionError()
 	{
-		// Will verify: description > 500 chars → error on "Description"
+		// Arrange
+		var longDesc = new string('x', 501);
+		var command = new EditCategoryCommand(Guid.NewGuid(), "Technology", longDesc);
+
+		// Act
+		var result = _validator.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Description"
+			&& e.ErrorMessage == "Description must not exceed 500 characters.");
 	}
 }

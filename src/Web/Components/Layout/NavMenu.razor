@@ -35,6 +35,12 @@
 
 					<AuthorizeView Roles="Admin">
 						<Authorized>
+							<NavLink class="nav-link" href="admin/categories">Categories</NavLink>
+						</Authorized>
+					</AuthorizeView>
+
+					<AuthorizeView Roles="Admin">
+						<Authorized>
 							<NavLink class="nav-link" href="admin/users">Manage Users</NavLink>
 						</Authorized>
 					</AuthorizeView>
@@ -68,6 +74,12 @@
 				<AuthorizeView>
 					<Authorized>
 						<NavLink class="nav-link py-2 block" href="profile">@GetProfileLabel(context.User)</NavLink>
+					</Authorized>
+				</AuthorizeView>
+
+				<AuthorizeView Roles="Admin">
+					<Authorized>
+						<NavLink class="nav-link py-2 block" href="admin/categories">Categories</NavLink>
 					</Authorized>
 				</AuthorizeView>
 
