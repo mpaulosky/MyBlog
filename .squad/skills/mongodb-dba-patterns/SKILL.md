@@ -65,6 +65,19 @@ live conventions versus future-only operator notes.
      updates in `Integration.Tests`.
    - Gimli owns the test side; Sam owns runtime implementation.
 
+6. **Sync the main repo before starting Aspire (running environment check).**
+   - The Aspire AppHost DLL that is currently running determines which MongoDB
+     image and volume are in use. A stale local `dev` branch will silently run
+     old infra code even after a fix has been merged.
+   - Before starting (or restarting) Aspire, confirm the main repo is current
+     by running `git pull origin dev` then
+     `dotnet build src/AppHost/AppHost.csproj -c Debug`.
+   - If Aspire is already running and MongoDB is crashing, identify the active
+     build with `ps aux | grep AppHost.dll` — the DLL path shows which repo
+     root is in use.
+   - If the path points to a repo other than your current worktree, rebuild that
+     repo's AppHost or restart Aspire from the correct directory.
+
 ### Local development and inspection
 
 Preferred tooling:

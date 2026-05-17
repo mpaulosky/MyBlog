@@ -148,6 +148,43 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		count.Should().BeGreaterThanOrEqualTo(1, "blogposts collection must have documents after seed");
 	}
 
+	/// <summary>
+	/// After seeding succeeds, the running web app must be able to read the seeded posts
+	/// through its real AppHost-wired MongoDB path.
+	/// </summary>
+	[Fact]
+	public async Task SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page()
+	{
+		// Arrange
+		using var client = new MongoClient(fixture.MongoConnectionString);
+		await client.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
+
+		var annotation = GetAnnotation();
+		var endpoint = fixture.App.GetEndpoint("web", "https");
+		using var handler = new HttpClientHandler
+		{
+			ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+		};
+		using var webClient = new HttpClient(handler)
+		{
+			BaseAddress = endpoint,
+		};
+		await WaitForWebReadyAsync(webClient);
+
+		// Act
+		var seedResult = await annotation.ExecuteCommand(MakeContext());
+		var blogPageHtml = await webClient.GetStringAsync(new Uri("/blog", UriKind.Relative), TestContext.Current.CancellationToken);
+
+		// Assert
+		seedResult.Success.Should().BeTrue("seeding must succeed before the page can read MongoDB data");
+		blogPageHtml.Should().Contain("Welcome to MyBlog",
+			"the public blog page should render the seeded post through the real Web runtime");
+		blogPageHtml.Should().Contain("Getting Started with .NET Aspire",
+			"the seeded posts should remain retrievable after AppHost wires MongoDB into Web");
+		blogPageHtml.Should().NotContain("An unexpected error occurred.",
+			"runtime MongoDB connectivity regressions should surface as a failing page response");
+	}
+
 
 	// ---------------------------------------------------------------------------
 	// Helpers
@@ -169,4 +206,28 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
 	};
+
+	private static async Task WaitForWebReadyAsync(HttpClient client)
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+
+		while (!cts.Token.IsCancellationRequested)
+		{
+			try
+			{
+				using var response = await client.GetAsync(new Uri("/alive", UriKind.Relative), cts.Token);
+				if (response.IsSuccessStatusCode)
+				{
+					return;
+				}
+			}
+			catch (HttpRequestException) when (!cts.Token.IsCancellationRequested)
+			{
+			}
+
+			await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+		}
+
+		throw new TimeoutException("Web app did not become ready before the MongoDB runtime connectivity check.");
+	}
 }

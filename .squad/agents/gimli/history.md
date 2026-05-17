@@ -1286,3 +1286,21 @@ code. Prefer configuration-focused tests that guard the intended MongoDB image/t
 3. When downgrading a local MongoDB container image, volume names matter too: reusing a volume
    created by MongoDB 8.2 can preserve FCV metadata that makes MongoDB 7 fail at startup. Guard
    the named volume in AppHost tests, not just the container image tag.
+
+## Session: Issue #348 — MongoDB Runtime Connectivity Regression Coverage (2026-05-17)
+
+### Task
+
+Inspect current AppHost/Web database startup and runtime connectivity coverage for issue #348, then add the smallest behavior-first regression test that proves the running web app can still read MongoDB through the AppHost-wired path.
+
+### Work Done
+
+- Reviewed `tests/AppHost.Tests/`, `tests/Web.Tests.Integration/`, `src/AppHost/AppHost.cs`, `src/Web/Program.cs`, and MongoDB data-layer files.
+- Confirmed the existing coverage split: AppHost tests verify Mongo container wiring and operator commands, while Web integration tests verify repositories directly against Testcontainers.
+- Added `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page` to `tests/AppHost.Tests/MongoSeedDataIntegrationTests.cs`.
+- Validated targeted database suites with `CI=true dotnet test` to skip the Tailwind build gate during test execution.
+
+### Learnings
+
+1. The pre-existing gap was runtime read coverage: no test exercised `/blog` against the real Aspire/AppHost MongoDB connection, so wiring regressions could slip past command-level and repository-level tests.
+2. A seed-command-plus-page-read test is the smallest useful tracer bullet here because it proves the full public path: AppHost Mongo wiring -> Web DI -> repository/handler -> rendered page.
