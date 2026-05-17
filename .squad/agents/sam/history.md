@@ -1,5 +1,58 @@
 # Sam's Work History
 
+## 2026-05-19 — Issue #348: Resolve Remaining Database Runtime Issues (branch squad/348-resolve-database-runtime-issues)
+
+### Task
+
+Re-investigate remaining database runtime issues after PR #346 (MongoDB 7 pin + fresh volume) and PR #347 (docs). Determine whether any Sam-owned backend defect remains.
+
+### Finding
+
+**No remaining backend defect found.** All Sam-owned code is correct.
+
+Thorough audit performed:
+
+| Check | Result |
+| --- | --- |
+| `AddMongoDBClient("myblog")` → `AddDbContextFactory<BlogDbContext>` wiring | ✅ Correct |
+| `MongoDbBlogPostRepository` — all CRUD methods use short-lived IDbContextFactory contexts | ✅ Correct |
+| `MongoDbCategoryRepository` — all CRUD methods use short-lived IDbContextFactory contexts | ✅ Correct |
+| `BlogDbContext.OnModelCreating` — blogposts, categories, owned Author, CategoryId element name | ✅ Correct |
+| AppHost.cs — MongoDB 7 tag, mongo-data-v7 volume, `.WaitFor(mongo)` before web | ✅ Correct |
+| Unit tests (Web.Tests) — 210/210 passed | ✅ |
+| Architecture tests — 16/16 passed | ✅ |
+| Integration tests (Web.Tests.Integration) — 29/29 passed | ✅ |
+| AppHost.Tests non-Docker tests — 20/20 passed | ✅ |
+| Build (Release) — 0 errors | ✅ |
+
+**Unstaged file in worktree:** `tests/AppHost.Tests/MongoSeedDataIntegrationTests.cs` contains an uncommitted test `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page` (added during investigation). This is a **Gimli-owned** test file; Sam does NOT commit or modify it.
+
+**Seed data GUID format:** The AppHost seed command uses `GuidRepresentation.Standard` (BinData subtype 4) for all GUID fields. `MongoDB.EntityFrameworkCore 10.0.1` also uses Standard UUID by default. No format mismatch.
+
+**Cache layer (BlogPostCacheService):** L1 (IMemoryCache, 1 min) + L2 (Redis, 5 min). After a seed, the first blog page request hits MongoDB correctly since no prior cache entry exists for the session. Cache staleness is not a production bug — it is expected TTL behaviour.
+
+### Changed Files
+
+None. No production code change required.
+
+### Validation Performed
+
+- ✅ `dotnet build MyBlog.slnx -c Release` — 0 errors
+- ✅ `dotnet test tests/Web.Tests/Web.Tests.csproj -c Release` — 210/210 passed
+- ✅ `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release` — 16/16 passed
+- ✅ `dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj -c Release` — 29/29 passed
+- ✅ AppHost non-Docker unit tests (MongoDb container config + seed/clear/stats command model tests) — 20/20 passed
+
+### Recommendation
+
+The runtime "remaining issues" after PR #346 are an **AppHost/Docker/runtime verification concern**, not a backend code defect:
+
+1. The new test `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page` (Gimli's file) is the canary that verifies the end-to-end path. Gimli should commit and run it in a Docker-enabled environment.
+2. Boromir should verify that the `mongo-data-v7` Docker volume is fresh (no MongoDB 8.x compatibility metadata) on any machine that previously ran the old `mongo-data` volume config.
+3. If the Aspire health checks time out in CI, Boromir should check DCP health-check configuration for the MongoDB 7 container.
+
+---
+
 ## 2026-05-19 — Issue #345: AppHost MongoDB Container Crash Investigation (branch squad/345-fix-apphost-mongodb-crash)
 
 ### Task
@@ -124,6 +177,19 @@ volume can retain MongoDB 8 feature compatibility version metadata, which can
 make MongoDB 7 exit with code 62 during startup. Web timeout logs remain
 as downstream symptoms of the container crash and should not be mistaken for
 wiring bugs.
+
+### "Remaining database runtime issues" after container fix are runtime-verification concerns, not backend bugs
+
+When a database container crash is fixed (PR #346), downstream "remaining issues" often turn out to be end-to-end runtime verification gaps, not new backend code defects. The correct response is:
+
+1. Re-run the full non-Docker test suite to confirm baseline (unit + integration + architecture all pass).
+2. Audit each repository and DbContext mapping against the seed data format — check GUID representation, field name alignment, and owned-entity mapping.
+3. If all tests pass and code is correct, defer the runtime-only scenario to an AppHost/Docker integration test (Gimli) and Boromir for environment verification.
+4. Never block a PR waiting for a Docker-requiring test when all code-level tests are green.
+
+### Seed command GUID representation must match MongoDB.EntityFrameworkCore serialisation
+
+The AppHost seed command writes documents via the raw MongoDB driver. Always use `GuidRepresentation.Standard` (BinData subtype 4) for all GUID fields, which matches `MongoDB.EntityFrameworkCore 10.0.1`'s default serialisation. Using a legacy representation (subtype 3) would cause EF Core `GetAllAsync` to deserialise zeros or throw.
 
 ---
 
