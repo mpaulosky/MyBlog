@@ -37,14 +37,21 @@ None. No Web production code changes required.
 
 ### Recommendation for Boromir
 
-Pin the MongoDB container image to a stable tag in AppHost.cs:
+Pin AppHost to MongoDB 7 and use a fresh MongoDB 7 data volume in AppHost.cs.
+MongoDB 8.x is the affected family in this environment because the container
+expects AVX-capable CPUs and crashes before the app can connect.
 
 ```csharp
 var mongo = builder.AddMongoDB("mongodb")
-    .WithImageTag("8.0")   // pin away from 8.2 which SIGSEGVs
-    .WithDataVolume("mongo-data")
+    .WithImageTag("7")
+    .WithDataVolume("mongo-data-v7")
     .WithMongoExpress();
 ```
+
+If a machine has already started MongoDB 8.x with the legacy `mongo-data`
+volume, do not reuse that volume for MongoDB 7. The old volume can retain
+MongoDB 8 feature compatibility version metadata, and MongoDB 7 can then exit
+with code 62 during startup.
 
 ---
 
@@ -105,9 +112,18 @@ Some test and skill files in the working tree (aragorn/boromir history files, a 
 
 Adding `Guid? CategoryId` with explicit `AssignCategory`/`RemoveCategory` domain methods preserves existing behavior (tests pass with `null`) while giving Legolas and the UI a clean optional-becomes-required upgrade path without a breaking API change.
 
-### mongo:8.2 (Aspire.Hosting.MongoDB 13.3.3 default) causes exit 139 (SIGSEGV)
+### MongoDB 8.x crashes here; the safe fix is MongoDB 7 with a fresh v7 volume
 
-When diagnosing MongoDB container crashes under Aspire, check the image tag first. Exit code 139 is SIGSEGV — an image-level crash, not an application wiring defect. The fix is to pin the container image with `.WithImageTag("8.0")` in AppHost. Web timeout logs are downstream symptoms of the container crash and should not be mistaken for wiring bugs.
+When diagnosing MongoDB container crashes under Aspire, check the image tag
+first. In this environment, the MongoDB 8.x family is the crashing family
+because those images require AVX-capable CPUs. The safe fix is to pin AppHost
+with `.WithImageTag("7")` and use `.WithDataVolume("mongo-data-v7")`.
+
+Do not reuse the legacy `mongo-data` volume after a MongoDB 8.x run. That
+volume can retain MongoDB 8 feature compatibility version metadata, which can
+make MongoDB 7 exit with code 62 during startup. Web timeout logs remain
+as downstream symptoms of the container crash and should not be mistaken for
+wiring bugs.
 
 ---
 
@@ -529,35 +545,22 @@ When upsert (`ReplaceOneAsync + IsUpsert=true`) is the behavior, log strings mus
 
 ---
 
-## 🔴 CORRECTION: Issue #345 MongoDB Container Crash Fix (2026-05-17)
+## Issue #345 History Correction (2026-05-17)
 
-**By:** Scribe (correction appended)  
-**Referenced:** Lines 44–45 (recommendation code snippet) and Line 110 (learning item) contained incomplete/incorrect guidance.
+**By:** Scribe  
+**Reason:** Reviewer lockout required an independent correction to Sam's history
+artifact, so the stale guidance was revised in place instead of being left as an
+active recommendation.
 
-### What Was Wrong
+### Canonical Outcome
 
-Sam's original investigation correctly identified the root cause (MongoDB 8.x SIGSEGV) but the **recommendation and learning item were incomplete:**
-
-- **Line 44–45:** Recommended pinning to `mongo:8.0` and keeping `mongo-data` volume
-- **Line 110:** Stated the fix is `.WithImageTag("8.0")`
-
-### What Actually Happened (Implementation)
-
-Boromir's infrastructure fix (issue #345) pinned to **`mongo:7`** (not `8.0`) **and renamed the volume to `mongo-data-v7`** (not keeping `mongo-data`).
-
-**Why this was necessary:**
-
-1. **Image tag:** MongoDB 8.x (including 8.0) still requires AVX CPU instructions. Pinning to `mongo:7` LTS (which does NOT require AVX) is the stable solution.
-2. **Volume rename:** When the first attempt used `mongo:7` but the old `mongo-data` volume remained, MongoDB 7 exited with code 62: `Wrong mongod version — featureCompatibilityVersion "8.2"`. MongoDB refuses to open data files from a newer major version. Renaming to `mongo-data-v7` gave MongoDB 7 a fresh, compatible volume.
-
-### Accepted Final Fix
-
-```csharp
-var mongo = builder.AddMongoDB("mongodb")
-    .WithImageTag("7")              // pin to LTS with no AVX requirement
-    .WithDataVolume("mongo-data-v7") // version-suffixed volume to avoid featureCompatibilityVersion mismatch
-    .WithMongoExpress();
-```
+- Use MongoDB 7 in AppHost for this fix path.
+- Use `mongo-data-v7` for the persistent volume.
+- Treat MongoDB 8.x as the affected family in this environment because those
+  images require AVX-capable CPUs and crash before the app can connect.
+- Do not reuse the legacy `mongo-data` volume after a MongoDB 8.x run; it can
+  retain feature compatibility version metadata that makes MongoDB 7 exit with
+  code 62.
 
 ### Validation Results
 
@@ -568,8 +571,7 @@ var mongo = builder.AddMongoDB("mongodb")
 
 ### Standing Rule (From Decision)
 
-When MongoDB major version changes on an Aspire dev environment with a pre-existing persistent volume, suffix the volume name with `v{major}` (e.g., `mongo-data-v7`, `mongo-data-v8`). This prevents featureCompatibilityVersion mismatch crashes transparently.
-
-### Why Scribe Is Appending This
-
-Reviewer lockout: Sam authored the incorrect guidance, so Sam cannot revise their own history artifact. Scribe appends this correction to preserve accuracy and allow the PR to proceed.
+When MongoDB major version changes on an Aspire dev environment with a
+pre-existing persistent volume, suffix the volume name with `v{major}` (for
+example, `mongo-data-v7`). This prevents feature compatibility version mismatch
+crashes transparently.
