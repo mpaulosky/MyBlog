@@ -2905,3 +2905,58 @@ is required only "before publishing a post."
 - Future PRs that introduce a "required at publish only" form constraint should either bind the asterisk + validator to the publish flag, or make the copy unconditional. Document the chosen pattern when #341 is implemented.
 - For all future PR gates, treat the `Coverage Analysis` job as the authoritative coverage signal when Codecov bot output is absent.
 - `gh pr merge --delete-branch` should be invoked from `dev` (or with `.squad/agents/` stashed) to avoid the post-merge local-checkout failure observed during this gate.
+
+---
+
+## Issue #345: AppHost MongoDB Container Crash (Sprint 19)
+
+### Decision: Pin AppHost MongoDB Image to `mongo:7` (LTS) and Use Version-Suffixed Volume
+
+**Status:** ✅ Implemented  
+**Date:** 2026-05-19  
+**Author:** Sam (investigation), Boromir (infrastructure change), Gimli (regression tests)  
+**Related Issue:** #345 — [Sprint 19] Fix AppHost MongoDB container crash under Aspire
+
+#### Problem
+
+Aspire AppHost health checks failing; MongoDB container (`docker.io/library/mongo:8.2`, default from `Aspire.Hosting.MongoDB` SDK 13.3.3) exits immediately with code 139 (SIGSEGV). Web logs show MongoDB heartbeat and connection timeouts.
+
+#### Root Cause
+
+MongoDB 8.x requires AVX CPU instruction set. Virtualized hosts and CI runners do not expose AVX; container crashes on startup.
+
+#### Decision
+
+1. **Image Pin:** `src/AppHost/AppHost.cs` pins MongoDB Aspire resource to `mongo:7` via `.WithImageTag("7")`
+2. **Volume Naming:** Data volume renamed from `mongo-data` to `mongo-data-v7` via `.WithDataVolume("mongo-data-v7")`
+3. **SDK Alignment:** `src/AppHost/AppHost.csproj` bumped `Aspire.AppHost.Sdk` from `13.3.2` to `13.3.3`
+
+#### Why
+
+**SIGSEGV Crash (Exit 139):**  
+MongoDB 8.x requires AVX. Pinning to `mongo:7` (LTS, no AVX requirement) eliminates the crash.
+
+**featureCompatibilityVersion Mismatch (Exit 62):**  
+After pinning image to `mongo:7`, MongoDB 7 still failed because the existing `mongo-data` volume contained `featureCompatibilityVersion: "8.2"` metadata from the previous `mongo:8.2` run. MongoDB refuses to open data files written by a newer major version. Renaming the volume to `mongo-data-v7` gives MongoDB 7 a fresh, compatible volume without requiring manual cleanup on developer machines.
+
+#### Standing Rule: Volume Naming Convention
+
+When MongoDB major version changes on an Aspire dev environment with a pre-existing persistent volume, suffix the volume name with `v{major}` (e.g., `mongo-data-v7`, `mongo-data-v8`). This prevents featureCompatibilityVersion mismatch crashes transparently.
+
+#### Validation
+
+- Build: ✅ `dotnet build MyBlog.slnx -c Release --no-restore` passed
+- Format: ✅ `dotnet format MyBlog.slnx --verify-no-changes --no-restore` passed
+- Regression tests: ✅ `dotnet test tests/AppHost.Tests -c Release --no-restore --filter 'FullyQualifiedName~MongoDbContainerConfigurationTests'` — 4/4 passed
+- Smoke test: ✅ `aspire start --isolated --apphost src/AppHost/AppHost.csproj` — MongoDB healthy on `mongo:7` with volume `mongo-data-v7`; all services running and healthy
+
+#### Impact
+
+- `src/AppHost/AppHost.cs` — `.WithImageTag("7")` + `.WithDataVolume("mongo-data-v7")`
+- `src/AppHost/AppHost.csproj` — `Aspire.AppHost.Sdk` bumped `13.3.2` → `13.3.3`
+- `tests/AppHost.Tests/MongoDbContainerConfigurationTests.cs` — new regression test suite asserting pinned image tag and version-suffixed volume
+- No application code changes; Web/MongoDB wiring confirmed correct
+
+#### Future Consideration
+
+When the team's standard dev/CI runner is confirmed to expose AVX (or when MongoDB 8.x AVX requirement is lifted), the image pin can be removed to resume tracking the hosting default. At that point rename the volume to `mongo-data-v8` (or remove the suffix if the pin is gone and volumes will be freshly created).

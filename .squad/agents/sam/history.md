@@ -1,5 +1,53 @@
 # Sam's Work History
 
+## 2026-05-19 — Issue #345: AppHost MongoDB Container Crash Investigation (branch squad/345-fix-apphost-mongodb-crash)
+
+### Task
+
+Review whether Web/MongoDB application wiring contributes to the `mongo:8.2` container crash (exit 139 / SIGSEGV) observed in the Aspire runtime.
+
+### Finding
+
+**Root cause is purely AppHost/container — no Web wiring defect found.**
+
+- `docker.io/library/mongo:8.2` (default for `Aspire.Hosting.MongoDB` 13.3.3) exits with code 139 (SIGSEGV). This is a container image crash — architecture incompatibility or a bug in the `8.2` tag. This is Boromir's domain.
+- Web's MongoDB.Driver heartbeat timeouts and operation cancellations are **downstream symptoms** of the container crash, not a contributing cause.
+
+**Web wiring verified clean:**
+
+| Check | Result |
+| --- | --- |
+| `AddMongoDBClient("myblog")` matches AppHost database resource name | ✅ Correct |
+| `AddDbContextFactory<BlogDbContext>` consumes IMongoClient correctly | ✅ Correct |
+| `MongoDbBlogPostRepository` uses short-lived contexts from factory | ✅ Correct |
+| `MongoDbCategoryRepository` uses short-lived contexts from factory | ✅ Correct |
+| `BlogDbContext` — blogposts collection, Version concurrency token, categories unique index | ✅ Correct |
+| AppHost `.WaitFor(mongo)` prevents Web serving before MongoDB is ready | ✅ Correct |
+
+### Changed Files
+
+None. No Web production code changes required.
+
+### Validation Performed
+
+- ✅ `dotnet build MyBlog.slnx -c Release` — 0 errors
+- ✅ `Architecture.Tests` — 16/16 passed
+- ✅ `Web.Tests` — 210/210 passed
+- ✅ `Domain.Tests` — 67/67 passed
+
+### Recommendation for Boromir
+
+Pin the MongoDB container image to a stable tag in AppHost.cs:
+
+```csharp
+var mongo = builder.AddMongoDB("mongodb")
+    .WithImageTag("8.0")   // pin away from 8.2 which SIGSEGVs
+    .WithDataVolume("mongo-data")
+    .WithMongoExpress();
+```
+
+---
+
 ## 2026-05-15 — Issue #339: Category Backend (branch squad/339-category-backend)
 
 ### Task
@@ -56,6 +104,10 @@ Some test and skill files in the working tree (aragorn/boromir history files, a 
 ### Nullable CategoryId is the right additive pattern for optional FK on existing entities
 
 Adding `Guid? CategoryId` with explicit `AssignCategory`/`RemoveCategory` domain methods preserves existing behavior (tests pass with `null`) while giving Legolas and the UI a clean optional-becomes-required upgrade path without a breaking API change.
+
+### mongo:8.2 (Aspire.Hosting.MongoDB 13.3.3 default) causes exit 139 (SIGSEGV)
+
+When diagnosing MongoDB container crashes under Aspire, check the image tag first. Exit code 139 is SIGSEGV — an image-level crash, not an application wiring defect. The fix is to pin the container image with `.WithImageTag("8.0")` in AppHost. Web timeout logs are downstream symptoms of the container crash and should not be mistaken for wiring bugs.
 
 ---
 

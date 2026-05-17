@@ -372,7 +372,11 @@ Completed full xUnit v2 → v3 migration for `tests/Web.Tests/`.
 
 1. **xUnit v3 is backward-compatible for `[Fact]`, `[Theory]`, `[InlineData]`** — no attribute changes needed. The migration is purely a package swap + parallelism configuration.
 
-2. **Indentation fix via brace-counter: leading `}` handling is the hard part.** When a line starts with `}`, the depth must be decremented BEFORE printing (so the `}` itself is one level less indented), and the net brace change for the rest of the line must exclude that leading close. The bug to avoid: counting the leading `}` twice — once when adjusting depth and again in the opens-minus-closes calculation.
+2. **Indentation fix via brace-counter: leading `}` handling is the hard part.**
+   When a line starts with `}`, the depth must be decremented BEFORE printing (so the `}` itself is one
+   level less indented), and the net brace change for the rest of the line must exclude that leading close.
+   The bug to avoid: counting the leading `}` twice — once when adjusting depth and again in the
+   opens-minus-closes calculation.
 
 3. **`edit` tool replaces a matched substring, not just the header.** When using `edit` to replace a header pattern, if the new content includes the full file body, the result is the new full content prepended to the surviving old body — producing a duplicate class. Always verify line count post-edit when replacing large blocks.
 
@@ -1244,3 +1248,41 @@ FluentAssertions instead.
 
 `cut.Render(p => p.Add(...))` cannot include `AddCascadingValue` — throws `InvalidOperationException`.
 Set cascading values only in the initial `Render<T>()` call.
+
+## Session: AppHost MongoDB Image Regression Coverage — Issue #345 (2026-05-17)
+
+### Task
+
+Add regression coverage for the AppHost MongoDB crash under Aspire without editing production
+code. Prefer configuration-focused tests that guard the intended MongoDB image/tag wiring.
+
+### Work Done
+
+- Added `tests/AppHost.Tests/MongoDbContainerConfigurationTests.cs`.
+- Covered the AppHost MongoDB resource at two levels:
+  - runtime model annotation resolves to `docker.io/library/mongo:7`
+  - source wiring keeps an explicit `.WithImageTag("7")` pin in `src/AppHost/AppHost.cs`
+- Extended the same regression file to guard the MongoDB data volume rename:
+  - runtime model mount resolves to named volume `mongo-data-v7` at `/data/db`
+  - source wiring keeps `.WithDataVolume("mongo-data-v7")`
+  - tests explicitly reject legacy volume name `mongo-data`
+- Confirmed Boromir's AppHost repair already exists in the worktree filesystem even though the
+  earlier file-view overlay did not show it.
+
+### Validation
+
+- `npm ci --no-audit --no-fund`
+- `dotnet test tests/AppHost.Tests -c Release --no-restore --filter "FullyQualifiedName~MongoDbContainerConfigurationTests|FullyQualifiedName~EnvVarTests"`
+  - Result: 6 passed, 0 failed, 0 skipped
+
+### Learnings
+
+1. AppHost MongoDB image pinning is worth testing twice: model-level `ContainerImageAnnotation`
+   coverage proves the built application resolves `docker.io/library/mongo:7`, while a
+   source-structure guard proves the explicit `.WithImageTag("7")` call remains in AppHost code.
+2. For this worktree, filesystem reads via `bash` reflected the latest `AppHost.cs` contents more
+   reliably than the file-view overlay; verify the on-disk source before assuming a config change
+   is missing.
+3. When downgrading a local MongoDB container image, volume names matter too: reusing a volume
+   created by MongoDB 8.2 can preserve FCV metadata that makes MongoDB 7 fail at startup. Guard
+   the named volume in AppHost tests, not just the container image tag.
