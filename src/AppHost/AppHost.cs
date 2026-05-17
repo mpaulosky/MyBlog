@@ -10,7 +10,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var mongo = builder.AddMongoDB("mongodb")
-	.WithDataVolume("mongo-data").WithMongoExpress();
+	.WithImageTag("7")
+	.WithDataVolume("mongo-data-v7").WithMongoExpress();
 
 var mongoDb = mongo.AddDatabase("myblog");
 

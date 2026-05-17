@@ -48,6 +48,34 @@
 
 ## Learnings
 
+### 2026-05-19 — Issue #345: Fix AppHost MongoDB Container Crash (exit code 139 + exit code 62)
+
+**Finding (pass 1):** MongoDB 8.x (the `Aspire.Hosting.MongoDB` 13.3.3 default image `mongo:8.2`) requires AVX CPU instructions on x86-64 hosts. Virtualized environments that do not expose AVX cause MongoDB 8.x to SIGSEGV immediately → container exit code 139, OOMKilled=false, ~30 s after start. Fix: pin to `mongo:7` via `.WithImageTag("7")`.
+
+**Finding (pass 2 — runtime smoke):** After the image tag fix, MongoDB 7 started but then exited with code 62.
+Docker logs: `Wrong mongod version` and `Invalid featureCompatibilityVersion document ... version: "8.2" ... expected ... "7.0"`.
+The persistent `mongo-data` Docker volume had been initialized by `mongo:8.2`; MongoDB 7 refuses to open data
+files written by a newer major version. Fix: rename volume to `mongo-data-v7` for a fresh, compatible volume.
+
+**Secondary finding:** `AppHost.csproj` SDK attribute was `Aspire.AppHost.Sdk/13.3.2` while all Aspire hosting packages in `Directory.Packages.props` were at `13.3.3`. Version mismatch corrected.
+
+**Changed files:**
+
+- `src/AppHost/AppHost.cs` — `.WithImageTag("7")` + `.WithDataVolume("mongo-data-v7")` on the `AddMongoDB` chain.
+- `src/AppHost/AppHost.csproj` — `Aspire.AppHost.Sdk` bumped `13.3.2` → `13.3.3` to match `Directory.Packages.props`.
+
+**Volume naming convention:** version-suffix the volume name (`mongo-data-v{major}`) whenever the MongoDB major version changes on an environment with a pre-existing persistent volume. This avoids featureCompatibilityVersion mismatch crashes without requiring manual `docker volume rm`.
+
+**Validation performed:**
+
+- `dotnet build --configuration Release` (full solution) — **Build succeeded, 0 Warnings, 0 Errors**
+- Architecture.Tests: Passed 16/16; Domain.Tests: Passed 67/67; Web.Tests: Passed 210/210; Web.Tests.Bunit: Passed 104/104 — **397 tests, 0 failures**
+- Integration tests (Docker-backed) not run in this pass — AppHost infra-only change; integration suite is Gimli's gate.
+
+**Worktree:** `squad/345-fix-apphost-mongodb-crash` at `/home/mpaulosky/github/MyBlog-345` (not pushed; coordinator to reconcile fan-out).
+
+---
+
 ### 2026-05-14 — Issue #337: Archive Self-Authored PR Gate Skill
 
 **What was done:** Created `.squad/skills/self-authored-pr-gate/SKILL.md` documenting the workflow pattern discovered during PR #336 (self-authored Aspire/markdown upgrade) and updated `.squad/agents/aragorn/history.md` with Aragorn's gate review findings.
