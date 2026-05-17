@@ -526,3 +526,50 @@ AppHost.Tests: 48/48 passed. Scope: log wording only; no logic changes.
 ### Learning: Log wording must match the actual DB operation semantics
 
 When upsert (`ReplaceOneAsync + IsUpsert=true`) is the behavior, log strings must say "upserted" or "inserted/updated" — not "inserted". Future seed operations: always audit log strings against the actual driver call used.
+
+---
+
+## 🔴 CORRECTION: Issue #345 MongoDB Container Crash Fix (2026-05-17)
+
+**By:** Scribe (correction appended)  
+**Referenced:** Lines 44–45 (recommendation code snippet) and Line 110 (learning item) contained incomplete/incorrect guidance.
+
+### What Was Wrong
+
+Sam's original investigation correctly identified the root cause (MongoDB 8.x SIGSEGV) but the **recommendation and learning item were incomplete:**
+
+- **Line 44–45:** Recommended pinning to `mongo:8.0` and keeping `mongo-data` volume
+- **Line 110:** Stated the fix is `.WithImageTag("8.0")`
+
+### What Actually Happened (Implementation)
+
+Boromir's infrastructure fix (issue #345) pinned to **`mongo:7`** (not `8.0`) **and renamed the volume to `mongo-data-v7`** (not keeping `mongo-data`).
+
+**Why this was necessary:**
+
+1. **Image tag:** MongoDB 8.x (including 8.0) still requires AVX CPU instructions. Pinning to `mongo:7` LTS (which does NOT require AVX) is the stable solution.
+2. **Volume rename:** When the first attempt used `mongo:7` but the old `mongo-data` volume remained, MongoDB 7 exited with code 62: `Wrong mongod version — featureCompatibilityVersion "8.2"`. MongoDB refuses to open data files from a newer major version. Renaming to `mongo-data-v7` gave MongoDB 7 a fresh, compatible volume.
+
+### Accepted Final Fix
+
+```csharp
+var mongo = builder.AddMongoDB("mongodb")
+    .WithImageTag("7")              // pin to LTS with no AVX requirement
+    .WithDataVolume("mongo-data-v7") // version-suffixed volume to avoid featureCompatibilityVersion mismatch
+    .WithMongoExpress();
+```
+
+### Validation Results
+
+- ✅ Build: `dotnet build MyBlog.slnx -c Release --no-restore` passed
+- ✅ Format: `dotnet format MyBlog.slnx --verify-no-changes --no-restore` passed
+- ✅ Regression tests: `dotnet test tests/AppHost.Tests -c Release --no-restore --filter 'FullyQualifiedName~MongoDbContainerConfigurationTests'` — 4/4 passed
+- ✅ Smoke test: `aspire start --isolated --apphost src/AppHost/AppHost.csproj` — MongoDB healthy on `docker.io/library/mongo:7` with volume `mongo-data-v7`; all services running
+
+### Standing Rule (From Decision)
+
+When MongoDB major version changes on an Aspire dev environment with a pre-existing persistent volume, suffix the volume name with `v{major}` (e.g., `mongo-data-v7`, `mongo-data-v8`). This prevents featureCompatibilityVersion mismatch crashes transparently.
+
+### Why Scribe Is Appending This
+
+Reviewer lockout: Sam authored the incorrect guidance, so Sam cannot revise their own history artifact. Scribe appends this correction to preserve accuracy and allow the PR to proceed.
