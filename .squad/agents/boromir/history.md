@@ -48,6 +48,61 @@
 
 ## Learnings
 
+### 2026-05-19 — Issue #348: Resolve Remaining Database Runtime Issues (post-PR #346 investigation)
+
+**Context:** Issue #348 was opened because MongoDB container crashes were still visible after PR #346 (which pinned `mongo:7` + `mongo-data-v7`). Assigned to Boromir + Sam + Gimli.
+
+**Root cause identified via `ps aux` + `docker ps -a`:** The running Aspire AppHost process was
+`/home/mpaulosky/github/MyBlog/src/AppHost/bin/Debug/net10.0/AppHost.dll` — built from the
+**MAIN REPO**, not the worktree. The main repo's local `dev` branch was 2 commits behind
+`origin/dev`, missing both PR #346 (image/volume fix) and PR #347 (docs). As a result, Aspire
+was still launching `mongo:8.2` against the old `mongo-data` volume → exit 139 (SIGSEGV, AVX).
+
+**How to identify which AppHost DLL is active:**
+
+```bash
+ps aux | grep AppHost.dll
+# DLL path reveals the repo root; compare to git log in that repo to confirm branch/commit
+```
+
+**Volume state at investigation time:**
+
+- `mongo-data` — FCV-contaminated (written by mongo:8.2; UUID-format collection files). MongoDB 7 refuses it with exit 62.
+- `mongo-data-v7` — clean, numeric-ident format (WiredTiger 11.x, mongo:7-compatible), lock file 0 bytes. Safe to use.
+
+**Remediation steps performed:**
+
+1. `git pull origin dev` on main repo — fast-forwarded to `883137f`, pulling both PR #346 + #347.
+2. `dotnet restore` + `dotnet build src/AppHost/AppHost.csproj -c Debug` — rebuilt with correct `mongo:7` + `mongo-data-v7` config. **0 errors.**
+3. Next Aspire session will start MongoDB with the correct image and volume.
+
+**Worktree code review:** `src/AppHost/AppHost.cs` in the worktree was already correct.
+`Web/Program.cs`, `BlogDbContext.cs`, and all repository code confirmed correct. No
+application-layer changes needed.
+
+**All tests confirmed passing:**
+
+- `MongoDbContainerConfigurationTests` — 4/4 (image tag + volume regression coverage)
+- `Web.Tests.Integration` (Testcontainers) — 29/29
+
+**Key lesson — developer environment sync:** When a squad member opens a new Aspire session,
+verify the running process DLL matches the current worktree. Use `ps aux | grep AppHost` to
+identify which build is active. If the main repo's `dev` branch is behind `origin/dev`, pull
+before starting. Stale local branches silently run old infra code.
+
+**Standing rule added to MongoDB DBA skill:** Added "Running environment sync check" rule —
+document the `ps aux` diagnostic and the importance of syncing the main repo dev branch after
+merged PRs.
+
+**Changed files:**
+
+- `.squad/agents/boromir/history.md` — this entry
+- `.squad/skills/mongodb-dba-patterns/SKILL.md` — running environment sync rule added
+
+**Note:** Architectural decision captured separately for Scribe merge into `.squad/decisions.md`.
+
+---
+
 ### 2026-05-19 — Issue #345: Fix AppHost MongoDB Container Crash (exit code 139 + exit code 62)
 
 **Finding (pass 1):** MongoDB 8.x (the `Aspire.Hosting.MongoDB` 13.3.3 default image `mongo:8.2`) requires AVX CPU instructions on x86-64 hosts. Virtualized environments that do not expose AVX cause MongoDB 8.x to SIGSEGV immediately → container exit code 139, OOMKilled=false, ~30 s after start. Fix: pin to `mongo:7` via `.WithImageTag("7")`.

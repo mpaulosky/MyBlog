@@ -2960,3 +2960,129 @@ When MongoDB major version changes on an Aspire dev environment with a pre-exist
 #### Future Consideration
 
 When the team's standard dev/CI runner is confirmed to expose AVX (or when MongoDB 8.x AVX requirement is lifted), the image pin can be removed to resume tracking the hosting default. At that point rename the volume to `mongo-data-v8` (or remove the suffix if the pin is gone and volumes will be freshly created).
+
+---
+
+## Issue #348: Resolve Remaining Database Runtime Issues
+
+### Decision 1: AppHost Binary Must Match Current Branch Before Starting Aspire
+
+**Status:** ✅ Decided
+**Date:** 2026-05-19
+**Author:** Boromir (DevOps/Infrastructure)
+**Issue:** #348
+**Scope:** Development workflow, AppHost infrastructure changes
+
+#### Problem
+
+After PR #346 merged MongoDB 7 + `mongo-data-v7` fixes to `origin/dev`,
+Aspire continued to fail with MongoDB containers crashing (exit code 139 /
+SIGSEGV). Investigation revealed the running AppHost DLL was built from a
+local `dev` branch 2 commits behind `origin/dev` and still contained the old
+`mongo:8.2` configuration. Aspire resolves MongoDB image tags and volume names
+**at build time**, compiled into the binary — a stale build runs outdated
+infrastructure silently with no warning.
+
+#### Decision
+
+Before starting or restarting Aspire, developers **must** verify the active AppHost binary reflects the current intended code:
+
+1. Run `git pull origin dev` on the main repo after AppHost-related PR merges
+2. Rebuild: `dotnet build src/AppHost/AppHost.csproj -c Debug`
+3. When MongoDB crashes unexpectedly, verify the active build: `ps aux | grep AppHost.dll` and confirm it is from the expected branch
+
+#### Rationale
+
+AppHost infrastructure configuration (image tags, volume names, environment variables, wait-for ordering) is embedded at compile time. Stale builds silently run obsolete infrastructure. This is especially dangerous after a configuration fix is merged — the fix exists in the codebase but the running binary predates it.
+
+#### Scope
+
+- Applies whenever AppHost infrastructure changes (image tags, volume names, env vars, wait-for configuration) are merged to `dev`
+- Boromir owns documenting and enforcing this as part of DevOps workflow
+- Documented in `.squad/skills/mongodb-dba-patterns/SKILL.md` as rule 6
+
+#### No Code Change Required
+
+`src/AppHost/AppHost.cs` already contains the correct configuration from PR #346. This decision governs developer workflow, not production code.
+
+---
+
+### Decision 2: Add AppHost End-to-End Regression Test for MongoDB Connectivity
+
+**Status:** ✅ Decided
+**Date:** 2026-05-19
+**Author:** Gimli (Testing / QA)
+**Issue:** #348
+**Implementation PR:** #349
+
+#### Problem
+
+AppHost coverage verified MongoDB container configuration and operator commands. Web integration coverage verified repositories against Testcontainers. However, neither suite proved that the running web app could read seeded MongoDB data through the AppHost-provided connection string — a critical runtime wiring gap.
+
+#### Decision
+
+Add and maintain at least one AppHost-level regression test that:
+
+1. Seeds MongoDB via AppHost operator
+2. Asserts the public `/blog` page renders seeded data
+3. Stays behavior-first by checking the public endpoint, not internal DI details
+
+#### Rationale
+
+This catches runtime wiring failures that unit repository tests and operator-command tests can miss. It verifies end-to-end data flow from seeded MongoDB through AppHost connection string to public web page.
+
+#### Implementation
+
+- New test class: `MongoSeedDataIntegrationTests` in `tests/AppHost.Tests/`
+- Test method: `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page`
+- Run in Docker-enabled environment to confirm full AppHost lifecycle
+
+#### Impact
+
+- Issue #348 now has tracer-bullet test for MongoDB runtime connectivity
+- Future MongoDB/AppHost regressions should extend this pattern before changing production wiring
+- Regression test provides safety net for image version, volume naming, and connection string changes
+
+---
+
+### Decision 3: No Further Backend Code Changes Required for Issue #348
+
+**Status:** ✅ Verified
+**Date:** 2026-05-19
+**Author:** Sam (Backend / Web)
+**Issue:** #348
+
+#### Finding
+
+Issue #348 ("Resolve remaining database runtime issues") was raised after PR #346 fixed the MongoDB 8.x container crash. Sam was tasked to determine whether any Web/backend code defect remains.
+
+Verification confirmed: **No further Sam-owned backend changes required.**
+
+All Web/backend code is correct as-of HEAD of `squad/348-resolve-database-runtime-issues`.
+
+#### Validation Results
+
+| Check | Result |
+| --- | --- |
+| `AddMongoDBClient("myblog")` + `AddDbContextFactory<BlogDbContext>` wiring | ✅ Correct |
+| `MongoDbBlogPostRepository` — all methods use short-lived factory contexts | ✅ Correct |
+| `MongoDbCategoryRepository` — all methods use short-lived factory contexts | ✅ Correct |
+| `BlogDbContext` mappings (blogposts, categories, owned Author, CategoryId) | ✅ Correct |
+| AppHost.cs — MongoDB 7, `mongo-data-v7`, `.WaitFor(mongo)` before web | ✅ Correct |
+| Seed command GUID format (`GuidRepresentation.Standard`) matches EF Core 10.0.1 | ✅ Correct |
+| Unit tests 210/210, architecture 16/16, integration 29/29, AppHost non-Docker 20/20 | ✅ All pass |
+
+#### Rationale
+
+The "remaining issues" after PR #346 are:
+
+1. **Runtime verification gap** — addressed by Gimli's new end-to-end test (Decision 2 above)
+2. **Stale Docker volume concern** — addressed by Boromir's volume naming convention and DevOps workflow (Decision 1 above)
+
+Neither is a Web/backend code defect. All code paths are correct.
+
+#### Routing
+
+- **Gimli:** commit and run `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page` in Docker-enabled environment to confirm end-to-end coverage
+- **Boromir:** verify `mongo-data-v7` volume is fresh on all developer machines that previously ran `mongo-data` (MongoDB 8.x) configuration
+- **Sam:** no further action required for Issue #348 backend scope

@@ -7,6 +7,8 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
+using System.Net;
+
 using AppHost.Tests.Infrastructure;
 
 using Aspire.Hosting;
@@ -148,6 +150,66 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		count.Should().BeGreaterThanOrEqualTo(1, "blogposts collection must have documents after seed");
 	}
 
+	/// <summary>
+	/// After seeding succeeds, the running web app must be able to read the seeded posts
+	/// through its real AppHost-wired MongoDB path.
+	/// </summary>
+	[Fact]
+	public async Task SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page()
+	{
+		// Arrange — start from a clean database so any BlogPostCacheService L1/L2 cached
+		// state cannot satisfy the assertions without a real MongoDB read.
+		using var mongoClient = new MongoClient(fixture.MongoConnectionString);
+		await mongoClient.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
+
+		var annotation = GetAnnotation();
+		var endpoint = fixture.App.GetEndpoint("web", "https");
+		using var handler = new HttpClientHandler
+		{
+			ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+		};
+		using var webClient = new HttpClient(handler) { BaseAddress = endpoint };
+		await WaitForWebReadyAsync(webClient);
+
+		// Act
+		var seedResult = await annotation.ExecuteCommand(MakeContext());
+
+		// Assert — seeding succeeded.
+		seedResult.Success.Should().BeTrue("seeding must succeed before the page can read MongoDB data");
+
+		// Canonical proof #1 (cache-independent): documents are physically present in MongoDB,
+		// confirming the real AppHost-wired seed path wrote to the live container.
+		var db = mongoClient.GetDatabase("myblog");
+		var seededCount = await db.GetCollection<BsonDocument>("blogposts")
+			.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty,
+				cancellationToken: TestContext.Current.CancellationToken);
+		seededCount.Should().BeGreaterThanOrEqualTo(2,
+			"at least 2 published posts must be present in MongoDB after seeding");
+
+		// Canonical proof #2: the Web app reads the freshly seeded posts through the real
+		// AppHost-wired MongoDB path.  With [StreamRendering] the server runs
+		// OnInitializedAsync during SSR pre-render and streams the final rendered DOM
+		// (including <td>@post.Title</td> rows) as a <template blazor-component-id="…">
+		// block inside the HTTP response body — so the seed title appears verbatim in a
+		// plain GetAsync call.
+		//
+		// PollBlogUntilSeededTitleVisibleAsync throws TimeoutException (with a sanitized
+		// last-status / last-body summary) if the title never appears, preventing a stale
+		// cached empty-list from passing silently.  The 2-minute window exceeds the
+		// BlogPostCacheService L1 TTL (1 min) so any pre-reseed cached state can expire
+		// and the handler re-queries MongoDB, making the test order-independent.
+		const string seededTitle = "Welcome to MyBlog";
+		var pageHtml = await PollBlogUntilSeededTitleVisibleAsync(
+			webClient,
+			seededTitle: seededTitle,
+			timeout: TimeSpan.FromMinutes(2),
+			TestContext.Current.CancellationToken);
+
+		pageHtml.Should().Contain(seededTitle,
+			"the seeded post title must appear in the /blog SSR output — proving Web read from MongoDB");
+		pageHtml.Should().NotContain("An unexpected error occurred.",
+			"a MongoDB connectivity regression must surface as a failing test, not a silent error page");
+	}
 
 	// ---------------------------------------------------------------------------
 	// Helpers
@@ -169,4 +231,95 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
 	};
+
+	private static async Task WaitForWebReadyAsync(HttpClient client)
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+
+		while (true)
+		{
+			try
+			{
+				using var response = await client.GetAsync(new Uri("/alive", UriKind.Relative), cts.Token);
+				if (response.IsSuccessStatusCode)
+					return;
+			}
+			catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+			{
+				throw new TimeoutException("Web app did not become ready before the MongoDB runtime connectivity check.");
+			}
+			catch (HttpRequestException) { }
+
+			try
+			{
+				await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+			}
+			catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+			{
+				throw new TimeoutException("Web app did not become ready before the MongoDB runtime connectivity check.");
+			}
+		}
+	}
+
+	/// <summary>
+	/// Polls GET /blog until the response body contains <paramref name="seededTitle"/>,
+	/// or until <paramref name="timeout"/> elapses.
+	/// <para>
+	/// Returns the full response body once the title is found — the caller can assert
+	/// directly on it as positive proof that the Web app read the seeded document from
+	/// MongoDB through the real AppHost-wired path.
+	/// </para>
+	/// <para>
+	/// If the title is never observed within <paramref name="timeout"/>, a
+	/// <see cref="TimeoutException"/> is thrown with a sanitized summary of the last
+	/// HTTP status and the first 400 characters of the last response body (no secrets).
+	/// This makes test failures immediately diagnosable and prevents a stale cached
+	/// empty-list from causing the test to pass silently.
+	/// </para>
+	/// </summary>
+	private static async Task<string> PollBlogUntilSeededTitleVisibleAsync(
+		HttpClient client,
+		string seededTitle,
+		TimeSpan timeout,
+		CancellationToken ct)
+	{
+		using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		cts.CancelAfter(timeout);
+
+		var lastStatusCode = HttpStatusCode.ServiceUnavailable;
+		var lastBodySummary = "(no response received)";
+
+		while (!cts.Token.IsCancellationRequested)
+		{
+			try
+			{
+				using var response = await client.GetAsync(new Uri("/blog", UriKind.Relative), cts.Token);
+				lastStatusCode = response.StatusCode;
+				var body = await response.Content.ReadAsStringAsync(cts.Token);
+				lastBodySummary = body.Length > 400 ? body[..400] + "…(truncated)" : body;
+
+				if (body.Contains(seededTitle, StringComparison.Ordinal))
+					return body;
+			}
+			catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+			{
+				break;
+			}
+			catch (HttpRequestException) { }
+
+			try
+			{
+				await Task.Delay(TimeSpan.FromSeconds(3), cts.Token);
+			}
+			catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
+			{
+				break;
+			}
+		}
+
+		throw new TimeoutException(
+			$"Timed out after {timeout.TotalMinutes:F0} min waiting for '{seededTitle}' on /blog. " +
+			$"Last HTTP status: {(int)lastStatusCode} {lastStatusCode}. " +
+			$"Last body summary: {lastBodySummary}");
+	}
 }
