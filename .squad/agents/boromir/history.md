@@ -98,7 +98,8 @@ merged PRs.
 
 - `.squad/agents/boromir/history.md` — this entry
 - `.squad/skills/mongodb-dba-patterns/SKILL.md` — running environment sync rule added
-- `.squad/decisions/inbox/boromir-issue348-dev-sync.md` — decision drop
+
+**Note:** Architectural decision captured separately for Scribe merge into `.squad/decisions.md`.
 
 ---
 
