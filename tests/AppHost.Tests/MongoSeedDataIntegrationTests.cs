@@ -7,6 +7,8 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
+using System.Net;
+
 using AppHost.Tests.Infrastructure;
 
 using Aspire.Hosting;
@@ -14,8 +16,6 @@ using Aspire.Hosting;
 using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
-
-using System.Net;
 
 using MongoDB.Bson;
 using MongoDB.Driver;
