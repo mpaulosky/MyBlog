@@ -1,5 +1,97 @@
 # Sam's Work History
 
+## 2026-05-26 — Issue #350: Repair Aspire Startup on New Machine
+
+### Task
+
+Investigate AppHost, Web, and ServiceDefaults startup wiring for anything likely to fail on a fresh machine. Implement the smallest correct fix for any Sam-owned defect.
+
+### Finding
+
+**Root cause found and fixed — single MSBuild target gap in `src/Web/Web.csproj`.**
+
+On a fresh machine, `dotnet build` fails with:
+
+```bash
+EXEC : error : Can't resolve 'tailwindcss'
+error MSB3073: The command "npm run tw:build" exited with code 1.
+```
+
+The existing `BuildTailwind` MSBuild target calls `npm run tw:build` without first ensuring `node_modules` exists. `tailwind.css` is gitignored and never committed, so the first build always requires npm packages. The `CI != 'true'` guard correctly skips this on CI but does nothing for a fresh local machine.
+
+**All other wiring verified clean:**
+
+| Check | Result |
+| --- | --- |
+| `AppHost.cs` — MongoDB 7 tag, `mongo-data-v7` volume, `.WaitFor(mongo)` | ✅ Correct |
+| `Program.cs` — `AddMongoDBClient`, `AddDbContextFactory`, Redis cache, all DI registrations | ✅ Correct |
+| `ServiceDefaults/Extensions.cs` — OpenTelemetry, health checks, service discovery | ✅ Correct |
+| `public partial class Program {}` present in both AppHost and Web | ✅ Correct |
+| Auth0 — mock fallback for Development/Testing environments prevents startup crash | ✅ Correct |
+| Health endpoints guarded by Development/Testing environment only | ✅ Correct |
+
+### Changed Files
+
+- `src/Web/Web.csproj` — Added `EnsureNpmPackages` MSBuild target that runs `npm install` automatically when `node_modules` is missing
+
+### Fix
+
+Added a new `EnsureNpmPackages` target that fires `BeforeTargets="BuildTailwind"` with guard `Condition="'$(CI)' != 'true' AND !Exists(...node_modules)"`. This self-heals a fresh checkout with zero cost on subsequent builds and zero risk to CI.
+
+### Validation Performed
+
+- ✅ `dotnet build src/Web/Web.csproj -c Release` — 0 errors (ran npm install + tw:build automatically)
+- ✅ `dotnet test tests/Web.Tests/Web.Tests.csproj -c Release` — 210/210 passed
+- ✅ `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release` — 16/16 passed
+
+### Decision Recorded
+
+`.squad/decisions/inbox/sam-npm-auto-install-on-fresh-machine.md`
+
+### Notes for Boromir
+
+All runtime wiring (AppHost, ServiceDefaults) is correct. There are no brittle container assumptions in Sam-owned code. Boromir should verify:
+
+1. Docker Desktop is running (required for Aspire DCP to launch MongoDB 7 and Redis containers)
+2. `mongo-data-v7` volume exists fresh (no MongoDB 8.x compatibility metadata from a prior machine)
+3. Aspire DCP version matches `Aspire.AppHost.Sdk/13.3.5` — mismatched DCP can cause silent startup hangs
+
+---
+
+## 2026-05-27 — Issue #350 Follow-up: Analyzer Warning Cleanup in MongoDbResourceBuilderExtensions.cs
+
+### Task
+
+Boromir flagged ~37 pre-existing analyzer warnings in `src/AppHost/MongoDbResourceBuilderExtensions.cs` that were blocking the zero-warning build gate.
+
+### Warnings Found and Fixed
+
+| Rule | Count | Fix Applied |
+| --- | --- | --- |
+| CA2007 | 14 | Added `.ConfigureAwait(false)` to every `await` expression |
+| CA1848 | 14 | Replaced all `LoggerExtensions.*` call-sites with `[LoggerMessage]` source-generated delegates |
+| CA1873 | 5 | Resolved automatically by `[LoggerMessage]` fix (same call-sites as CA1848) |
+| CA1305 | 1 | `sb.AppendLine(CultureInfo.InvariantCulture, $"...")` in stats loop |
+
+### Approach
+
+- Made the class `internal static partial class` (required for `[LoggerMessage]` source generation).
+- Declared 12 `[LoggerMessage]`-attributed `private static partial void` methods covering every distinct log call across the three commands (Clear, Seed, Stats).
+- The `LogConnectionStringError` delegate is shared by all three commands (same message, same parameter signature).
+- Added `using System.Globalization;` for `CultureInfo.InvariantCulture`.
+
+### Validation
+
+- ✅ `dotnet build src/AppHost/AppHost.csproj -c Release --no-incremental` — zero warnings from `MongoDbResourceBuilderExtensions.cs`
+- ✅ `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release` — 53 passed, 1 skipped (pre-existing), 0 failed
+- ✅ `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release` — 16/16 passed
+
+### Notes for Gimli
+
+Behavior is identical — all log messages, levels, and parameters are preserved; only the call pattern changed from extension methods to source-generated delegates. No new test cases needed, but the mutex-concurrency tests in `AppHost.Tests` cover the command paths and all remain green.
+
+---
+
 ## 2026-05-19 — Issue #348: Resolve Remaining Database Runtime Issues (branch squad/348-resolve-database-runtime-issues)
 
 ### Task
@@ -50,6 +142,87 @@ The runtime "remaining issues" after PR #346 are an **AppHost/Docker/runtime ver
 1. The new test `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page` (Gimli's file) is the canary that verifies the end-to-end path. Gimli should commit and run it in a Docker-enabled environment.
 2. Boromir should verify that the `mongo-data-v7` Docker volume is fresh (no MongoDB 8.x compatibility metadata) on any machine that previously ran the old `mongo-data` volume config.
 3. If the Aspire health checks time out in CI, Boromir should check DCP health-check configuration for the MongoDB 7 container.
+
+---
+
+## 2026-05-23 — Issue #350 Follow-up: Remaining AppHost.Tests Mongo Startup Failures
+
+### Task
+
+Investigate 3 remaining `AppHost.Tests` Mongo/Aspire startup failures that Gimli
+identified after the first repair pass (exit code 100, `needRepair`).
+
+### Findings
+
+**Root cause: dirty `mongo-data-v7` Docker volume — not a code defect.**
+
+All Sam-owned AppHost code (`AppHost.cs`, `MongoDbResourceBuilderExtensions.cs`,
+`ClearCommandAppFixture.cs`) is correct. The failures came from an environment
+state problem, not a code path bug.
+
+| Check | Result |
+| --- | --- |
+| `AppHost.cs` — MongoDB 7 tag, `mongo-data-v7` volume, `.WaitFor(mongo)` | ✅ Correct |
+| `MongoDbResourceBuilderExtensions.cs` — Clear/Seed/Stats commands, `_dbMutex` | ✅ Correct |
+| `ClearCommandAppFixture` — starts Aspire, waits for `KnownResourceStates.Running` | ✅ Correct logic |
+| Unit/model AppHost tests (22 tests) | ✅ 22/22 passed |
+| MongoClearDataIntegrationTests (5 tests) | ✅ 5/5 passed |
+| MongoShowStatsIntegrationTests (3 tests) | ✅ 3/3 passed |
+| MongoSeedDataIntegrationTests (4 tests) | ✅ 4/4 passed |
+| All 12 integration tests combined | ✅ 12/12 passed |
+
+**Exit code 100 = MongoDB `needRepair` — WiredTiger found a dirty data directory.**
+
+When the Aspire host is forcefully stopped (SIGKILL, machine sleep, or Aspire
+`DisposeAsync()` racing ahead of the container's clean shutdown), MongoDB's
+WiredTiger engine does not complete its shutdown sequence. The `mongod.lock`
+file and WiredTiger checkpoint files are left in a state that causes the NEXT
+MongoDB container mounting the same `mongo-data-v7` volume to exit immediately
+with code 100.
+
+**Reproduction scenario:**
+
+1. `MongoStatsIntegration` fixture starts → MongoDB container A mounts `mongo-data-v7` → tests run → `App.DisposeAsync()` called
+2. If Docker stops container A with SIGKILL (or close-before-flush), WiredTiger lock remains in volume
+3. `MongoSeedIntegration` fixture starts → MongoDB container B mounts same `mongo-data-v7` → finds dirty lock → exits 100
+
+This is **timing-dependent**: if `DisposeAsync()` waits long enough for
+WiredTiger's graceful SIGTERM shutdown, the lock is removed and the next fixture
+starts clean. In our test run, the lock was left from a previous unclean session
+(not from within the same `dotnet test` invocation).
+
+**After environment cleanup, all tests pass across multiple runs.**
+
+### Changed Files
+
+None. No AppHost or backend code changes required.
+
+### Latent Risk and Recommendation for Gimli
+
+`ClearCommandAppFixture` uses the same `mongo-data-v7` named volume as the
+production AppHost. If multiple collections race or the host is killed uncleanly,
+the volume becomes dirty and blocks the next collection's fixture.
+
+**Suggested fix in `ClearCommandAppFixture.DisposeAsync()` (Gimli owns this):**
+
+Option A — Use a test-unique volume name by removing the `ContainerMountAnnotation`
+for `/data/db` after `DistributedApplicationTestingBuilder.CreateAsync()` and
+replacing it with an anonymous volume. This eliminates all cross-fixture
+contamination.
+
+Option B — Add a brief `await Task.Delay(...)` after `App.DisposeAsync()` to
+allow the Docker container time to flush WiredTiger before the next fixture
+mounts the volume.
+
+**Sam does not own the test file; Gimli must make this call.**
+
+### Notes
+
+- The `mongo-data-v7` volume design is correct for production (data persistence
+  across Aspire restarts). The issue only manifests in test scenarios where
+  3 separate xUnit fixtures each boot and tear down a full Aspire host using the
+  same volume.
+- A machine-level clean-up (`docker volume rm mongo-data-v7 && docker volume create mongo-data-v7`) resolves the dirty state and brings tests green.
 
 ---
 
@@ -641,3 +814,33 @@ When MongoDB major version changes on an Aspire dev environment with a
 pre-existing persistent volume, suffix the volume name with `v{major}` (for
 example, `mongo-data-v7`). This prevents feature compatibility version mismatch
 crashes transparently.
+
+---
+
+## 2026-05-23 — Issue #350 Session Closeout (Orchestration Coordination)
+
+### Session Summary
+
+Sam completed two parallel tracks for Issue #350:
+
+1. **Runtime wiring verification** — Confirmed all AppHost, ServiceDefaults, and Web startup code correct; identified and fixed MSBuild npm-install gap
+2. **Analyzer warning cleanup** — Resolved 37 pre-existing warnings in `MongoDbResourceBuilderExtensions.cs` (CA2007, CA1848, CA1873, CA1305)
+
+Both tracks shipped with zero test failures:
+
+- Web.Tests: 210/210 passed
+- Architecture.Tests: 16/16 passed
+
+### Decisions Recorded
+
+- Decision 4: Auto-run npm install in MSBuild when node_modules is missing
+- Decision 6: Resolve analyzer warnings in MongoDbResourceBuilderExtensions.cs
+
+### Files Changed
+
+- `src/Web/Web.csproj` — Added `EnsureNpmPackages` MSBuild target
+- `src/AppHost/MongoDbResourceBuilderExtensions.cs` — Refactored logging to source-generated delegates, added `.ConfigureAwait(false)`
+
+### Status
+
+✅ Completed. Open gates (AppHost.Tests startup failures) assigned to Boromir/Gimli follow-up agents.

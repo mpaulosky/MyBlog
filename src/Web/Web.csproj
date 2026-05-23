@@ -33,6 +33,13 @@
     <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
   </PropertyGroup>
 
+  <!-- On a fresh machine, node_modules won't exist. Auto-run npm install before Tailwind builds. -->
+  <Target Name="EnsureNpmPackages" BeforeTargets="BuildTailwind"
+          Condition="'$(CI)' != 'true' AND !Exists('$(MSBuildProjectDirectory)/../../node_modules')">
+    <Message Importance="high" Text="node_modules not found — running npm install..." />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
+  </Target>
+
   <!-- Build Tailwind CSS (skip on CI environments where npm is not installed) -->
   <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true'">
     <Exec Command="npm run tw:build" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />

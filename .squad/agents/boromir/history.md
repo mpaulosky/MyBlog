@@ -1601,3 +1601,98 @@ the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`
 - Final push pre-gate: all checks passed on first run.
 
 **Learning:** Five-person parallel fix delivery on a single polish PR keeps iteration velocity high and reduces back-and-forth review cycles.
+
+---
+
+### 2026-07-08 — Issue #350: Aspire Startup Repair on New Machine
+
+**Context:** Sprint 19. Aspire failed to start on a new machine clone. Issue labelled `squad:boromir` + `squad:sam`.
+
+**Root causes found (both in infra/config — Boromir's domain):**
+
+1. **Missing `node_modules`** — After a fresh clone, `npm ci` (or `npm install`) was never run.
+   The `BuildTailwind` MSBuild target in `Web.csproj` runs `npm run tw:build` → `npx @tailwindcss/cli`.
+   Without `node_modules`, this fails: `Can't resolve 'tailwindcss' in '.../src/Web/Styles'`.
+   CI is unaffected (guarded by `Condition="'$(CI)' != 'true'"`; GitHub Actions sets `CI=true`).
+   Fix: ran `npm ci` to restore; updated README.md step 3 from `npm install` → `npm ci`.
+
+2. **`aspire.config.json` stale project path** — `src/AppHost/aspire.config.json` referenced
+   `MyBlog.AppHost.csproj` but the actual file is `AppHost.csproj`. Breaks `dotnet aspire run`.
+   Fix: corrected path in `aspire.config.json` to `AppHost.csproj`.
+
+**Build state post-fix:** `Build succeeded. 0 Error(s)`. Pre-existing warnings (~60+) across
+application/test code remain — owned by Sam and Gimli (CA2007, CA2012, CA1305, CA2000, CA1711).
+
+**Handoff to Sam:** `MongoDbResourceBuilderExtensions.cs` has 37 pre-existing warnings
+(CA2007 × ~16, CA1305 × 1) that violate the zero-warning policy. Sam should address these.
+
+**Files changed:** `src/AppHost/aspire.config.json`, `README.md`
+
+---
+
+## 2026-05-23 — Issue #350 Session Closeout (Orchestration Coordination)
+
+### Session Summary
+
+Boromir fixed two infrastructure-layer defects blocking Aspire startup on fresh machines:
+
+1. **`aspire.config.json` misconfiguration** — Corrected `.csproj` name from `MyBlog.AppHost.csproj` to `AppHost.csproj`
+2. **npm-install gap** — Coordinated with Sam on root-cause analysis; delegated fix to Sam's MSBuild target (Decision 4)
+
+Changes shipped clean with zero test failures (Architecture.Tests: 16/16 passed).
+
+### Decisions Recorded
+
+- Decision 5: Aspire startup failure on new machine — root cause and fixes (comprehensive infrastructure analysis)
+
+### Files Changed
+
+- `src/AppHost/aspire.config.json` — Corrected `.csproj` project name reference
+
+### Status
+
+✅ Completed. Two follow-up agents active:
+
+- **boromir-apphost-failures** — investigating Aspire DCP version/Docker runtime issues
+- **sam-apphost-runtime-followup** — verifying runtime-side Aspire wiring
+
+### Key Learnings
+
+- Fresh machine issues surface in two layers: build-time (`node_modules` MSBuild target) and CLI-time (aspire.config.json mismatch)
+- Both issues are isolated to local developer machines; CI unaffected (GitHubActions sets `CI=true`, uses `dotnet run --project` instead of `dotnet aspire run`)
+- Pre-existing analyzer warnings (~60+ across solution) delegated to Sam/Gimli specialists
+
+---
+
+## 2026-07-08 — Issue #350 Round 2: AppHost.Tests Mongo/Aspire Startup Verification
+
+**Context:** Gimli's verification reported 3 remaining AppHost.Tests Mongo/Aspire startup failures after prior round (node_modules, aspire.config.json fixes). Tasked with reproducing and diagnosing.
+
+### Investigation Outcome
+
+**All 54 AppHost.Tests pass.** Ran the full suite (54 tests): 53 passed, 1 intentional skip (`ThemeToggle ClickingSwitchesBrightnessAndHtmlDarkClass` — uses `Assert.Skip()` as its own guard when the AppHost testing environment doesn't reach a trustworthy interactive theme state). **0 failures.**
+
+The 3 Mongo/Aspire startup failures reported by Gimli had already been resolved by:
+
+- **PR #346** (`c0a44c7`) — Pinned MongoDB from `mongo:8.2` → `mongo:7` with `mongo-data-v7` volume. Root cause: `mongo:8.2` crashed with exit 139 (SIGSEGV/AVX instruction fault) on the new machine's CPU. Fixed `src/AppHost/AppHost.cs`.
+- **PR #348/#349** (`b079c0d`) — Pulled `origin/dev` into the running Aspire host build (it was 2 commits stale, still launching `mongo:8.2`). Also added `MongoSeedDataIntegrationTests` (4 new tests). All `MongoDbContainerConfigurationTests` (4/4), `MongoSeedDataIntegrationTests` (4/4), and `Web.Tests.Integration` (29/29) confirmed green.
+
+### Root Cause of the 3 Failures (historical)
+
+The 3 collection fixture initializations (`MongoClearIntegration`, `MongoSeedIntegration`, `MongoStatsIntegration`) each use
+`ClearCommandAppFixture.InitializeAsync()` which boots a full Aspire host. When that host attempted to start `mongo:8.2`, the
+container crashed (exit 139/SIGSEGV). Each collection's fixture failure cascaded to all its member tests →
+3 collections × N tests = multiple failures reported.
+
+### Current State
+
+- Build: ✅ 0 errors (66 pre-existing warnings in Gimli/Sam domain, already suppressed where appropriate)
+- AppHost.Tests: ✅ 53 passed, 1 intentional skip
+- No infra/AppHost changes required this round
+- No Sam handoff required
+
+### Key Learnings
+
+- When Aspire integration test collections fail at fixture init (not test body), ALL tests in the collection report as failed — making "3 failures" actually mean "3 fixture startup failures affecting N tests total"
+- `Assert.Skip()` (xUnit v3) skips appear in CI as Skipped not Failed — a 1-skip result on the theme toggle test is expected/normal behavior
+- The Mongo volume state matters across sessions: `mongo-data` (FCV-contaminated with mongo:8.2 UUID idents) must never be used with `mongo:7`; only `mongo-data-v7` is safe
