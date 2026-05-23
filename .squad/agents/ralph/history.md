@@ -134,3 +134,30 @@ Initial setup complete.
 - Remote state: `origin` now has only `dev` and `main`
 
 **Board state after:** 0 open issues, 0 open PRs. Board clear.
+
+### 2026-05-08 — Board Sweep: Release Labeling, Mutex Rename, CI Failures Filed
+
+**Trigger:** User "Ralph, go" — autonomous board sweep.
+
+**Board scan result:** 2 open issues (#265, #266). 0 open PRs at scan start.
+
+**Actions taken:**
+
+- **Issue #265** (Milestone Review): Decided Option A — release candidate, v1.5.0 minor bump (2 additive user-facing enhancements #259, #260; no breaking changes; CI green). Applied `release-candidate` label, removed `pending-review`, commented decision on issue. Issue auto-closed by `milestone-blog.yml`.
+- **Issue #266** (Rename `_clearMutex → _dbMutex`): Delegated to Sam. Sam created branch `squad/266-rename-clear-mutex-to-db-mutex`, renamed field across 7 sites in `src/AppHost/MongoDbResourceBuilderExtensions.cs` (1 declaration + 6 usage sites + 1 comment), ran pre-push gates (build 0 errors, Architecture.Tests 15/15, Domain.Tests 42/42, Integration.Tests 12/12), opened PR #267 targeting `dev`.
+- Identified 2 pre-existing CI failures; filed Issue #268 (`squad-mark-released.yml` fails — `GITHUB_TOKEN` lacks `project` scope for GraphQL) and Issue #269 (Blog→README Sync fails — direct push to `main` blocked by branch protection). Both labeled `squad:boromir,bug`.
+
+**Board state after:** Issue #265 closed, PR #267 open targeting `dev` (awaiting merge), Issues #268 and #269 queued for Boromir.
+
+### 2026-05-08 — CI Fix Sprint
+
+**Session issues closed:**
+
+- **#266** — rename `_clearMutex` → `_dbMutex` in `MongoDbResourceBuilderExtensions.cs` (PR #267, squash-merged)
+- **#268** — `squad-mark-released.yml` GraphQL permission error; added pre-flight `GH_PROJECT_TOKEN` validation, fixed `permissions: contents: read`, pinned `actions/github-script@v7` (PR #271, squash-merged)
+- **#269** — `blog-readme-sync.yml` direct push to `main` blocked by branch protection; changed to `git push origin HEAD:dev` (PR #270, squash-merged)
+
+**Notes:**
+- Board clear at end of session. No open squad issues or PRs.
+- `GH_PROJECT_TOKEN` secret must be set manually in repo Settings → Secrets with a PAT scoped to `project` for squad-mark-released to work.
+

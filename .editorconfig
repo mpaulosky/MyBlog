@@ -402,3 +402,10 @@ dotnet_naming_style.s_camelcase.required_prefix = s_
 dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator =
 dotnet_naming_style.s_camelcase.capitalization = camel_case
+
+[tests/**/*.cs]
+# Tests intentionally use xUnit-style method names with underscores.
+dotnet_diagnostic.CA1707.severity = none
+# Test code deliberately exercises sync validators and uses xUnit-created fixtures.
+dotnet_diagnostic.CA1849.severity = none
+dotnet_diagnostic.CA1515.severity = none

@@ -1,69 +1,163 @@
 @page "/blog/create"
-@using MyBlog.Web.Features.BlogPosts.Create
+@using MyBlog.Domain.ValueObjects
+@using MyBlog.Web.Security
+@using MyBlog.Web.Features.Categories.List
+@using System.Security.Claims
 @inject ISender Sender
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Author,Admin")]
 
-<PageTitle>Create Post</PageTitle>
-
-<h1 class="text-3xl font-bold mb-6">Create Post</h1>
+<PageHeadingComponent HeaderText="Create Post" Level="1" TextColorClass="text-primary-900 dark:text-primary-50" />
 
 @if (_error is not null)
 {
-    <div class="rounded-lg border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm mb-4 flex items-center justify-between" role="alert">
-        <span>@_error</span>
-        <button type="button" class="ml-4 cursor-pointer text-red-700 hover:text-red-900" @onclick="() => _error = null">&times;</button>
-    </div>
+	<div class="alert-error" role="alert">
+		<span>@_error</span>
+		<button type="button" class="alert-dismiss" @onclick="() => _error = null">&times;</button>
+	</div>
 }
 
-<div class="rounded-lg shadow p-6 bg-white dark:bg-gray-800 max-w-2xl">
-    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="mb-4" />
+<p class="form-label mb-4">Author: <span class="font-semibold">@_authorName</span></p>
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Title</label>
-            <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Title" />
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Author</label>
-            <InputText class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" @bind-Value="_model.Author" />
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Content</label>
-            <InputTextArea class="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" rows="8" @bind-Value="_model.Content" />
-        </div>
+<div class="form-panel">
+	<EditForm Model="_model" OnValidSubmit="HandleSubmit">
+		<DataAnnotationsValidator />
+		<ValidationSummary class="mb-4" />
 
-        <div class="flex gap-2">
-            <button type="submit" class="btn-primary">Create</button>
-            <a href="/blog" class="px-4 py-2 rounded font-medium border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Cancel</a>
-        </div>
-    </EditForm>
+		<div class="form-group">
+			<label class="form-label">Title</label>
+			<InputText class="form-input" @bind-Value="_model.Title" />
+		</div>
+		<div class="form-group">
+			<label class="form-label">Content <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Markdown)</span></label>
+			<TextEditor @bind-Content="_model.Content" AlignmentOptionsEnabled="false" />
+		</div>
+		<div class="form-group">
+			<label class="form-label">
+				Category
+				@if (_model.IsPublished)
+				{
+					<span class="text-xs text-red-500"> *</span>
+				}
+				<span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">(required when publishing)</span>
+			</label>
+			@if (_categoriesLoadFailed)
+			{
+				<p class="text-sm text-red-600 dark:text-red-400">
+					Categories could not be loaded. You may save as a draft; publishing requires categories to be available.
+				</p>
+			}
+			else if (!_categories.Any())
+			{
+				<p class="text-sm text-gray-500 dark:text-gray-400">
+					No categories available.
+					<a href="/admin/categories" class="text-primary-600 dark:text-primary-400 underline">Create categories</a>
+					before publishing a post.
+				</p>
+			}
+			else
+			{
+				<InputSelect class="form-select" @bind-Value="_model.CategoryId">
+					<option value="">-- Select a category --</option>
+					@foreach (var cat in _categories)
+					{
+						<option value="@cat.Id">@cat.Name</option>
+					}
+				</InputSelect>
+				<ValidationMessage For="() => _model.CategoryId" />
+			}
+		</div>
+		<div class="form-group">
+			<label class="form-label flex items-center gap-2">
+				<InputCheckbox @bind-Value="_model.IsPublished" />
+				<span>Published</span>
+			</label>
+		</div>
+
+		<div class="flex gap-2">
+			<button type="submit" class="btn-primary">Create</button>
+			<a href="/blog" class="btn-secondary">Cancel</a>
+		</div>
+	</EditForm>
 </div>
 
 @code {
-    private readonly PostFormModel _model = new();
-    private string? _error;
+	private readonly PostFormModel _model = new();
+	private string? _error;
+	private IReadOnlyList<CategoryDto> _categories = [];
+	private bool _categoriesLoadFailed;
 
-    private async Task HandleSubmit()
-    {
-        var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, _model.Author));
-        if (result.Success)
-            Navigation.NavigateTo("/blog");
-        else
-            _error = result.Error;
-    }
+	private string _authorId = string.Empty;
+	private string _authorName = string.Empty;
+	private string _authorEmail = string.Empty;
+	private IReadOnlyList<string> _authorRoles = [];
 
-    private sealed class PostFormModel
-    {
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Title { get; set; } = string.Empty;
+	protected override async Task OnInitializedAsync()
+	{
+		var state = await AuthStateProvider.GetAuthenticationStateAsync();
+		var user = state.User;
+		
+		// Extract nameidentifier claim for AuthorId, with fallbacks for Development/Testing
+		_authorId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+			?? user.FindFirst("sub")?.Value
+			?? user.Identity?.Name
+			?? "dev-user";
+		_authorName = user.FindFirst("name")?.Value ?? user.Identity?.Name ?? "Author";
+		_authorEmail = user.FindFirst(ClaimTypes.Email)?.Value
+			?? user.FindFirst("email")?.Value
+			?? "no-email@example.com";
+		_authorRoles = RoleClaimsHelper.GetRoles(user);
+		
+		// If still empty, generate sensible defaults for Development mode
+		if (string.IsNullOrWhiteSpace(_authorId))
+		{
+			_authorId = $"auth0|dev-{Guid.NewGuid().ToString().Substring(0, 8)}";
+		}
+		if (string.IsNullOrWhiteSpace(_authorName))
+		{
+			_authorName = "Author";
+		}
 
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Author { get; set; } = string.Empty;
+		var categoriesResult = await Sender.Send(new GetCategoriesQuery());
+		if (categoriesResult is { Success: true })
+			_categories = categoriesResult.Value!;
+		else
+		{
+			_categoriesLoadFailed = true;
+			_error = "Failed to load categories. You may save as a draft, but cannot publish until categories are available.";
+		}
+	}
 
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Content { get; set; } = string.Empty;
-    }
+	private async Task HandleSubmit()
+	{
+		if (_model.IsPublished && (_categoriesLoadFailed || _model.CategoryId is null))
+		{
+			_error = _categoriesLoadFailed
+				? "Categories failed to load. Cannot publish until categories are available."
+				: "Please select a category before publishing.";
+			return;
+		}
+
+		var author = new PostAuthor(_authorId, _authorName, _authorEmail, _authorRoles);
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished, _model.CategoryId));
+		if (result.Success)
+			Navigation.NavigateTo("/blog");
+		else
+			_error = result.Error;
+	}
+
+	private sealed class PostFormModel
+	{
+		[System.ComponentModel.DataAnnotations.Required]
+		public string Title { get; set; } = string.Empty;
+
+		[System.ComponentModel.DataAnnotations.Required]
+		public string Content { get; set; } = string.Empty;
+
+		public bool IsPublished { get; set; }
+
+		public Guid? CategoryId { get; set; }
+	}
 }

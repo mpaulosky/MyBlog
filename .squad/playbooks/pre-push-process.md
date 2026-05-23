@@ -2,7 +2,7 @@
 
 **Owner:** Boromir (DevOps) + Aragorn (Lead)
 **Ref:** `.github/hooks/pre-push`, `CONTRIBUTING.md`
-**Last Updated:** 2026-04-19
+**Last Updated:** 2026-05-12
 
 ---
 
@@ -20,7 +20,7 @@
 
 ## Overview
 
-The pre-push hook (`.github/hooks/pre-push`) enforces 5 gates that mirror CI. This playbook documents what agents must do before pushing and how to troubleshoot failures.
+The pre-push hook (`.github/hooks/pre-push`) enforces 7 gates that mirror CI. This playbook documents what agents must do before pushing and how to troubleshoot failures.
 
 ## Pre-Flight Checklist (Before `git push`)
 
@@ -41,32 +41,56 @@ Before running `git push`, verify:
    git add <files>
    ```
 
-3. **Release build passes locally** — Gate 2 runs Release (not Debug)
+3. **Markdown lint passes** — Gate 2 runs `markdownlint-cli2`
 
    ```bash
-   dotnet build IssueTrackerApp.slnx --configuration Release
+   npx markdownlint-cli2 "**/*.md" \
+     "!**/node_modules/**" \
+     "!.squad/**" \
+     "!.copilot/**" \
+     "!.github/agents/**" \
+     "!.github/skills/**" \
+     "!.github/copilot-instructions.md"
+   ```
+
+4. **Code is formatted** — Gate 3 runs `dotnet format --verify-no-changes`
+
+   ```bash
+   dotnet format MyBlog.slnx --verify-no-changes
+   ```
+
+   If formatting issues are found, fix with:
+
+   ```bash
+   dotnet format MyBlog.slnx
+   git add -u
+   git commit  # or --amend
+   ```
+
+5. **Release build passes locally** — Gate 4 runs Release (not Debug)
+
+   ```bash
+   dotnet build MyBlog.slnx --configuration Release
    ```
 
    If build fails, run `.github/prompts/build-repair.prompt.md` to fix.
 
-4. **Unit tests pass** — Gate 3 runs 6 test projects
+6. **Unit tests pass** — Gate 5 runs 4 test projects
 
    ```bash
    dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build
    dotnet test tests/Domain.Tests/Domain.Tests.csproj --configuration Release --no-build
-   dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build
-   dotnet test tests/Persistence.MongoDb.Tests/Persistence.MongoDb.Tests.csproj --configuration Release --no-build
    dotnet test tests/Web.Tests/Web.Tests.csproj --configuration Release --no-build
-   dotnet test tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.csproj --configuration Release --no-build
+   dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build
    ```
 
-5. **Docker is running** — Gate 4 requires Docker for integration tests
+7. **Docker is running** — Gate 6 requires Docker for integration tests
 
    ```bash
    docker info &>/dev/null && echo "Docker OK" || echo "Docker NOT running"
    ```
 
-## The 5 Gates (What the Hook Runs)
+## The 7 Gates (What the Hook Runs)
 
 When you execute `git push`, the hook runs automatically:
 
@@ -74,35 +98,33 @@ When you execute `git push`, the hook runs automatically:
 | ----- | ---------------------- | ------------------------------------------------------------------------ |
 | **0** | Branch protection      | Current branch is `main` or `dev`                                        |
 | **1** | Untracked source files | `.razor`/`.cs` files not staged (prompts y/N)                            |
-| **2** | Release build          | `dotnet build --configuration Release` fails (3 attempts)                |
-| **3** | Unit/Arch/bUnit tests  | Any of 6 test projects fail (3 attempts)                                 |
-| **4** | Integration tests      | Any of 4 integration test projects fail; Docker not running (3 attempts) |
+| **2** | markdownlint-cli2      | Any Markdown lint violation                                               |
+| **3** | dotnet format          | Any file requires formatting changes (prompts auto-fix y/N)              |
+| **4** | Release build          | `dotnet build --configuration Release` fails (3 attempts)                |
+| **5** | Unit/Arch/bUnit tests  | Any of 4 test projects fail (3 attempts)                                 |
+| **6** | Integration tests      | Any of 2 integration test projects fail; Docker not running (3 attempts) |
 
-### Gate 3 — Test Projects (Unit)
+### Gate 5 — Test Projects (Unit)
 
 ```text
 tests/Architecture.Tests/Architecture.Tests.csproj
 tests/Domain.Tests/Domain.Tests.csproj
-tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj
-tests/Persistence.MongoDb.Tests/Persistence.MongoDb.Tests.csproj
 tests/Web.Tests/Web.Tests.csproj
-tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.csproj
+tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj
 ```
 
-### Gate 4 — Integration Test Projects (Docker Required)
+### Gate 6 — Integration Test Projects (Docker Required)
 
 ```text
-tests/Persistence.MongoDb.Tests.Integration/Persistence.MongoDb.Tests.Integration.csproj
 tests/Web.Tests.Integration/Web.Tests.Integration.csproj
-tests/Persistence.AzureStorage.Tests.Integration/Persistence.AzureStorage.Tests.Integration.csproj
 tests/AppHost.Tests/AppHost.Tests.csproj
 ```
 
-These use Testcontainers (mongo:7.0, Azurite) and Aspire DCP. Docker daemon MUST be running.
+These use Testcontainers (mongo:7.0) and Aspire DCP (`DistributedApplicationTestingBuilder`). Docker daemon MUST be running.
 
 ## Retry Behavior
 
-The hook allows **3 attempts** for Gates 2, 3, and 4. Between attempts:
+The hook allows **3 attempts** for Gates 4, 5, and 6. Between attempts:
 
 - The hook pauses and prompts "Fix the errors and press Enter to retry, or Ctrl+C to abort"
 - Fix the failing code, then press Enter
@@ -110,7 +132,23 @@ The hook allows **3 attempts** for Gates 2, 3, and 4. Between attempts:
 
 ## Troubleshooting
 
-### Build Failure (Gate 2)
+### Markdownlint Failure (Gate 2)
+
+| Symptom                    | Fix                                                                     |
+| -------------------------- | ----------------------------------------------------------------------- |
+| MD013 / line-length errors | Reflow paragraphs or use explicit markdownlint disable comments         |
+| Lint binary missing        | Run `npm install` to restore `markdownlint-cli2` dev dependency         |
+| Unexpected lint scope      | Use `.markdownlint.json` and keep hook globs aligned with CI exclusions |
+
+### Formatting Failure (Gate 3)
+
+| Symptom                  | Fix                                                               |
+| ------------------------ | ----------------------------------------------------------------- |
+| Files differ from format | Run `dotnet format MyBlog.slnx`, then `git add -u && git commit` |
+| Analyzer rule violation  | Run `dotnet format MyBlog.slnx --diagnostics <rule-id>` to debug |
+| dotnet format not found  | Install .NET SDK matching `global.json`; format ships with SDK   |
+
+### Build Failure (Gate 4)
 
 | Symptom                  | Fix                                                   |
 | ------------------------ | ----------------------------------------------------- |
@@ -120,7 +158,7 @@ The hook allows **3 attempts** for Gates 2, 3, and 4. Between attempts:
 
 **Escalation:** Run `.github/prompts/build-repair.prompt.md` for automated fix.
 
-### Test Failure (Gate 3)
+### Test Failure (Gate 5)
 
 | Symptom                   | Fix                                                                                                                |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -128,7 +166,7 @@ The hook allows **3 attempts** for Gates 2, 3, and 4. Between attempts:
 | bUnit test failure        | Verify Blazor component rendering; check `Render<T>()` not `RenderComponent<T>()` (bUnit 2.x)                      |
 | DateTime equality failure | Assert individual fields, not whole-record equality (UtcNow varies between calls)                                  |
 
-### Integration Test Failure (Gate 4)
+### Integration Test Failure (Gate 6)
 
 | Symptom                   | Fix                                                             |
 | ------------------------- | --------------------------------------------------------------- |
@@ -148,8 +186,10 @@ chmod +x .git/hooks/pre-push
 ## Anti-Patterns
 
 - ❌ **Bypassing the hook** with `git push --no-verify` — CI will catch it, wasting time
+- ❌ **Committing broken Markdown** — Gate 2 blocks the push; run `npx markdownlint-cli2`
+- ❌ **Committing unformatted code** — Gate 3 blocks the push; run `dotnet format MyBlog.slnx` first
 - ❌ **Running Debug build only** — CI uses Release; Debug hides missing files
-- ❌ **Pushing without Docker** — Gate 4 will block; start Docker first
+- ❌ **Pushing without Docker** — Gate 6 will block; start Docker first
 - ❌ **Ignoring untracked files** — They're invisible to CI and will cause failures
 - ❌ **Committing to `main` directly** — Gate 0 blocks this; use `squad/{issue}-{slug}` branches
 

@@ -7,6 +7,8 @@
 //Project Name :  Web.Tests.Integration
 //=======================================================
 
+using Microsoft.EntityFrameworkCore.Diagnostics;
+
 using Testcontainers.MongoDb;
 
 namespace Web.Infrastructure;
@@ -37,13 +39,13 @@ public sealed class MongoDbFixture : IAsyncLifetime
 	private sealed class TestContextFactory(string connectionString, string dbName)
 		: IDbContextFactory<BlogDbContext>
 	{
-		public BlogDbContext CreateDbContext()
-		{
-			var options = new DbContextOptionsBuilder<BlogDbContext>()
+		private readonly DbContextOptions<BlogDbContext> _options =
+			new DbContextOptionsBuilder<BlogDbContext>()
 				.UseMongoDB(connectionString, dbName)
+				.ConfigureWarnings(w => w.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning))
 				.Options;
-			return new BlogDbContext(options);
-		}
+
+		public BlogDbContext CreateDbContext() => new(_options);
 
 		public Task<BlogDbContext> CreateDbContextAsync(CancellationToken ct = default) =>
 			Task.FromResult(CreateDbContext());

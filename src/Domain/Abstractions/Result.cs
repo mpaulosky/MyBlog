@@ -1,5 +1,5 @@
 //=======================================================
-//Copyright (c) 2026. All rights reserved.
+//Copyright (c) 2025. All rights reserved.
 //File Name :     Result.cs
 //Company :       mpaulosky
 //Author :        Matthew Paulosky
@@ -7,15 +7,7 @@
 //Project Name :  Domain
 //=======================================================
 
-// =======================================================
-// Copyright (c) 2025. All rights reserved.
-// File Name :     Result.cs
-// Company :       mpaulosky
-// Author :        Matthew Paulosky
-// Solution Name : MyBlog
-// Project Name :  Domain
-// =======================================================
-
+using System.Diagnostics.CodeAnalysis;
 namespace MyBlog.Domain.Abstractions;
 
 public enum ResultErrorCode
@@ -24,7 +16,8 @@ public enum ResultErrorCode
 	Concurrency = 1,
 	NotFound = 2,
 	Validation = 3,
-	Conflict = 4
+	Conflict = 4,
+	Unauthorized = 5
 }
 
 public class Result
@@ -140,6 +133,9 @@ public sealed class Result<T> : Result
 	}
 #pragma warning restore CA1000 // Do not declare static members on generic types
 
+	// CA2225 does not recognize Result<T>.ToValue()/FromValue() as valid alternates for
+	// these generic implicit conversions, so suppress the warning only on the operators.
+	[SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "Result<T> already exposes ToValue()/FromValue() named conversion APIs; the implicit conversions are kept intentionally for application ergonomics.")]
 	public static implicit operator T?(Result<T>? result)
 	{
 		if (result is null)
@@ -152,6 +148,7 @@ public sealed class Result<T> : Result
 		return result.Value;
 	}
 
+	[SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "Result<T> already exposes ToValue()/FromValue() named conversion APIs; the implicit conversions are kept intentionally for application ergonomics.")]
 	public static implicit operator Result<T>(T? value)
 	{
 		return Ok(value);

@@ -17,7 +17,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 	// ------------------------------------------------------------------ helpers
 
 	private static BlogPostDto MakeDto(string title = "Test Post") =>
-		new(Guid.NewGuid(), title, "Content", "Author", DateTime.UtcNow, null, true);
+		new(Guid.NewGuid(), title, "Content", string.Empty, "Author", string.Empty, [], DateTime.UtcNow, null, true, null);
 
 	// ------------------------------------------------------------------ tests
 

@@ -15,11 +15,13 @@ public class CreateBlogPostCommandValidatorTests
 {
 	private readonly CreateBlogPostCommandValidator _sut = new();
 
+	private static readonly PostAuthor ValidAuthor = new("id", "Valid Author", "author@example.com", []);
+
 	[Fact]
 	public void Validate_ValidCommand_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("Valid Title", "Valid Content", "Valid Author");
+		var command = new CreateBlogPostCommand("Valid Title", "Valid Content", ValidAuthor);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -28,14 +30,11 @@ public class CreateBlogPostCommandValidatorTests
 		result.IsValid.Should().BeTrue();
 	}
 
-	[Theory]
-	[InlineData("", "Content", "Author")]
-	[InlineData("Title", "", "Author")]
-	[InlineData("Title", "Content", "")]
-	public void Validate_MissingRequiredFields_ReturnsErrors(string title, string content, string author)
+	[Fact]
+	public void Validate_MissingTitle_ReturnsError()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand(title, content, author);
+		var command = new CreateBlogPostCommand("", "Content", ValidAuthor);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -45,10 +44,50 @@ public class CreateBlogPostCommandValidatorTests
 	}
 
 	[Fact]
+	public void Validate_MissingContent_ReturnsError()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "", ValidAuthor);
+
+		// Act
+		var result = _sut.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+	}
+
+	[Fact]
+	public void Validate_NullAuthor_ReturnsError()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "Content", null!);
+
+		// Act
+		var result = _sut.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+	}
+
+	[Fact]
+	public void Validate_AuthorWithEmptyName_ReturnsError()
+	{
+		// Arrange
+		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "", "", []));
+
+		// Act
+		var result = _sut.Validate(command);
+
+		// Assert
+		result.IsValid.Should().BeFalse();
+		result.Errors.Should().Contain(e => e.PropertyName == "Author.Name");
+	}
+
+	[Fact]
 	public void Validate_TitleExceedsMaxLength_ReturnsError()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand(new string('A', 201), "Content", "Author");
+		var command = new CreateBlogPostCommand(new string('A', 201), "Content", ValidAuthor);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -59,37 +98,10 @@ public class CreateBlogPostCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_AuthorExceedsMaxLength_ReturnsError()
-	{
-		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", new string('A', 101));
-
-		// Act
-		var result = _sut.Validate(command);
-
-		// Assert
-		result.IsValid.Should().BeFalse();
-		result.Errors.Should().ContainSingle(e => e.PropertyName == "Author");
-	}
-
-	[Fact]
 	public void Validate_TitleAtMaxLength_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand(new string('A', 200), "Content", "Author");
-
-		// Act
-		var result = _sut.Validate(command);
-
-		// Assert
-		result.IsValid.Should().BeTrue();
-	}
-
-	[Fact]
-	public void Validate_AuthorAtMaxLength_ReturnsNoErrors()
-	{
-		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", new string('A', 100));
+		var command = new CreateBlogPostCommand(new string('A', 200), "Content", ValidAuthor);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -102,7 +114,7 @@ public class CreateBlogPostCommandValidatorTests
 	public void Validate_WhitespaceTitle_ReturnsError()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("   ", "Content", "Author");
+		var command = new CreateBlogPostCommand("   ", "Content", ValidAuthor);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -113,24 +125,10 @@ public class CreateBlogPostCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_WhitespaceAuthor_ReturnsError()
-	{
-		// Arrange
-		var command = new CreateBlogPostCommand("Title", "Content", "   ");
-
-		// Act
-		var result = _sut.Validate(command);
-
-		// Assert
-		result.IsValid.Should().BeFalse();
-		result.Errors.Should().Contain(e => e.PropertyName == "Author");
-	}
-
-	[Fact]
 	public void Validate_WhitespaceContent_ReturnsError()
 	{
 		// Arrange
-		var command = new CreateBlogPostCommand("Title", "   ", "Author");
+		var command = new CreateBlogPostCommand("Title", "   ", ValidAuthor);
 
 		// Act
 		var result = _sut.Validate(command);

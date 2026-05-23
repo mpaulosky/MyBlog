@@ -40,6 +40,101 @@ public class ProfileTests : BunitContext
 	}
 
 	[Fact]
+	public void ProfileUsesOpenIdEmailClaimWhenFrameworkMappedEmailClaimIsMissing()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|oidc-admin",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("email", "oidc-admin@example.com")
+				]);
+
+		// Act
+		var cut = RenderForUser(principal);
+		var emailLine = cut.Find("section.card div.space-y-2 > p");
+
+		// Assert
+		emailLine.TextContent.Trim().Should().Be("oidc-admin@example.com");
+	}
+
+	[Fact]
+	public void ProfileUsesPreferredUsernameAsEmailFallbackWhenDirectEmailClaimsAreMissing()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|preferred-username",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("preferred_username", "preferred-admin@example.com")
+				]);
+
+		// Act
+		var cut = RenderForUser(principal);
+		var emailLine = cut.Find("section.card div.space-y-2 > p");
+
+		// Assert
+		emailLine.TextContent.Trim().Should().Be("preferred-admin@example.com");
+	}
+
+	[Fact]
+	public void ProfileUsesNamespacedEmailClaimTailWhenDirectEmailClaimsAreMissing()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|namespaced-email",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("https://schemas.example.com/email", "namespaced-admin@example.com")
+				]);
+
+		// Act
+		var cut = RenderForUser(principal);
+		var emailLine = cut.Find("section.card div.space-y-2 > p");
+
+		// Assert
+		emailLine.TextContent.Trim().Should().Be("namespaced-admin@example.com");
+	}
+
+	[Fact]
+	public void ProfileIgnoresNonStringEntriesInJsonEmailsClaimAndUsesFirstStringEmail()
+	{
+		// Arrange
+		var principal = CreatePrincipal(
+				name: "Admin User",
+				email: null,
+				userId: "auth0|json-emails",
+				pictureUrl: null,
+				rolesJson: null,
+				extraClaims:
+				[
+					new Claim("emails", "[{\"value\":\"ignore-me\"},\"json-array@example.com\",42]")
+				]);
+
+		IRenderedComponent<Profile>? cut = null;
+		Action act = () => cut = RenderForUser(principal);
+
+		// Act
+		act.Should().NotThrow();
+
+		// Assert
+		cut.Should().NotBeNull();
+		cut!.Find("section.card div.space-y-2 > p").TextContent.Trim().Should().Be("json-array@example.com");
+	}
+
+	[Fact]
 	public void ProfileUsesFallbackValuesWhenOptionalClaimsAreMissing()
 	{
 		// Arrange
@@ -76,15 +171,15 @@ public class ProfileTests : BunitContext
 		// Act
 		var cut = RenderForUser(principal);
 
-		// Assert — the roles card Admin span must carry red Tailwind classes
+		// Assert — the roles card Admin span must carry solid red Tailwind classes
 		var adminBadge = cut.FindAll("span")
 				.FirstOrDefault(span =>
 						span.TextContent.Trim() == "Admin"
 						&& span.GetAttribute("class") is { } cls
-						&& cls.Contains("bg-red-100"));
+						&& cls.Contains("bg-red-700", StringComparison.Ordinal));
 
-		adminBadge.Should().NotBeNull("Admin role should render with red-100 background");
-		adminBadge!.GetAttribute("class").Should().Contain("text-red-800");
+		adminBadge.Should().NotBeNull("Admin role should render with red-700 background");
+		adminBadge.GetAttribute("class").Should().Contain("text-white");
 	}
 
 	[Fact]
@@ -102,15 +197,15 @@ public class ProfileTests : BunitContext
 		// Act
 		var cut = RenderForUser(principal);
 
-		// Assert — the roles card Author span must carry green Tailwind classes
+		// Assert — the roles card Author span must carry solid green Tailwind classes
 		var authorBadge = cut.FindAll("span")
 				.FirstOrDefault(span =>
 						span.TextContent.Trim() == "Author"
 						&& span.GetAttribute("class") is { } cls
-						&& cls.Contains("bg-green-100"));
+						&& cls.Contains("bg-green-700", StringComparison.Ordinal));
 
-		authorBadge.Should().NotBeNull("Non-admin role should render with green-100 background");
-		authorBadge!.GetAttribute("class").Should().Contain("text-green-800");
+		authorBadge.Should().NotBeNull("Non-admin role should render with green-700 background");
+		authorBadge.GetAttribute("class").Should().Contain("text-white");
 	}
 
 	[Fact]
@@ -128,14 +223,14 @@ public class ProfileTests : BunitContext
 		// Act
 		var cut = RenderForUser(principal);
 
-		// Assert — the header-area Admin badge (title="Administrator") must use red-600 bg
+		// Assert — the header-area Admin badge (title="Administrator") must use red-700 bg
 		var headerBadge = cut.FindAll("span")
 				.FirstOrDefault(span =>
 						span.GetAttribute("title") == "Administrator"
 						&& span.GetAttribute("class") is { } cls
-						&& cls.Contains("bg-red-600"));
+						&& cls.Contains("bg-red-700", StringComparison.Ordinal));
 
-		headerBadge.Should().NotBeNull("Header Admin badge should render with bg-red-600");
+		headerBadge.Should().NotBeNull("Header Admin badge should render with bg-red-700");
 	}
 
 	private IRenderedComponent<Profile> RenderForUser(ClaimsPrincipal principal)

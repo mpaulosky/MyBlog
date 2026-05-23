@@ -1,0 +1,219 @@
+@page "/admin/categories"
+@using MyBlog.Web.Features.Categories.Create
+@using MyBlog.Web.Features.Categories.Edit
+@using MyBlog.Web.Features.Categories.Delete
+@inject ISender Sender
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin")]
+
+<PageHeadingComponent HeaderText="Manage Categories" Level="1" TextColorClass="text-primary-900 dark:text-primary-50" />
+
+@if (_error is not null)
+{
+	<div class="alert-error" role="alert">
+		<span>@_error</span>
+		<button type="button" class="alert-dismiss" @onclick="() => _error = null">&times;</button>
+	</div>
+}
+
+@* Create form *@
+<div class="form-panel mb-6">
+	<h2 class="text-base font-semibold mb-4 text-primary-900 dark:text-primary-50">Add Category</h2>
+	<EditForm Model="_createModel" OnValidSubmit="HandleCreate">
+		<DataAnnotationsValidator />
+		<ValidationSummary class="mb-2" />
+		<div class="form-group">
+			<label class="form-label">Name</label>
+			<InputText class="form-input" @bind-Value="_createModel.Name" />
+		</div>
+		<div class="form-group">
+			<label class="form-label">Description</label>
+			<InputText class="form-input" @bind-Value="_createModel.Description" />
+		</div>
+		<button type="submit" class="btn-primary">Add</button>
+	</EditForm>
+</div>
+
+@* Categories table *@
+@if (_loading)
+{
+	<p class="text-gray-600 dark:text-gray-400" role="status">Loading...</p>
+}
+else if (!_categories.Any())
+{
+	<p class="text-gray-600 dark:text-gray-400">No categories yet. Use the form above to add one.</p>
+}
+else
+{
+	<div class="table-wrapper">
+		<table class="data-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Description</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var cat in _categories)
+				{
+					@if (_editingId == cat.Id)
+					{
+						<tr>
+							<td colspan="3">
+								<EditForm Model="_editModel" OnValidSubmit="HandleEdit">
+									<DataAnnotationsValidator />
+									<div class="flex gap-2 items-start flex-wrap">
+										<div class="flex-1 min-w-0">
+											<InputText class="form-input w-full" @bind-Value="_editModel.Name" placeholder="Name" />
+										</div>
+										<div class="flex-1 min-w-0">
+											<InputText class="form-input w-full" @bind-Value="_editModel.Description" placeholder="Description" />
+										</div>
+										<div class="flex gap-2 flex-shrink-0">
+											<button type="submit" class="btn-primary">Save</button>
+											<button type="button" class="btn-secondary" @onclick="CancelEdit">Cancel</button>
+										</div>
+									</div>
+									<ValidationSummary class="mt-1" />
+								</EditForm>
+							</td>
+						</tr>
+					}
+					else
+					{
+						<tr>
+							<td>@cat.Name</td>
+							<td>@cat.Description</td>
+							<td>
+								<button class="btn-secondary mr-1" @onclick="() => BeginEdit(cat)">Edit</button>
+								<button class="btn-destructive" @onclick="() => ConfirmDelete(cat)">Delete</button>
+							</td>
+						</tr>
+					}
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+@* Inline delete confirmation *@
+@if (_deleteTarget is not null)
+{
+	<div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" @onclick="() => _deleteTarget = null">
+		<div class="rounded-lg shadow-xl p-6 max-w-md w-full mx-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
+				 @onclick:stopPropagation="true" role="dialog" aria-labelledby="cat-delete-title">
+			<h5 id="cat-delete-title" class="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">Confirm Delete</h5>
+			<p class="text-gray-900 dark:text-gray-50 mb-2">
+				Delete category <strong>@_deleteTarget.Name</strong>?
+			</p>
+			<p class="text-red-600 dark:text-red-400 text-sm mb-4">This action cannot be undone.</p>
+			<div class="flex gap-2 justify-end">
+				<button class="btn-destructive" @onclick="ExecuteDelete">Delete</button>
+				<button class="btn-secondary" @onclick="() => _deleteTarget = null">Cancel</button>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	private IReadOnlyList<CategoryDto> _categories = [];
+	private bool _loading = true;
+	private string? _error;
+
+	private readonly CategoryFormModel _createModel = new();
+	private Guid? _editingId;
+	private readonly CategoryEditModel _editModel = new();
+	private CategoryDto? _deleteTarget;
+
+	protected override async Task OnInitializedAsync() => await LoadAsync();
+
+	private async Task LoadAsync()
+	{
+		_loading = true;
+		var result = await Sender.Send(new GetCategoriesQuery());
+		if (result.Success)
+		{
+			_categories = result.Value!;
+			_error = null;
+		}
+		else
+		{
+			_categories = [];
+			_error = result.Error;
+		}
+		_loading = false;
+	}
+
+	private async Task HandleCreate()
+	{
+		var result = await Sender.Send(new CreateCategoryCommand(_createModel.Name, _createModel.Description));
+		if (result.Success)
+		{
+			_createModel.Name = string.Empty;
+			_createModel.Description = string.Empty;
+			await LoadAsync();
+		}
+		else
+		{
+			_error = result.Error;
+		}
+	}
+
+	private void BeginEdit(CategoryDto category)
+	{
+		_editingId = category.Id;
+		_editModel.Name = category.Name;
+		_editModel.Description = category.Description;
+	}
+
+	private void CancelEdit() => _editingId = null;
+
+	private async Task HandleEdit()
+	{
+		if (_editingId is null) return;
+		var result = await Sender.Send(new EditCategoryCommand(_editingId.Value, _editModel.Name, _editModel.Description));
+		if (result.Success)
+		{
+			_editingId = null;
+			await LoadAsync();
+		}
+		else
+		{
+			_error = result.Error;
+		}
+	}
+
+	private void ConfirmDelete(CategoryDto category) => _deleteTarget = category;
+
+	private async Task ExecuteDelete()
+	{
+		if (_deleteTarget is null) return;
+		var result = await Sender.Send(new DeleteCategoryCommand(_deleteTarget.Id));
+		if (result.Failure) _error = result.Error;
+		_deleteTarget = null;
+		await LoadAsync();
+	}
+
+	private sealed class CategoryFormModel
+	{
+		[System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Name is required.")]
+		[System.ComponentModel.DataAnnotations.MaxLength(100, ErrorMessage = "Name must not exceed 100 characters.")]
+		public string Name { get; set; } = string.Empty;
+
+		[System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Description is required.")]
+		[System.ComponentModel.DataAnnotations.MaxLength(500, ErrorMessage = "Description must not exceed 500 characters.")]
+		public string Description { get; set; } = string.Empty;
+	}
+
+	private sealed class CategoryEditModel
+	{
+		[System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Name is required.")]
+		[System.ComponentModel.DataAnnotations.MaxLength(100, ErrorMessage = "Name must not exceed 100 characters.")]
+		public string Name { get; set; } = string.Empty;
+
+		[System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Description is required.")]
+		[System.ComponentModel.DataAnnotations.MaxLength(500, ErrorMessage = "Description must not exceed 500 characters.")]
+		public string Description { get; set; } = string.Empty;
+	}
+}

@@ -1,7 +1,5 @@
 <header>
-	<nav class="fixed top-0 left-0 right-0 z-50
-		bg-primary-600 dark:bg-primary-600
-		border-b-2 border-primary-200 dark:border-primary-200" aria-label="Main navigation">
+	<nav aria-label="Main navigation">
 		<div class="mx-auto max-w-7xl px-4">
 			<div class="flex items-center justify-between h-16">
 
@@ -11,7 +9,7 @@
 				@* Mobile hamburger (pure CSS peer toggle — no JS required) *@
 				<input type="checkbox" id="menu-toggle" class="peer sr-only" aria-hidden="true" />
 				<label for="menu-toggle"
-							 class="md:hidden cursor-pointer p-2 rounded hover:bg-primary-500 dark:hover:bg-primary-600 text-white"
+							 class="md:hidden cursor-pointer p-2 rounded hover:bg-primary-400 dark:hover:bg-primary-800 text-primary-900 dark:text-primary-500"
 							 aria-label="Toggle navigation" role="button" tabindex="0">
 					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -32,6 +30,12 @@
 					<AuthorizeView>
 						<Authorized>
 							<NavLink class="nav-link" href="profile">@GetProfileLabel(context.User)</NavLink>
+						</Authorized>
+					</AuthorizeView>
+
+					<AuthorizeView Roles="Admin">
+						<Authorized>
+							<NavLink class="nav-link" href="admin/categories">Categories</NavLink>
 						</Authorized>
 					</AuthorizeView>
 
@@ -70,6 +74,12 @@
 				<AuthorizeView>
 					<Authorized>
 						<NavLink class="nav-link py-2 block" href="profile">@GetProfileLabel(context.User)</NavLink>
+					</Authorized>
+				</AuthorizeView>
+
+				<AuthorizeView Roles="Admin">
+					<Authorized>
+						<NavLink class="nav-link py-2 block" href="admin/categories">Categories</NavLink>
 					</Authorized>
 				</AuthorizeView>
 

@@ -1,0 +1,295 @@
+//=======================================================
+//Copyright (c) 2026. All rights reserved.
+//File Name :     EditAclTests.cs
+//Company :       mpaulosky
+//Author :        Matthew Paulosky
+//Solution Name : MyBlog
+//Project Name :  Web.Tests.Bunit
+//=======================================================
+
+using MediatR;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
+
+using MyBlog.Domain.Abstractions;
+using MyBlog.Web.Features.BlogPosts.Edit;
+
+using Web.Testing;
+
+namespace Web.Features;
+
+public class EditAclTests : BunitContext
+{
+	private readonly TestAuthenticationStateProvider _authProvider = new();
+
+	public EditAclTests()
+	{
+		JSInterop.Mode = JSRuntimeMode.Loose;
+		Services.AddAuthorizationCore();
+		Services.AddSingleton<IAuthorizationService, TestAuthorizationService>();
+		Services.AddSingleton<AuthenticationStateProvider>(_authProvider);
+		Services.AddSingleton(Substitute.For<IFileStorage>());
+	}
+
+	[Fact]
+	public void EditRedirectsToBlogWhenPostNotFound()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(null)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub("auth0|some-user", ["Author"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Assert
+		navigation.Uri.Should().EndWith("/blog");
+		cut.Markup.Should().NotContain("Loading...");
+	}
+
+	[Fact]
+	public void EditRedirectsToBlogWhenAuthorIsNotPostOwner()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+		const string NonOwnerSub = "auth0|other-user";
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		RenderWithUser<Edit>(
+				CreatePrincipalWithSub(NonOwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Assert
+		navigation.Uri.Should().EndWith("/blog");
+	}
+
+	[Fact]
+	public void EditAllowsAccessWhenAuthorIsPostOwner()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Assert
+		navigation.Uri.Should().NotEndWith("/blog");
+		cut.Markup.Should().Contain("Edit Post");
+	}
+
+	[Fact]
+	public void EditShowsErrorWhenServerReturnsUnauthorized()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Act
+		cut.Find("button[type='submit']").Click();
+
+		// Assert
+		cut.WaitForAssertion(() =>
+				cut.Markup.Should().Contain("You don't have permission to edit this post."));
+		navigation.Uri.Should().NotEndWith("/blog");
+	}
+
+	[Fact]
+	public void EditAllowsAdminToEditAnyPost()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = Guid.NewGuid();
+		const string OwnerSub = "auth0|some-author";
+		const string AdminSub = "auth0|admin-user";
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "SomeAuthor", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+
+		Services.AddSingleton(sender);
+
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(AdminSub, ["Admin"]),
+				parameters => parameters.Add(p => p.Id, postId));
+
+		// Assert
+		navigation.Uri.Should().NotEndWith("/blog");
+		cut.Markup.Should().Contain("Edit Post");
+	}
+
+	[Fact]
+	public void EditShowsNewPostContentAfterParameterChange()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var secondPost = new BlogPostDto(secondPostId, "Second Post Title", "Second Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(secondPost)));
+
+		Services.AddSingleton(sender);
+
+		// Act — first render
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+
+		// Act — change parameters to a different post
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — second post content shown, loading indicator gone, no stale first-post content
+		cut.Markup.Should().Contain("Second Post Title");
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+	}
+
+	[Fact]
+	public void EditClearsStaleContentOnErrorAfterSuccessfulLoad()
+	{
+		// Arrange: first load succeeds, second load fails
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Fail<BlogPostDto?>("Post could not be loaded.")));
+
+		Services.AddSingleton(sender);
+
+		// Act — first render succeeds
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+
+		// Act — second render returns error
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — stale form content gone, error shown
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+		cut.Markup.Should().Contain("Post could not be loaded.");
+	}
+
+	[Fact]
+	public void EditClearsStaleContentOnNullAfterSuccessfulLoad()
+	{
+		// Arrange: first load succeeds, second returns null (post not found)
+		var sender = Substitute.For<ISender>();
+		var firstPostId = Guid.NewGuid();
+		var secondPostId = Guid.NewGuid();
+		const string OwnerSub = "auth0|owner-user";
+
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(null)));
+
+		Services.AddSingleton(sender);
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act — first render succeeds
+		var cut = RenderWithUser<Edit>(
+				CreatePrincipalWithSub(OwnerSub, ["Author"]),
+				parameters => parameters.Add(p => p.Id, firstPostId));
+
+		cut.Markup.Should().Contain("First Post Title");
+
+		// Act — second render: post not found → should redirect
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+
+		// Assert — redirected and no stale form content visible
+		navigation.Uri.Should().EndWith("/blog");
+		cut.Markup.Should().NotContain("First Post Title");
+		cut.Markup.Should().NotContain("Loading...");
+	}
+
+	private IRenderedComponent<TComponent> RenderWithUser<TComponent>(
+			ClaimsPrincipal principal,
+			Action<ComponentParameterCollectionBuilder<TComponent>>? configure = null)
+			where TComponent : IComponent
+	{
+		_authProvider.SetUser(principal);
+		return Render<TComponent>(parameters =>
+		{
+			parameters.AddCascadingValue(Task.FromResult(new AuthenticationState(principal)));
+			configure?.Invoke(parameters);
+		});
+	}
+
+	private static ClaimsPrincipal CreatePrincipalWithSub(string sub, string[] roles)
+	{
+		var claims = new List<Claim> { new("sub", sub) };
+		claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+		return new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth", null, ClaimTypes.Role));
+	}
+}

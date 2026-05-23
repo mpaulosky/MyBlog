@@ -10,11 +10,13 @@
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Auth0.AspNetCore.Authentication" />
     <PackageReference Include="Auth0.ManagementApi" />
-    <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="HtmlSanitizer" />
+    <PackageReference Include="Markdig" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="MongoDB.EntityFrameworkCore" />
+    <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" />
     <PackageReference Include="Snappier" />
   </ItemGroup>
 
@@ -30,6 +32,13 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
   </PropertyGroup>
+
+  <!-- On a fresh machine, node_modules won't exist. Auto-run npm install before Tailwind builds. -->
+  <Target Name="EnsureNpmPackages" BeforeTargets="BuildTailwind"
+          Condition="'$(CI)' != 'true' AND !Exists('$(MSBuildProjectDirectory)/../../node_modules')">
+    <Message Importance="high" Text="node_modules not found — running npm install..." />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
+  </Target>
 
   <!-- Build Tailwind CSS (skip on CI environments where npm is not installed) -->
   <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true'">

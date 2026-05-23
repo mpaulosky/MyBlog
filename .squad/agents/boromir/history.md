@@ -48,6 +48,145 @@
 
 ## Learnings
 
+### 2026-05-19 — Issue #348: Resolve Remaining Database Runtime Issues (post-PR #346 investigation)
+
+**Context:** Issue #348 was opened because MongoDB container crashes were still visible after PR #346 (which pinned `mongo:7` + `mongo-data-v7`). Assigned to Boromir + Sam + Gimli.
+
+**Root cause identified via `ps aux` + `docker ps -a`:** The running Aspire AppHost process was
+`/home/mpaulosky/github/MyBlog/src/AppHost/bin/Debug/net10.0/AppHost.dll` — built from the
+**MAIN REPO**, not the worktree. The main repo's local `dev` branch was 2 commits behind
+`origin/dev`, missing both PR #346 (image/volume fix) and PR #347 (docs). As a result, Aspire
+was still launching `mongo:8.2` against the old `mongo-data` volume → exit 139 (SIGSEGV, AVX).
+
+**How to identify which AppHost DLL is active:**
+
+```bash
+ps aux | grep AppHost.dll
+# DLL path reveals the repo root; compare to git log in that repo to confirm branch/commit
+```
+
+**Volume state at investigation time:**
+
+- `mongo-data` — FCV-contaminated (written by mongo:8.2; UUID-format collection files). MongoDB 7 refuses it with exit 62.
+- `mongo-data-v7` — clean, numeric-ident format (WiredTiger 11.x, mongo:7-compatible), lock file 0 bytes. Safe to use.
+
+**Remediation steps performed:**
+
+1. `git pull origin dev` on main repo — fast-forwarded to `883137f`, pulling both PR #346 + #347.
+2. `dotnet restore` + `dotnet build src/AppHost/AppHost.csproj -c Debug` — rebuilt with correct `mongo:7` + `mongo-data-v7` config. **0 errors.**
+3. Next Aspire session will start MongoDB with the correct image and volume.
+
+**Worktree code review:** `src/AppHost/AppHost.cs` in the worktree was already correct.
+`Web/Program.cs`, `BlogDbContext.cs`, and all repository code confirmed correct. No
+application-layer changes needed.
+
+**All tests confirmed passing:**
+
+- `MongoDbContainerConfigurationTests` — 4/4 (image tag + volume regression coverage)
+- `Web.Tests.Integration` (Testcontainers) — 29/29
+
+**Key lesson — developer environment sync:** When a squad member opens a new Aspire session,
+verify the running process DLL matches the current worktree. Use `ps aux | grep AppHost` to
+identify which build is active. If the main repo's `dev` branch is behind `origin/dev`, pull
+before starting. Stale local branches silently run old infra code.
+
+**Standing rule added to MongoDB DBA skill:** Added "Running environment sync check" rule —
+document the `ps aux` diagnostic and the importance of syncing the main repo dev branch after
+merged PRs.
+
+**Changed files:**
+
+- `.squad/agents/boromir/history.md` — this entry
+- `.squad/skills/mongodb-dba-patterns/SKILL.md` — running environment sync rule added
+
+**Note:** Architectural decision captured separately for Scribe merge into `.squad/decisions.md`.
+
+---
+
+### 2026-05-19 — Issue #345: Fix AppHost MongoDB Container Crash (exit code 139 + exit code 62)
+
+**Finding (pass 1):** MongoDB 8.x (the `Aspire.Hosting.MongoDB` 13.3.3 default image `mongo:8.2`) requires AVX CPU instructions on x86-64 hosts. Virtualized environments that do not expose AVX cause MongoDB 8.x to SIGSEGV immediately → container exit code 139, OOMKilled=false, ~30 s after start. Fix: pin to `mongo:7` via `.WithImageTag("7")`.
+
+**Finding (pass 2 — runtime smoke):** After the image tag fix, MongoDB 7 started but then exited with code 62.
+Docker logs: `Wrong mongod version` and `Invalid featureCompatibilityVersion document ... version: "8.2" ... expected ... "7.0"`.
+The persistent `mongo-data` Docker volume had been initialized by `mongo:8.2`; MongoDB 7 refuses to open data
+files written by a newer major version. Fix: rename volume to `mongo-data-v7` for a fresh, compatible volume.
+
+**Secondary finding:** `AppHost.csproj` SDK attribute was `Aspire.AppHost.Sdk/13.3.2` while all Aspire hosting packages in `Directory.Packages.props` were at `13.3.3`. Version mismatch corrected.
+
+**Changed files:**
+
+- `src/AppHost/AppHost.cs` — `.WithImageTag("7")` + `.WithDataVolume("mongo-data-v7")` on the `AddMongoDB` chain.
+- `src/AppHost/AppHost.csproj` — `Aspire.AppHost.Sdk` bumped `13.3.2` → `13.3.3` to match `Directory.Packages.props`.
+
+**Volume naming convention:** version-suffix the volume name (`mongo-data-v{major}`) whenever the MongoDB major version changes on an environment with a pre-existing persistent volume. This avoids featureCompatibilityVersion mismatch crashes without requiring manual `docker volume rm`.
+
+**Validation performed:**
+
+- `dotnet build --configuration Release` (full solution) — **Build succeeded, 0 Warnings, 0 Errors**
+- Architecture.Tests: Passed 16/16; Domain.Tests: Passed 67/67; Web.Tests: Passed 210/210; Web.Tests.Bunit: Passed 104/104 — **397 tests, 0 failures**
+- Integration tests (Docker-backed) not run in this pass — AppHost infra-only change; integration suite is Gimli's gate.
+
+**Worktree:** `squad/345-fix-apphost-mongodb-crash` at `/home/mpaulosky/github/MyBlog-345` (not pushed; coordinator to reconcile fan-out).
+
+---
+
+### 2026-05-14 — Issue #337: Archive Self-Authored PR Gate Skill
+
+**What was done:** Created `.squad/skills/self-authored-pr-gate/SKILL.md` documenting the workflow pattern discovered during PR #336 (self-authored Aspire/markdown upgrade) and updated `.squad/agents/aragorn/history.md` with Aragorn's gate review findings.
+
+**Context:** PR #336 had Boromir as author and Aragorn as lead reviewer. GitHub returns `422: Can not approve your own pull request` when the reviewer account is also the PR author, preventing the standard lead-gate approve verdict. Instead, the gate relied on:
+
+1. CI fully green (build, tests, security, coverage)
+2. Copilot automated review (no unresolved bugs/security findings)
+3. Codecov bot (no material regression)
+4. Domain-specialist review perspective documented
+
+**Key lesson:** For self-authored PRs where lead review is locked out by GitHub's constraint, explicitly document the alternative path (CI + Copilot + Codecov + specialist input) so future gate reviews aren't confused by the missing approval. The skill captures this as a standing process rule.
+
+**Files:** Committed `.squad/skills/self-authored-pr-gate/SKILL.md` and updated `.squad/agents/aragorn/history.md`. Created issue #337 and PR #338.
+
+**Branch cleanup:** Verified no orphaned merged branches remain locally or remotely after Sprint 15 merges. Pre-push hook gates all passed (markdown lint, formatting, release build, unit/architecture/integration tests).
+
+---
+
+### 2026-05-11 — Issue #289: dotnet format gate added to pre-push hook
+
+**What was done:** Added Gate 2 (`dotnet format --verify-no-changes`) to the pre-push hook between Gate 1 (untracked files) and the former Gate 2 (now Gate 3 — Release build). Gates 2–4 (build, unit tests, integration) renumbered to 3–5.
+
+**Key decisions:**
+
+- Gate uses `--verify-no-changes` (check mode, not mutating) so it always blocks on dirty formatting
+- On failure, hook offers interactive auto-fix (y/N via `/dev/tty`) — same pattern as Gate 1
+- If auto-fix is chosen, files are formatted in working tree but push is still blocked; user must stage, commit, and re-push (correct behavior — staged changes belong in a commit)
+- `dotnet format` exits with code **2** (not 1) when files would be changed; the hook checks `$FORMAT_EXIT -ne 0` which covers both non-zero codes
+
+**Files changed:**
+
+- `.github/hooks/pre-push` — added Gate 2, renumbered 2→3, 3→4, 4→5
+- `scripts/install-hooks.sh` — updated gate count (5→6) and summary list
+- `.squad/playbooks/pre-push-process.md` — updated pre-flight checklist, gate table, troubleshooting, and anti-patterns
+- `.squad/skills/pre-push-test-gate/SKILL.md` — updated gate summary
+
+**Validation:** Confirmed `dotnet format MyBlog.slnx --verify-no-changes` exits 2 when repo has formatting issues; exits 0 when clean. Bash syntax validated with `bash -n`.
+
+**Note:** Repo had pre-existing formatting violations (whitespace and import ordering in test files). These are out of scope for this issue and should be tracked separately.
+
+---
+
+### 2026-05-08 — Sprint 18 Release PR #272
+
+**What was done:** Opened release PR #272 to promote `dev` → `main` for Sprint 18 (AppHost
+MongoDB Dev Commands Refactor). Verified Squad CI was green on `dev`. Noted one flaky test
+(`SeedMyBlogData Concurrent Invocations Allow Only One Run` — timing race in test harness, not
+prod code) in the Test Suite workflow; Squad CI gate remained authoritative and green. PR body
+includes Sprint 18 summary (PRs #262, #263, #264, #267, #270, #271), CI status note, and standard
+release checklist per playbook. Awaiting Aragorn approval and PR CI pass before merge.
+
+**PR:** #272 — https://github.com/mpaulosky/MyBlog/pull/272
+
+---
+
 ### 2026-05-XX — Issue #269: Blog → README Sync workflow branch protection fix
 
 **Problem:** `blog-readme-sync.yml` pushed directly to `main` after updating `README.md`, which is blocked by branch protection rules (direct pushes forbidden, "Build Solution" check required).
@@ -57,6 +196,7 @@
 **Key insight:** The `permissions: contents: write` block was already present. No new secrets or PAT bypass needed. One-line change.
 
 **Decision:** Captured in `.squad/decisions/inbox/boromir-269-readme-sync-target.md`.
+
 ### 2026-05-08 — Issue #268: Fix squad-mark-released GraphQL Permission Error
 
 **Root cause:**
@@ -1308,3 +1448,251 @@ the runtime theme test can become interactive, toggle light/dark, navigate to
 
 - **Sam:** Implement actual MongoDB collection clearing logic inside the command handler (connect to the mongodb resource endpoint, enumerate collections, drop non-system collections, return per-collection counts)
 - **Gimli:** Write automated coverage for #247 AC4: verify (a) command annotation exists on mongodb resource in RunMode, (b) `ConfirmationMessage` is non-null, (c) `UpdateState` returns `Disabled` when `HealthStatus != Healthy`, (d) handler returns `Success = true` with zero-deletion message
+
+---
+
+## 2026-05-10 — Workflow Lints: Add Markdown & YAML Linting to CI
+
+**Issue:** #287 — [Feature] Add markdown lint and YAML lint GitHub Actions workflows  
+**PR:** #288  
+**Branch:** squad/287-lint-workflows  
+**Status:** ✅ Complete — PR ready for review
+
+### Work Completed
+
+Added two new GitHub Actions workflows to the `.github/workflows/` directory:
+
+1. **`lint-markdown.yml`**
+   - Uses `DavidAnson/markdownlint-cli2-action@v23`
+   - References existing `.markdownlint.json` (no duplication)
+   - Triggers: `push` to `[dev, insider]` + `pull_request` to `[dev, preview, main, insider]`
+   - Paths filtered to markdown files only
+
+2. **`lint-yaml.yml`**
+   - Uses `ibiqlik/action-yamllint@v3`
+   - **Inline config** (no separate `.yamllint.yml` file) tuned to MyBlog conventions:
+     - `line-length: max: 200` (GitHub Actions workflows are verbose)
+     - `truthy: allowed-values: ['true', 'false', 'on']` (GitHub event triggers use `on:`)
+     - `brackets: min-spaces-inside: 0, max-spaces-inside: 1`
+   - Same trigger pattern as markdown workflow
+
+### Design Decisions
+
+- **Markdown config reuse:** The repo already has `.markdownlint.json` (used by pre-commit hook). Referencing it in the workflow avoids duplication and maintains a single source of truth.
+- **YAML inline config:** No separate dotfile. The workflow is self-documenting and removes management overhead for a single linting rule set.
+- **Checkout version:** `actions/checkout@v6` — consistent with all other MyBlog workflows.
+- **Reference:** BlogApp workflows were consulted for pattern, but conventions adapted to MyBlog's branch model (`dev` + `insider` for push, expanded set for PR).
+
+### Reference Decision
+
+Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md`)
+
+### Next Steps
+
+- Review PR #288 for approval
+- Merge to `dev` branch
+- Workflows become active on next push/PR to dev, insider, or main
+
+## Learnings
+
+### Issue #299 — Pre-Push Gate: AppHost.Tests Was Missing from Live Hook (2026-05-11)
+
+**Root cause:** The playbook and SKILL.md documented `AppHost.Tests` as mandatory in Gate 5, but the live `.github/hooks/pre-push` `INTEGRATION_PROJECTS` array only contained `Web.Tests.Integration`. The hook and docs were out of sync.
+
+**Changes made:**
+
+- `.github/hooks/pre-push` — Added `AppHost.Tests` to `INTEGRATION_PROJECTS` (Gate 5)
+- `.squad/playbooks/pre-push-process.md` — Removed 4 non-existent test projects from Gate 4/5 lists; fixed `IssueTrackerApp.slnx` → `MyBlog.slnx`; corrected counts in the gate table
+- `scripts/install-hooks.sh` — Corrected Gate 4/5 descriptions in echo summary; replaced informal `--no-verify` tip with the policy statement
+
+**Learnings:**
+
+- Hook arrays and playbook project lists are a dual-maintenance surface. Any future test project addition must land in BOTH the hook array and the playbook simultaneously.
+- Use this quick alignment check: `grep -r "csproj" .github/hooks/pre-push .squad/playbooks/pre-push-process.md scripts/install-hooks.sh`
+- Stale playbook content (6 test projects, Azurite-backed projects) can mislead agents into believing gates exist that don't — documentation debt has real enforcement consequences.
+- The `--no-verify` policy must be stated consistently across all three surfaces (hook comment, playbook, install script); having a permissive "skip in an emergency" line in `install-hooks.sh` while the playbook hard-blocks it created a contradiction.
+
+### Issue #299 — Round 3: docs/CONTRIBUTING.md alignment + bypass policy doc (2026-05-11)
+
+**Context:** Ralph's work-check cycle Round 3 confirmed the source hook and installed hook were already in sync. This round focused on the remaining documentation drift.
+
+**Changes made (PR squad/299-prepush-gate-alignment):**
+
+- `.github/hooks/pre-push` — Added `⚠️ BYPASS POLICY` comment at header (prohibits --no-verify without approval)
+- `docs/CONTRIBUTING.md` — Corrected gate table from 5→6 gates; fixed Gate 3 as "dotnet format", Gate 3 as "Release build", Gate 4 as unit tests (4 projects), Gate 5 as integration tests (2 projects); removed references to non-existent `tests/Unit.Tests` and `tests/Integration.Tests`; updated bypass policy language
+- `scripts/install-hooks.sh` — Already had correct descriptions from prior round
+- `.squad/playbooks/pre-push-process.md` — Already had correct content from prior round
+
+**Learnings:**
+
+- `docs/CONTRIBUTING.md` is a third maintenance surface beyond the hook and playbook. All three must be checked on hook changes.
+- Gate numbering in docs must match the hook source exactly (0–5, not 0–4).
+
+### Issue #305 — PR #306 Blocker: Released Option Did Not Exist on Project Board (2026-05-11)
+
+**Root cause:** `RELEASED_OPTION_ID: 98236657` on the `squad/305-sync-board-option-ids` branch was
+identical to `DONE_OPTION_ID`. The "Released" status option did not exist on the MyBlog project board —
+the board only had Todo (`f75ad846`), In Progress (`47fc9ee4`), Done (`98236657`).
+
+**Changes made:**
+
+- Added "Released" (BLUE) option to the project board Status field via `updateProjectV2Field` GraphQL
+  mutation. New ID: `90af7f3b`.
+- Updated `RELEASED_OPTION_ID` to `90af7f3b` in both:
+  - `.github/workflows/project-board-automation.yml`
+  - `.github/workflows/squad-mark-released.yml`
+- `DONE_OPTION_ID` (`98236657`) left untouched.
+- Committed and pushed to `origin/squad/305-sync-board-option-ids`; all 6 pre-push gates passed
+  (49 tests, 0 failures).
+
+**Learnings:**
+
+- **Verify board options exist before hardcoding option IDs** — A phantom ID causes silent no-ops or
+  runtime GraphQL errors. Always query `field(name: "Status") { options { id name } }` to confirm IDs.
+- **Unset `GH_TOKEN` for board GraphQL** — The environment `GH_TOKEN` may lack `read:org`/`project`
+  scopes. The keyring token (set via `gh auth login`) carries full project scopes.
+- **`updateProjectV2Field` mutation: no `projectId` argument** — Input only takes `fieldId` +
+  `singleSelectOptions`. Pass all existing option IDs to preserve them; omit `id` for new options.
+- **Cherry-pick workflow for PR fixes:** stash → checkout origin branch → cherry-pick fix commit →
+  rename to `squad/{issue}-{slug}` → push. Cleaner than diverging 8 commits onto the remote.
+
+### PR #306 Post-Triage Review: Project Board Automation Token/Option ID Sync (2026-05-11)
+
+**Context:** Aragorn triaged PR #306 with recommendation to route to Boromir for DevOps review. PR bundles three concerns: merge conflict resolution, CI/infra fixes (token + option IDs), and a Blazor redirect fix.
+
+**Assessment:**
+
+- ✅ **CI/Infra gate clear:** All 21 checks passing (linting, tests, coverage, CodeQL). Issue #305 linked. No merge conflicts. Branch naming correct.
+- ✅ **Workflow logic sound:** Token change (GITHUB_TOKEN → GH_PROJECT_TOKEN) fixes 403 auth errors on project board mutations. Option ID updates (IN_SPRINT, IN_REVIEW, RELEASED) are consistent across 4 workflows.
+- ✅ **No regressions:** Documentation added to project-board-audit.yml. markdownlint fix in decisions.md. Secondary UI changes out of scope (routed to Legolas/Gimli).
+- ⚠️ **Dependency:** `GH_PROJECT_TOKEN` secret must be configured in repo settings. Already documented in `.squad/decisions/decisions.md`.
+
+**Routing:**
+
+- PR author is Boromir (me), so I cannot self-approve per GitHub policy. However, DevOps verification is complete.
+- Required parallel reviewers: **Aragorn** (architecture), **Legolas** (Blazor UI), **Gimli** (tests).
+- Decision: **READY FOR REVIEWER SPAWN** per playbook.
+
+**Learnings:**
+
+- The PR merge process enforces strict separation: PR author cannot approve own changes, even if the changes are infra-only. This is a healthy gate to ensure at least one independent human review.
+- Workflow option IDs are a runtime dependency that must be kept in sync across multiple files. A single outdated ID can silently fail board mutations. This PR shows the fix pattern: grep all workflows, update consistently, test in CI.
+- The "secondary review" layer (Copilot automated review) is effective at flagging missing tests and logic errors, but does not substitute for domain reviewer verdict. Always route to domain specialist after Copilot.
+
+**Related Decision:** `.squad/decisions/inbox/boromir-pr306-review.md` (assessment + routing recommendation)
+
+### Issue #341 Polish PR Orchestration (2026-05-15)
+
+**Branch:** squad/341-category-polish  
+**PR:** #342 (pending merge)  
+**Team:** Gimli (test rename), Frodo (documentation), Legolas (UI semantics), Sam (log wording)
+
+**Work:**
+
+- Aggregated 5 commit-based polish fixes to issue #341 on `squad/341-category-polish`.
+- Ran pre-push gates: CI ✅, Codecov ✅, Copilot automated review ✅, lead gate checks ✅.
+- Pushed branch; opened PR #342 (link to #341 in body).
+- All gatekeeping signals green; ready for lead review.
+
+**Team Coordination Notes:**
+
+- Each agent worked on isolated scope (test file, UI component, log strings, documentation).
+- Parallel commits integrated cleanly; no merge conflicts.
+- Final push pre-gate: all checks passed on first run.
+
+**Learning:** Five-person parallel fix delivery on a single polish PR keeps iteration velocity high and reduces back-and-forth review cycles.
+
+---
+
+### 2026-07-08 — Issue #350: Aspire Startup Repair on New Machine
+
+**Context:** Sprint 19. Aspire failed to start on a new machine clone. Issue labelled `squad:boromir` + `squad:sam`.
+
+**Root causes found (both in infra/config — Boromir's domain):**
+
+1. **Missing `node_modules`** — After a fresh clone, `npm ci` (or `npm install`) was never run.
+   The `BuildTailwind` MSBuild target in `Web.csproj` runs `npm run tw:build` → `npx @tailwindcss/cli`.
+   Without `node_modules`, this fails: `Can't resolve 'tailwindcss' in '.../src/Web/Styles'`.
+   CI is unaffected (guarded by `Condition="'$(CI)' != 'true'"`; GitHub Actions sets `CI=true`).
+   Fix: ran `npm ci` to restore; updated README.md step 3 from `npm install` → `npm ci`.
+
+2. **`aspire.config.json` stale project path** — `src/AppHost/aspire.config.json` referenced
+   `MyBlog.AppHost.csproj` but the actual file is `AppHost.csproj`. Breaks `dotnet aspire run`.
+   Fix: corrected path in `aspire.config.json` to `AppHost.csproj`.
+
+**Build state post-fix:** `Build succeeded. 0 Error(s)`. Pre-existing warnings (~60+) across
+application/test code remain — owned by Sam and Gimli (CA2007, CA2012, CA1305, CA2000, CA1711).
+
+**Handoff to Sam:** `MongoDbResourceBuilderExtensions.cs` has 37 pre-existing warnings
+(CA2007 × ~16, CA1305 × 1) that violate the zero-warning policy. Sam should address these.
+
+**Files changed:** `src/AppHost/aspire.config.json`, `README.md`
+
+---
+
+## 2026-05-23 — Issue #350 Session Closeout (Orchestration Coordination)
+
+### Session Summary
+
+Boromir fixed two infrastructure-layer defects blocking Aspire startup on fresh machines:
+
+1. **`aspire.config.json` misconfiguration** — Corrected `.csproj` name from `MyBlog.AppHost.csproj` to `AppHost.csproj`
+2. **npm-install gap** — Coordinated with Sam on root-cause analysis; delegated fix to Sam's MSBuild target (Decision 4)
+
+Changes shipped clean with zero test failures (Architecture.Tests: 16/16 passed).
+
+### Decisions Recorded
+
+- Decision 5: Aspire startup failure on new machine — root cause and fixes (comprehensive infrastructure analysis)
+
+### Files Changed
+
+- `src/AppHost/aspire.config.json` — Corrected `.csproj` project name reference
+
+### Status
+
+✅ Completed. Two follow-up agents active:
+
+- **boromir-apphost-failures** — investigating Aspire DCP version/Docker runtime issues
+- **sam-apphost-runtime-followup** — verifying runtime-side Aspire wiring
+
+### Key Learnings
+
+- Fresh machine issues surface in two layers: build-time (`node_modules` MSBuild target) and CLI-time (aspire.config.json mismatch)
+- Both issues are isolated to local developer machines; CI unaffected (GitHubActions sets `CI=true`, uses `dotnet run --project` instead of `dotnet aspire run`)
+- Pre-existing analyzer warnings (~60+ across solution) delegated to Sam/Gimli specialists
+
+---
+
+## 2026-07-08 — Issue #350 Round 2: AppHost.Tests Mongo/Aspire Startup Verification
+
+**Context:** Gimli's verification reported 3 remaining AppHost.Tests Mongo/Aspire startup failures after prior round (node_modules, aspire.config.json fixes). Tasked with reproducing and diagnosing.
+
+### Investigation Outcome
+
+**All 54 AppHost.Tests pass.** Ran the full suite (54 tests): 53 passed, 1 intentional skip (`ThemeToggle ClickingSwitchesBrightnessAndHtmlDarkClass` — uses `Assert.Skip()` as its own guard when the AppHost testing environment doesn't reach a trustworthy interactive theme state). **0 failures.**
+
+The 3 Mongo/Aspire startup failures reported by Gimli had already been resolved by:
+
+- **PR #346** (`c0a44c7`) — Pinned MongoDB from `mongo:8.2` → `mongo:7` with `mongo-data-v7` volume. Root cause: `mongo:8.2` crashed with exit 139 (SIGSEGV/AVX instruction fault) on the new machine's CPU. Fixed `src/AppHost/AppHost.cs`.
+- **PR #348/#349** (`b079c0d`) — Pulled `origin/dev` into the running Aspire host build (it was 2 commits stale, still launching `mongo:8.2`). Also added `MongoSeedDataIntegrationTests` (4 new tests). All `MongoDbContainerConfigurationTests` (4/4), `MongoSeedDataIntegrationTests` (4/4), and `Web.Tests.Integration` (29/29) confirmed green.
+
+### Root Cause of the 3 Failures (historical)
+
+The 3 collection fixture initializations (`MongoClearIntegration`, `MongoSeedIntegration`, `MongoStatsIntegration`) each use
+`ClearCommandAppFixture.InitializeAsync()` which boots a full Aspire host. When that host attempted to start `mongo:8.2`, the
+container crashed (exit 139/SIGSEGV). Each collection's fixture failure cascaded to all its member tests →
+3 collections × N tests = multiple failures reported.
+
+### Current State
+
+- Build: ✅ 0 errors (66 pre-existing warnings in Gimli/Sam domain, already suppressed where appropriate)
+- AppHost.Tests: ✅ 53 passed, 1 intentional skip
+- No infra/AppHost changes required this round
+- No Sam handoff required
+
+### Key Learnings
+
+- When Aspire integration test collections fail at fixture init (not test body), ALL tests in the collection report as failed — making "3 failures" actually mean "3 fixture startup failures affecting N tests total"
+- `Assert.Skip()` (xUnit v3) skips appear in CI as Skipped not Failed — a 1-skip result on the theme toggle test is expected/normal behavior
+- The Mongo volume state matters across sessions: `mongo-data` (FCV-contaminated with mongo:8.2 UUID idents) must never be used with `mongo:7`; only `mongo-data-v7` is safe

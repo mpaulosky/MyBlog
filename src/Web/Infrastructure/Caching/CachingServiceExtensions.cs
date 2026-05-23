@@ -21,4 +21,15 @@ internal static class CachingServiceExtensions
 		services.AddSingleton<IBlogPostCacheService, BlogPostCacheService>();
 		return services;
 	}
+
+	/// <summary>
+	/// Registers the two-tier (L1 in-memory 30s + L2 Redis 2min) <see cref="IUserManagementCacheService"/>
+	/// implementation. Call this after <c>AddMemoryCache()</c> and
+	/// <c>AddRedisDistributedCache()</c> are already registered.
+	/// </summary>
+	public static IServiceCollection AddUserManagementCaching(this IServiceCollection services)
+	{
+		services.AddSingleton<IUserManagementCacheService, UserManagementCacheService>();
+		return services;
+	}
 }

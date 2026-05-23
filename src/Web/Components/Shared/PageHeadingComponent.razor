@@ -1,0 +1,48 @@
+<PageTitle>@HeaderText</PageTitle>
+
+<header class="container-card">
+
+	@switch (Level)
+	{
+		case "1":
+
+			<h1 class=@($"{TextColorClass}")>@HeaderText</h1>
+
+			break;
+
+		case "2":
+
+			<h2 class=@($"{TextColorClass}")>@HeaderText</h2>
+
+			break;
+
+		case "3":
+
+			<h3 class=@($"{TextColorClass}")>@HeaderText</h3>
+
+			break;
+
+		case "4":
+
+			<h4 class=@($"{TextColorClass}")>@HeaderText</h4>
+
+			break;
+
+		default:
+
+			<h1 class=@($"{TextColorClass}")>@HeaderText</h1>
+
+			break;
+	}
+
+</header>
+
+@code {
+
+	[Parameter] public string HeaderText { get; set; } = "My Blog";
+
+	[Parameter] public string Level { get; set; } = "1";
+
+	[Parameter] public string TextColorClass { get; set; } = string.Empty;
+
+}

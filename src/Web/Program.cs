@@ -14,6 +14,8 @@ using Auth0.AspNetCore.Authentication;
 
 using FluentValidation;
 
+using Ganss.Xss;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
@@ -70,6 +72,7 @@ builder.Services.AddAuth0WebAppAuthentication(opts =>
 	opts.Domain = auth0Domain;
 	opts.ClientId = auth0ClientId;
 	opts.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+	opts.Scope = "openid profile email";
 	opts.CallbackPath = "/signin-auth0";
 });
 
@@ -80,8 +83,7 @@ builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.Authenticati
 	var existingOnTokenValidated = options.Events.OnTokenValidated;
 	options.Events.OnTokenValidated = async context =>
 	{
-		if (existingOnTokenValidated is not null)
-			await existingOnTokenValidated(context);
+		await existingOnTokenValidated(context).ConfigureAwait(false);
 
 		if (context.Principal?.Identity is not ClaimsIdentity identity)
 		{
@@ -112,22 +114,35 @@ builder.Services.AddMemoryCache();
 // BlogPost two-tier cache service (L1 + L2)
 builder.Services.AddBlogPostCaching();
 
+// UserManagement two-tier cache service (L1 30s + L2 2min)
+builder.Services.AddUserManagementCaching();
+
 // Repository: concrete + interface
 builder.Services.AddScoped<MongoDbBlogPostRepository>();
 builder.Services.AddScoped<IBlogPostRepository>(sp =>
 		sp.GetRequiredService<MongoDbBlogPostRepository>());
 
+builder.Services.AddScoped<MongoDbCategoryRepository>();
+builder.Services.AddScoped<ICategoryRepository>(sp =>
+		sp.GetRequiredService<MongoDbCategoryRepository>());
+
 // MediatR — scans Web assembly for all handlers
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+	cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
 });
 
 // FluentValidation — scans Web assembly for all validators
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
+// HtmlSanitizer — singleton: thread-safe, shared across requests
+builder.Services.AddSingleton<IHtmlSanitizer, HtmlSanitizer>();
+
 // Register ValidationBehavior pipeline
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+// File storage (local disk — baseline for image uploads in the markdown editor)
+builder.Services.AddFileStorage();
 
 // HttpClient for Auth0 Management API
 builder.Services.AddHttpClient();
@@ -160,7 +175,7 @@ app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 	var props = new LoginAuthenticationPropertiesBuilder()
 			.WithRedirectUri(safeReturn)
 			.Build();
-	await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props);
+	await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props).ConfigureAwait(false);
 }).AllowAnonymous();
 
 app.MapGet("/Account/Logout", async ctx =>
@@ -168,8 +183,8 @@ app.MapGet("/Account/Logout", async ctx =>
 	var props = new LogoutAuthenticationPropertiesBuilder()
 			.WithRedirectUri("/")
 			.Build();
-	await ctx.SignOutAsync(Auth0Constants.AuthenticationScheme, props);
-	await ctx.SignOutAsync();
+	await ctx.SignOutAsync(Auth0Constants.AuthenticationScheme, props).ConfigureAwait(false);
+	await ctx.SignOutAsync().ConfigureAwait(false);
 }).RequireAuthorization();
 
 // Test-only login endpoint for E2E testing (Development/Testing environments only)
@@ -205,11 +220,12 @@ static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
 	await ctx.SignInAsync("Cookies", principal, new AuthenticationProperties
 	{
 		IsPersistent = true,
-	});
+	}).ConfigureAwait(false);
 
 	ctx.Response.Redirect("/");
 }
 
 // Exclude the compiler-generated Program class (top-level bootstrap statements) from coverage.
+[SuppressMessage("Design", "CA1515:Consider making public types internal", Justification = "WebApplicationFactory<Program> requires a public entry point for integration tests.")]
 [ExcludeFromCodeCoverage(Justification = "Application bootstrap entry-point — not business logic")]
 public partial class Program { }

@@ -10,10 +10,14 @@
 namespace MyBlog.Web.Data;
 
 internal sealed record BlogPostDto(
-    Guid Id,
-    string Title,
-    string Content,
-    string Author,
-    DateTime CreatedAt,
-    DateTime? UpdatedAt,
-    bool IsPublished);
+		Guid Id,
+		string Title,
+		string Content,
+		string AuthorId,
+		string AuthorName,
+		string AuthorEmail,
+		IReadOnlyList<string> AuthorRoles,
+		DateTime CreatedAt,
+		DateTime? UpdatedAt,
+		bool IsPublished,
+		Guid? CategoryId);

@@ -87,9 +87,26 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 
 		var annotation = GetAnnotation();
 
-		// Act — fire two concurrent stats operations
-		var firstTask = annotation.ExecuteCommand(MakeContext());
-		var secondTask = annotation.ExecuteCommand(MakeContext());
+		// Act — dispatch both calls to thread-pool workers and open the gate at the same
+		// moment so they race to acquire _dbMutex.  Without this the async lambda may run
+		// entirely synchronously (fast local MongoDB) and release the semaphore before the
+		// second call even starts, causing both to succeed (flake).
+		var ct = TestContext.Current.CancellationToken;
+		using var startGate = new SemaphoreSlim(0, 2);
+
+		var firstTask = Task.Run(async () =>
+		{
+			await startGate.WaitAsync(ct);
+			return await annotation.ExecuteCommand(MakeContext());
+		}, ct);
+
+		var secondTask = Task.Run(async () =>
+		{
+			await startGate.WaitAsync(ct);
+			return await annotation.ExecuteCommand(MakeContext());
+		}, ct);
+
+		startGate.Release(2); // open the gate — both workers race for _dbMutex
 		var results = await Task.WhenAll(firstTask, secondTask);
 
 		// Assert
