@@ -7,6 +7,7 @@
 //Project Name :  AppHost
 //=======================================================
 
+using System.Globalization;
 using System.Text;
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -17,10 +18,46 @@ using MongoDB.Driver;
 
 namespace Aspire.Hosting;
 
-internal static class MongoDbResourceBuilderExtensions
+internal static partial class MongoDbResourceBuilderExtensions
 {
 	// Shared semaphore — guards all three dev commands (Clear, Seed, Stats) so only one runs at a time.
 	private static readonly SemaphoreSlim _dbMutex = new(1, 1);
+
+	[LoggerMessage(Level = LogLevel.Warning, Message = "Clear MyBlog data skipped on {ResourceName} — a clear operation is already in progress.")]
+	private static partial void LogClearSkipped(ILogger logger, string resourceName);
+
+	[LoggerMessage(Level = LogLevel.Warning, Message = "Clear MyBlog data invoked on {ResourceName} — enumerating collections in '{Database}'.")]
+	private static partial void LogClearStarted(ILogger logger, string resourceName, string database);
+
+	[LoggerMessage(Level = LogLevel.Error, Message = "Could not resolve MongoDB connection string for resource {ResourceName}.")]
+	private static partial void LogConnectionStringError(ILogger logger, string resourceName);
+
+	[LoggerMessage(Level = LogLevel.Information, Message = "Collection '{Collection}': {Count} document(s) deleted.")]
+	private static partial void LogCollectionDeleted(ILogger logger, string collection, long count);
+
+	[LoggerMessage(Level = LogLevel.Warning, Message = "Collection '{Collection}' could not be cleared — skipping and continuing.")]
+	private static partial void LogCollectionClearError(ILogger logger, Exception exception, string collection);
+
+	[LoggerMessage(Level = LogLevel.Warning, Message = "Clear MyBlog data complete: {Total} document(s) removed across {Count} collection(s). Warnings: {WarnCount}.")]
+	private static partial void LogClearComplete(ILogger logger, long total, int count, int warnCount);
+
+	[LoggerMessage(Level = LogLevel.Warning, Message = "Seed MyBlog data skipped on {ResourceName} — a database operation is already in progress.")]
+	private static partial void LogSeedSkipped(ILogger logger, string resourceName);
+
+	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data invoked on {ResourceName} — upserting General category and inserting blog posts into '{Database}'.")]
+	private static partial void LogSeedStarted(ILogger logger, string resourceName, string database);
+
+	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data complete: 1 category upserted + {Count} blog post(s) inserted.")]
+	private static partial void LogSeedComplete(ILogger logger, int count);
+
+	[LoggerMessage(Level = LogLevel.Warning, Message = "Show MyBlog stats skipped on {ResourceName} — a database operation is already in progress.")]
+	private static partial void LogStatsSkipped(ILogger logger, string resourceName);
+
+	[LoggerMessage(Level = LogLevel.Information, Message = "Show MyBlog stats invoked on {ResourceName} — querying '{Database}'.")]
+	private static partial void LogStatsStarted(ILogger logger, string resourceName, string database);
+
+	[LoggerMessage(Level = LogLevel.Information, Message = "Show MyBlog stats complete: {Count} collection(s) reported.")]
+	private static partial void LogStatsComplete(ILogger logger, int count);
 
 	/// <summary>
 	/// Test-only hook used by <c>AppHost.Tests</c> to hold the seed command inside the shared mutex
@@ -51,11 +88,9 @@ internal static class MongoDbResourceBuilderExtensions
 		executeCommand: async context =>
 		{
 			// AC2: Non-blocking acquire — return immediately if another clear is already in flight.
-			if (!await _dbMutex.WaitAsync(0))
+			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
-				context.Logger.LogWarning(
-		"Clear MyBlog data skipped on {ResourceName} — a clear operation is already in progress.",
-		context.ResourceName);
+				LogClearSkipped(context.Logger, context.ResourceName);
 
 				return new ExecuteCommandResult
 				{
@@ -66,14 +101,12 @@ internal static class MongoDbResourceBuilderExtensions
 
 			try
 			{
-				context.Logger.LogWarning(
-		"Clear MyBlog data invoked on {ResourceName} — enumerating collections in '{Database}'.",
-		context.ResourceName, databaseName);
+				LogClearStarted(context.Logger, context.ResourceName, databaseName);
 
-				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
+				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken).ConfigureAwait(false);
 				if (connectionString is null)
 				{
-					context.Logger.LogError("Could not resolve MongoDB connection string for resource {ResourceName}.", context.ResourceName);
+					LogConnectionStringError(context.Logger, context.ResourceName);
 					return new ExecuteCommandResult
 					{
 						Success = false,
@@ -84,8 +117,8 @@ internal static class MongoDbResourceBuilderExtensions
 				var client = new MongoClient(connectionString);
 				var database = client.GetDatabase(databaseName);
 
-				var namesCursor = await database.ListCollectionNamesAsync(cancellationToken: context.CancellationToken);
-				var collectionNames = await namesCursor.ToListAsync(context.CancellationToken);
+				var namesCursor = await database.ListCollectionNamesAsync(cancellationToken: context.CancellationToken).ConfigureAwait(false);
+				var collectionNames = await namesCursor.ToListAsync(context.CancellationToken).ConfigureAwait(false);
 
 				var results = new List<(string Name, long Deleted)>();
 				var warnings = new List<string>();
@@ -103,22 +136,17 @@ internal static class MongoDbResourceBuilderExtensions
 						var collection = database.GetCollection<BsonDocument>(name);
 						var deleteResult = await collection.DeleteManyAsync(
 				FilterDefinition<BsonDocument>.Empty,
-				context.CancellationToken);
+				context.CancellationToken).ConfigureAwait(false);
 
 						results.Add((name, deleteResult.DeletedCount));
 
-						context.Logger.LogInformation(
-				"Collection '{Collection}': {Count} document(s) deleted.",
-				name, deleteResult.DeletedCount);
+						LogCollectionDeleted(context.Logger, name, deleteResult.DeletedCount);
 					}
 					catch (Exception ex) when (ex is not OperationCanceledException)
 					{
 						var warning = $"{name}: {ex.Message}";
 						warnings.Add(warning);
-						context.Logger.LogWarning(
-				ex,
-				"Collection '{Collection}' could not be cleared — skipping and continuing.",
-				name);
+						LogCollectionClearError(context.Logger, ex, name);
 					}
 				}
 
@@ -127,9 +155,7 @@ internal static class MongoDbResourceBuilderExtensions
 		? "no non-system collections found"
 		: string.Join("; ", results.Select(static r => $"{r.Name}: {r.Deleted}"));
 
-				context.Logger.LogWarning(
-		"Clear MyBlog data complete: {Total} document(s) removed across {Count} collection(s). Warnings: {WarnCount}.",
-		totalDeleted, results.Count, warnings.Count);
+				LogClearComplete(context.Logger, totalDeleted, results.Count, warnings.Count);
 
 				var message = $"{results.Count} collection(s) cleared — {totalDeleted} total document(s) deleted. ({perCollection})";
 				if (warnings.Count > 0)
@@ -171,11 +197,9 @@ internal static class MongoDbResourceBuilderExtensions
 		"🌱 Seed MyBlog Data",
 		executeCommand: async context =>
 		{
-			if (!await _dbMutex.WaitAsync(0))
+			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
-				context.Logger.LogWarning(
-		"Seed MyBlog data skipped on {ResourceName} — a database operation is already in progress.",
-		context.ResourceName);
+				LogSeedSkipped(context.Logger, context.ResourceName);
 
 				return new ExecuteCommandResult
 				{
@@ -188,16 +212,14 @@ internal static class MongoDbResourceBuilderExtensions
 			{
 				var afterMutexAcquired = SeedCommandAfterMutexAcquiredAsync;
 				if (afterMutexAcquired is not null)
-					await afterMutexAcquired(context.CancellationToken);
+					await afterMutexAcquired(context.CancellationToken).ConfigureAwait(false);
 
-				context.Logger.LogInformation(
-		"Seed MyBlog data invoked on {ResourceName} — upserting General category and inserting blog posts into '{Database}'.",
-		context.ResourceName, databaseName);
+				LogSeedStarted(context.Logger, context.ResourceName, databaseName);
 
-				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
+				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken).ConfigureAwait(false);
 				if (connectionString is null)
 				{
-					context.Logger.LogError("Could not resolve MongoDB connection string for resource {ResourceName}.", context.ResourceName);
+					LogConnectionStringError(context.Logger, context.ResourceName);
 					return new ExecuteCommandResult
 					{
 						Success = false,
@@ -228,7 +250,7 @@ internal static class MongoDbResourceBuilderExtensions
 					Builders<BsonDocument>.Filter.Eq("_id", generalCategoryId),
 					generalCategory,
 					new ReplaceOptions { IsUpsert = true },
-					cancellationToken: context.CancellationToken);
+					cancellationToken: context.CancellationToken).ConfigureAwait(false);
 
 				var authorId = "auth0|author-matthew-paulosky";
 				var authorDocument = new BsonDocument
@@ -279,11 +301,9 @@ new()
 },
 	};
 
-				await postsCollection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken);
+				await postsCollection.InsertManyAsync(seedDocuments, cancellationToken: context.CancellationToken).ConfigureAwait(false);
 
-				context.Logger.LogInformation(
-		"Seed MyBlog data complete: 1 category upserted + {Count} blog post(s) inserted.",
-		seedDocuments.Length);
+				LogSeedComplete(context.Logger, seedDocuments.Length);
 
 				return new ExecuteCommandResult
 				{
@@ -316,11 +336,9 @@ new()
 		"📊 Show MyBlog Stats",
 		executeCommand: async context =>
 		{
-			if (!await _dbMutex.WaitAsync(0))
+			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
-				context.Logger.LogWarning(
-		"Show MyBlog stats skipped on {ResourceName} — a database operation is already in progress.",
-		context.ResourceName);
+				LogStatsSkipped(context.Logger, context.ResourceName);
 
 				return CommandResults.Failure(
 		"A database operation is already in progress. Wait for the current run to finish, then try again.");
@@ -328,22 +346,20 @@ new()
 
 			try
 			{
-				context.Logger.LogInformation(
-		"Show MyBlog stats invoked on {ResourceName} — querying '{Database}'.",
-		context.ResourceName, databaseName);
+				LogStatsStarted(context.Logger, context.ResourceName, databaseName);
 
-				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken);
+				var connectionString = await builder.Resource.ConnectionStringExpression.GetValueAsync(context.CancellationToken).ConfigureAwait(false);
 				if (connectionString is null)
 				{
-					context.Logger.LogError("Could not resolve MongoDB connection string for resource {ResourceName}.", context.ResourceName);
+					LogConnectionStringError(context.Logger, context.ResourceName);
 					return CommandResults.Failure("Could not resolve MongoDB connection string. Is the MongoDB resource running?");
 				}
 
 				var client = new MongoClient(connectionString);
 				var database = client.GetDatabase(databaseName);
 
-				var namesCursor = await database.ListCollectionNamesAsync(cancellationToken: context.CancellationToken);
-				var collectionNames = await namesCursor.ToListAsync(context.CancellationToken);
+				var namesCursor = await database.ListCollectionNamesAsync(cancellationToken: context.CancellationToken).ConfigureAwait(false);
+				var collectionNames = await namesCursor.ToListAsync(context.CancellationToken).ConfigureAwait(false);
 				var userCollections = collectionNames
 		.Where(static n => !n.StartsWith("system.", StringComparison.OrdinalIgnoreCase))
 		.ToList();
@@ -363,15 +379,13 @@ new()
 						var col = database.GetCollection<BsonDocument>(name);
 						var count = await col.CountDocumentsAsync(
 				FilterDefinition<BsonDocument>.Empty,
-				cancellationToken: context.CancellationToken);
-						sb.AppendLine($"| {name} | {count} |");
+				cancellationToken: context.CancellationToken).ConfigureAwait(false);
+						sb.AppendLine(CultureInfo.InvariantCulture, $"| {name} | {count} |");
 					}
 				}
 
 				var markdownTable = sb.ToString();
-				context.Logger.LogInformation(
-		"Show MyBlog stats complete: {Count} collection(s) reported.",
-		userCollections.Count);
+				LogStatsComplete(context.Logger, userCollections.Count);
 
 				return CommandResults.Success(
 		$"{userCollections.Count} collection(s) found in '{databaseName}'",

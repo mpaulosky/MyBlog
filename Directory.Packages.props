@@ -5,11 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Aspire Packages -->
-    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.3.3" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.3.3" />
+    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.3.5" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.3.5" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.3" />
-    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.3.3" />
-    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.3.3" />
+    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.3.5" />
+    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.3.5" />
     <!-- Auth0 Packages -->
     <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
     <PackageVersion Include="Auth0.ManagementApi" Version="8.3.0" />
