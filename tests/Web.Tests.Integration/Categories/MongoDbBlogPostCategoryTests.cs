@@ -33,15 +33,39 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
 		var categoryId = ObjectId.GenerateNewId();
+		var otherCategoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Hello World", "Content", Author);
+		var otherPost = BlogPost.Create("Another Post", "Content", Author);
 		post.AssignCategory(categoryId);
+		otherPost.AssignCategory(otherCategoryId);
 		await repo.AddAsync(post, ct);
+		await repo.AddAsync(otherPost, ct);
 
 		// Act
 		var exists = await repo.ExistsByCategoryAsync(categoryId, ct);
 
 		// Assert
 		exists.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task ExistsByCategoryAsync_ReturnsFalseForDifferentAssignedCategory()
+	{
+		// Arrange
+		var ct = TestContext.Current.CancellationToken;
+		var dbName = $"T{Guid.NewGuid():N}";
+		var repo = CreateBlogPostRepo(dbName);
+		var assignedCategoryId = ObjectId.GenerateNewId();
+		var queriedCategoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Hello World", "Content", Author);
+		post.AssignCategory(assignedCategoryId);
+		await repo.AddAsync(post, ct);
+
+		// Act
+		var exists = await repo.ExistsByCategoryAsync(queriedCategoryId, ct);
+
+		// Assert
+		exists.Should().BeFalse();
 	}
 
 	[Fact]
