@@ -74,6 +74,72 @@ public class ObjectIdWorkflowTests : BunitContext
 	}
 
 	[Fact]
+	public async Task CreatePost_SubmittingDraftWithPlaceholderCategory_TreatsSelectionAsNoCategory()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var categories = new[]
+		{
+			new CategoryDto(ObjectId.GenerateNewId(), "Technology", "Tech posts."),
+		};
+
+		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(categories)));
+		sender.Send(Arg.Any<CreateBlogPostCommand>(), Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult(Result.Ok(ObjectId.GenerateNewId())));
+
+		Services.AddSingleton(sender);
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", "auth0|alice", ["Author"]));
+		cut.Find("input.form-input").Change("Draft without category");
+		await cut.InvokeAsync(() => cut.FindComponent<TextEditor>().Instance.ContentChanged.InvokeAsync("Draft content"));
+		cut.Find("select.form-select").Change(string.Empty);
+		Action act = () => cut.Find("form").Submit();
+
+		// Assert
+		act.Should().NotThrow();
+		await sender.Received(1).Send(
+			Arg.Is<CreateBlogPostCommand>(command =>
+				command.Title == "Draft without category" &&
+				command.CategoryId == null &&
+				!command.IsPublished),
+			Arg.Any<CancellationToken>());
+		cut.Markup.Should().NotContain("Please select a valid category.");
+		navigation.Uri.Should().EndWith("/blog");
+	}
+
+	[Fact]
+	public async Task CreatePost_PublishingWithPlaceholderCategory_ShowsValidationInsteadOfThrowing()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var categories = new[]
+		{
+			new CategoryDto(ObjectId.GenerateNewId(), "Technology", "Tech posts."),
+		};
+
+		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(categories)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", "auth0|alice", ["Author"]));
+		cut.Find("input.form-input").Change("Published without category");
+		await cut.InvokeAsync(() => cut.FindComponent<TextEditor>().Instance.ContentChanged.InvokeAsync("Publish me"));
+		cut.Find("input[type='checkbox']").Change(true);
+		cut.Find("select.form-select").Change(string.Empty);
+		Action act = () => cut.Find("form").Submit();
+
+		// Assert
+		act.Should().NotThrow();
+		cut.WaitForAssertion(() => cut.Markup.Should().Contain("Please select a category before publishing."));
+		await sender.DidNotReceive().Send(Arg.Any<CreateBlogPostCommand>(), Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
 	public void EditPost_Submits_SelectedCategoryString_As_ObjectId_CommandValue()
 	{
 		// Arrange
