@@ -16,6 +16,8 @@ global using Microsoft.AspNetCore.Components.Authorization;
 global using Microsoft.Extensions.Caching.Distributed;
 global using Microsoft.Extensions.Caching.Memory;
 
+global using MongoDB.Bson;
+
 global using MyBlog.Domain.Entities;
 global using MyBlog.Domain.Interfaces;
 global using MyBlog.Domain.ValueObjects;

@@ -25,7 +25,7 @@ ILogger<EditBlogPostHandler> logger)
 IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 {
 	[LoggerMessage(Level = LogLevel.Warning, Message = "HTML sanitized on EditBlogPost — unsafe markup was removed. PostId: {PostId}")]
-	private static partial void LogHtmlSanitized(ILogger logger, Guid postId);
+	private static partial void LogHtmlSanitized(ILogger logger, ObjectId postId);
 
 	public async Task<Result> Handle(EditBlogPostCommand request, CancellationToken cancellationToken)
 	{

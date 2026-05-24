@@ -27,6 +27,7 @@
     <!-- CQRS/Mediator -->
     <PackageVersion Include="MediatR" Version="14.1.0" />
     <!-- Database -->
+    <PackageVersion Include="MongoDB.Bson" Version="3.8.1" />
     <PackageVersion Include="MongoDB.Driver" Version="3.8.1" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
     <!-- Transitive pin: MongoDB.Driver resolves an older SharpCompress; pinned to 1.0.0 -->

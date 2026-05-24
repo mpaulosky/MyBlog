@@ -12,5 +12,5 @@ namespace MyBlog.Web.Data;
 internal static class CategoryMappings
 {
 	internal static CategoryDto ToDto(this Category category) =>
-		new(category.Id, category.Name, category.Description);
+		new(category.Id.ToString(), category.Name, category.Description);
 }

@@ -12,7 +12,7 @@ namespace MyBlog.Web.Data;
 internal static class BlogPostMappings
 {
 	internal static BlogPostDto ToDto(this BlogPost post) => new(
-			post.Id, post.Title, post.Content,
+			post.Id.ToString(), post.Title, post.Content,
 			post.Author.Id, post.Author.Name, post.Author.Email, post.Author.Roles,
-			post.CreatedAt, post.UpdatedAt, post.IsPublished, post.CategoryId);
+			post.CreatedAt, post.UpdatedAt, post.IsPublished, post.CategoryId?.ToString());
 }

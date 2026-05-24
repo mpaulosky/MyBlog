@@ -14,6 +14,8 @@ global using FluentValidation.Results;
 
 global using MediatR;
 
+global using MongoDB.Bson;
+
 global using MyBlog.Domain.Abstractions;
 global using MyBlog.Domain.Behaviors;
 global using MyBlog.Domain.Entities;

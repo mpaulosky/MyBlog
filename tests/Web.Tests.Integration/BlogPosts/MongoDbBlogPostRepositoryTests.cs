@@ -43,7 +43,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		var repo = CreateRepo();
 
 		// Act
-		var result = await repo.GetByIdAsync(Guid.NewGuid(), ct);
+		var result = await repo.GetByIdAsync(ObjectId.GenerateNewId(), ct);
 
 		// Assert
 		result.Should().BeNull();
@@ -136,7 +136,7 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		var repo = CreateRepo();
 
 		// Act
-		var act = async () => await repo.DeleteAsync(Guid.NewGuid(), ct);
+		var act = async () => await repo.DeleteAsync(ObjectId.GenerateNewId(), ct);
 
 		// Assert
 		await act.Should().NotThrowAsync();

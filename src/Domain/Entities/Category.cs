@@ -7,11 +7,13 @@
 //Project Name :  Domain
 //=======================================================
 
+using MongoDB.Bson;
+
 namespace MyBlog.Domain.Entities;
 
 public sealed class Category
 {
-	public Guid Id { get; private set; }
+	public ObjectId Id { get; private set; }
 	public string Name { get; private set; } = string.Empty;
 	public string Description { get; private set; } = string.Empty;
 
@@ -24,7 +26,7 @@ public sealed class Category
 
 		return new Category
 		{
-			Id = Guid.NewGuid(),
+			Id = ObjectId.GenerateNewId(),
 			Name = name.Trim(),
 			Description = description.Trim(),
 		};

@@ -31,7 +31,7 @@ public class CategoryTests
 		var category = Category.Create("Tech", "Description.");
 
 		// Assert
-		category.Id.Should().NotBeEmpty();
+		category.Id.Should().NotBe(ObjectId.Empty);
 	}
 
 	[Fact]

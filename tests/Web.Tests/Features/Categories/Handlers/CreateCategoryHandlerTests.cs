@@ -37,7 +37,7 @@ public class CreateCategoryHandlerTests
 
 		// Assert
 		result.Success.Should().BeTrue();
-		result.Value.Should().NotBeEmpty();
+		result.Value.Should().NotBe(ObjectId.Empty);
 		await _repo.Received(1).AddAsync(Arg.Any<Category>(), Arg.Any<CancellationToken>());
 	}
 

@@ -11,6 +11,9 @@ global using FluentAssertions;
 
 global using Microsoft.EntityFrameworkCore;
 
+global using MongoDB.Bson;
+
+
 global using MyBlog.Domain.Entities;
 global using MyBlog.Domain.ValueObjects;
 global using MyBlog.Web.Data;

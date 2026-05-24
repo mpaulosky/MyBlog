@@ -16,5 +16,5 @@ internal static class BlogPostCacheKeys
 	public const string All = "blog:all";
 
 	/// <summary>Key for a single blog post identified by <paramref name="id"/>.</summary>
-	public static string ById(Guid id) => $"blog:{id}";
+	public static string ById(ObjectId id) => $"blog:{id}";
 }

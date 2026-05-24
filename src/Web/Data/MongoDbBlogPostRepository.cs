@@ -12,7 +12,7 @@ namespace MyBlog.Web.Data;
 internal sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext> contextFactory)
 		: IBlogPostRepository
 {
-	public async Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default)
+	public async Task<BlogPost?> GetByIdAsync(ObjectId id, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 		return await ctx.BlogPosts.AsNoTracking()
@@ -27,7 +27,7 @@ internal sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext>
 				.ToListAsync(ct).ConfigureAwait(false);
 	}
 
-	public async Task<bool> ExistsByCategoryAsync(Guid categoryId, CancellationToken ct = default)
+	public async Task<bool> ExistsByCategoryAsync(ObjectId categoryId, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 		return await ctx.BlogPosts.AsNoTracking()
@@ -52,7 +52,7 @@ internal sealed class MongoDbBlogPostRepository(IDbContextFactory<BlogDbContext>
 		await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
 	}
 
-	public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+	public async Task DeleteAsync(ObjectId id, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 		var post = await ctx.BlogPosts.FindAsync([id], ct).ConfigureAwait(false);

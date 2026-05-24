@@ -108,7 +108,7 @@ else
 	{
 		if (_postToDelete is not null)
 		{
-			var result = await Sender.Send(new DeleteBlogPostCommand(_postToDelete.Id));
+			var result = await Sender.Send(new DeleteBlogPostCommand(ObjectId.Parse(_postToDelete.Id)));
 			if (result.Failure)
 			{
 				_error = result.Error;
