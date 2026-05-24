@@ -326,18 +326,25 @@ A **sprint-stamped issue** satisfies all three conditions:
 
 **Enforcement sequence (runs before Step 1):**
 
-```
+```text
 1. Does a GitHub issue exist for this work?
    NO  → CREATE the issue now before touching any file
-         → Title MUST start with [Sprint N]
-         → Milestone MUST be set to "Sprint N: {Theme}"
-         → Add to Project #4, move to "In Sprint"
-         → Create squad/{issue}-{slug} branch
-         → THEN and only then begin writing code
+          → Title MUST start with [Sprint N]
+          → Milestone MUST be set to "Sprint N: {Theme}"
+          → Add to Project #4, move to "In Sprint"
+          → Create or reuse the issue worktree
+          → Create squad/{issue}-{slug} branch
+          → THEN and only then begin writing code
 
-   YES → Is it sprint-stamped (title prefix + milestone + project)?
-         NO  → Fix it now: rename title, set milestone, add to board
-         YES → Proceed to Step 1
+    YES → Is it sprint-stamped (title prefix + milestone + project)?
+          NO  → Fix it now: rename title, set milestone, add to board
+          YES → Verify checkout alignment before opening files
+                 → git branch --show-current must be squad/{issue}-{slug}
+                 → git rev-parse --show-toplevel and pwd must point at the
+                   correct sprint or issue worktree for that same issue
+                 → If you are on dev, on another issue branch, or in the wrong
+                   worktree: STOP, switch to the correct checkout, then continue
+                 → Only after alignment passes do you proceed to Step 1
 ```
 
 If you skip this gate and write code without a sprint-stamped issue, you have violated the squad's process.
@@ -351,6 +358,8 @@ the stash re-applied before committing. This costs time — follow the gate.
 - ❌ **Writing any code before a GitHub issue exists** — always create the issue first
 - ❌ **Creating an issue without a `[Sprint N]` title prefix** — every issue title must begin with `[Sprint N]`
 - ❌ **Creating an issue without a milestone** — every issue must be assigned to `Sprint N: {Theme}` before any branch or PR references it
+- ❌ **Starting issue-owned work on `dev`** — move to the issue's `squad/{issue}-{slug}` branch first
+- ❌ **Continuing issue #A from issue #B's branch or worktree** — branch/worktree must match the active issue before any file is touched
 - ❌ **Implementing a `[[PLAN]]` request without first running the sprint planning ceremony** — plan → issue → branch → code
 - ❌ **Opening `squad/{issue}` PRs directly to `dev`** during an active sprint
 - ❌ **Skipping worktree** — always work in `../MyBlog-sprint-{N}/` for isolation
