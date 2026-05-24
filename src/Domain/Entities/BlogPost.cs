@@ -7,13 +7,15 @@
 //Project Name :  Domain
 //=======================================================
 
+using MongoDB.Bson;
+
 using MyBlog.Domain.ValueObjects;
 
 namespace MyBlog.Domain.Entities;
 
 public sealed class BlogPost
 {
-	public Guid Id { get; private set; }
+	public ObjectId Id { get; private set; }
 	public string Title { get; private set; } = string.Empty;
 	public string Content { get; private set; } = string.Empty;
 	public PostAuthor Author { get; private set; } = PostAuthor.Empty;
@@ -21,7 +23,7 @@ public sealed class BlogPost
 	public DateTime? UpdatedAt { get; private set; }
 	public bool IsPublished { get; private set; }
 	public int Version { get; private set; }
-	public Guid? CategoryId { get; private set; }
+	public ObjectId? CategoryId { get; private set; }
 
 	private BlogPost() { }
 
@@ -34,7 +36,7 @@ public sealed class BlogPost
 
 		return new BlogPost
 		{
-			Id = Guid.NewGuid(),
+			Id = ObjectId.GenerateNewId(),
 			Title = title,
 			Content = content,
 			Author = author,
@@ -55,7 +57,7 @@ public sealed class BlogPost
 	public void Publish() => IsPublished = true;
 	public void Unpublish() => IsPublished = false;
 
-	public void AssignCategory(Guid categoryId)
+	public void AssignCategory(ObjectId categoryId)
 	{
 		CategoryId = categoryId;
 		Version++;

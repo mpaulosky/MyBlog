@@ -66,7 +66,7 @@ internal sealed class BlogPostCacheService(
 	}
 
 	public async ValueTask<BlogPostDto?> GetOrFetchByIdAsync(
-		Guid id,
+		ObjectId id,
 		Func<Task<BlogPostDto?>> fetch,
 		CancellationToken ct = default)
 	{
@@ -117,7 +117,7 @@ internal sealed class BlogPostCacheService(
 		await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None).ConfigureAwait(false);
 	}
 
-	public async Task InvalidateByIdAsync(Guid id, CancellationToken ct = default)
+	public async Task InvalidateByIdAsync(ObjectId id, CancellationToken ct = default)
 	{
 		var key = BlogPostCacheKeys.ById(id);
 		localCache.Remove(key);

@@ -23,7 +23,7 @@ public class BlogPostMappingsTests
 		var dto = post.ToDto();
 
 		// Assert
-		dto.Id.Should().Be(post.Id);
+		dto.Id.Should().Be(post.Id.ToString());
 		dto.Title.Should().Be(post.Title);
 		dto.Content.Should().Be(post.Content);
 		dto.AuthorId.Should().Be(post.Author.Id);

@@ -235,10 +235,9 @@ internal static partial class MongoDbResourceBuilderExtensions
 
 				var now = DateTime.UtcNow;
 
-				// Seed the default "General" category with a stable, well-known id.
-				var generalCategoryId = new BsonBinaryData(
-					new Guid("00000000-0000-0000-0000-000000000001"),
-					GuidRepresentation.Standard);
+				// Seed the default "General" category with a stable, deterministic ObjectId.
+				// Slot 1 → 000000000000000000000001 — safe to rely on in tests and seed scripts.
+				var generalCategoryId = new ObjectId("000000000000000000000001");
 
 				var generalCategory = new BsonDocument
 				{
@@ -265,7 +264,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 		{
 new()
 {
-["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
+["_id"] = ObjectId.GenerateNewId(),
 ["Title"] = "Welcome to MyBlog",
 ["Content"] = "This is the first post on MyBlog. Welcome!",
 ["Author"] = authorDocument.DeepClone(),
@@ -277,7 +276,7 @@ new()
 },
 new()
 {
-["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
+["_id"] = ObjectId.GenerateNewId(),
 ["Title"] = "Getting Started with .NET Aspire",
 ["Content"] = "Learn how to build cloud-native apps with .NET Aspire.",
 ["Author"] = authorDocument.DeepClone(),
@@ -289,7 +288,7 @@ new()
 },
 new()
 {
-["_id"] = new BsonBinaryData(Guid.NewGuid(), GuidRepresentation.Standard),
+["_id"] = ObjectId.GenerateNewId(),
 ["Title"] = "Draft: MongoDB Performance Tips",
 ["Content"] = "Work in progress — tips for optimising MongoDB queries.",
 ["Author"] = authorDocument.DeepClone(),

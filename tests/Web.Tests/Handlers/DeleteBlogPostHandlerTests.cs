@@ -29,7 +29,7 @@ public class DeleteBlogPostHandlerTests
 	public async Task Handle_Success_DeletesAndInvalidatesBothCaches()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var command = new DeleteBlogPostCommand(id);
 
 		// Act
@@ -46,7 +46,7 @@ public class DeleteBlogPostHandlerTests
 	public async Task Handle_RepoThrows_ReturnsFailResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var command = new DeleteBlogPostCommand(id);
 		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
 		.ThrowsAsync(new InvalidOperationException("delete failed"));
@@ -63,7 +63,7 @@ public class DeleteBlogPostHandlerTests
 	public async Task Handle_ConcurrentDelete_ReturnsConcurrencyErrorCode()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var command = new DeleteBlogPostCommand(id);
 		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
 		.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new Exception()));
@@ -80,7 +80,7 @@ public class DeleteBlogPostHandlerTests
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var command = new DeleteBlogPostCommand(id);
 		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new OperationCanceledException());
@@ -96,7 +96,7 @@ public class DeleteBlogPostHandlerTests
 	public async Task Handle_UnexpectedException_ReturnsUnexpectedErrorResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var command = new DeleteBlogPostCommand(id);
 		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new TimeoutException("db timeout"));

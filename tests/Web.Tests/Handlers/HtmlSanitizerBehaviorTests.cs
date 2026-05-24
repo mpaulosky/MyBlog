@@ -104,7 +104,7 @@ public class HtmlSanitizerBehaviorTests
 		_sanitizer.Sanitize(MaliciousOnly).Returns(string.Empty);
 
 		var handler = new EditBlogPostHandler(_repo, _cache, _sanitizer, NullLogger<EditBlogPostHandler>.Instance);
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", MaliciousOnly, "auth0|user", false);
+		var command = new EditBlogPostCommand(ObjectId.GenerateNewId(), "Title", MaliciousOnly, "auth0|user", false);
 
 		// Act
 		var result = await handler.Handle(command, CancellationToken.None);
@@ -112,7 +112,7 @@ public class HtmlSanitizerBehaviorTests
 		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("empty after sanitization");
-		await _repo.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+		await _repo.DidNotReceive().GetByIdAsync(Arg.Any<ObjectId>(), Arg.Any<CancellationToken>());
 	}
 
 	// ── Real HtmlSanitizer integration ───────────────────────────────────────

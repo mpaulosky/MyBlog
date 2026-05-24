@@ -844,3 +844,57 @@ Both tracks shipped with zero test failures:
 ### Status
 
 ✅ Completed. Open gates (AppHost.Tests startup failures) assigned to Boromir/Gimli follow-up agents.
+
+---
+
+## 2026-05-26 — Issue #360: ObjectId Foundation and AppHost Seeding Rules
+
+### Task
+
+Establish MongoDB-native `ObjectId` as the identifier type across all domain entities, repository contracts, commands/queries/handlers, cache infrastructure, and AppHost seed data. Migrate from `System.Guid`.
+
+### What Was Implemented
+
+**New file**:
+
+- `src/Domain/ValueObjects/ObjectIdExtensions.cs` — `TryParseObjectId`, `ParseObjectId`, `DeterministicId(int slot)` helpers
+
+**Domain layer** (`src/Domain/`):
+
+- `Domain.csproj` — added `MongoDB.Bson` PackageReference
+- `Entities/BlogPost.cs`, `Entities/Category.cs` — `Guid Id` → `ObjectId Id`, `Guid.NewGuid()` → `ObjectId.GenerateNewId()`
+- `Interfaces/IBlogPostRepository.cs`, `Interfaces/ICategoryRepository.cs` — all `Guid` params → `ObjectId`
+
+**Web layer** (`src/Web/`):
+
+- `GlobalUsings.cs` — `global using MongoDB.Bson`
+- DTOs: `BlogPostDto.cs`, `CategoryDto.cs` — IDs as `string` (JSON compatibility)
+- `Data/BlogPostMappings.cs`, `Data/CategoryMappings.cs` — `.ToString()` bridge
+- Repository impls, all commands/queries/handlers, cache infrastructure — `Guid` → `ObjectId`
+- Blazor pages — route `{Id:guid}` → `{Id}`, `string Id` params + `ObjectId.Parse(Id)` at use
+
+**AppHost** (`src/AppHost/MongoDbResourceBuilderExtensions.cs`):
+
+- General category seed uses deterministic `new ObjectId("000000000000000000000001")`
+- Blog post seeds use `ObjectId.GenerateNewId()`
+
+**Test files** — all compile errors resolved (Guid → ObjectId call sites, `.NotBeEmpty()` → `.NotBe(ObjectId.Empty)`, ValidationBehavior type constraint updated)
+
+### Results
+
+- Build: `0 Error(s), 0 Warning(s)`
+- Domain.Tests: 67/67 passed
+- Web.Tests: 210/210 passed
+- Architecture.Tests: 16/16 passed
+
+### Decisions Recorded
+
+- `ObjectId` is the canonical ID type in domain entities (not Guid, not string)
+
+- DTOs use `string` IDs for JSON/Redis serialization compatibility
+
+- AppHost seed uses deterministic `ObjectId` hex strings for stable upserts
+
+### Status
+
+✅ Completed. Production code and tests all green.

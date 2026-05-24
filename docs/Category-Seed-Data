@@ -1,0 +1,37 @@
+	private static readonly string _categoriesJson = @"[
+    {
+        ""_id"": { ""$oid"": ""677db927900ea4af1b500cab"" },
+        ""Name"": ""ASP.NET Core"",
+        ""Description"": ""This document is related to ASP.NET Core"",
+    },
+    {
+        ""_id"": { ""$oid"": ""677db927900ea4af1b500cac"" },
+        ""Name"": ""Blazor Server"",
+        ""Description"": ""This document is related to Blazor Server"",
+    },
+    {
+        ""_id"": { ""$oid"": ""677db9bd900ea4af1b500cad"" },
+        ""Name"": ""Blazor WebAssembly"",
+        ""Description"": ""This document is related to Blazor WebAssembly"",
+    },
+    {
+        ""_id"": { ""$oid"": ""677db9bd900ea4af1b500cae"" },
+        ""Name"": ""C#"",
+        ""Description"": ""This document is related to C#"",
+    },
+    {
+        ""_id"": { ""$oid"": ""677db9bd900ea4af1b500caf"" },
+        ""Name"": ""Entity Framework Core (EF Core)"",
+        ""Description"": ""This document is related to Entity Framework Core (EF Core)"",
+    },
+    {
+        ""_id"": { ""$oid"": ""677db9bd900ea4af1b500cb0"" },
+        ""Name"": "".NET MAUI"",
+        ""Description"": ""This document is related to .NET MAUI"",
+    },
+    {
+        ""_id"": { ""$oid"": ""677db9bd900ea4af1b500cb1"" },
+        ""Name"": ""Other"",
+        ""Description"": ""This document is related to other information"",
+    }
+]";

@@ -70,11 +70,11 @@ public class MarkdownEditorLifecycleTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|alice";
 		const string ExpectedContent = "# Sprint 19\n\nMarkdown content here.";
 
-		var post = new BlogPostDto(postId, "Sprint Post", ExpectedContent, OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId.ToString(), "Sprint Post", ExpectedContent, OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -84,7 +84,7 @@ public class MarkdownEditorLifecycleTests : BunitContext
 		// Act
 		var cut = RenderWithUser<Edit>(
 				CreateAuthorPrincipal("Alice", OwnerSub),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Assert — editor must carry the post's existing content, NOT be blank
 		cut.FindComponent<TextEditor>().Instance.Content.Should().Be(ExpectedContent);
@@ -113,10 +113,10 @@ public class MarkdownEditorLifecycleTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|alice";
 
-		var post = new BlogPostDto(postId, "Some Post", "Some content", OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId.ToString(), "Some Post", "Some content", OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -125,7 +125,7 @@ public class MarkdownEditorLifecycleTests : BunitContext
 
 		RenderWithUser<Edit>(
 				CreateAuthorPrincipal("Alice", OwnerSub),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Act — simulate navigating away mid-edit
 		Func<Task> act = DisposeComponentsAsync;

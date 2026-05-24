@@ -141,7 +141,7 @@
 		}
 
 		var author = new PostAuthor(_authorId, _authorName, _authorEmail, _authorRoles);
-		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished, _model.CategoryId));
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished, _model.CategoryId is not null ? ObjectId.Parse(_model.CategoryId) : null));
 		if (result.Success)
 			Navigation.NavigateTo("/blog");
 		else
@@ -158,6 +158,6 @@
 
 		public bool IsPublished { get; set; }
 
-		public Guid? CategoryId { get; set; }
+		public string? CategoryId { get; set; }
 	}
 }

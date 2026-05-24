@@ -122,7 +122,7 @@ else
 	private string? _error;
 
 	private readonly CategoryFormModel _createModel = new();
-	private Guid? _editingId;
+	private string? _editingId;
 	private readonly CategoryEditModel _editModel = new();
 	private CategoryDto? _deleteTarget;
 
@@ -172,7 +172,7 @@ else
 	private async Task HandleEdit()
 	{
 		if (_editingId is null) return;
-		var result = await Sender.Send(new EditCategoryCommand(_editingId.Value, _editModel.Name, _editModel.Description));
+		var result = await Sender.Send(new EditCategoryCommand(ObjectId.Parse(_editingId), _editModel.Name, _editModel.Description));
 		if (result.Success)
 		{
 			_editingId = null;
@@ -189,7 +189,7 @@ else
 	private async Task ExecuteDelete()
 	{
 		if (_deleteTarget is null) return;
-		var result = await Sender.Send(new DeleteCategoryCommand(_deleteTarget.Id));
+		var result = await Sender.Send(new DeleteCategoryCommand(ObjectId.Parse(_deleteTarget.Id)));
 		if (result.Failure) _error = result.Error;
 		_deleteTarget = null;
 		await LoadAsync();

@@ -16,8 +16,8 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 {
 	// ------------------------------------------------------------------ helpers
 
-	private static BlogPostDto MakeDto(string title = "Test Post") =>
-		new(Guid.NewGuid(), title, "Content", string.Empty, "Author", string.Empty, [], DateTime.UtcNow, null, true, null);
+	private static BlogPostDto MakeDto(string title = "Test Post", ObjectId? id = null) =>
+		new((id ?? ObjectId.GenerateNewId()).ToString(), title, "Content", string.Empty, "Author", string.Empty, [], DateTime.UtcNow, null, true, null);
 
 	// ------------------------------------------------------------------ tests
 
@@ -64,8 +64,8 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		// Arrange — service #1 with cold L1
 		var ct = TestContext.Current.CancellationToken;
 		var svc1 = fixture.CreateCacheService();
-		var dto = MakeDto("By-Id Post");
-		var id = dto.Id;
+		var id = ObjectId.GenerateNewId();
+		var dto = MakeDto("By-Id Post", id);
 
 		var fetch1 = Substitute.For<Func<Task<BlogPostDto?>>>();
 		fetch1().Returns(Task.FromResult<BlogPostDto?>(dto));

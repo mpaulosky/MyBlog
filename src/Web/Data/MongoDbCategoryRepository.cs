@@ -12,7 +12,7 @@ namespace MyBlog.Web.Data;
 internal sealed class MongoDbCategoryRepository(IDbContextFactory<BlogDbContext> contextFactory)
 	: ICategoryRepository
 {
-	public async Task<Category?> GetByIdAsync(Guid id, CancellationToken ct = default)
+	public async Task<Category?> GetByIdAsync(ObjectId id, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 		return await ctx.Categories.AsNoTracking()
@@ -35,7 +35,7 @@ internal sealed class MongoDbCategoryRepository(IDbContextFactory<BlogDbContext>
 			.AnyAsync(c => c.Name == normalizedName, ct).ConfigureAwait(false);
 	}
 
-	public async Task<bool> ExistsByNameExcludingAsync(string name, Guid excludedId, CancellationToken ct = default)
+	public async Task<bool> ExistsByNameExcludingAsync(string name, ObjectId excludedId, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 		var normalizedName = name.Trim();
@@ -57,7 +57,7 @@ internal sealed class MongoDbCategoryRepository(IDbContextFactory<BlogDbContext>
 		await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
 	}
 
-	public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+	public async Task DeleteAsync(ObjectId id, CancellationToken ct = default)
 	{
 		await using var ctx = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 		var category = await ctx.Categories.FindAsync([id], ct).ConfigureAwait(false);

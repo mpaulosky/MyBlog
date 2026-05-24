@@ -32,7 +32,7 @@ public class BlogPostTests
 		var post = BlogPost.Create("Title", "Content", TestAuthor);
 
 		// Assert
-		post.Id.Should().NotBeEmpty();
+		post.Id.Should().NotBe(ObjectId.Empty);
 	}
 
 	[Fact]

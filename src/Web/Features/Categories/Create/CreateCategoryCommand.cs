@@ -13,4 +13,4 @@ namespace MyBlog.Web.Features.Categories.Create;
 
 internal sealed record CreateCategoryCommand(
 	string Name,
-	string Description) : IRequest<Result<Guid>>;
+	string Description) : IRequest<Result<ObjectId>>;

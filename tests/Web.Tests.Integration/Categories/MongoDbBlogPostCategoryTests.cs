@@ -32,7 +32,7 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var ct = TestContext.Current.CancellationToken;
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Hello World", "Content", Author);
 		post.AssignCategory(categoryId);
 		await repo.AddAsync(post, ct);
@@ -51,7 +51,7 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var ct = TestContext.Current.CancellationToken;
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Hello World", "Content", Author);
 		// No AssignCategory call — CategoryId is null
 		await repo.AddAsync(post, ct);
@@ -71,7 +71,7 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var repo = CreateBlogPostRepo($"T{Guid.NewGuid():N}");
 
 		// Act
-		var exists = await repo.ExistsByCategoryAsync(Guid.NewGuid(), ct);
+		var exists = await repo.ExistsByCategoryAsync(ObjectId.GenerateNewId(), ct);
 
 		// Assert
 		exists.Should().BeFalse();
@@ -84,7 +84,7 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var ct = TestContext.Current.CancellationToken;
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Post", "Content", Author);
 		post.AssignCategory(categoryId);
 		await repo.AddAsync(post, ct);

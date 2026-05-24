@@ -20,7 +20,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_ValidCommand_PassesValidation()
 	{
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "Valid Title", "Valid Content", string.Empty, false);
+		var command = new EditBlogPostCommand(ObjectId.GenerateNewId(), "Valid Title", "Valid Content", string.Empty, false);
 
 		var result = _validator.TestValidate(command);
 
@@ -30,7 +30,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_EmptyId_FailsValidation()
 	{
-		var command = new EditBlogPostCommand(Guid.Empty, "Title", "Content", string.Empty, false);
+		var command = new EditBlogPostCommand(ObjectId.Empty, "Title", "Content", string.Empty, false);
 
 		var result = _validator.TestValidate(command);
 
@@ -42,7 +42,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[InlineData(null!)]
 	public void Validate_EmptyTitle_FailsValidation(string? title)
 	{
-		var command = new EditBlogPostCommand(Guid.NewGuid(), title!, "Content", string.Empty, false);
+		var command = new EditBlogPostCommand(ObjectId.GenerateNewId(), title!, "Content", string.Empty, false);
 
 		var result = _validator.TestValidate(command);
 
@@ -52,7 +52,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[Fact]
 	public void Validate_TitleExceedsMaxLength_FailsValidation()
 	{
-		var command = new EditBlogPostCommand(Guid.NewGuid(), new string('a', 201), "Content", string.Empty, false);
+		var command = new EditBlogPostCommand(ObjectId.GenerateNewId(), new string('a', 201), "Content", string.Empty, false);
 
 		var result = _validator.TestValidate(command);
 
@@ -64,7 +64,7 @@ public class UpdateBlogPostCommandValidatorTests
 	[InlineData(null!)]
 	public void Validate_EmptyContent_FailsValidation(string? content)
 	{
-		var command = new EditBlogPostCommand(Guid.NewGuid(), "Title", content!, string.Empty, false);
+		var command = new EditBlogPostCommand(ObjectId.GenerateNewId(), "Title", content!, string.Empty, false);
 
 		var result = _validator.TestValidate(command);
 

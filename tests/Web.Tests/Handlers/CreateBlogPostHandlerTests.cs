@@ -39,7 +39,7 @@ public class CreateBlogPostHandlerTests
 
 		// Assert
 		result.Success.Should().BeTrue();
-		result.Value.Should().NotBeEmpty();
+		result.Value.Should().NotBe(ObjectId.Empty);
 		await _repo.Received(1).AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>());
 		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
 	}
@@ -72,7 +72,7 @@ public class CreateBlogPostHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
-		await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+		await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<ObjectId>(), Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
