@@ -109,16 +109,6 @@
 			?? user.FindFirst("email")?.Value
 			?? "no-email@example.com";
 		_authorRoles = RoleClaimsHelper.GetRoles(user);
-		
-		// If still empty, generate sensible defaults for Development mode
-		if (string.IsNullOrWhiteSpace(_authorId))
-		{
-			_authorId = $"auth0|dev-{Guid.NewGuid().ToString().Substring(0, 8)}";
-		}
-		if (string.IsNullOrWhiteSpace(_authorName))
-		{
-			_authorName = "Author";
-		}
 
 		var categoriesResult = await Sender.Send(new GetCategoriesQuery());
 		if (categoriesResult is { Success: true })
