@@ -898,3 +898,29 @@ Establish MongoDB-native `ObjectId` as the identifier type across all domain ent
 ### Status
 
 ✅ Completed. Production code and tests all green.
+
+---
+
+## Issue #361 — Sprint 20: Migrate Category entity and queries to ObjectId
+
+**Branch:** `sprint/20-mongo-objectid-migration`
+**Approach:** Fast-forward merged `origin/dev` (containing PR #360 commits) into the sprint/20 worktree branch. PR #360 already contained all production code required for issue #361.
+
+### Verified Acceptance Criteria
+
+- ✅ `Category.Id` is `ObjectId`; `Create()` factory uses `ObjectId.GenerateNewId()`
+- ✅ `CreateCategoryCommand`, `EditCategoryCommand` accept `ObjectId` parameters
+- ✅ `GetCategoryByIdQuery`, `GetCategoriesQuery` — CategoryDto returns `string Id` (stringified at edge)
+- ✅ `MongoDbCategoryRepository` uses `ObjectId` in all filter/insert/update paths
+- ✅ Category UI (Index.razor) holds `string? _editingId`; calls `ObjectId.Parse()` before sending commands
+- ✅ `IBlogPostRepository.ExistsByCategoryAsync(ObjectId)` aligned
+- ✅ Build: 0 errors; Domain.Tests 67/67, Web.Tests 210/210, Architecture.Tests 16/16, Bunit 104/104 — all green
+- ⏳ **[Gimli]** Unit + integration tests for Category commands/queries with ObjectId signatures
+
+### Key Decision Confirmed
+
+Commands take `ObjectId` directly; Blazor components hold string IDs from DTOs and call `ObjectId.Parse()` at the point of command dispatch. This places the string↔ObjectId boundary at the UI entry point, not inside command validators or handlers.
+
+### Status
+
+✅ Sam scope complete. Gimli owns test updates (see issue #361 Gimli checklist).
