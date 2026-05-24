@@ -1,3 +1,30 @@
+## 2026-05-24 Session Log: Issue #371 Docs Recovery & Branch Alignment Guardrail
+
+Boromir recovered dirty issue #371 documentation work that had been started on `dev`
+and rehomed it onto the proper branch:
+`squad/371-our-documentation-is-outdated-and-missing-blog-and-release-information`.
+
+### What changed
+
+- Safely stashed only the issue-owned docs files from `dev` and reapplied them on the
+  issue branch created from `origin/dev`
+- Preserved the recovered docs scope to:
+  `README.md`, `docs/blog/index.md`, `docs/index.html`, and five release posts under
+  `docs/blog/`
+- Added a reusable process guardrail:
+  `.squad/skills/issue-branch-alignment/SKILL.md`
+- Routed the new guardrail in `.squad/routing.md`
+- Updated `.squad/playbooks/pre-push-process.md` with the stash-and-rehome recovery flow
+- Recorded the team-facing decision in
+  `.squad/decisions/inbox/boromir-issue-branch-alignment.md`
+
+### Verification
+
+- Markdown lint passed for all changed Markdown files
+- Local gate passed with:
+  `dotnet restore`, `dotnet build MyBlog.slnx --configuration Release`, and all required
+  test projects including `tests/AppHost.Tests/AppHost.Tests.csproj`
+
 ## Core Context
 
 ### MyBlog DevOps & Infrastructure Patterns
