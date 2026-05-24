@@ -279,6 +279,35 @@ Running `dotnet run` from AppHost launches the Aspire dashboard:
 - Check logs and metrics
 - Monitor resource usage
 
+### MongoDB Seeding and Local Development
+
+AppHost provides three developer commands (accessible from the Aspire dashboard's MongoDB resource card) for managing local database state:
+
+- **🌱 Seed MyBlog Data** — Upserts seven canonical categories (hardcoded ObjectIds) and inserts seed blog posts. Safe to run multiple times (categories are upserted); blog posts are inserted fresh.
+- **⚠️ Clear MyBlog Data** — Clears all non-system collections. Use before reseeding to avoid duplicates.
+- **📊 Show MyBlog Stats** — Displays collection names and document counts for verification.
+
+**Canonical Categories** (source of truth in code):
+
+The seven canonical categories have fixed ObjectIds defined in `MongoDbResourceBuilderExtensions.cs` and referenced by all seeded blog posts:
+
+1. ASP.NET Core (`677db927900ea4af1b500cab`)
+2. Blazor Server (`677db927900ea4af1b500cac`)
+3. Blazor WebAssembly (`677db9bd900ea4af1b500cad`)
+4. C# (`677db9bd900ea4af1b500cae`)
+5. Entity Framework Core (EF Core) (`677db9bd900ea4af1b500caf`)
+6. .NET MAUI (`677db9bd900ea4af1b500cb0`)
+7. Other (`677db9bd900ea4af1b500cb1`)
+
+These ObjectIds are **hardcoded** in the AppHost seeding logic and **must never change**; tests verify that seeded blog posts reference only these canonical categories by their exact ObjectIds.
+
+**Clear-and-Reseed Workflow**: When canonical seed data changes or you need a clean local database state, use the Aspire dashboard to:
+1. Click **⚠️ Clear MyBlog Data** and confirm
+2. Click **📊 Show MyBlog Stats** to verify clean state
+3. Click **🌱 Seed MyBlog Data** to reseed with current data
+
+For detailed seeding instructions and troubleshooting, see [APPHOST-LOCAL-DEVELOPMENT.md](APPHOST-LOCAL-DEVELOPMENT.md).
+
 ## Testing Strategy
 
 ### Unit Tests (Unit.Tests/)
@@ -398,9 +427,8 @@ All significant design choices are documented in [`docs/decisions/`](decisions/i
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-001](decisions/ADR-001-architecture-decisions.md) | Core Architecture Decisions (VSA, MongoDB, Redis, Auth0, RBAC) | Accepted |
-
 ---
 
-**Maintained by**: @mpaulosky  
-**Project Status**: Training / Learning  
+**Maintained by**: @mpaulosky
+**Project Status**: Training / Learning
 **Last Updated**: 2026-04-23
