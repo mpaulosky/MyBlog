@@ -6,6 +6,11 @@ Welcome to the MyBlog technical blog! Here we document the project's evolution�
 
 | Date | Title | Tags |
 |------|-------|------|
+| 2026-05-23 | [Release: v1.5.2 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-5-2.md) | release, v1.5.2, blazor, ui, categories, markdown, sprint-19 |
+| 2026-05-08 | [Release: v1.5.1 — AppHost MongoDB Dev Commands Refactor](./2026-05-08-release-v1-5-1.md) | release, v1.5.1, aspire, mongodb, sprint-18 |
+| 2026-05-08 | [Release: v1.5.0 — MongoDB Resource Refactoring and Aspire Dev Commands](./2026-05-08-release-v1-5-0.md) | release, v1.5.0, aspire, mongodb, devops, sprint-14-18 |
+| 2026-05-08 | [Release: v1.4.0 — Board Automation and Test Harness Hardening](./2026-05-08-release-v1-4-0.md) | release, v1.4.0, board-automation, testing, ci-cd, sprints-10-13 |
+| 2026-04-30 | [Release: v1.3.0 — Complete xUnit v3 Migration and Code Quality](./2026-04-30-release-v1-3-0.md) | release, v1.3.0, testing, xunit, code-quality, sprints-6-8 |
 | 2026-04-24 | [Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy](./2026-04-24-release-v1-2-0.md) | release, v1.2.0, redis, caching, aspire, sprint-5 |
 | 2026-04-24 | [Release: v1.1.0 — Blazor Theme System with TailwindCSS v4](./2026-04-24-release-v1-1-0.md) | release, v1.1.0, blazor, tailwind, theme, testing, sprint-4 |
 | 2026-04-20 | [Release: v1.0.0 — Semantic Versioning and Production Readiness](./2026-04-20-release-v1-0-0.md) | release, semver, ci, devops |
@@ -35,13 +40,35 @@ Welcome to the MyBlog technical blog! Here we document the project's evolution�
 
 - [Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy](./2026-04-24-release-v1-2-0.md)
 
+### Sprints 6–8: xUnit v3 Migration
+
+- [Release: v1.3.0 — Complete xUnit v3 Migration and Code Quality](./2026-04-30-release-v1-3-0.md)
+
+### Sprints 10–13: Board Automation
+
+- [Release: v1.4.0 — Board Automation and Test Harness Hardening](./2026-05-08-release-v1-4-0.md)
+
+### Sprints 14–18: MongoDB Infrastructure
+
+- [Release: v1.5.0 — MongoDB Resource Refactoring and Aspire Dev Commands](./2026-05-08-release-v1-5-0.md)
+- [Release: v1.5.1 — AppHost MongoDB Dev Commands Refactor](./2026-05-08-release-v1-5-1.md)
+
+### Sprint 19: Markdown Editor & Categories
+
+- [Release: v1.5.2 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-5-2.md)
+
 ## Release Timeline
 
 | Release | Date | Focus |
 |---------|------|-------|
-| [v1.0.0](./2026-04-20-release-v1-0-0.md) | 2026-04-20 | Semantic versioning, production readiness |
-| [v1.1.0](./2026-04-24-release-v1-1-0.md) | 2026-04-24 | Blazor theme system, test reorganization |
+| [v1.5.2](./2026-05-23-release-v1-5-2.md) | 2026-05-23 | Markdown editor, blog post categories, ObjectId migration |
+| [v1.5.1](./2026-05-08-release-v1-5-1.md) | 2026-05-08 | MongoDB dev commands refinement, diagnostic tooling |
+| [v1.5.0](./2026-05-08-release-v1-5-0.md) | 2026-05-08 | MongoDB resource refactoring, Aspire dev commands |
+| [v1.4.0](./2026-05-08-release-v1-4-0.md) | 2026-05-08 | Board automation, test harness hardening |
+| [v1.3.0](./2026-04-30-release-v1-3-0.md) | 2026-04-30 | Complete xUnit v3 migration, code quality |
 | [v1.2.0](./2026-04-24-release-v1-2-0.md) | 2026-04-24 | Redis caching, distributed cache strategy |
+| [v1.1.0](./2026-04-24-release-v1-1-0.md) | 2026-04-24 | Blazor theme system, test reorganization |
+| [v1.0.0](./2026-04-20-release-v1-0-0.md) | 2026-04-20 | Semantic versioning, production readiness |
 
 ## About This Blog
 
@@ -49,4 +76,4 @@ Written by **Bilbo**, the MyBlog Tech Blogger. Posts document architecture, feat
 
 ---
 
-Last updated: 2026-04-24
+Last updated: 2026-05-23
