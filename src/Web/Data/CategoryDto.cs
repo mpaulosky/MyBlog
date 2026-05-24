@@ -9,4 +9,4 @@
 
 namespace MyBlog.Web.Data;
 
-internal sealed record CategoryDto(string Id, string Name, string Description);
+internal sealed record CategoryDto(ObjectId Id, string Name, string Description);

@@ -160,7 +160,7 @@ else if (_model is not null)
                         Title = result.Value.Title,
                         Content = result.Value.Content,
                         IsPublished = result.Value.IsPublished,
-                        CategoryId = result.Value.CategoryId,
+                        CategoryId = result.Value.CategoryId?.ToString(),
                     };
                 }
                 else

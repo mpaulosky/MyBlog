@@ -51,11 +51,11 @@ public class EditCategoryRegressionTests : BunitContext
 		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
-		var firstPost = new BlogPostDto(firstPostId.ToString(), "First Post", "Content", OwnerSub, "Owner",
+		var firstPost = new BlogPostDto(firstPostId, "First Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, false, null);
-		var secondPost = new BlogPostDto(secondPostId.ToString(), "Second Post", "Content", OwnerSub, "Owner",
+		var secondPost = new BlogPostDto(secondPostId, "Second Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, false, null);
-		var category = new CategoryDto(ObjectId.GenerateNewId().ToString(), "Tech", "Tech category");
+		var category = new CategoryDto(ObjectId.GenerateNewId(), "Tech", "Tech category");
 
 		// First navigation: categories fail, post loads fine.
 		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
@@ -103,8 +103,8 @@ public class EditCategoryRegressionTests : BunitContext
 		const string OwnerSub = "auth0|owner-user";
 
 		// Post is already published and already has a CategoryId — a real-world published post.
-		var post = new BlogPostDto(postId.ToString(), "Published Post", "Content", OwnerSub, "Owner",
-			string.Empty, [], DateTime.UtcNow, null, IsPublished: true, CategoryId: categoryId.ToString());
+		var post = new BlogPostDto(postId, "Published Post", "Content", OwnerSub, "Owner",
+			string.Empty, [], DateTime.UtcNow, null, IsPublished: true, CategoryId: categoryId);
 
 		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult(Result.Fail<IReadOnlyList<CategoryDto>>("Category service unavailable.")));
@@ -156,7 +156,7 @@ public class EditCategoryRegressionTests : BunitContext
 		const string OwnerSub = "auth0|owner-user";
 
 		// Post is marked published but has no category — user cannot fix this without categories loading.
-		var post = new BlogPostDto(postId.ToString(), "Draft Post", "Content", OwnerSub, "Owner",
+		var post = new BlogPostDto(postId, "Draft Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, IsPublished: true, CategoryId: null);
 
 		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())

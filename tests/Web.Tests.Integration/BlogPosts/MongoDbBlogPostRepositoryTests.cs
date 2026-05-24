@@ -56,6 +56,8 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		var ct = TestContext.Current.CancellationToken;
 		var repo = CreateRepo();
 		var post = BlogPost.Create("My Title", "My Content", new PostAuthor(string.Empty, "My Author", string.Empty, []));
+		var categoryId = ObjectId.GenerateNewId();
+		post.AssignCategory(categoryId);
 		await repo.AddAsync(post, ct);
 
 		// Act
@@ -63,9 +65,11 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 
 		// Assert
 		result.Should().NotBeNull();
+		result!.Id.Should().Be(post.Id);
 		result!.Title.Should().Be("My Title");
 		result.Author.Name.Should().Be("My Author");
 		result.Content.Should().Be("My Content");
+		result.CategoryId.Should().Be(categoryId);
 	}
 
 	[Fact]
@@ -109,6 +113,29 @@ public sealed class MongoDbBlogPostRepositoryTests(MongoDbFixture fixture)
 		var result = await repo.GetByIdAsync(post.Id, ct);
 		result!.Title.Should().Be("Updated Title");
 		result.Content.Should().Be("Updated Content");
+	}
+
+	[Fact]
+	public async Task UpdateAsync_persists_category_assignment_changes()
+	{
+		// Arrange
+		var ct = TestContext.Current.CancellationToken;
+		var repo = CreateRepo();
+		var originalCategoryId = ObjectId.GenerateNewId();
+		var updatedCategoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Original Title", "Original Content", new PostAuthor(string.Empty, "Author", string.Empty, []));
+		post.AssignCategory(originalCategoryId);
+		await repo.AddAsync(post, ct);
+
+		post.AssignCategory(updatedCategoryId);
+
+		// Act
+		await repo.UpdateAsync(post, ct);
+
+		// Assert
+		var result = await repo.GetByIdAsync(post.Id, ct);
+		result.Should().NotBeNull();
+		result!.CategoryId.Should().Be(updatedCategoryId);
 	}
 
 	[Fact]

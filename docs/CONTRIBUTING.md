@@ -230,6 +230,7 @@ on a new issue branch keeps the repository clean and your work tracking obvious.
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Solution structure and design decisions
 - [AUTH0_SETUP.md](AUTH0_SETUP.md) — Auth0 configuration guide
+- [APPHOST-LOCAL-DEVELOPMENT.md](APPHOST-LOCAL-DEVELOPMENT.md) — AppHost orchestration, seeding, and clear-and-reseed workflow
 - [README.md](../README.md) — Project overview and getting started
 - [Pre-Push Process Playbook](../.squad/playbooks/pre-push-process.md) — Detailed pre-push
   troubleshooting and gate descriptions
