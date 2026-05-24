@@ -25,7 +25,7 @@ public class GetCategoryByIdHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_CategoryExists_ReturnsMappedDto()
+	public async Task Handle_CategoryExists_ReturnsDtoWithOriginalObjectId()
 	{
 		// Arrange
 		var category = Category.Create("Technology", "Tech posts.");
@@ -38,9 +38,12 @@ public class GetCategoryByIdHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().NotBeNull();
-		result.Value!.Name.Should().Be("Technology");
-		result.Value.Description.Should().Be("Tech posts.");
-		result.Value.Id.Should().Be(category.Id.ToString());
+		result.Value.Should().BeEquivalentTo(new
+		{
+			Id = category.Id,
+			Name = "Technology",
+			Description = "Tech posts.",
+		});
 	}
 
 	[Fact]

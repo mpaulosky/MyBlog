@@ -25,7 +25,7 @@ public class GetCategoriesHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_WithCategories_ReturnsMappedDtos()
+	public async Task Handle_WithCategories_ReturnsDtosThatPreserveObjectIds()
 	{
 		// Arrange
 		var cat1 = Category.Create("Technology", "Tech posts.");
@@ -39,8 +39,25 @@ public class GetCategoriesHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().HaveCount(2);
-		result.Value!.Should().Contain(d => d.Name == "Technology");
-		result.Value!.Should().Contain(d => d.Name == "Design");
+		result.Value!
+			.Select(category => (object)category.Id)
+			.Should()
+			.AllSatisfy(id => id.Should().BeOfType<ObjectId>());
+		result.Value.Should().BeEquivalentTo(
+			[
+				new
+				{
+					Id = cat1.Id,
+					Name = "Technology",
+					Description = "Tech posts.",
+				},
+				new
+				{
+					Id = cat2.Id,
+					Name = "Design",
+					Description = "Design posts.",
+				},
+			]);
 	}
 
 	[Fact]

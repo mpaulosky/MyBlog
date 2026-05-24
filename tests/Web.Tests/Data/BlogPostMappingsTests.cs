@@ -23,7 +23,7 @@ public class BlogPostMappingsTests
 		var dto = post.ToDto();
 
 		// Assert
-		dto.Id.Should().Be(post.Id.ToString());
+		dto.Id.Should().Be(post.Id);
 		dto.Title.Should().Be(post.Title);
 		dto.Content.Should().Be(post.Content);
 		dto.AuthorId.Should().Be(post.Author.Id);
@@ -101,5 +101,34 @@ public class BlogPostMappingsTests
 
 		// Assert
 		dto.IsPublished.Should().BeFalse();
+	}
+
+	[Fact]
+	public void ToDto_AssignedCategory_PreservesObjectIdRelationship()
+	{
+		// Arrange
+		var categoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
+		post.AssignCategory(categoryId);
+
+		// Act
+		var dto = post.ToDto();
+
+		// Assert
+		dto.Id.Should().Be(post.Id);
+		dto.CategoryId.Should().Be(categoryId);
+	}
+
+	[Fact]
+	public void ToDto_UnassignedCategory_LeavesCategoryIdNull()
+	{
+		// Arrange
+		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
+
+		// Act
+		var dto = post.ToDto();
+
+		// Assert
+		dto.CategoryId.Should().BeNull();
 	}
 }

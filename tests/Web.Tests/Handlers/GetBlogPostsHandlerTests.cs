@@ -24,8 +24,8 @@ public class GetBlogPostsHandlerTests
 
 	private static List<BlogPostDto> MakeDtos() =>
 	[
-	new(ObjectId.GenerateNewId().ToString(), "T1", "C1", string.Empty, "A1", string.Empty, [], DateTime.UtcNow, null, false, null),
-	new(ObjectId.GenerateNewId().ToString(), "T2", "C2", string.Empty, "A2", string.Empty, [], DateTime.UtcNow, null, true, null),
+	new(ObjectId.GenerateNewId(), "T1", "C1", string.Empty, "A1", string.Empty, [], DateTime.UtcNow, null, false, ObjectId.GenerateNewId()),
+	new(ObjectId.GenerateNewId(), "T2", "C2", string.Empty, "A2", string.Empty, [], DateTime.UtcNow, null, true, null),
 	];
 
 	[Fact]
@@ -44,6 +44,7 @@ public class GetBlogPostsHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().HaveCount(2);
+		result.Value.Should().BeEquivalentTo(cachedList);
 		await _repo.DidNotReceive().GetAllAsync(Arg.Any<CancellationToken>());
 	}
 
@@ -63,6 +64,7 @@ public class GetBlogPostsHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().HaveCount(2);
+		result.Value.Should().BeEquivalentTo(cachedList);
 		await _repo.DidNotReceive().GetAllAsync(Arg.Any<CancellationToken>());
 	}
 
@@ -71,6 +73,8 @@ public class GetBlogPostsHandlerTests
 	{
 		// Arrange
 		var post1 = BlogPost.Create("T1", "C1", new PostAuthor("", "Test Author", "", []));
+		var categoryId = ObjectId.GenerateNewId();
+		post1.AssignCategory(categoryId);
 		var post2 = BlogPost.Create("T2", "C2", new PostAuthor("", "Test Author", "", []));
 		_repo.GetAllAsync(Arg.Any<CancellationToken>())
 		.Returns(new List<BlogPost> { post1, post2 });
@@ -89,6 +93,9 @@ public class GetBlogPostsHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().HaveCount(2);
+		result.Value[0].Id.Should().Be(post1.Id);
+		result.Value[0].CategoryId.Should().Be(categoryId);
+		result.Value[1].Id.Should().Be(post2.Id);
 		await _repo.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
 	}
 
