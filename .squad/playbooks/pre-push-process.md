@@ -26,14 +26,32 @@ The pre-push hook (`.github/hooks/pre-push`) enforces 7 gates that mirror CI. Th
 
 Before running `git push`, verify:
 
-1. **You are on a `squad/*` branch** — Gate 0 blocks pushes to `main` and `dev`
+1. **Your branch matches the issue you are delivering** — do not push issue work from
+   `dev`, `main`, or the wrong `squad/*` branch
+
+   ```bash
+   git symbolic-ref --short HEAD
+   # Must show the exact issue branch, e.g. squad/371-our-documentation-is-outdated-and-missing-blog-and-release-information
+   ```
+
+   If the wrong files are already dirty on another branch, recover them safely:
+
+   ```bash
+   git stash push -u -m "issue-371-rehome" -- <issue-files>
+   git fetch origin
+   git switch -c squad/371-issue-slug origin/dev
+   git stash apply stash@{0}
+   git stash drop stash@{0}
+   ```
+
+2. **You are on a `squad/*` branch** — Gate 0 blocks pushes to `main` and `dev`
 
    ```bash
    git symbolic-ref --short HEAD
    # Must show: squad/{issue}-{slug}
    ```
 
-2. **No untracked `.razor` or `.cs` files** — Gate 1 blocks these (invisible to CI)
+3. **No untracked `.razor` or `.cs` files** — Gate 1 blocks these (invisible to CI)
 
    ```bash
    git ls-files --others --exclude-standard -- '*.razor' '*.cs'
@@ -41,7 +59,7 @@ Before running `git push`, verify:
    git add <files>
    ```
 
-3. **Markdown lint passes** — Gate 2 runs `markdownlint-cli2`
+4. **Markdown lint passes** — Gate 2 runs `markdownlint-cli2`
 
    ```bash
    npx markdownlint-cli2 "**/*.md" \
@@ -53,7 +71,7 @@ Before running `git push`, verify:
      "!.github/copilot-instructions.md"
    ```
 
-4. **Code is formatted** — Gate 3 runs `dotnet format --verify-no-changes`
+5. **Code is formatted** — Gate 3 runs `dotnet format --verify-no-changes`
 
    ```bash
    dotnet format MyBlog.slnx --verify-no-changes
@@ -67,7 +85,7 @@ Before running `git push`, verify:
    git commit  # or --amend
    ```
 
-5. **Release build passes locally** — Gate 4 runs Release (not Debug)
+6. **Release build passes locally** — Gate 4 runs Release (not Debug)
 
    ```bash
    dotnet build MyBlog.slnx --configuration Release
@@ -75,7 +93,7 @@ Before running `git push`, verify:
 
    If build fails, run `.github/prompts/build-repair.prompt.md` to fix.
 
-6. **Unit tests pass** — Gate 5 runs 4 test projects
+7. **Unit tests pass** — Gate 5 runs 4 test projects
 
    ```bash
    dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build
@@ -84,7 +102,7 @@ Before running `git push`, verify:
    dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build
    ```
 
-7. **Docker is running** — Gate 6 requires Docker for integration tests
+8. **Docker is running** — Gate 6 requires Docker for integration tests
 
    ```bash
    docker info &>/dev/null && echo "Docker OK" || echo "Docker NOT running"

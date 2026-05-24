@@ -168,6 +168,11 @@ dotnet test
 <!-- BLOG_START -->
 | Date | Title | Tags |
 | ------ | ------- | ------ |
+| 2026-05-23 | [Release: v1.5.2 — Markdown Editor and Blog Post Categories](docs/blog/2026-05-23-release-v1-5-2.md) | release, v1.5.2, blazor, ui, categories, markdown, sprint-19 |
+| 2026-05-08 | [Release: v1.5.1 — AppHost MongoDB Dev Commands Refactor](docs/blog/2026-05-08-release-v1-5-1.md) | release, v1.5.1, aspire, mongodb, sprint-18 |
+| 2026-05-08 | [Release: v1.5.0 — MongoDB Resource Refactoring and Aspire Dev Commands](docs/blog/2026-05-08-release-v1-5-0.md) | release, v1.5.0, aspire, mongodb, devops, sprint-14-18 |
+| 2026-05-08 | [Release: v1.4.0 — Board Automation and Test Harness Hardening](docs/blog/2026-05-08-release-v1-4-0.md) | release, v1.4.0, board-automation, testing, ci-cd, sprints-10-13 |
+| 2026-04-30 | [Release: v1.3.0 — Complete xUnit v3 Migration and Code Quality](docs/blog/2026-04-30-release-v1-3-0.md) | release, v1.3.0, testing, xunit, code-quality, sprints-6-8 |
 | 2026-04-24 | [Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy](docs/blog/2026-04-24-release-v1-2-0.md) | release, v1.2.0, redis, caching, aspire, sprint-5 |
 | 2026-04-24 | [Release: v1.1.0 — Blazor Theme System with TailwindCSS v4](docs/blog/2026-04-24-release-v1-1-0.md) | release, v1.1.0, blazor, tailwind, theme, testing, sprint-4 |
 | 2026-04-20 | [Release: v1.0.0 — Semantic Versioning and Production Readiness](docs/blog/2026-04-20-release-v1-0-0.md) | release, semver, ci, devops |
@@ -179,6 +184,11 @@ dotnet test
 
 | Version | Date | Highlights |
 | --------- | ------ | ------------ |
+| [v1.5.2](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.2) | 2026-05-23 | **Markdown Editor & Categories** — Blog post categories, markdown editing, ObjectId migration |
+| [v1.5.1](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.1) | 2026-05-08 | **MongoDB Dev Commands** — AppHost diagnostic commands, resource refinement |
+| [v1.5.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.0) | 2026-05-08 | **MongoDB Refactoring** — Resource abstractions, Aspire dev commands, infrastructure hardening |
+| [v1.4.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.4.0) | 2026-05-08 | **Board Automation** — GitHub project automation, test harness hardening, CI/CD improvements |
+| [v1.3.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.3.0) | 2026-04-30 | **xUnit v3 Migration** — Complete test framework upgrade, code quality enhancements |
 | [v1.2.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0) | 2026-04-24 | **Redis & Caching** — IBlogPostCacheService L1+L2, handler cache integration |
 | [v1.1.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.1.0) | 2026-04-24 | **Themes & Testing** — TailwindCSS v4 themes, test project reorganization, E2E fixes |
 | [v1.0.1](https://github.com/mpaulosky/MyBlog/releases/tag/v1.0.1) | 2026-04-20 | Automatic semver versioning enabled |
@@ -190,4 +200,4 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ---
 
-**Status**: Training Project | **.NET 10** | **v1.2.0** | **Maintained by**: @mpaulosky
+**Status**: Training Project | **.NET 10** | **v1.5.2** | **Maintained by**: @mpaulosky
