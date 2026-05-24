@@ -166,7 +166,7 @@ public class ValidationBehaviorTests
 	}
 
 	[Fact]
-	public async Task Handle_DeleteEmptyGuid_ReturnsValidationFailWithoutCallingNext()
+	public async Task Handle_DeleteEmptyObjectId_ReturnsValidationFailWithoutCallingNext()
 	{
 		// Arrange
 		var validator = new DeleteBlogPostCommandValidator();

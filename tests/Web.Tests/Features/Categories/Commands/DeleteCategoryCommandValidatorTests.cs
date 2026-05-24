@@ -29,7 +29,7 @@ public class DeleteCategoryCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsIdError()
+	public void Validate_EmptyObjectId_ReturnsIdError()
 	{
 		// Arrange
 		var command = new DeleteCategoryCommand(ObjectId.Empty);
@@ -43,7 +43,7 @@ public class DeleteCategoryCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsRequiredMessage()
+	public void Validate_EmptyObjectId_ReturnsRequiredMessage()
 	{
 		// Arrange
 		var command = new DeleteCategoryCommand(ObjectId.Empty);

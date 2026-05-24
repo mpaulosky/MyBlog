@@ -54,6 +54,25 @@ public class EditBlogPostHandlerTests
 	}
 
 	[Fact]
+	public async Task HandleEdit_CategoryIdProvided_AssignsCategoryBeforePersisting()
+	{
+		// Arrange
+		var authorId = "auth0|author1";
+		var categoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Old Title", "Old Content", new PostAuthor(authorId, "Test Author", "", []));
+		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content", authorId, false, CategoryId: categoryId);
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		post.CategoryId.Should().Be(categoryId);
+		await _repo.Received(1).UpdateAsync(post, Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
 	public async Task HandleEdit_AdminCanEditAnyPost_ReturnsSuccess()
 	{
 		// Arrange
@@ -160,7 +179,7 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var id = ObjectId.GenerateNewId();
-		var dto = new BlogPostDto(id.ToString(), "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		_cache.GetOrFetchByIdAsync(
 		Arg.Any<ObjectId>(),
 		Arg.Any<Func<Task<BlogPostDto?>>>(),
@@ -173,7 +192,7 @@ public class EditBlogPostHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().NotBeNull();
-		result.Value!.Id.Should().Be(id.ToString());
+		result.Value!.Id.Should().Be(id);
 		await _repo.DidNotReceive().GetByIdAsync(Arg.Any<ObjectId>(), Arg.Any<CancellationToken>());
 	}
 
@@ -206,6 +225,8 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
+		var categoryId = ObjectId.GenerateNewId();
+		post.AssignCategory(categoryId);
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
 		_cache.GetOrFetchByIdAsync(
 		Arg.Any<ObjectId>(),
@@ -222,7 +243,9 @@ public class EditBlogPostHandlerTests
 
 		// Assert
 		result.Success.Should().BeTrue();
+		result.Value!.Id.Should().Be(post.Id);
 		result.Value!.Title.Should().Be("Title");
+		result.Value.CategoryId.Should().Be(categoryId);
 		await _repo.Received(1).GetByIdAsync(post.Id, Arg.Any<CancellationToken>());
 	}
 

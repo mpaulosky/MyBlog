@@ -44,10 +44,10 @@ internal static partial class MongoDbResourceBuilderExtensions
 	[LoggerMessage(Level = LogLevel.Warning, Message = "Seed MyBlog data skipped on {ResourceName} — a database operation is already in progress.")]
 	private static partial void LogSeedSkipped(ILogger logger, string resourceName);
 
-	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data invoked on {ResourceName} — upserting General category and inserting blog posts into '{Database}'.")]
+	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data invoked on {ResourceName} — upserting 7 canonical categories and inserting blog posts into '{Database}'.")]
 	private static partial void LogSeedStarted(ILogger logger, string resourceName, string database);
 
-	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data complete: 1 category upserted + {Count} blog post(s) inserted.")]
+	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data complete: 7 categories upserted + {Count} blog post(s) inserted.")]
 	private static partial void LogSeedComplete(ILogger logger, int count);
 
 	[LoggerMessage(Level = LogLevel.Warning, Message = "Show MyBlog stats skipped on {ResourceName} — a database operation is already in progress.")]
@@ -235,21 +235,31 @@ internal static partial class MongoDbResourceBuilderExtensions
 
 				var now = DateTime.UtcNow;
 
-				// Seed the default "General" category with a stable, deterministic ObjectId.
-				// Slot 1 → 000000000000000000000001 — safe to rely on in tests and seed scripts.
-				var generalCategoryId = new ObjectId("000000000000000000000001");
-
-				var generalCategory = new BsonDocument
+				// Canonical categories — stable ObjectIds from docs/Category-Seed-Data.
+				// Never change these IDs; blog posts and tests rely on them as foreign keys.
+				var canonicalCategories = new BsonDocument[]
 				{
-					["_id"] = generalCategoryId,
-					["Name"] = "General",
-					["Description"] = "Default category for blog posts.",
+					new() { ["_id"] = new ObjectId("677db927900ea4af1b500cab"), ["Name"] = "ASP.NET Core",                      ["Description"] = "This document is related to ASP.NET Core" },
+					new() { ["_id"] = new ObjectId("677db927900ea4af1b500cac"), ["Name"] = "Blazor Server",                     ["Description"] = "This document is related to Blazor Server" },
+					new() { ["_id"] = new ObjectId("677db9bd900ea4af1b500cad"), ["Name"] = "Blazor WebAssembly",                ["Description"] = "This document is related to Blazor WebAssembly" },
+					new() { ["_id"] = new ObjectId("677db9bd900ea4af1b500cae"), ["Name"] = "C#",                               ["Description"] = "This document is related to C#" },
+					new() { ["_id"] = new ObjectId("677db9bd900ea4af1b500caf"), ["Name"] = "Entity Framework Core (EF Core)",  ["Description"] = "This document is related to Entity Framework Core (EF Core)" },
+					new() { ["_id"] = new ObjectId("677db9bd900ea4af1b500cb0"), ["Name"] = ".NET MAUI",                       ["Description"] = "This document is related to .NET MAUI" },
+					new() { ["_id"] = new ObjectId("677db9bd900ea4af1b500cb1"), ["Name"] = "Other",                           ["Description"] = "This document is related to other information" },
 				};
-				await categoriesCollection.ReplaceOneAsync(
-					Builders<BsonDocument>.Filter.Eq("_id", generalCategoryId),
-					generalCategory,
-					new ReplaceOptions { IsUpsert = true },
-					cancellationToken: context.CancellationToken).ConfigureAwait(false);
+
+				foreach (var category in canonicalCategories)
+				{
+					await categoriesCollection.ReplaceOneAsync(
+						Builders<BsonDocument>.Filter.Eq("_id", category["_id"]),
+						category,
+						new ReplaceOptions { IsUpsert = true },
+						cancellationToken: context.CancellationToken).ConfigureAwait(false);
+				}
+
+				// Canonical category IDs referenced by seed blog posts.
+				var aspNetCoreId = new ObjectId("677db927900ea4af1b500cab");
+				var otherId      = new ObjectId("677db9bd900ea4af1b500cb1");
 
 				var authorId = "auth0|author-matthew-paulosky";
 				var authorDocument = new BsonDocument
@@ -264,7 +274,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 		{
 new()
 {
-["_id"] = ObjectId.GenerateNewId(),
+["_id"] = new ObjectId("000000000000000000000002"),
 ["Title"] = "Welcome to MyBlog",
 ["Content"] = "This is the first post on MyBlog. Welcome!",
 ["Author"] = authorDocument.DeepClone(),
@@ -272,11 +282,11 @@ new()
 ["UpdatedAt"] = now,
 ["IsPublished"] = true,
 ["Version"] = 1,
-["CategoryId"] = generalCategoryId,
+["CategoryId"] = otherId,
 },
 new()
 {
-["_id"] = ObjectId.GenerateNewId(),
+["_id"] = new ObjectId("000000000000000000000003"),
 ["Title"] = "Getting Started with .NET Aspire",
 ["Content"] = "Learn how to build cloud-native apps with .NET Aspire.",
 ["Author"] = authorDocument.DeepClone(),
@@ -284,11 +294,11 @@ new()
 ["UpdatedAt"] = now,
 ["IsPublished"] = true,
 ["Version"] = 1,
-["CategoryId"] = generalCategoryId,
+["CategoryId"] = aspNetCoreId,
 },
 new()
 {
-["_id"] = ObjectId.GenerateNewId(),
+["_id"] = new ObjectId("000000000000000000000004"),
 ["Title"] = "Draft: MongoDB Performance Tips",
 ["Content"] = "Work in progress — tips for optimising MongoDB queries.",
 ["Author"] = authorDocument.DeepClone(),
@@ -296,7 +306,7 @@ new()
 ["UpdatedAt"] = now,
 ["IsPublished"] = false,
 ["Version"] = 1,
-["CategoryId"] = generalCategoryId,
+["CategoryId"] = otherId,
 },
 	};
 
@@ -307,7 +317,7 @@ new()
 				return new ExecuteCommandResult
 				{
 					Success = true,
-					Message = $"categories: 1 upserted (General); blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
+					Message = $"categories: 7 upserted (ASP.NET Core, Blazor Server, Blazor WebAssembly, C#, EF Core, .NET MAUI, Other); blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
 				};
 			}
 			finally

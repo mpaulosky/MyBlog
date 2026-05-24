@@ -29,7 +29,7 @@ public class DeleteBlogPostCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsError()
+	public void Validate_EmptyObjectId_ReturnsError()
 	{
 		// Arrange
 		var command = new DeleteBlogPostCommand(ObjectId.Empty);
@@ -43,7 +43,7 @@ public class DeleteBlogPostCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsRequiredMessage()
+	public void Validate_EmptyObjectId_ReturnsRequiredMessage()
 	{
 		// Arrange
 		var command = new DeleteBlogPostCommand(ObjectId.Empty);
