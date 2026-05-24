@@ -1767,3 +1767,30 @@ Ran the full PR gate for #340 (Sprint 19 Categories feature, issue #339) request
   `already merged` and you can clean up the local branch separately.
 - For PRs where the human repo owner is the GitHub author of record, `gh pr review --approve` still typically blocks self-approval. Aragorn gate-pass via `gh pr comment` documenting Copilot dispositions + CI/Codecov status remains the working approval signal, then `gh pr merge --squash --delete-branch` performs the merge directly.
 - When Codecov fails to post a bot comment, prefer the in-pipeline `Coverage Analysis` job result as the coverage gate signal rather than blocking the PR for missing bot output.
+
+## Issue #362 — ObjectId Cache Serialization Fix (2026-05-XX)
+
+Diagnosed and fixed the production-code gap reported by Gimli: `BlogPostDto.Id` and
+`BlogPostDto.CategoryId` (both `ObjectId`) were silently round-tripping to
+`ObjectId.Empty` when deserializing from Redis because `System.Text.Json` has no
+built-in `ObjectId` converter and was reflecting private fields, producing a zero struct.
+
+### Changes made
+
+| File | Change |
+| --- | --- |
+| `src/Web/Infrastructure/Caching/ObjectIdJsonConverter.cs` | New — `JsonConverter<ObjectId>` that reads/writes the 24-char hex string |
+| `src/Web/Infrastructure/Caching/BlogPostCacheService.cs` | `JsonOpts` changed from `private static` to `internal static`; wired in `ObjectIdJsonConverter` via `BuildJsonOpts()` helper |
+| `tests/Web.Tests/Infrastructure/Caching/BlogPostCacheServiceTests.cs` | Updated local `JsonOpts` to reference `BlogPostCacheService.JsonOpts` so both sides stay in sync |
+
+### Learnings
+
+- `System.Text.Json` silently produces `default(T)` (i.e., `ObjectId.Empty`) when
+  deserializing an unrecognised struct without a converter, rather than throwing.
+  This makes the bug invisible at the serialization site but manifests as bad IDs at read time.
+- The correct fix is a `JsonConverter<ObjectId>` using `ObjectId.TryParse` + `ToString()`.
+- Exposing the `JsonSerializerOptions` as `internal static` (visibility widened, not public)
+  lets test code share the same instance without duplicating converter registration —
+  prevents future drift if new converters are added.
+- Scope is correctly limited to the BlogPost caching path; `UserManagementCacheService`
+  does not serialize `ObjectId` values and was left untouched.

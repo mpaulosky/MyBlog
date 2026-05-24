@@ -151,6 +151,83 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	}
 
 	/// <summary>
+	/// The seed command must always upsert the canonical seven categories with their
+	/// documented ObjectIds so downstream features can rely on stable category identities.
+	/// </summary>
+	[Fact]
+	public async Task SeedMyBlogData_Upserts_Seven_Canonical_Categories()
+	{
+		// Arrange
+		using var mongoClient = new MongoClient(fixture.MongoConnectionString);
+		await mongoClient.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
+
+		var annotation = GetAnnotation();
+		var expectedCategories = new Dictionary<ObjectId, string>
+		{
+			[new ObjectId("677db927900ea4af1b500cab")] = "ASP.NET Core",
+			[new ObjectId("677db927900ea4af1b500cac")] = "Blazor Server",
+			[new ObjectId("677db9bd900ea4af1b500cad")] = "Blazor WebAssembly",
+			[new ObjectId("677db9bd900ea4af1b500cae")] = "C#",
+			[new ObjectId("677db9bd900ea4af1b500caf")] = "Entity Framework Core (EF Core)",
+			[new ObjectId("677db9bd900ea4af1b500cb0")] = ".NET MAUI",
+			[new ObjectId("677db9bd900ea4af1b500cb1")] = "Other",
+		};
+
+		// Act
+		var result = await annotation.ExecuteCommand(MakeContext());
+
+		// Assert
+		result.Success.Should().BeTrue("seeding must succeed before canonical categories can be asserted");
+
+		var db = mongoClient.GetDatabase("myblog");
+		var seededCategories = await db.GetCollection<BsonDocument>("categories")
+			.Find(FilterDefinition<BsonDocument>.Empty)
+			.ToListAsync(TestContext.Current.CancellationToken);
+
+		seededCategories.Should().HaveCount(7, "the AppHost seed should expose exactly the seven canonical categories");
+		seededCategories.Should().OnlyContain(category => expectedCategories.ContainsKey(category["_id"].AsObjectId));
+		seededCategories.Should().OnlyContain(category =>
+			expectedCategories[category["_id"].AsObjectId] == category["Name"].AsString);
+	}
+
+	/// <summary>
+	/// Seeded blog posts must point at the documented canonical category ObjectIds so the
+	/// sample data remains deterministic across reseeds.
+	/// </summary>
+	[Fact]
+	public async Task SeedMyBlogData_Assigns_BlogPosts_To_Expected_Canonical_Categories()
+	{
+		// Arrange
+		using var mongoClient = new MongoClient(fixture.MongoConnectionString);
+		await mongoClient.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
+
+		var annotation = GetAnnotation();
+		var expectedCategoryByTitle = new Dictionary<string, ObjectId>(StringComparer.Ordinal)
+		{
+			["Welcome to MyBlog"] = new ObjectId("677db9bd900ea4af1b500cb1"),
+			["Getting Started with .NET Aspire"] = new ObjectId("677db927900ea4af1b500cab"),
+			["Draft: MongoDB Performance Tips"] = new ObjectId("677db9bd900ea4af1b500cb1"),
+		};
+
+		// Act
+		var result = await annotation.ExecuteCommand(MakeContext());
+
+		// Assert
+		result.Success.Should().BeTrue("seeding must succeed before seeded post/category links can be asserted");
+
+		var db = mongoClient.GetDatabase("myblog");
+		var seededPosts = await db.GetCollection<BsonDocument>("blogposts")
+			.Find(FilterDefinition<BsonDocument>.Empty)
+			.ToListAsync(TestContext.Current.CancellationToken);
+
+		seededPosts.Should().HaveCount(expectedCategoryByTitle.Count,
+			"the current AppHost seed should insert the documented three sample posts");
+		seededPosts.Should().OnlyContain(post => expectedCategoryByTitle.ContainsKey(post["Title"].AsString));
+		seededPosts.Should().OnlyContain(post =>
+			expectedCategoryByTitle[post["Title"].AsString] == post["CategoryId"].AsObjectId);
+	}
+
+	/// <summary>
 	/// After seeding succeeds, the running web app must be able to read the seeded posts
 	/// through its real AppHost-wired MongoDB path.
 	/// </summary>

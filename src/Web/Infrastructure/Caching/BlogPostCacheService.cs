@@ -23,7 +23,14 @@ internal sealed class BlogPostCacheService(
 	private static readonly DistributedCacheEntryOptions RedisOpts =
 		new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
 
-	private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
+	internal static readonly JsonSerializerOptions JsonOpts = BuildJsonOpts();
+
+	private static JsonSerializerOptions BuildJsonOpts()
+	{
+		var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+		opts.Converters.Add(new ObjectIdJsonConverter());
+		return opts;
+	}
 
 	public async ValueTask<IReadOnlyList<BlogPostDto>> GetOrFetchAllAsync(
 		Func<Task<IReadOnlyList<BlogPostDto>>> fetch,

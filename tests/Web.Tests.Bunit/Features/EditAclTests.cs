@@ -65,7 +65,7 @@ public class EditAclTests : BunitContext
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 		const string NonOwnerSub = "auth0|other-user";
-		var post = new BlogPostDto(postId.ToString(), "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -90,7 +90,7 @@ public class EditAclTests : BunitContext
 		var sender = Substitute.For<ISender>();
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
-		var post = new BlogPostDto(postId.ToString(), "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -116,7 +116,7 @@ public class EditAclTests : BunitContext
 		var sender = Substitute.For<ISender>();
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
-		var post = new BlogPostDto(postId.ToString(), "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -149,7 +149,7 @@ public class EditAclTests : BunitContext
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|some-author";
 		const string AdminSub = "auth0|admin-user";
-		var post = new BlogPostDto(postId.ToString(), "Test Post", "Content", OwnerSub, "SomeAuthor", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "SomeAuthor", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -177,8 +177,8 @@ public class EditAclTests : BunitContext
 		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
-		var firstPost = new BlogPostDto(firstPostId.ToString(), "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
-		var secondPost = new BlogPostDto(secondPostId.ToString(), "Second Post Title", "Second Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var secondPost = new BlogPostDto(secondPostId, "Second Post Title", "Second Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
@@ -213,7 +213,7 @@ public class EditAclTests : BunitContext
 		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
-		var firstPost = new BlogPostDto(firstPostId.ToString(), "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
@@ -247,7 +247,7 @@ public class EditAclTests : BunitContext
 		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
-		var firstPost = new BlogPostDto(firstPostId.ToString(), "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));

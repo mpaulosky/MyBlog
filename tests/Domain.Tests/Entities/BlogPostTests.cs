@@ -26,7 +26,7 @@ public class BlogPostTests
 	}
 
 	[Fact]
-	public void Create_ValidArguments_IdIsNonEmptyGuid()
+	public void Create_ValidArguments_IdIsNonEmptyObjectId()
 	{
 		// Arrange / Act
 		var post = BlogPost.Create("Title", "Content", TestAuthor);

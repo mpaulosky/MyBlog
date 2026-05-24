@@ -74,7 +74,7 @@ public class MarkdownEditorLifecycleTests : BunitContext
 		const string OwnerSub = "auth0|alice";
 		const string ExpectedContent = "# Sprint 19\n\nMarkdown content here.";
 
-		var post = new BlogPostDto(postId.ToString(), "Sprint Post", ExpectedContent, OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId, "Sprint Post", ExpectedContent, OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
@@ -116,7 +116,7 @@ public class MarkdownEditorLifecycleTests : BunitContext
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|alice";
 
-		var post = new BlogPostDto(postId.ToString(), "Some Post", "Some content", OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
+		var post = new BlogPostDto(postId, "Some Post", "Some content", OwnerSub, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));

@@ -44,13 +44,15 @@ public sealed class BlogPost
 		};
 	}
 
-	public void Update(string title, string content)
+	public void Update(string title, string content, ObjectId? categoryId = null)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(title);
 		ArgumentException.ThrowIfNullOrWhiteSpace(content);
 		Title = title;
 		Content = content;
 		UpdatedAt = DateTime.UtcNow;
+		if (categoryId.HasValue)
+			CategoryId = categoryId.Value;
 		Version++;
 	}
 
