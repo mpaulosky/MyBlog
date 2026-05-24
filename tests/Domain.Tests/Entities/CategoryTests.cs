@@ -25,13 +25,24 @@ public class CategoryTests
 	}
 
 	[Fact]
-	public void Create_ValidArguments_IdIsNonEmptyGuid()
+	public void Create_ValidArguments_IdIsNonEmptyObjectId()
 	{
 		// Arrange / Act
 		var category = Category.Create("Tech", "Description.");
 
 		// Assert
-		category.Id.Should().NotBeEmpty();
+		category.Id.Should().NotBe(ObjectId.Empty);
+	}
+
+	[Fact]
+	public void Create_ValidArguments_IdCanBeRoundTrippedFromString()
+	{
+		// Arrange / Act
+		var category = Category.Create("Tech", "Description.");
+
+		// Assert
+		ObjectId.TryParse(category.Id.ToString(), out var parsedId).Should().BeTrue();
+		parsedId.Should().Be(category.Id);
 	}
 
 	[Fact]

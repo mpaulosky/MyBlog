@@ -32,10 +32,14 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var ct = TestContext.Current.CancellationToken;
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
+		var otherCategoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Hello World", "Content", Author);
+		var otherPost = BlogPost.Create("Another Post", "Content", Author);
 		post.AssignCategory(categoryId);
+		otherPost.AssignCategory(otherCategoryId);
 		await repo.AddAsync(post, ct);
+		await repo.AddAsync(otherPost, ct);
 
 		// Act
 		var exists = await repo.ExistsByCategoryAsync(categoryId, ct);
@@ -45,13 +49,33 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 	}
 
 	[Fact]
+	public async Task ExistsByCategoryAsync_ReturnsFalseForDifferentAssignedCategory()
+	{
+		// Arrange
+		var ct = TestContext.Current.CancellationToken;
+		var dbName = $"T{Guid.NewGuid():N}";
+		var repo = CreateBlogPostRepo(dbName);
+		var assignedCategoryId = ObjectId.GenerateNewId();
+		var queriedCategoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Hello World", "Content", Author);
+		post.AssignCategory(assignedCategoryId);
+		await repo.AddAsync(post, ct);
+
+		// Act
+		var exists = await repo.ExistsByCategoryAsync(queriedCategoryId, ct);
+
+		// Assert
+		exists.Should().BeFalse();
+	}
+
+	[Fact]
 	public async Task ExistsByCategoryAsync_ReturnsFalseWhenNoCategoryAssigned()
 	{
 		// Arrange
 		var ct = TestContext.Current.CancellationToken;
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Hello World", "Content", Author);
 		// No AssignCategory call — CategoryId is null
 		await repo.AddAsync(post, ct);
@@ -71,7 +95,7 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var repo = CreateBlogPostRepo($"T{Guid.NewGuid():N}");
 
 		// Act
-		var exists = await repo.ExistsByCategoryAsync(Guid.NewGuid(), ct);
+		var exists = await repo.ExistsByCategoryAsync(ObjectId.GenerateNewId(), ct);
 
 		// Assert
 		exists.Should().BeFalse();
@@ -84,7 +108,7 @@ public sealed class MongoDbBlogPostCategoryTests(MongoDbFixture fixture)
 		var ct = TestContext.Current.CancellationToken;
 		var dbName = $"T{Guid.NewGuid():N}";
 		var repo = CreateBlogPostRepo(dbName);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 		var post = BlogPost.Create("Post", "Content", Author);
 		post.AssignCategory(categoryId);
 		await repo.AddAsync(post, ct);

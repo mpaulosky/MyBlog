@@ -25,7 +25,7 @@ ILogger<EditBlogPostHandler> logger)
 IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 {
 	[LoggerMessage(Level = LogLevel.Warning, Message = "HTML sanitized on EditBlogPost — unsafe markup was removed. PostId: {PostId}")]
-	private static partial void LogHtmlSanitized(ILogger logger, Guid postId);
+	private static partial void LogHtmlSanitized(ILogger logger, ObjectId postId);
 
 	public async Task<Result> Handle(EditBlogPostCommand request, CancellationToken cancellationToken)
 	{
@@ -49,7 +49,11 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 			if (!request.CallerIsAdmin && post.Author.Id != request.CallerUserId)
 				return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
 
-			post.Update(request.Title, sanitizedContent);
+			// Pass categoryId into Update() so all field mutations happen inside a single Version++.
+			// Calling AssignCategory() separately after Update() would double-increment Version,
+			// making UpdateAsync's OriginalValue = Version - 1 point to the wrong generation
+			// and causing a false DbUpdateConcurrencyException on every category-bearing edit.
+			post.Update(request.Title, sanitizedContent, request.CategoryId);
 			if (request.IsPublished is true)
 			{
 				post.Publish();
@@ -57,11 +61,6 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 			else if (request.IsPublished is false)
 			{
 				post.Unpublish();
-			}
-
-			if (request.CategoryId is not null)
-			{
-				post.AssignCategory(request.CategoryId.Value);
 			}
 
 			await repo.UpdateAsync(post, cancellationToken).ConfigureAwait(false);

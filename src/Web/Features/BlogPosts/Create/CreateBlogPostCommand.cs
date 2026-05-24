@@ -17,5 +17,5 @@ internal sealed record CreateBlogPostCommand(
 	string Content,
 	PostAuthor Author,
 	bool IsPublished = false,
-	Guid? CategoryId = null)
-		: IRequest<Result<Guid>>;
+	ObjectId? CategoryId = null)
+		: IRequest<Result<ObjectId>>;

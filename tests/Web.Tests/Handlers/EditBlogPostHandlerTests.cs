@@ -54,6 +54,25 @@ public class EditBlogPostHandlerTests
 	}
 
 	[Fact]
+	public async Task HandleEdit_CategoryIdProvided_AssignsCategoryBeforePersisting()
+	{
+		// Arrange
+		var authorId = "auth0|author1";
+		var categoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Old Title", "Old Content", new PostAuthor(authorId, "Test Author", "", []));
+		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content", authorId, false, CategoryId: categoryId);
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		post.CategoryId.Should().Be(categoryId);
+		await _repo.Received(1).UpdateAsync(post, Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
 	public async Task HandleEdit_AdminCanEditAnyPost_ReturnsSuccess()
 	{
 		// Arrange
@@ -140,9 +159,9 @@ public class EditBlogPostHandlerTests
 	public async Task HandleEdit_NotFound_ReturnsFailResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var command = new EditBlogPostCommand(id, "T", "C", "auth0|user1", false);
-		_repo.GetByIdAsync(Arg.Is<Guid>(g => g == id), Arg.Any<CancellationToken>())
+		_repo.GetByIdAsync(Arg.Is<ObjectId>(g => g == id), Arg.Any<CancellationToken>())
 		.Returns((BlogPost?)null);
 
 		// Act
@@ -159,10 +178,10 @@ public class EditBlogPostHandlerTests
 	public async Task HandleGetById_L1CacheHit_ReturnsCachedDtoWithoutRepo()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		_cache.GetOrFetchByIdAsync(
-		Arg.Any<Guid>(),
+		Arg.Any<ObjectId>(),
 		Arg.Any<Func<Task<BlogPostDto?>>>(),
 		Arg.Any<CancellationToken>())
 		.Returns(new ValueTask<BlogPostDto?>(dto));
@@ -174,17 +193,17 @@ public class EditBlogPostHandlerTests
 		result.Success.Should().BeTrue();
 		result.Value.Should().NotBeNull();
 		result.Value!.Id.Should().Be(id);
-		await _repo.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+		await _repo.DidNotReceive().GetByIdAsync(Arg.Any<ObjectId>(), Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
 	public async Task HandleGetById_CacheMissRepoReturnsNull_ReturnsOkWithNull()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns((BlogPost?)null);
 		_cache.GetOrFetchByIdAsync(
-		Arg.Any<Guid>(),
+		Arg.Any<ObjectId>(),
 		Arg.Any<Func<Task<BlogPostDto?>>>(),
 		Arg.Any<CancellationToken>())
 		.Returns<ValueTask<BlogPostDto?>>(ci =>
@@ -206,9 +225,11 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var post = BlogPost.Create("Title", "Content", new PostAuthor("", "Test Author", "", []));
+		var categoryId = ObjectId.GenerateNewId();
+		post.AssignCategory(categoryId);
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
 		_cache.GetOrFetchByIdAsync(
-		Arg.Any<Guid>(),
+		Arg.Any<ObjectId>(),
 		Arg.Any<Func<Task<BlogPostDto?>>>(),
 		Arg.Any<CancellationToken>())
 		.Returns<ValueTask<BlogPostDto?>>(ci =>
@@ -222,7 +243,9 @@ public class EditBlogPostHandlerTests
 
 		// Assert
 		result.Success.Should().BeTrue();
+		result.Value!.Id.Should().Be(post.Id);
 		result.Value!.Title.Should().Be("Title");
+		result.Value.CategoryId.Should().Be(categoryId);
 		await _repo.Received(1).GetByIdAsync(post.Id, Arg.Any<CancellationToken>());
 	}
 
@@ -249,7 +272,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleGetById_CacheServiceThrows_ReturnsFailResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_cache.GetOrFetchByIdAsync(
 		id,
 		Arg.Any<Func<Task<BlogPostDto?>>>(),
@@ -303,7 +326,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleGetById_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_cache.GetOrFetchByIdAsync(
 			id,
 			Arg.Any<Func<Task<BlogPostDto?>>>(),
@@ -321,7 +344,7 @@ public class EditBlogPostHandlerTests
 	public async Task HandleGetById_UnexpectedException_ReturnsUnexpectedErrorResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_cache.GetOrFetchByIdAsync(
 			id,
 			Arg.Any<Func<Task<BlogPostDto?>>>(),

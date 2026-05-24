@@ -64,14 +64,14 @@ public class DeleteCategoryHandlerTests
 		result.Failure.Should().BeTrue();
 		result.ErrorCode.Should().Be(ResultErrorCode.Conflict);
 		result.Error.Should().Contain("Technology");
-		await _categoryRepo.DidNotReceive().DeleteAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+		await _categoryRepo.DidNotReceive().DeleteAsync(Arg.Any<ObjectId>(), Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
 	public async Task Handle_CategoryNotFound_ReturnsNotFoundFailResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_categoryRepo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.Returns((Category?)null);
 
@@ -111,7 +111,7 @@ public class DeleteCategoryHandlerTests
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_categoryRepo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new OperationCanceledException());
 

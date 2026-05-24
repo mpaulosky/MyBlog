@@ -47,15 +47,15 @@ public class EditCategoryRegressionTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var firstPostId = Guid.NewGuid();
-		var secondPostId = Guid.NewGuid();
+		var firstPostId = ObjectId.GenerateNewId();
+		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
 		var firstPost = new BlogPostDto(firstPostId, "First Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, false, null);
 		var secondPost = new BlogPostDto(secondPostId, "Second Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, false, null);
-		var category = new CategoryDto(Guid.NewGuid(), "Tech", "Tech category");
+		var category = new CategoryDto(ObjectId.GenerateNewId(), "Tech", "Tech category");
 
 		// First navigation: categories fail, post loads fine.
 		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
@@ -73,13 +73,13 @@ public class EditCategoryRegressionTests : BunitContext
 		// Act — first render: categories fail → failure banner expected.
 		var cut = RenderWithUser<Edit>(
 			CreatePrincipalWithSub(OwnerSub, ["Author"]),
-			parameters => parameters.Add(p => p.Id, firstPostId));
+			parameters => parameters.Add(p => p.Id, firstPostId.ToString()));
 
 		cut.Markup.Should().Contain("Categories could not be loaded",
 			because: "first load failure must surface the failure banner");
 
 		// Act — re-navigate: categories now succeed.
-		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId.ToString()));
 
 		// Assert — stale failure banner must be gone after successful reload.
 		cut.Markup.Should().NotContain("Categories could not be loaded",
@@ -98,8 +98,8 @@ public class EditCategoryRegressionTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
-		var categoryId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
+		var categoryId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
 		// Post is already published and already has a CategoryId — a real-world published post.
@@ -120,7 +120,7 @@ public class EditCategoryRegressionTests : BunitContext
 
 		var cut = RenderWithUser<Edit>(
 			CreatePrincipalWithSub(OwnerSub, ["Author"]),
-			parameters => parameters.Add(p => p.Id, postId));
+			parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Confirm the category failure banner is visible (_categoriesLoadFailed=true).
 		cut.Markup.Should().Contain("Categories could not be loaded",
@@ -152,7 +152,7 @@ public class EditCategoryRegressionTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
 		// Post is marked published but has no category — user cannot fix this without categories loading.
@@ -170,7 +170,7 @@ public class EditCategoryRegressionTests : BunitContext
 
 		var cut = RenderWithUser<Edit>(
 			CreatePrincipalWithSub(OwnerSub, ["Author"]),
-			parameters => parameters.Add(p => p.Id, postId));
+			parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Explicitly bind IsPublished=true so the guard evaluates the publish condition.
 		cut.Find("input[type='checkbox']").Change(true);

@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="MediatR" />
+    <PackageReference Include="MongoDB.Bson" />
   </ItemGroup>
 
 </Project>

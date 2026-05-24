@@ -23,7 +23,14 @@ internal sealed class BlogPostCacheService(
 	private static readonly DistributedCacheEntryOptions RedisOpts =
 		new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
 
-	private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
+	internal static readonly JsonSerializerOptions JsonOpts = BuildJsonOpts();
+
+	private static JsonSerializerOptions BuildJsonOpts()
+	{
+		var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+		opts.Converters.Add(new ObjectIdJsonConverter());
+		return opts;
+	}
 
 	public async ValueTask<IReadOnlyList<BlogPostDto>> GetOrFetchAllAsync(
 		Func<Task<IReadOnlyList<BlogPostDto>>> fetch,
@@ -66,7 +73,7 @@ internal sealed class BlogPostCacheService(
 	}
 
 	public async ValueTask<BlogPostDto?> GetOrFetchByIdAsync(
-		Guid id,
+		ObjectId id,
 		Func<Task<BlogPostDto?>> fetch,
 		CancellationToken ct = default)
 	{
@@ -117,7 +124,7 @@ internal sealed class BlogPostCacheService(
 		await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None).ConfigureAwait(false);
 	}
 
-	public async Task InvalidateByIdAsync(Guid id, CancellationToken ct = default)
+	public async Task InvalidateByIdAsync(ObjectId id, CancellationToken ct = default)
 	{
 		var key = BlogPostCacheKeys.ById(id);
 		localCache.Remove(key);

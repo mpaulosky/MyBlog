@@ -11,4 +11,4 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.Categories.GetById;
 
-internal sealed record GetCategoryByIdQuery(Guid Id) : IRequest<Result<CategoryDto?>>;
+internal sealed record GetCategoryByIdQuery(ObjectId Id) : IRequest<Result<CategoryDto?>>;

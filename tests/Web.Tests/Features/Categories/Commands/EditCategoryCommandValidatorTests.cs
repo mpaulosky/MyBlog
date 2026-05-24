@@ -19,7 +19,7 @@ public class EditCategoryCommandValidatorTests
 	public void Validate_ValidCommand_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new EditCategoryCommand(Guid.NewGuid(), "Technology", "All about tech.");
+		var command = new EditCategoryCommand(ObjectId.GenerateNewId(), "Technology", "All about tech.");
 
 		// Act
 		var result = _validator.Validate(command);
@@ -32,7 +32,7 @@ public class EditCategoryCommandValidatorTests
 	public void Validate_EmptyId_ReturnsIdError()
 	{
 		// Arrange
-		var command = new EditCategoryCommand(Guid.Empty, "Technology", "All about tech.");
+		var command = new EditCategoryCommand(ObjectId.Empty, "Technology", "All about tech.");
 
 		// Act
 		var result = _validator.Validate(command);
@@ -46,7 +46,7 @@ public class EditCategoryCommandValidatorTests
 	public void Validate_EmptyName_ReturnsNameError()
 	{
 		// Arrange
-		var command = new EditCategoryCommand(Guid.NewGuid(), "", "All about tech.");
+		var command = new EditCategoryCommand(ObjectId.GenerateNewId(), "", "All about tech.");
 
 		// Act
 		var result = _validator.Validate(command);
@@ -60,7 +60,7 @@ public class EditCategoryCommandValidatorTests
 	public void Validate_EmptyDescription_ReturnsDescriptionError()
 	{
 		// Arrange
-		var command = new EditCategoryCommand(Guid.NewGuid(), "Technology", "");
+		var command = new EditCategoryCommand(ObjectId.GenerateNewId(), "Technology", "");
 
 		// Act
 		var result = _validator.Validate(command);
@@ -75,7 +75,7 @@ public class EditCategoryCommandValidatorTests
 	{
 		// Arrange
 		var longName = new string('x', 101);
-		var command = new EditCategoryCommand(Guid.NewGuid(), longName, "All about tech.");
+		var command = new EditCategoryCommand(ObjectId.GenerateNewId(), longName, "All about tech.");
 
 		// Act
 		var result = _validator.Validate(command);
@@ -91,7 +91,7 @@ public class EditCategoryCommandValidatorTests
 	{
 		// Arrange
 		var longDesc = new string('x', 501);
-		var command = new EditCategoryCommand(Guid.NewGuid(), "Technology", longDesc);
+		var command = new EditCategoryCommand(ObjectId.GenerateNewId(), "Technology", longDesc);
 
 		// Act
 		var result = _validator.Validate(command);
