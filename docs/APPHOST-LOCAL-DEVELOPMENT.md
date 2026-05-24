@@ -65,7 +65,8 @@ When canonical category seed data changes, or when you want to reset your local 
 3. Click the **⚠️ Clear MyBlog Data** command
 4. Confirm the destructive operation when prompted
 5. Wait for the operation to complete — the command output will show:
-   ```
+
+   ```text
    {n} collection(s) cleared — {m} total document(s) deleted.
    ```
 
@@ -73,7 +74,8 @@ When canonical category seed data changes, or when you want to reset your local 
 
 1. In the same MongoDB resource card, click **📊 Show MyBlog Stats**
 2. Confirm the output shows no collections, or only system collections:
-   ```
+
+   ```text
    *(no collections found)* | -
    ```
 
@@ -81,9 +83,11 @@ When canonical category seed data changes, or when you want to reset your local 
 
 1. Click **🌱 Seed MyBlog Data** on the MongoDB resource
 2. Wait for completion — the output will show:
-   ```
+
+   ```text
    categories: 7 upserted (...); blogposts: {n} inserted (... published, ... draft)
    ```
+
 3. Verify with **📊 Show MyBlog Stats** — you should see:
    - **categories**: 7 documents
    - **blogposts**: 3 documents (as of this version)
@@ -120,6 +124,7 @@ await categoriesCollection.ReplaceOneAsync(
 ```
 
 This ensures:
+
 - Running seed multiple times is safe (existing categories are replaced with the current definition)
 - If a category is deleted manually, re-running seed will recreate it
 - The seeding operation is idempotent
@@ -186,6 +191,7 @@ All posts are authored by "Matthew Paulosky" with the Auth0 ID `auth0|author-mat
 **Cause**: The seed operation may have failed silently, or you did not wait for completion.
 
 **Solution**:
+
 1. Check the command output in the Aspire dashboard for error messages
 2. Verify with **📊 Show MyBlog Stats** that collections exist
 3. Clear and reseed again if needed
@@ -197,6 +203,7 @@ All posts are authored by "Matthew Paulosky" with the Auth0 ID `auth0|author-mat
 **Cause**: Your local seed data is stale or differs from the current AppHost seeding logic.
 
 **Solution**:
+
 1. Pull the latest code from `dev`
 2. Clear your local database with **⚠️ Clear MyBlog Data**
 3. Reseed with **🌱 Seed MyBlog Data**

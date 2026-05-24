@@ -302,6 +302,7 @@ The seven canonical categories have fixed ObjectIds defined in `MongoDbResourceB
 These ObjectIds are **hardcoded** in the AppHost seeding logic and **must never change**; tests verify that seeded blog posts reference only these canonical categories by their exact ObjectIds.
 
 **Clear-and-Reseed Workflow**: When canonical seed data changes or you need a clean local database state, use the Aspire dashboard to:
+
 1. Click **⚠️ Clear MyBlog Data** and confirm
 2. Click **📊 Show MyBlog Stats** to verify clean state
 3. Click **🌱 Seed MyBlog Data** to reseed with current data
@@ -427,6 +428,7 @@ All significant design choices are documented in [`docs/decisions/`](decisions/i
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-001](decisions/ADR-001-architecture-decisions.md) | Core Architecture Decisions (VSA, MongoDB, Redis, Auth0, RBAC) | Accepted |
+
 ---
 
 **Maintained by**: @mpaulosky
