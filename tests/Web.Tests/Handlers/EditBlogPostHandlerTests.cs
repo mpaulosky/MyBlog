@@ -73,6 +73,26 @@ public class EditBlogPostHandlerTests
 	}
 
 	[Fact]
+	public async Task HandleEdit_ClearCategoryRequested_RemovesCategoryBeforePersisting()
+	{
+		// Arrange
+		var authorId = "auth0|author1";
+		var existingCategoryId = ObjectId.GenerateNewId();
+		var post = BlogPost.Create("Old Title", "Old Content", new PostAuthor(authorId, "Test Author", "", []));
+		post.AssignCategory(existingCategoryId);
+		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content", authorId, false, CategoryId: null, ClearCategory: true);
+		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		post.CategoryId.Should().BeNull();
+		await _repo.Received(1).UpdateAsync(post, Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
 	public async Task HandleEdit_AdminCanEditAnyPost_ReturnsSuccess()
 	{
 		// Arrange

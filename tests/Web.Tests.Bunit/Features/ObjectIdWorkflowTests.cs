@@ -128,6 +128,59 @@ public class ObjectIdWorkflowTests : BunitContext
 	}
 
 	[Fact]
+	public void EditPost_ClearingCategory_Submits_CommandThatRemovesCategoryAssociation()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var postId = ObjectId.GenerateNewId();
+		var initialCategoryId = ObjectId.GenerateNewId();
+		const string OwnerSub = "auth0|owner-user";
+
+		var categories = new[]
+		{
+			new CategoryDto(initialCategoryId, "Technology", "Tech posts."),
+		};
+		var post = new BlogPostDto(
+			postId,
+			"Existing title",
+			"Existing content",
+			OwnerSub,
+			"Alice",
+			string.Empty,
+			[],
+			DateTime.UtcNow,
+			null,
+			false,
+			initialCategoryId);
+
+		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(categories)));
+		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult(Result.Ok()));
+
+		Services.AddSingleton(sender);
+		var navigation = Services.GetRequiredService<NavigationManager>();
+
+		// Act
+		var cut = RenderWithUser<Edit>(
+			CreatePrincipal("Alice", OwnerSub, ["Author"]),
+			parameters => parameters.Add(p => p.Id, postId.ToString()));
+		cut.Find("select.form-select").Change(string.Empty);
+		cut.Find("form").Submit();
+
+		// Assert
+		sender.Received(1).Send(
+			Arg.Is<EditBlogPostCommand>(command =>
+				command.Id == postId &&
+				command.CategoryId == null &&
+				command.ClearCategory),
+			Arg.Any<CancellationToken>());
+		navigation.Uri.Should().EndWith("/blog");
+	}
+
+	[Fact]
 	public void CategoryIndex_Submits_EditCategoryCommand_With_Category_ObjectId()
 	{
 		// Arrange

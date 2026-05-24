@@ -49,11 +49,11 @@ IRequestHandler<GetBlogPostByIdQuery, Result<BlogPostDto?>>
 			if (!request.CallerIsAdmin && post.Author.Id != request.CallerUserId)
 				return Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized);
 
-			// Pass categoryId into Update() so all field mutations happen inside a single Version++.
-			// Calling AssignCategory() separately after Update() would double-increment Version,
+			// Keep category assignment/clearing inside Update() so the edit remains a single Version++.
+			// Calling AssignCategory()/RemoveCategory() after Update() would double-increment Version,
 			// making UpdateAsync's OriginalValue = Version - 1 point to the wrong generation
-			// and causing a false DbUpdateConcurrencyException on every category-bearing edit.
-			post.Update(request.Title, sanitizedContent, request.CategoryId);
+			// and causing a false DbUpdateConcurrencyException on category edits.
+			post.Update(request.Title, sanitizedContent, request.CategoryId, request.ClearCategory);
 			if (request.IsPublished is true)
 			{
 				post.Publish();
