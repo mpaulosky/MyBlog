@@ -1794,3 +1794,72 @@ built-in `ObjectId` converter and was reflecting private fields, producing a zer
   prevents future drift if new converters are added.
 - Scope is correctly limited to the BlogPost caching path; `UserManagementCacheService`
   does not serialize `ObjectId` values and was left untouched.
+
+## 2026-05-24 — Release PR #383 conflict review
+
+Reviewed release PR #383 (`dev` → `main`) after the user reported a large merge-conflict
+burst on the release branch.
+
+### Findings
+
+- `origin/main` is only **1 commit** ahead of `origin/dev`, but that one commit is the
+  squash-merged Sprint 19 release commit: `c7e4c3a` (`[RELEASE] Sprint 19 — Polish,
+  Markdown Editor & Categories (#352)`).
+- `origin/dev` does **not** contain `c7e4c3a`; `git branch --contains c7e4c3a` returns
+  only `main`.
+- The earlier `main` → `dev` ancestry-unblock work for PR #352 (`bf8919a`, `3b1f1dc`,
+  `e0a46c6`) happened **before** GitHub created the final squash commit on `main`, so the
+  exact release commit was never replayed back into `dev`.
+- `git merge-tree --write-tree --name-only --no-messages origin/main origin/dev` reports
+  **55 real conflicted files**, concentrated in:
+  - `src/Web/Features/BlogPosts` (6)
+  - `src/Web/Features/Categories` (6)
+  - `src/Web/Data` (4)
+  - `src/Domain` (4)
+  - `tests/Web.Tests/Categories` (7)
+  - `tests/Web.Tests.Bunit/Features` (4)
+  - plus `Directory.Packages.props`, `src/AppHost/MongoDbResourceBuilderExtensions.cs`,
+    `tests/AppHost.Tests/MongoSeedDataIntegrationTests.cs`, `.github/workflows/squad-heartbeat.yml`,
+    and `.squad/playbooks/pre-push-process.md`
+
+### Learnings
+
+- **Squash-merging recurring `dev` → `main` release PRs causes ancestry drift.** The next
+  release PR sees the prior release as a brand-new main-only commit and re-conflicts on
+  every overlapping file.
+- **Pre-merge ancestry fixes are not enough** if the final GitHub merge creates a new
+  single-parent squash commit afterward; that exact commit must either be merged back to
+  `dev` or future release work should use a merge strategy that preserves ancestry.
+- **Do release-conflict recovery in a dedicated clean worktree.** This repo currently has
+  many local modifications on `dev`, including files inside the present conflict set, so
+  resolving on the primary checkout would be high risk.
+
+---
+
+## 2026-05-24 — PR #385 final release gate (replacement for #383)
+
+Conducted the final release-candidate gate for replacement PR #385 after recovery commits
+`04e4847`, `872a732`, and `fcb7f5a`, using Boromir's recovery summary plus Sam and Gimli
+review evidence.
+
+### Gate Outcome
+
+- **Verdict:** approve-with-notes
+- **Supersession:** PR #385 should replace PR #383 for the Sprint 20 release path; PR #383
+  remains conflict-stuck and should not be merged.
+- **Branch shape:** clean worktree recovery from `origin/main` with a single
+  `origin/dev` merge is intact, and the two follow-up fixes were applied on the same
+  recovery branch without disturbing the recovered release payload.
+- **Validation:** the create/edit category regressions are now covered, and local
+  `Web.Tests` + `Web.Tests.Bunit` validation passed on the recovery branch.
+- **Final outstanding requirement before merge:** wait for the in-flight
+  `AppHost.Tests` / downstream PR checks on #385 to finish green.
+
+### Learnings
+
+- A recovery branch can be judged the correct release candidate before it is fully
+  merge-ready, but the actual merge still waits for terminal green CI on the replacement
+  PR.
+- Once squash ancestry drift has already exploded the original `dev` → `main` PR, a clean
+  replacement PR is the safer release path than trying to keep resolving conflicts in the
+  original branch.

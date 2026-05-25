@@ -366,6 +366,52 @@ The AppHost seed command writes documents via the raw MongoDB driver. Always use
 
 ---
 
+## 2026-05-24 — PR #385: Release Recovery Backend Review
+
+### Task
+
+Review the release-recovery branch for PR #385 and confirm whether the backend
+ObjectId migration, repository contracts, MediatR handlers, cache-key/cache
+serialization work, and AppHost runtime wiring were recovered safely after
+merging `origin/dev` into the release branch.
+
+### Findings
+
+- All requested backend migration files in `src/Domain`, `src/Web`, and caching
+  remain aligned with `origin/dev`.
+- The only backend file that differs from `origin/dev` on this branch is
+  `src/AppHost/MongoDbResourceBuilderExtensions.cs`, and that diff is
+  whitespace-only (`git diff -w origin/dev..HEAD -- ...` is clean).
+- Repository contracts consistently use `ObjectId` and remain matched to the
+  EF/Mongo implementations and MediatR handlers.
+- Cache serialization hardening is present via
+  `src/Web/Infrastructure/Caching/ObjectIdJsonConverter.cs`, and the
+  AppHost/Web integration still points at the `myblog` Aspire Mongo resource.
+
+### Changed Files
+
+None. Review only; no backend production fix was needed.
+
+### Validation Performed
+
+- ✅ `dotnet test tests/Domain.Tests/Domain.Tests.csproj -c Release` — 68/68 passed
+- ✅ `dotnet test tests/Web.Tests/Web.Tests.csproj -c Release` — 224/224 passed
+- ✅ `dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj -c Release` — 36/36 passed
+- ✅ `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release` — 55 passed, 1 skipped, 0 failed
+- ✅ `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release` — 16/16 passed
+
+## Learnings
+
+### Recovery-branch backend review should first diff against `origin/dev`, not just the PR base
+
+For release-recovery PRs created from `main` and then merged with `origin/dev`,
+the fastest backend safety check is to diff the critical backend files against
+`origin/dev`. If that comparison is unchanged (or whitespace-only), the recovery
+merge did not introduce a new backend regression; remaining review can focus on
+the already-known feature payload rather than conflict fallout.
+
+---
+
 ## 2026-05-15 — PR #338: Skill Template Compliance Fix
 
 ### Task

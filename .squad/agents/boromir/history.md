@@ -75,6 +75,27 @@ and rehomed it onto the proper branch:
 
 ## Learnings
 
+### 2026-05-24 — Issue #384: Recover release PR #383 after squash-merge ancestry drift
+
+**What worked:** Rebuild the replacement release branch from `origin/main` in a
+clean worktree, merge `origin/dev`, resolve conflicts once, then strip every
+`.squad/` path back to the `main` version before commit. That keeps the release
+PR scoped to product/docs/workflow changes only.
+
+**Release recovery rule:** For ancestry-drift repairs, treat `origin/dev` as the
+source of truth for active product code and tests. Preserve only intentional
+main-only release differences, such as workflow deletions already accepted on
+`dev`.
+
+**Validation gotchas:** Local toolchains placed inside the repo can break the
+pre-push markdownlint gate because it scans `**/*.md`. Keep ad-hoc SDK/Node
+installs outside the worktree, and install Playwright Chromium before running
+`tests/AppHost.Tests`.
+
+**Key paths:** `src/AppHost/MongoDbResourceBuilderExtensions.cs`,
+`Directory.Packages.props`, `.github/workflows/dependabot-auto-merge.yml`,
+`.github/workflows/squad-heartbeat.yml`, and `tests/AppHost.Tests`.
+
 ### 2026-05-19 — Issue #348: Resolve Remaining Database Runtime Issues (post-PR #346 investigation)
 
 **Context:** Issue #348 was opened because MongoDB container crashes were still visible after PR #346 (which pinned `mongo:7` + `mongo-data-v7`). Assigned to Boromir + Sam + Gimli.
