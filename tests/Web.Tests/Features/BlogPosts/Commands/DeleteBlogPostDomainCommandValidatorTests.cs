@@ -20,7 +20,7 @@ public class DeleteBlogPostDomainCommandValidatorTests
 	[Fact]
 	public void Validate_ValidId_PassesValidation()
 	{
-		var command = new DeleteBlogPostCommand(Guid.NewGuid());
+		var command = new DeleteBlogPostCommand(ObjectId.GenerateNewId());
 
 		var result = _validator.TestValidate(command);
 
@@ -30,7 +30,7 @@ public class DeleteBlogPostDomainCommandValidatorTests
 	[Fact]
 	public void Validate_EmptyId_FailsValidation()
 	{
-		var command = new DeleteBlogPostCommand(Guid.Empty);
+		var command = new DeleteBlogPostCommand(ObjectId.Empty);
 
 		var result = _validator.TestValidate(command);
 

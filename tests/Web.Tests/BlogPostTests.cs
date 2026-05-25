@@ -22,7 +22,7 @@ public class BlogPostTests
 		var post = BlogPost.Create("Test Title", "Test Content", TestAuthor);
 
 		// Assert
-		post.Id.Should().NotBeEmpty();
+		post.Id.Should().NotBe(ObjectId.Empty);
 		post.Title.Should().Be("Test Title");
 		post.Content.Should().Be("Test Content");
 		post.Author.Name.Should().Be("Test Author");

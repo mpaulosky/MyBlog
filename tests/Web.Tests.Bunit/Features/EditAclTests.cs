@@ -38,7 +38,7 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(null)));
@@ -50,7 +50,7 @@ public class EditAclTests : BunitContext
 		// Act
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub("auth0|some-user", ["Author"]),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Assert
 		navigation.Uri.Should().EndWith("/blog");
@@ -62,7 +62,7 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 		const string NonOwnerSub = "auth0|other-user";
 		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
@@ -77,7 +77,7 @@ public class EditAclTests : BunitContext
 		// Act
 		RenderWithUser<Edit>(
 				CreatePrincipalWithSub(NonOwnerSub, ["Author"]),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Assert
 		navigation.Uri.Should().EndWith("/blog");
@@ -88,7 +88,7 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
@@ -102,7 +102,7 @@ public class EditAclTests : BunitContext
 		// Act
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub(OwnerSub, ["Author"]),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Assert
 		navigation.Uri.Should().NotEndWith("/blog");
@@ -114,7 +114,7 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
@@ -130,7 +130,7 @@ public class EditAclTests : BunitContext
 
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub(OwnerSub, ["Author"]),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Act
 		cut.Find("button[type='submit']").Click();
@@ -146,7 +146,7 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|some-author";
 		const string AdminSub = "auth0|admin-user";
 		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "SomeAuthor", string.Empty, [], DateTime.UtcNow, null, false, null);
@@ -161,7 +161,7 @@ public class EditAclTests : BunitContext
 		// Act
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub(AdminSub, ["Admin"]),
-				parameters => parameters.Add(p => p.Id, postId));
+				parameters => parameters.Add(p => p.Id, postId.ToString()));
 
 		// Assert
 		navigation.Uri.Should().NotEndWith("/blog");
@@ -173,8 +173,8 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var firstPostId = Guid.NewGuid();
-		var secondPostId = Guid.NewGuid();
+		var firstPostId = ObjectId.GenerateNewId();
+		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
 		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
@@ -190,13 +190,13 @@ public class EditAclTests : BunitContext
 		// Act — first render
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub(OwnerSub, ["Author"]),
-				parameters => parameters.Add(p => p.Id, firstPostId));
+				parameters => parameters.Add(p => p.Id, firstPostId.ToString()));
 
 		cut.Markup.Should().Contain("First Post Title");
 		cut.Markup.Should().NotContain("Loading...");
 
 		// Act — change parameters to a different post
-		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId.ToString()));
 
 		// Assert — second post content shown, loading indicator gone, no stale first-post content
 		cut.Markup.Should().Contain("Second Post Title");
@@ -209,8 +209,8 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange: first load succeeds, second load fails
 		var sender = Substitute.For<ISender>();
-		var firstPostId = Guid.NewGuid();
-		var secondPostId = Guid.NewGuid();
+		var firstPostId = ObjectId.GenerateNewId();
+		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
 		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
@@ -225,12 +225,12 @@ public class EditAclTests : BunitContext
 		// Act — first render succeeds
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub(OwnerSub, ["Author"]),
-				parameters => parameters.Add(p => p.Id, firstPostId));
+				parameters => parameters.Add(p => p.Id, firstPostId.ToString()));
 
 		cut.Markup.Should().Contain("First Post Title");
 
 		// Act — second render returns error
-		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId.ToString()));
 
 		// Assert — stale form content gone, error shown
 		cut.Markup.Should().NotContain("First Post Title");
@@ -243,8 +243,8 @@ public class EditAclTests : BunitContext
 	{
 		// Arrange: first load succeeds, second returns null (post not found)
 		var sender = Substitute.For<ISender>();
-		var firstPostId = Guid.NewGuid();
-		var secondPostId = Guid.NewGuid();
+		var firstPostId = ObjectId.GenerateNewId();
+		var secondPostId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
 		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
@@ -260,12 +260,12 @@ public class EditAclTests : BunitContext
 		// Act — first render succeeds
 		var cut = RenderWithUser<Edit>(
 				CreatePrincipalWithSub(OwnerSub, ["Author"]),
-				parameters => parameters.Add(p => p.Id, firstPostId));
+				parameters => parameters.Add(p => p.Id, firstPostId.ToString()));
 
 		cut.Markup.Should().Contain("First Post Title");
 
 		// Act — second render: post not found → should redirect
-		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId));
+		cut.Render(parameters => parameters.Add(p => p.Id, secondPostId.ToString()));
 
 		// Assert — redirected and no stale form content visible
 		navigation.Uri.Should().EndWith("/blog");

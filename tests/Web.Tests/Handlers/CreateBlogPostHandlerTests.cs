@@ -29,17 +29,21 @@ public class CreateBlogPostHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_Success_CreatesPostInvalidatesCacheAndReturnsGuid()
+	public async Task Handle_Success_CreatesPostInvalidatesCacheAndReturnsObjectId()
 	{
 		// Arrange
+		BlogPost? persistedPost = null;
 		var command = new CreateBlogPostCommand("Title", "Content", new PostAuthor("", "Author", "", []));
+		_repo.AddAsync(Arg.Do<BlogPost>(post => persistedPost = post), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
 
 		// Act
 		var result = await _handler.Handle(command, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
-		result.Value.Should().NotBeEmpty();
+		persistedPost.Should().NotBeNull();
+		result.Value.Should().Be(persistedPost!.Id);
 		await _repo.Received(1).AddAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>());
 		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
 	}
@@ -72,7 +76,7 @@ public class CreateBlogPostHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
-		await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+		await _cache.DidNotReceive().InvalidateByIdAsync(Arg.Any<ObjectId>(), Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
@@ -122,6 +126,29 @@ public class CreateBlogPostHandlerTests
 		result.Success.Should().BeTrue();
 		persistedPost.Should().NotBeNull();
 		persistedPost!.IsPublished.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task Handle_CategoryIdProvided_PersistsAssignedCategory()
+	{
+		// Arrange
+		BlogPost? persistedPost = null;
+		var categoryId = ObjectId.GenerateNewId();
+		var command = new CreateBlogPostCommand(
+			"Title",
+			"Content",
+			new PostAuthor("", "Author", "", []),
+			CategoryId: categoryId);
+		_repo.AddAsync(Arg.Do<BlogPost>(post => persistedPost = post), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
+
+		// Act
+		var result = await _handler.Handle(command, CancellationToken.None);
+
+		// Assert
+		result.Success.Should().BeTrue();
+		persistedPost.Should().NotBeNull();
+		persistedPost!.CategoryId.Should().Be(categoryId);
 	}
 
 	[Fact]

@@ -11,4 +11,4 @@ using MyBlog.Domain.Abstractions;
 
 namespace MyBlog.Web.Features.Categories.Delete;
 
-internal sealed record DeleteCategoryCommand(Guid Id) : IRequest<Result>;
+internal sealed record DeleteCategoryCommand(ObjectId Id) : IRequest<Result>;

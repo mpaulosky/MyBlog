@@ -19,15 +19,15 @@ namespace Web.Behaviors;
 
 public class ValidationBehaviorTests
 {
-	// ── CreateBlogPostCommand (Result<Guid>) ─────────────────────────────────
+	// ── CreateBlogPostCommand (Result<ObjectId>) ─────────────────────────────────
 
 	[Fact]
 	public async Task Handle_NoValidators_CallsNext()
 	{
 		// Arrange
-		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
-		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<Guid>(Guid.NewGuid()));
-		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([]);
+		var next = Substitute.For<RequestHandlerDelegate<Result<ObjectId>>>();
+		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<ObjectId>(ObjectId.GenerateNewId()));
+		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<ObjectId>>([]);
 
 		// Act
 		var result = await behavior.Handle(
@@ -43,9 +43,9 @@ public class ValidationBehaviorTests
 	{
 		// Arrange
 		var validator = new CreateBlogPostCommandValidator();
-		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
-		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<Guid>(Guid.NewGuid()));
-		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator]);
+		var next = Substitute.For<RequestHandlerDelegate<Result<ObjectId>>>();
+		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<ObjectId>(ObjectId.GenerateNewId()));
+		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<ObjectId>>([validator]);
 
 		// Act
 		var result = await behavior.Handle(
@@ -61,8 +61,8 @@ public class ValidationBehaviorTests
 	{
 		// Arrange
 		var validator = new CreateBlogPostCommandValidator();
-		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
-		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator]);
+		var next = Substitute.For<RequestHandlerDelegate<Result<ObjectId>>>();
+		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<ObjectId>>([validator]);
 
 		// Act
 		var result = await behavior.Handle(
@@ -79,8 +79,8 @@ public class ValidationBehaviorTests
 	{
 		// Arrange
 		var validator = new CreateBlogPostCommandValidator();
-		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
-		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator]);
+		var next = Substitute.For<RequestHandlerDelegate<Result<ObjectId>>>();
+		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<ObjectId>>([validator]);
 
 		// Act
 		var result = await behavior.Handle(
@@ -96,9 +96,9 @@ public class ValidationBehaviorTests
 		// Arrange
 		var validator1 = new CreateBlogPostCommandValidator();
 		var validator2 = new CreateBlogPostCommandValidator();
-		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
-		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<Guid>(Guid.NewGuid()));
-		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator1, validator2]);
+		var next = Substitute.For<RequestHandlerDelegate<Result<ObjectId>>>();
+		next(Arg.Any<CancellationToken>()).Returns(Result.Ok<ObjectId>(ObjectId.GenerateNewId()));
+		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<ObjectId>>([validator1, validator2]);
 
 		// Act
 		var result = await behavior.Handle(
@@ -115,8 +115,8 @@ public class ValidationBehaviorTests
 		// Arrange
 		var validator1 = new CreateBlogPostCommandValidator();
 		var validator2 = new CreateBlogPostCommandValidator();
-		var next = Substitute.For<RequestHandlerDelegate<Result<Guid>>>();
-		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<Guid>>([validator1, validator2]);
+		var next = Substitute.For<RequestHandlerDelegate<Result<ObjectId>>>();
+		var behavior = new ValidationBehavior<CreateBlogPostCommand, Result<ObjectId>>([validator1, validator2]);
 
 		// Act
 		var result = await behavior.Handle(
@@ -140,7 +140,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new DeleteBlogPostCommand(Guid.NewGuid()), next, CancellationToken.None);
+			new DeleteBlogPostCommand(ObjectId.GenerateNewId()), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -158,7 +158,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new DeleteBlogPostCommand(Guid.NewGuid()), next, CancellationToken.None);
+			new DeleteBlogPostCommand(ObjectId.GenerateNewId()), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -166,7 +166,7 @@ public class ValidationBehaviorTests
 	}
 
 	[Fact]
-	public async Task Handle_DeleteEmptyGuid_ReturnsValidationFailWithoutCallingNext()
+	public async Task Handle_DeleteEmptyObjectId_ReturnsValidationFailWithoutCallingNext()
 	{
 		// Arrange
 		var validator = new DeleteBlogPostCommandValidator();
@@ -175,7 +175,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new DeleteBlogPostCommand(Guid.Empty), next, CancellationToken.None);
+			new DeleteBlogPostCommand(ObjectId.Empty), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeFalse();
@@ -196,7 +196,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new EditBlogPostCommand(Guid.NewGuid(), "Title", "Content", string.Empty, false), next, CancellationToken.None);
+			new EditBlogPostCommand(ObjectId.GenerateNewId(), "Title", "Content", string.Empty, false), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeTrue();
@@ -213,7 +213,7 @@ public class ValidationBehaviorTests
 
 		// Act
 		var result = await behavior.Handle(
-			new EditBlogPostCommand(Guid.Empty, "", "", string.Empty, false), next, CancellationToken.None);
+			new EditBlogPostCommand(ObjectId.Empty, "", "", string.Empty, false), next, CancellationToken.None);
 
 		// Assert
 		result.Success.Should().BeFalse();

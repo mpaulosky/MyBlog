@@ -19,7 +19,7 @@ public class DeleteBlogPostCommandValidatorTests
 	public void Validate_ValidId_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new DeleteBlogPostCommand(Guid.NewGuid());
+		var command = new DeleteBlogPostCommand(ObjectId.GenerateNewId());
 
 		// Act
 		var result = _sut.Validate(command);
@@ -29,10 +29,10 @@ public class DeleteBlogPostCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsError()
+	public void Validate_EmptyObjectId_ReturnsError()
 	{
 		// Arrange
-		var command = new DeleteBlogPostCommand(Guid.Empty);
+		var command = new DeleteBlogPostCommand(ObjectId.Empty);
 
 		// Act
 		var result = _sut.Validate(command);
@@ -43,10 +43,10 @@ public class DeleteBlogPostCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsRequiredMessage()
+	public void Validate_EmptyObjectId_ReturnsRequiredMessage()
 	{
 		// Arrange
-		var command = new DeleteBlogPostCommand(Guid.Empty);
+		var command = new DeleteBlogPostCommand(ObjectId.Empty);
 
 		// Act
 		var result = _sut.Validate(command);

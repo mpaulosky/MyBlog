@@ -16,8 +16,8 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 {
 	// ------------------------------------------------------------------ helpers
 
-	private static BlogPostDto MakeDto(string title = "Test Post") =>
-		new(Guid.NewGuid(), title, "Content", string.Empty, "Author", string.Empty, [], DateTime.UtcNow, null, true, null);
+	private static BlogPostDto MakeDto(string title = "Test Post", ObjectId? id = null) =>
+		new(id ?? ObjectId.GenerateNewId(), title, "Content", string.Empty, "Author", string.Empty, [], DateTime.UtcNow, null, true, ObjectId.GenerateNewId());
 
 	// ------------------------------------------------------------------ tests
 
@@ -41,6 +41,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		// Assert
 		result1.Should().HaveCount(1);
 		result1[0].Title.Should().Be("Redis Test Post");
+		result1[0].Id.Should().Be(dto.Id);
 		fetch1.ReceivedCalls().Should().HaveCount(1);
 
 		// Arrange — service #2: fresh L1 (cold), same Redis container (warm)
@@ -55,6 +56,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		// Assert — Redis served the data without calling the DB delegate
 		result2.Should().HaveCount(1);
 		result2[0].Title.Should().Be("Redis Test Post");
+		result2[0].Id.Should().Be(dto.Id);
 		fetch2.ReceivedCalls().Should().BeEmpty();
 	}
 
@@ -64,8 +66,8 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		// Arrange — service #1 with cold L1
 		var ct = TestContext.Current.CancellationToken;
 		var svc1 = fixture.CreateCacheService();
-		var dto = MakeDto("By-Id Post");
-		var id = dto.Id;
+		var id = ObjectId.GenerateNewId();
+		var dto = MakeDto("By-Id Post", id);
 
 		var fetch1 = Substitute.For<Func<Task<BlogPostDto?>>>();
 		fetch1().Returns(Task.FromResult<BlogPostDto?>(dto));
@@ -76,6 +78,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		// Assert
 		result1.Should().NotBeNull();
 		result1!.Title.Should().Be("By-Id Post");
+		result1.Id.Should().Be(id);
 		fetch1.ReceivedCalls().Should().HaveCount(1);
 
 		// Arrange — service #2: fresh L1, same Redis (now contains the key)
@@ -90,6 +93,7 @@ public sealed class BlogPostCacheServiceTests(RedisFixture fixture)
 		// Assert
 		result2.Should().NotBeNull();
 		result2!.Title.Should().Be("By-Id Post");
+		result2.Id.Should().Be(id);
 		fetch2.ReceivedCalls().Should().BeEmpty();
 	}
 

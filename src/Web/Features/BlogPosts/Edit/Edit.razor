@@ -1,4 +1,4 @@
-@page "/blog/edit/{Id:guid}"
+@page "/blog/edit/{Id}"
 @using System.Security.Claims
 @using MyBlog.Web.Features.Categories.List
 @inject ISender Sender
@@ -100,7 +100,7 @@ else if (_model is not null)
 }
 
 @code {
-    [Parameter] public Guid Id { get; set; }
+    [Parameter] public string Id { get; set; } = string.Empty;
 
     private PostFormModel? _model;
     private string? _error;
@@ -123,7 +123,7 @@ else if (_model is not null)
         try
         {
             var categoriesTask = Sender.Send(new GetCategoriesQuery());
-            var postTask = Sender.Send(new GetBlogPostByIdQuery(Id));
+            var postTask = Sender.Send(new GetBlogPostByIdQuery(ObjectId.Parse(Id)));
             await Task.WhenAll(categoriesTask, postTask);
 
             var categoriesResult = await categoriesTask;
@@ -160,7 +160,7 @@ else if (_model is not null)
                         Title = result.Value.Title,
                         Content = result.Value.Content,
                         IsPublished = result.Value.IsPublished,
-                        CategoryId = result.Value.CategoryId,
+                        CategoryId = result.Value.CategoryId?.ToString(),
                     };
                 }
                 else
@@ -183,7 +183,8 @@ else if (_model is not null)
     private async Task HandleSubmit()
     {
         if (_model is null) return;
-        if (_model.IsPublished && _model.CategoryId is null)
+        var hasCategorySelection = !string.IsNullOrWhiteSpace(_model.CategoryId);
+        if (_model.IsPublished && !hasCategorySelection)
         {
             _error = _categoriesLoadFailed
                 ? "Categories failed to load. Cannot publish until categories are available."
@@ -192,13 +193,14 @@ else if (_model is not null)
         }
 
         var result = await Sender.Send(new EditBlogPostCommand(
-            Id,
+            ObjectId.Parse(Id),
             _model.Title,
             _model.Content,
             _callerUserId,
             _callerIsAdmin,
             _model.IsPublished,
-            _model.CategoryId));
+            hasCategorySelection ? ObjectId.Parse(_model.CategoryId!) : null,
+            ClearCategory: !hasCategorySelection));
         if (result.Success)
             Navigation.NavigateTo("/blog");
         else
@@ -221,6 +223,6 @@ else if (_model is not null)
 
         public bool IsPublished { get; set; }
 
-        public Guid? CategoryId { get; set; }
+        public string? CategoryId { get; set; }
     }
 }

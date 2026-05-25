@@ -43,7 +43,7 @@ internal interface IBlogPostCacheService
 	/// Do not await the same <see cref="ValueTask{T}"/> instance more than once.
 	/// </remarks>
 	ValueTask<BlogPostDto?> GetOrFetchByIdAsync(
-		Guid id,
+		ObjectId id,
 		Func<Task<BlogPostDto?>> fetch,
 		CancellationToken ct = default);
 
@@ -63,5 +63,5 @@ internal interface IBlogPostCacheService
 	/// Redis removal uses <see cref="CancellationToken.None"/>: the database write has
 	/// already committed and invalidation must complete regardless of caller cancellation.
 	/// </remarks>
-	Task InvalidateByIdAsync(Guid id, CancellationToken ct = default);
+	Task InvalidateByIdAsync(ObjectId id, CancellationToken ct = default);
 }

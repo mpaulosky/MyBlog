@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyBlog</title>
-    <meta name="description" content="A hands-on learning project for .NET Aspire orchestration, Blazor Server rendering, MongoDB, Redis caching, and CQRS with MediatR.">
+    <meta name="description" content="A hands-on learning project for .NET Aspire orchestration, Blazor Server rendering, clean architecture, MongoDB persistence, Redis caching, Auth0 authentication, and TailwindCSS v4 theming.">
     <style>
         * {
             margin: 0;
@@ -129,16 +129,22 @@
         em {
             font-style: italic;
         }
+        blockquote {
+            border-left: 4px solid #e1e4e8;
+            padding: 0 1em;
+            color: #57606a;
+            margin: 16px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>MyBlog</h1>
 
-        <p>A hands-on learning project for .NET Aspire orchestration, Blazor Server rendering, MongoDB, Redis caching, and CQRS with MediatR.</p>
+        <p>A hands-on learning project for .NET Aspire orchestration, Blazor Server rendering, and clean architecture.</p>
 
         <div class="badges">
-            <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet" alt=".NET 10"></a>
+            <a href="https://dotnet.microsoft.com/en-us/download"><img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet" alt=".NET 10"></a>
             <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"></a>
             <a href="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-ci.yml"><img src="https://img.shields.io/badge/Tests-xUnit-blueviolet?logo=github" alt="xUnit Tests"></a>
             <a href="https://github.com/mpaulosky/MyBlog/releases/latest"><img src="https://img.shields.io/github/v/release/mpaulosky/MyBlog?logo=github&color=blue&label=Release" alt="Latest Release"></a>
@@ -152,6 +158,7 @@
         <div class="badges">
             <a href="https://codecov.io/gh/mpaulosky/MyBlog"><img src="https://codecov.io/gh/mpaulosky/MyBlog/branch/main/graph/badge.svg" alt="CodeCov Coverage"></a>
             <a href="https://codecov.io/gh/mpaulosky/MyBlog/commits/main"><img src="https://img.shields.io/badge/Coverage-Trend-blue?logo=codecov" alt="Coverage Trend"></a>
+            <a href="https://github.com/mpaulosky/MyBlog/actions/workflows/squad-test.yml"><img src="https://img.shields.io/badge/Coverage%20Gate-%E2%89%A580%25-brightgreen?logo=codecov" alt="Coverage Gate"></a>
         </div>
 
         <div class="badges">
@@ -161,102 +168,72 @@
             <a href="https://github.com/mpaulosky/MyBlog/pulls?q=is%3Aclosed+is%3Apr"><img src="https://img.shields.io/github/issues-pr-closed/mpaulosky/MyBlog?color=6f42c1" alt="Closed PRs"></a>
         </div>
 
+        <blockquote><p>⚠️ <strong>Training Project</strong> — This is a learning exercise focused on .NET practices, not a production application.</p></blockquote>
+
         <p class="nav-links"><a href="blog/">📝 Dev Blog</a></p>
 
         <h2>Overview</h2>
 
-        <p>MyBlog is a Blazor Server blog application demonstrating .NET Aspire orchestration, CQRS with MediatR, MongoDB persistence, Redis distributed caching, Auth0 authentication, and TailwindCSS v4 theming.</p>
+        <p>MyBlog is a Blazor Server blog application demonstrating modern .NET patterns: Aspire orchestration, CQRS with MediatR, MongoDB persistence, Redis distributed caching, Auth0 authentication, TailwindCSS v4 theming, and comprehensive testing (unit, architecture, integration, bUnit, E2E).</p>
 
         <h2>Features</h2>
 
-        <h3>Core Functionality</h3>
-
         <ul>
             <li><strong>Blog Management</strong>: Create, edit, delete, publish/unpublish blog posts</li>
-            <li><strong>CQRS with MediatR</strong>: All operations use MediatR command/query handlers with FluentValidation pipeline</li>
-            <li><strong>Redis Caching</strong>: L1 (in-memory) + L2 (Redis distributed) cache via <code>IBlogPostCacheService</code></li>
-            <li><strong>Auth0 Authentication</strong>: Secure login with Authorization Code + PKCE; Role-Based Authorization</li>
-        </ul>
-
-        <h3>Security</h3>
-
-        <ul>
-            <li><strong>Auth0 Authentication</strong>: Secure login with Authorization Code + PKCE flow</li>
-            <li><strong>Role-Based Authorization</strong>: Admin and User policies for fine-grained access control</li>
-            <li><strong>Security Hardening</strong>: Protection against open redirect and CSRF attacks</li>
-        </ul>
-
-        <h3>User Interface</h3>
-
-        <ul>
-            <li><strong>Dark Mode</strong>: System-aware dark mode with manual override (light/dark/system)</li>
-            <li><strong>Color Schemes</strong>: 4 built-in themes (Blue, Red, Green, Yellow)</li>
-            <li><strong>Responsive Design</strong>: TailwindCSS v4 for modern, responsive UI</li>
-            <li><strong>Theme Persistence</strong>: User preferences saved to localStorage</li>
+            <li><strong>CQRS with MediatR</strong>: All blog operations handled by MediatR command/query handlers with FluentValidation pipeline</li>
+            <li><strong>Redis Caching</strong>: L1 (in-memory) + L2 (Redis distributed) cache via <code>IBlogPostCacheService</code> abstraction</li>
+            <li><strong>Auth0 Authentication</strong>: Secure login with Authorization Code + PKCE flow; Role-Based Authorization (Admin/User policies)</li>
+            <li><strong>Blazor TailwindCSS Theming</strong>: Dark/light/system modes, 4 color schemes (Blue, Red, Green, Yellow), localStorage persistence</li>
+            <li><strong>Aspire Orchestration</strong>: MongoDB + Redis as Aspire resources with health checks and OpenTelemetry</li>
         </ul>
 
         <h2>Technology Stack</h2>
 
-        <h3>Backend</h3>
-
         <ul>
             <li><strong>.NET 10</strong> with <strong>C# 14</strong></li>
-            <li><strong>.NET Aspire</strong> for orchestration and service management</li>
-            <li><strong>MongoDB</strong> with <strong>MongoDB.EntityFrameworkCore</strong> for data persistence</li>
-            <li><strong>Redis</strong> for distributed caching</li>
-            <li><strong>MediatR</strong> for CQRS pattern implementation</li>
-            <li><strong>FluentValidation</strong> for robust data validation</li>
-        </ul>
-
-        <h3>Frontend</h3>
-
-        <ul>
-            <li><strong>Blazor Interactive Server Rendering</strong> for responsive UI</li>
-            <li><strong>TailwindCSS v4</strong> with <code>@tailwindcss/cli</code> for styling</li>
-            <li><strong>MSBuild Integration</strong> for automatic CSS compilation</li>
-        </ul>
-
-        <h3>Observability</h3>
-
-        <ul>
-            <li><strong>OpenTelemetry</strong> for distributed tracing and metrics</li>
-            <li><strong>Azure Application Insights</strong> integration</li>
-            <li><strong>Health Checks</strong> for MongoDB and Redis connectivity</li>
-        </ul>
-
-        <h3>DevOps</h3>
-
-        <ul>
-            <li><strong>14 GitHub Workflows</strong> for CI/CD automation</li>
-            <li><strong>DocFX</strong> for API documentation generation</li>
-            <li><strong>CodeCov</strong> for test coverage reporting</li>
+            <li><strong>.NET Aspire 13.2.3</strong> — Service orchestration, MongoDB + Redis resources, health checks</li>
+            <li><strong>Blazor Server (Interactive Server Rendering)</strong> — Dynamic UI with TailwindCSS v4 theming</li>
+            <li><strong>MongoDB</strong> with <strong>MongoDB.EntityFrameworkCore</strong> — Blog post persistence</li>
+            <li><strong>Redis</strong> — Distributed caching (L2 cache via <code>IDistributedCache</code>)</li>
+            <li><strong>MediatR</strong> — CQRS pattern (Create/Update/Delete/GetAll/GetById handlers)</li>
+            <li><strong>FluentValidation</strong> — Validation pipeline behavior</li>
+            <li><strong>Auth0</strong> — Authentication + role-based authorization</li>
+            <li><strong>xUnit</strong> + <strong>FluentAssertions</strong> + <strong>NSubstitute</strong> — Test framework</li>
+            <li><strong>bUnit</strong> — Blazor component testing</li>
+            <li><strong>NetArchTest.Rules</strong> — Architecture validation</li>
         </ul>
 
         <h2>Project Structure</h2>
 
         <pre><code>MyBlog/
 ├── src/
-│   ├── AppHost/                  # .NET Aspire orchestration (MongoDB + Redis)
-│   ├── Domain/                   # BlogPost entity, MediatR handlers, validators
-│   │   ├── Abstractions/         # Result&lt;T&gt;, IBlogPostRepository, IBlogPostCacheService
-│   │   ├── Behaviors/            # ValidationBehavior pipeline
-│   │   └── Entities/             # BlogPost domain entity
-│   ├── ServiceDefaults/          # OpenTelemetry, health checks, Aspire extensions
-│   └── Web/                      # Blazor Server application
-│       ├── Features/BlogPosts/   # Vertical slice: handlers, pages
-│       ├── Infrastructure/Caching/ # BlogPostCacheService (L1+L2)
-│       ├── Components/Theme/     # TailwindCSS theme components
-│       └── Security/             # Auth0 endpoints
+│   ├── AppHost/              # .NET Aspire orchestration (MongoDB + Redis resources)
+│   ├── Domain/               # BlogPost entity, MediatR handlers, validators, IBlogPostCacheService
+│   │   ├── Abstractions/     # Result&lt;T&gt;, IBlogPostRepository, IBlogPostCacheService
+│   │   ├── Behaviors/        # ValidationBehavior MediatR pipeline
+│   │   ├── Entities/         # BlogPost domain entity
+│   │   └── Interfaces/       # Repository and cache interfaces
+│   ├── ServiceDefaults/      # OpenTelemetry, health checks, Aspire extensions
+│   └── Web/                  # Blazor Server application
+│       ├── Features/BlogPosts/  # Vertical slice: commands, queries, Blazor pages
+│       ├── Infrastructure/Caching/  # BlogPostCacheService (L1+L2 implementation)
+│       ├── Components/Theme/ # TailwindCSS theme components
+│       ├── Security/         # Auth0 endpoints
+│       └── Styles/           # TailwindCSS input.css
 ├── tests/
-│   ├── Unit.Tests/               # Domain entity + handler unit tests
-│   ├── Architecture.Tests/       # Layer dependency enforcement
-│   ├── Integration.Tests/        # Aspire integration tests
-│   ├── AppHost.Tests/            # Aspire AppHost + E2E tests
-│   ├── Web.Tests/                # Web layer tests
-│   ├── Web.Tests.Bunit/          # Blazor component tests (bUnit)
-│   └── Web.Tests.Integration/    # Web integration tests
-├── docs/                         # Documentation + GitHub Pages
-└── Directory.Packages.props      # Centralized NuGet versioning (CPM)
+│   ├── Unit.Tests/           # Domain entity + handler unit tests
+│   ├── Architecture.Tests/   # Layer dependency enforcement
+│   ├── Integration.Tests/    # Aspire integration tests
+│   ├── AppHost.Tests/        # Aspire AppHost + E2E tests
+│   ├── Web.Tests/            # Web layer unit tests
+│   ├── Web.Tests.Bunit/      # Blazor component tests (bUnit)
+│   └── Web.Tests.Integration/# Web integration tests
+├── docs/                     # Documentation + GitHub Pages blog
+├── Directory.Build.props     # Centralized build settings
+├── Directory.Packages.props  # Centralized NuGet versioning (CPM)
+├── global.json               # SDK version lock (.NET 10.0.202)
+├── GitVersion.yml            # Semantic versioning config
+└── MyBlog.slnx               # Solution file
 </code></pre>
 
         <h2>Getting Started</h2>
@@ -264,14 +241,14 @@
         <h3>Prerequisites</h3>
 
         <ul>
-            <li>.NET 10 SDK or later</li>
-            <li>Node.js 18+ (for TailwindCSS compilation)</li>
-            <li>MongoDB Atlas cluster (or local MongoDB)</li>
-            <li>Redis instance (for caching)</li>
-            <li>Auth0 tenant configuration</li>
+            <li><strong>.NET 10 SDK</strong> — <a href="https://dotnet.microsoft.com/en-us/download">Download</a></li>
+            <li><strong>Node.js 18+</strong> — for TailwindCSS compilation</li>
+            <li><strong>Auth0 account</strong> — required for authentication (free tier). See <a href="AUTH0_SETUP.md">AUTH0_SETUP.md</a></li>
+            <li><strong>MongoDB</strong> — MongoDB Atlas or local instance (or let Aspire provision via Docker)</li>
+            <li><strong>Redis</strong> — Redis instance (or let Aspire provision via Docker)</li>
         </ul>
 
-        <h3>Development Setup</h3>
+        <h3>Setup</h3>
 
         <ol>
             <li>
@@ -287,11 +264,11 @@ cd MyBlog
             </li>
             <li>
                 <p><strong>Install npm dependencies</strong> (for TailwindCSS)</p>
-                <pre><code>npm install
+                <pre><code>npm ci
 </code></pre>
             </li>
             <li>
-                <p><strong>Build the solution</strong> (includes CSS compilation via MSBuild)</p>
+                <p><strong>Build the solution</strong></p>
                 <pre><code>dotnet build
 </code></pre>
             </li>
@@ -305,132 +282,43 @@ cd MyBlog
                 <pre><code>cd src/AppHost
 dotnet run
 </code></pre>
+                <p>The Aspire dashboard will be available at the URL shown in the console.</p>
             </li>
         </ol>
 
-        <h3>TailwindCSS Development</h3>
+        <h2>Testing</h2>
 
-        <p>For active CSS development with hot reload:</p>
-
-        <pre><code>npm run tw:watch
-</code></pre>
-
-        <p>This watches for changes in Razor components and automatically recompiles CSS.</p>
-
-        <h3>Configuration</h3>
-
-        <h4>User Secrets Setup</h4>
-
-        <pre><code>cd src/Web
-dotnet user-secrets init
-dotnet user-secrets set "Auth0:Domain" "your-tenant.auth0.com"
-dotnet user-secrets set "Auth0:ClientId" "your-client-id"
-dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
-</code></pre>
-
-        <h4>Auth0 Configuration</h4>
-
-        <ol>
-            <li>Create an Auth0 Application (Regular Web Application)</li>
-            <li>Configure Allowed Callback URLs: <code>https://localhost:7xxx/callback</code></li>
-            <li>Configure Allowed Logout URLs: <code>https://localhost:7xxx/</code></li>
-            <li>Enable Authorization Code Flow with PKCE</li>
-            <li>Create roles: <code>Admin</code>, <code>User</code></li>
-        </ol>
-
-        <h4>Environment Variables</h4>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Variable</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><code>Auth0__Domain</code></td>
-                    <td>Auth0 tenant domain</td>
-                </tr>
-                <tr>
-                    <td><code>Auth0__ClientId</code></td>
-                    <td>Auth0 application client ID</td>
-                </tr>
-                <tr>
-                    <td><code>Auth0__ClientSecret</code></td>
-                    <td>Auth0 application client secret</td>
-                </tr>
-                <tr>
-                    <td><code>ConnectionStrings__mongodb</code></td>
-                    <td>MongoDB connection string</td>
-                </tr>
-                <tr>
-                    <td><code>ConnectionStrings__redis</code></td>
-                    <td>Redis connection string</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <h2>Theming</h2>
-
-        <p>MyBlog supports dark mode and multiple color schemes. See <a href="THEMING.md">docs/THEMING.md</a> for details.</p>
-
-        <h3>Quick Start</h3>
+        <p>Multiple test tiers, all passing:</p>
 
         <ul>
-            <li><strong>Toggle Theme</strong>: Click the theme toggle button in the header</li>
-            <li><strong>Change Color</strong>: Select from Blue, Red, Green, or Yellow schemes</li>
-            <li><strong>System Mode</strong>: Follows your OS dark/light preference</li>
+            <li><strong>Unit.Tests</strong> — Domain entity logic and MediatR handler behavior</li>
+            <li><strong>Architecture.Tests</strong> — Layer dependency enforcement</li>
+            <li><strong>Integration.Tests</strong> — Aspire integration tests</li>
+            <li><strong>AppHost.Tests</strong> — .NET Aspire host + E2E tests</li>
+            <li><strong>Web.Tests</strong> — Web layer unit tests</li>
+            <li><strong>Web.Tests.Bunit</strong> — Blazor component tests (bUnit)</li>
+            <li><strong>Web.Tests.Integration</strong> — Web integration tests</li>
         </ul>
+
+        <p>Run all tests:</p>
+
+        <pre><code>dotnet test
+</code></pre>
 
         <h2>Documentation</h2>
 
         <ul>
-            <li><a href="ARCHITECTURE.md">ARCHITECTURE.md</a> - Solution architecture overview</li>
-            <li><a href="CONTRIBUTING.md">CONTRIBUTING.md</a> - Contribution guidelines</li>
-            <li><a href="AUTH0_SETUP.md">AUTH0_SETUP.md</a> - Auth0 configuration guide</li>
-            <li><a href="TESTING.md">TESTING.md</a> - Test strategy and running instructions</li>
-            <li><a href="THEMING.md">THEMING.md</a> - Theming and customization guide</li>
-            <li><a href="SECURITY.md">SECURITY.md</a> - Security guidelines</li>
-            <li><a href="CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a> - Community standards</li>
-            <li><a href="REFERENCES.md">REFERENCES.md</a> - NuGet and npm package references</li>
+            <li><a href="ARCHITECTURE.md">ARCHITECTURE.md</a> — Solution structure, layer diagram, design decisions</li>
+            <li><a href="CONTRIBUTING.md">CONTRIBUTING.md</a> — Contribution guidelines and project setup</li>
+            <li><a href="AUTH0_SETUP.md">AUTH0_SETUP.md</a> — Step-by-step Auth0 configuration for local development</li>
+            <li><a href="TESTING.md">TESTING.md</a> — Test strategy and running instructions</li>
+            <li><a href="THEMING.md">THEMING.md</a> — TailwindCSS theme system guide</li>
+            <li><a href="SECURITY.md">SECURITY.md</a> — Security guidelines</li>
+            <li><a href="CODE_OF_CONDUCT.md">CODE_OF_CONDUCT.md</a> — Community standards</li>
+            <li><a href="REFERENCES.md">REFERENCES.md</a> — NuGet and npm package references</li>
         </ul>
 
-        <h2>Architecture</h2>
-
-        <h3>Domain Layer</h3>
-
-        <ul>
-            <li><strong>BlogPost Entity</strong>: Core domain entity with factory methods and immutable updates</li>
-            <li><strong>MediatR Handlers</strong>: CreateBlogPost, UpdateBlogPost, DeleteBlogPost, GetAllBlogPosts, GetBlogPostById</li>
-            <li><strong>ValidationBehavior</strong>: MediatR pipeline behavior with FluentValidation</li>
-            <li><strong>IBlogPostCacheService</strong>: Cache abstraction for L1+L2 caching strategy</li>
-        </ul>
-
-        <h3>Web Layer</h3>
-
-        <ul>
-            <li><strong>BlogPostCacheService</strong>: L1 (IMemoryCache) + L2 (IDistributedCache/Redis) implementation</li>
-            <li><strong>Auth0 Endpoints</strong>: <code>/login</code>, <code>/logout</code> with security hardening</li>
-            <li><strong>Theme Components</strong>: <code>ThemeProvider</code> cascading parameter, <code>ThemeToggle</code> UI</li>
-            <li><strong>Vertical Slices</strong>: Blog post pages co-located with handlers in <code>Web/Features/BlogPosts/</code></li>
-        </ul>
-
-        <h2>Testing</h2>
-
-        <p>The project includes multiple testing layers:</p>
-
-        <ul>
-            <li><strong>Unit.Tests</strong>: Domain entity logic and MediatR handler behavior</li>
-            <li><strong>Architecture.Tests</strong>: Layer dependency enforcement</li>
-            <li><strong>Integration.Tests</strong>: Aspire integration tests</li>
-            <li><strong>AppHost.Tests</strong>: .NET Aspire host + E2E tests</li>
-            <li><strong>Web.Tests</strong>: Web layer unit tests</li>
-            <li><strong>Web.Tests.Bunit</strong>: Blazor component tests (bUnit)</li>
-            <li><strong>Web.Tests.Integration</strong>: Web integration tests</li>
-        </ul>
-
-        <h2>Release Notes</h2>
+        <h2>Release History</h2>
 
         <!-- RELEASES_START -->
         <table>
@@ -443,24 +331,49 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
             </thead>
             <tbody>
                 <tr>
-                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0"><strong>v1.2.0</strong></a> <span style="background:#dafbe1;color:#1a7f37;font-size:0.75em;padding:2px 6px;border-radius:10px;font-weight:600;">Latest</span></td>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.2"><strong>v1.5.2</strong></a> <span style="background:#dafbe1;color:#1a7f37;font-size:0.75em;padding:2px 6px;border-radius:10px;font-weight:600;">Latest</span></td>
+                    <td>2026-05-23</td>
+                    <td><strong>Markdown Editor &amp; Categories</strong> — Blog post categories, markdown editing, ObjectId migration</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.1">v1.5.1</a></td>
+                    <td>2026-05-08</td>
+                    <td><strong>MongoDB Dev Commands</strong> — AppHost diagnostic commands, resource refinement</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.0">v1.5.0</a></td>
+                    <td>2026-05-08</td>
+                    <td><strong>MongoDB Refactoring</strong> — Resource abstractions, Aspire dev commands, infrastructure hardening</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.4.0">v1.4.0</a></td>
+                    <td>2026-05-08</td>
+                    <td><strong>Board Automation</strong> — GitHub project automation, test harness hardening, CI/CD improvements</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.3.0">v1.3.0</a></td>
+                    <td>2026-04-30</td>
+                    <td><strong>xUnit v3 Migration</strong> — Complete test framework upgrade, code quality enhancements</td>
+                </tr>
+                <tr>
+                    <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0">v1.2.0</a></td>
                     <td>2026-04-24</td>
-                    <td>Redis &amp; Caching — IBlogPostCacheService L1+L2 abstraction, handler cache integration, bUnit tests</td>
+                    <td><strong>Redis &amp; Caching</strong> — IBlogPostCacheService L1+L2, handler cache integration</td>
                 </tr>
                 <tr>
                     <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.1.0">v1.1.0</a></td>
                     <td>2026-04-24</td>
-                    <td>Themes &amp; Testing — TailwindCSS v4 theme system (4 colors, dark/light/system), test project reorganization, flaky E2E fixes</td>
+                    <td><strong>Themes &amp; Testing</strong> — TailwindCSS v4 themes, test project reorganization, E2E fixes</td>
                 </tr>
                 <tr>
                     <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.0.1">v1.0.1</a></td>
                     <td>2026-04-20</td>
-                    <td>Automatic semantic versioning enabled via GitVersion CI integration</td>
+                    <td>Automatic semver versioning enabled</td>
                 </tr>
                 <tr>
                     <td><a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.0.0">v1.0.0</a></td>
                     <td>2026-04-20</td>
-                    <td>First pure semantic release — CQRS/MediatR domain, E2E testing, CI hardening</td>
+                    <td>First semantic version release</td>
                 </tr>
             </tbody>
         </table>
@@ -481,40 +394,60 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
             </thead>
             <tbody>
                 <tr>
-                    <td>2026-04-24</td>
-                    <td><a href="blog/2026-04-24-release-v1-2-0.md">Release v1.2.0 — Redis &amp; Caching</a></td>
-                    <td>release, v1.2.0, redis, caching, sprint-5</td>
+                    <td>2026-05-23</td>
+                    <td><a href="blog/2026-05-23-release-v1-5-2.md">Release: v1.5.2 — Markdown Editor and Blog Post Categories</a></td>
+                    <td>release, v1.5.2, blazor, ui, categories, markdown, sprint-19</td>
+                </tr>
+                <tr>
+                    <td>2026-05-08</td>
+                    <td><a href="blog/2026-05-08-release-v1-5-1.md">Release: v1.5.1 — AppHost MongoDB Dev Commands Refactor</a></td>
+                    <td>release, v1.5.1, aspire, mongodb, sprint-18</td>
+                </tr>
+                <tr>
+                    <td>2026-05-08</td>
+                    <td><a href="blog/2026-05-08-release-v1-5-0.md">Release: v1.5.0 — MongoDB Resource Refactoring and Aspire Dev Commands</a></td>
+                    <td>release, v1.5.0, aspire, mongodb, devops, sprint-14-18</td>
+                </tr>
+                <tr>
+                    <td>2026-05-08</td>
+                    <td><a href="blog/2026-05-08-release-v1-4-0.md">Release: v1.4.0 — Board Automation and Test Harness Hardening</a></td>
+                    <td>release, v1.4.0, board-automation, testing, ci-cd, sprints-10-13</td>
+                </tr>
+                <tr>
+                    <td>2026-04-30</td>
+                    <td><a href="blog/2026-04-30-release-v1-3-0.md">Release: v1.3.0 — Complete xUnit v3 Migration and Code Quality</a></td>
+                    <td>release, v1.3.0, testing, xunit, code-quality, sprints-6-8</td>
                 </tr>
                 <tr>
                     <td>2026-04-24</td>
-                    <td><a href="blog/2026-04-24-release-v1-1-0.md">Release v1.1.0 — Blazor Theming &amp; Testing</a></td>
-                    <td>release, v1.1.0, blazor, tailwind, testing, sprint-4</td>
+                    <td><a href="blog/2026-04-24-release-v1-2-0.md">Release: v1.2.0 — Redis Caching and L1/L2 Cache Strategy</a></td>
+                    <td>release, v1.2.0, redis, caching, aspire, sprint-5</td>
+                </tr>
+                <tr>
+                    <td>2026-04-24</td>
+                    <td><a href="blog/2026-04-24-release-v1-1-0.md">Release: v1.1.0 — Blazor Theme System with TailwindCSS v4</a></td>
+                    <td>release, v1.1.0, blazor, tailwind, theme, testing, sprint-4</td>
                 </tr>
                 <tr>
                     <td>2026-04-20</td>
-                    <td><a href="blog/2026-04-20-release-v1-0-0.md">Release v1.0.0 — Semantic Versioning Transition</a></td>
-                    <td>release, v1.0.0, semver, ci</td>
+                    <td><a href="blog/2026-04-20-release-v1-0-0.md">Release: v1.0.0 — Semantic Versioning and Production Readiness</a></td>
+                    <td>release, semver, ci, devops</td>
                 </tr>
                 <tr>
                     <td>2026-04-20</td>
-                    <td><a href="blog/2026-04-20-sprint-3-e2e-tests-ci-hardening.md">Sprint 3 — E2E Testing &amp; CI Hardening</a></td>
-                    <td>e2e, aspire, ci, testing</td>
+                    <td><a href="blog/2026-04-20-sprint-3-e2e-tests-ci-hardening.md">Sprint 3: E2E Testing and CI Hardening</a></td>
+                    <td>e2e, aspire, ci, testing, sprint-3</td>
                 </tr>
                 <tr>
                     <td>2026-04-20</td>
-                    <td><a href="blog/2026-04-20-sprint-2-cqrs-mediatr.md">Sprint 2 — CQRS &amp; MediatR Domain Layer</a></td>
-                    <td>cqrs, mediatr, domain, testing</td>
-                </tr>
-                <tr>
-                    <td>2026-04-18</td>
-                    <td><a href="blog/2026-04-18-myblog-project-kickoff.md">MyBlog Project Kickoff — Sprint 1</a></td>
-                    <td>aspire, blazor, clean-architecture</td>
+                    <td><a href="blog/2026-04-20-sprint-2-cqrs-mediatr.md">Sprint 2: CQRS and MediatR Deep Dive</a></td>
+                    <td>cqrs, mediatr, testing, domain, sprint-2</td>
                 </tr>
             </tbody>
         </table>
         <!-- BLOG_END -->
 
-        <p>View all posts → <a href="blog/index.md">docs/blog/index.md</a></p>
+        <p>View all posts → <a href="blog/">docs/blog/</a></p>
 
         <h2>License</h2>
 
@@ -526,7 +459,7 @@ dotnet user-secrets set "Auth0:ClientSecret" "your-client-secret"
 
         <hr>
 
-        <p><strong>Status</strong>: Training Project | <strong>Latest Release</strong>: <a href="https://github.com/mpaulosky/MyBlog/releases/tag/v1.2.0">v1.2.0</a> | <strong>Maintained By</strong>: @mpaulosky</p>
+        <p><strong>Status</strong>: Training Project | <strong>.NET 10</strong> | <strong>v1.5.2</strong> | <strong>Maintained by</strong>: @mpaulosky</p>
     </div>
 </body>
 </html>

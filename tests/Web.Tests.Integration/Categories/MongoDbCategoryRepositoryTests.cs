@@ -82,7 +82,7 @@ public sealed class MongoDbCategoryRepositoryTests(MongoDbFixture fixture)
 		var repo = CreateRepo();
 
 		// Act
-		var result = await repo.GetByIdAsync(Guid.NewGuid(), ct);
+		var result = await repo.GetByIdAsync(ObjectId.GenerateNewId(), ct);
 
 		// Assert
 		result.Should().BeNull();
@@ -106,6 +106,22 @@ public sealed class MongoDbCategoryRepositoryTests(MongoDbFixture fixture)
 		result.Description.Should().Be("Design and UX posts.");
 	}
 
+	[Fact]
+	public async Task GetByIdAsync_ReturnsNullForDifferentObjectIdWhenRepositoryContainsCategories()
+	{
+		// Arrange
+		var ct = TestContext.Current.CancellationToken;
+		var repo = CreateRepo();
+		var category = Category.Create("Design", "Design and UX posts.");
+		await repo.AddAsync(category, ct);
+
+		// Act
+		var result = await repo.GetByIdAsync(ObjectId.GenerateNewId(), ct);
+
+		// Assert
+		result.Should().BeNull();
+	}
+
 	// ── UpdateAsync ───────────────────────────────────────────────────────
 
 	[Fact]
@@ -125,6 +141,32 @@ public sealed class MongoDbCategoryRepositoryTests(MongoDbFixture fixture)
 		var result = await repo.GetByIdAsync(category.Id, ct);
 		result!.Name.Should().Be("New Name");
 		result.Description.Should().Be("New description.");
+	}
+
+	[Fact]
+	public async Task UpdateAsync_OnlyChangesCategoryMatchingObjectId()
+	{
+		// Arrange
+		var ct = TestContext.Current.CancellationToken;
+		var repo = CreateRepo();
+		var updatedCategory = Category.Create("Technology", "Tech posts.");
+		var untouchedCategory = Category.Create("Design", "Design posts.");
+		await repo.AddAsync(updatedCategory, ct);
+		await repo.AddAsync(untouchedCategory, ct);
+		updatedCategory.Update("Technology Updated", "Updated tech posts.");
+
+		// Act
+		await repo.UpdateAsync(updatedCategory, ct);
+
+		// Assert
+		var reloadedUpdatedCategory = await repo.GetByIdAsync(updatedCategory.Id, ct);
+		var reloadedUntouchedCategory = await repo.GetByIdAsync(untouchedCategory.Id, ct);
+		reloadedUpdatedCategory.Should().NotBeNull();
+		reloadedUpdatedCategory!.Name.Should().Be("Technology Updated");
+		reloadedUpdatedCategory.Description.Should().Be("Updated tech posts.");
+		reloadedUntouchedCategory.Should().NotBeNull();
+		reloadedUntouchedCategory!.Name.Should().Be("Design");
+		reloadedUntouchedCategory.Description.Should().Be("Design posts.");
 	}
 
 	// ── DeleteAsync ───────────────────────────────────────────────────────
@@ -147,6 +189,29 @@ public sealed class MongoDbCategoryRepositoryTests(MongoDbFixture fixture)
 	}
 
 	[Fact]
+	public async Task DeleteAsync_RemovesOnlyCategoryMatchingObjectId()
+	{
+		// Arrange
+		var ct = TestContext.Current.CancellationToken;
+		var repo = CreateRepo();
+		var removedCategory = Category.Create("ToDelete", "Will be removed.");
+		var keptCategory = Category.Create("ToKeep", "Will stay.");
+		await repo.AddAsync(removedCategory, ct);
+		await repo.AddAsync(keptCategory, ct);
+
+		// Act
+		await repo.DeleteAsync(removedCategory.Id, ct);
+
+		// Assert
+		var removedResult = await repo.GetByIdAsync(removedCategory.Id, ct);
+		var keptResult = await repo.GetByIdAsync(keptCategory.Id, ct);
+		removedResult.Should().BeNull();
+		keptResult.Should().NotBeNull();
+		keptResult!.Id.Should().Be(keptCategory.Id);
+		keptResult.Name.Should().Be("ToKeep");
+	}
+
+	[Fact]
 	public async Task DeleteAsync_DoesNothingWhenCategoryNotFound()
 	{
 		// Arrange
@@ -154,7 +219,7 @@ public sealed class MongoDbCategoryRepositoryTests(MongoDbFixture fixture)
 		var repo = CreateRepo();
 
 		// Act
-		var act = async () => await repo.DeleteAsync(Guid.NewGuid(), ct);
+		var act = async () => await repo.DeleteAsync(ObjectId.GenerateNewId(), ct);
 
 		// Assert
 		await act.Should().NotThrowAsync();

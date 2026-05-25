@@ -25,7 +25,7 @@ public class GetCategoryByIdHandlerTests
 	}
 
 	[Fact]
-	public async Task Handle_CategoryExists_ReturnsMappedDto()
+	public async Task Handle_CategoryExists_ReturnsDtoWithOriginalObjectId()
 	{
 		// Arrange
 		var category = Category.Create("Technology", "Tech posts.");
@@ -38,16 +38,19 @@ public class GetCategoryByIdHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		result.Value.Should().NotBeNull();
-		result.Value!.Name.Should().Be("Technology");
-		result.Value.Description.Should().Be("Tech posts.");
-		result.Value.Id.Should().Be(category.Id);
+		result.Value.Should().BeEquivalentTo(new
+		{
+			Id = category.Id,
+			Name = "Technology",
+			Description = "Tech posts.",
+		});
 	}
 
 	[Fact]
 	public async Task Handle_CategoryNotFound_ReturnsSuccessWithNullValue()
 	{
 		// Arrange
-		var missingId = Guid.NewGuid();
+		var missingId = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(missingId, Arg.Any<CancellationToken>())
 			.Returns((Category?)null);
 
@@ -63,7 +66,7 @@ public class GetCategoryByIdHandlerTests
 	public async Task Handle_RepoThrowsInvalidOperation_ReturnsFailResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new InvalidOperationException("db error"));
 
@@ -79,7 +82,7 @@ public class GetCategoryByIdHandlerTests
 	public async Task Handle_UnexpectedException_ReturnsGenericError()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new TimeoutException("timeout"));
 
@@ -95,7 +98,7 @@ public class GetCategoryByIdHandlerTests
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new OperationCanceledException());
 

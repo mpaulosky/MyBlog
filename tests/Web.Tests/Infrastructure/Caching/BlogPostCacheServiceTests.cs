@@ -26,12 +26,12 @@ public class BlogPostCacheServiceTests : IDisposable
 
 	public void Dispose() => _realLocalCache.Dispose();
 
-	private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
+	private static readonly JsonSerializerOptions JsonOpts = BlogPostCacheService.JsonOpts;
 
 	private static List<BlogPostDto> MakeDtos() =>
 	[
-		new(Guid.NewGuid(), "Title1", "Content1", string.Empty, "Author1", string.Empty, [], DateTime.UtcNow, null, false, null),
-		new(Guid.NewGuid(), "Title2", "Content2", string.Empty, "Author2", string.Empty, [], DateTime.UtcNow, null, true, null),
+		new(ObjectId.GenerateNewId(), "Title1", "Content1", string.Empty, "Author1", string.Empty, [], DateTime.UtcNow, null, false, ObjectId.GenerateNewId()),
+		new(ObjectId.GenerateNewId(), "Title2", "Content2", string.Empty, "Author2", string.Empty, [], DateTime.UtcNow, null, true, null),
 	];
 
 	// ── GetOrFetchAllAsync ────────────────────────────────────────────────
@@ -51,6 +51,7 @@ public class BlogPostCacheServiceTests : IDisposable
 
 		// Assert
 		result.Should().HaveCount(2);
+		result.Should().BeEquivalentTo(cachedList);
 		fetchCalled.Should().BeFalse();
 		await _distributedCache.DidNotReceive().GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
 	}
@@ -70,6 +71,8 @@ public class BlogPostCacheServiceTests : IDisposable
 
 		// Assert
 		result.Should().HaveCount(2);
+		result[0].Id.Should().Be(dtos[0].Id);
+		result[0].CategoryId.Should().Be(dtos[0].CategoryId);
 		_realLocalCache.TryGetValue(BlogPostCacheKeys.All, out List<BlogPostDto>? l1Val).Should().BeTrue();
 		l1Val.Should().HaveCount(2);
 	}
@@ -137,7 +140,7 @@ public class BlogPostCacheServiceTests : IDisposable
 	public async Task GetOrFetchByIdAsync_L1Hit_ReturnsCachedDtoWithoutDistributedCall()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var key = BlogPostCacheKeys.ById(id);
 		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		_realLocalCache.Set(key, dto);
@@ -155,7 +158,7 @@ public class BlogPostCacheServiceTests : IDisposable
 	public async Task GetOrFetchByIdAsync_L2Hit_DeserializesAndPopulatesL1()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var key = BlogPostCacheKeys.ById(id);
 		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		var bytes = JsonSerializer.SerializeToUtf8Bytes(dto, JsonOpts);
@@ -176,7 +179,7 @@ public class BlogPostCacheServiceTests : IDisposable
 	public async Task GetOrFetchByIdAsync_L2JsonCorrupt_RemovesAndFallsThroughToFetch()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var key = BlogPostCacheKeys.ById(id);
 		var corruptBytes = "{ not valid json !!!"u8.ToArray();
 		_distributedCache.GetAsync(key, Arg.Any<CancellationToken>())
@@ -204,7 +207,7 @@ public class BlogPostCacheServiceTests : IDisposable
 	public async Task GetOrFetchByIdAsync_FullMiss_FetchesAndPopulatesBothTiers()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var key = BlogPostCacheKeys.ById(id);
 		_distributedCache.GetAsync(key, Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult<byte[]?>(null));
@@ -229,7 +232,7 @@ public class BlogPostCacheServiceTests : IDisposable
 	public async Task GetOrFetchByIdAsync_FetchReturnsNull_ReturnsNull()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var key = BlogPostCacheKeys.ById(id);
 		_distributedCache.GetAsync(key, Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult<byte[]?>(null));
@@ -268,7 +271,7 @@ public class BlogPostCacheServiceTests : IDisposable
 	public async Task InvalidateByIdAsync_RemovesByKeyFromBothTiers()
 	{
 		// Arrange — populate L1 so we can verify removal
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		var key = BlogPostCacheKeys.ById(id);
 		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		_realLocalCache.Set(key, dto);

@@ -19,7 +19,7 @@ public class DeleteCategoryCommandValidatorTests
 	public void Validate_ValidId_ReturnsNoErrors()
 	{
 		// Arrange
-		var command = new DeleteCategoryCommand(Guid.NewGuid());
+		var command = new DeleteCategoryCommand(ObjectId.GenerateNewId());
 
 		// Act
 		var result = _validator.Validate(command);
@@ -29,10 +29,10 @@ public class DeleteCategoryCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsIdError()
+	public void Validate_EmptyObjectId_ReturnsIdError()
 	{
 		// Arrange
-		var command = new DeleteCategoryCommand(Guid.Empty);
+		var command = new DeleteCategoryCommand(ObjectId.Empty);
 
 		// Act
 		var result = _validator.Validate(command);
@@ -43,10 +43,10 @@ public class DeleteCategoryCommandValidatorTests
 	}
 
 	[Fact]
-	public void Validate_EmptyGuid_ReturnsRequiredMessage()
+	public void Validate_EmptyObjectId_ReturnsRequiredMessage()
 	{
 		// Arrange
-		var command = new DeleteCategoryCommand(Guid.Empty);
+		var command = new DeleteCategoryCommand(ObjectId.Empty);
 
 		// Act
 		var result = _validator.Validate(command);

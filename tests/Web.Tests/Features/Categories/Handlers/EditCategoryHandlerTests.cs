@@ -47,7 +47,7 @@ public class EditCategoryHandlerTests
 	public async Task Handle_CategoryNotFound_ReturnsNotFoundFailResult()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.Returns((Category?)null);
 
@@ -108,7 +108,7 @@ public class EditCategoryHandlerTests
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		var id = Guid.NewGuid();
+		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>())
 			.ThrowsAsync(new OperationCanceledException());
 

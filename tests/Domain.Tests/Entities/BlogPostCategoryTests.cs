@@ -36,7 +36,7 @@ public class BlogPostCategoryTests
 	{
 		// Arrange
 		var post = BlogPost.Create("Title", "Content", TestAuthor);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 
 		// Act
 		post.AssignCategory(categoryId);
@@ -50,7 +50,7 @@ public class BlogPostCategoryTests
 	{
 		// Arrange
 		var post = BlogPost.Create("Stable Title", "Stable Content", TestAuthor);
-		var categoryId = Guid.NewGuid();
+		var categoryId = ObjectId.GenerateNewId();
 
 		// Act
 		post.AssignCategory(categoryId);
@@ -66,8 +66,8 @@ public class BlogPostCategoryTests
 	{
 		// Arrange
 		var post = BlogPost.Create("Title", "Content", TestAuthor);
-		var firstCategoryId = Guid.NewGuid();
-		var secondCategoryId = Guid.NewGuid();
+		var firstCategoryId = ObjectId.GenerateNewId();
+		var secondCategoryId = ObjectId.GenerateNewId();
 
 		// Act
 		post.AssignCategory(firstCategoryId);
@@ -84,7 +84,7 @@ public class BlogPostCategoryTests
 	{
 		// Arrange
 		var post = BlogPost.Create("Title", "Content", TestAuthor);
-		post.AssignCategory(Guid.NewGuid());
+		post.AssignCategory(ObjectId.GenerateNewId());
 
 		// Act
 		post.RemoveCategory();

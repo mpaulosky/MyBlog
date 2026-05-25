@@ -57,7 +57,7 @@ public class RichTextEditorTests : BunitContext
 	{
 		// Arrange
 		var sender = Substitute.For<ISender>();
-		var postId = Guid.NewGuid();
+		var postId = ObjectId.GenerateNewId();
 		var post = new BlogPostDto(postId, "Test title", "<p>Test content</p>", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
 		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
@@ -71,7 +71,7 @@ public class RichTextEditorTests : BunitContext
 		{
 			parameters.AddCascadingValue(
 				Task.FromResult(new AuthenticationState(CreatePrincipal("Alice", ["Author"]))));
-			parameters.Add(p => p.Id, postId);
+			parameters.Add(p => p.Id, postId.ToString());
 		});
 
 		// Assert

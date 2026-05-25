@@ -20,12 +20,12 @@ internal sealed partial class CreateBlogPostHandler(
 IBlogPostRepository repo,
 IBlogPostCacheService cache,
 IHtmlSanitizer sanitizer,
-ILogger<CreateBlogPostHandler> logger) : IRequestHandler<CreateBlogPostCommand, Result<Guid>>
+ILogger<CreateBlogPostHandler> logger) : IRequestHandler<CreateBlogPostCommand, Result<ObjectId>>
 {
 	[LoggerMessage(Level = LogLevel.Warning, Message = "HTML sanitized on CreateBlogPost — unsafe markup was removed. Title: {Title}")]
 	private static partial void LogHtmlSanitized(ILogger logger, string title);
 
-	public async Task<Result<Guid>> Handle(CreateBlogPostCommand request, CancellationToken cancellationToken)
+	public async Task<Result<ObjectId>> Handle(CreateBlogPostCommand request, CancellationToken cancellationToken)
 	{
 		try
 		{
@@ -37,7 +37,7 @@ ILogger<CreateBlogPostHandler> logger) : IRequestHandler<CreateBlogPostCommand, 
 
 			if (string.IsNullOrWhiteSpace(sanitizedContent))
 			{
-				return Result.Fail<Guid>("Content is empty after sanitization. Please provide valid content.");
+				return Result.Fail<ObjectId>("Content is empty after sanitization. Please provide valid content.");
 			}
 
 			var post = BlogPost.Create(request.Title, sanitizedContent, request.Author);
@@ -53,7 +53,7 @@ ILogger<CreateBlogPostHandler> logger) : IRequestHandler<CreateBlogPostCommand, 
 
 			await repo.AddAsync(post, cancellationToken).ConfigureAwait(false);
 			await cache.InvalidateAllAsync(cancellationToken).ConfigureAwait(false);
-			return Result.Ok<Guid>(post.Id);
+			return Result.Ok<ObjectId>(post.Id);
 		}
 		catch (OperationCanceledException)
 		{
@@ -61,12 +61,12 @@ ILogger<CreateBlogPostHandler> logger) : IRequestHandler<CreateBlogPostCommand, 
 		}
 		catch (InvalidOperationException ex)
 		{
-			return Result.Fail<Guid>(ex.Message);
+			return Result.Fail<ObjectId>(ex.Message);
 		}
 #pragma warning disable CA1031 // Intentional: top-level handler converts unexpected failures to Result to keep UI stable
 		catch (Exception)
 		{
-			return Result.Fail<Guid>("An unexpected error occurred.");
+			return Result.Fail<ObjectId>("An unexpected error occurred.");
 		}
 #pragma warning restore CA1031
 	}

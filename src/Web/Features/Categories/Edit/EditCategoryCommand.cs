@@ -12,6 +12,6 @@ using MyBlog.Domain.Abstractions;
 namespace MyBlog.Web.Features.Categories.Edit;
 
 internal sealed record EditCategoryCommand(
-	Guid Id,
+	ObjectId Id,
 	string Name,
 	string Description) : IRequest<Result>;

@@ -109,16 +109,6 @@
 			?? user.FindFirst("email")?.Value
 			?? "no-email@example.com";
 		_authorRoles = RoleClaimsHelper.GetRoles(user);
-		
-		// If still empty, generate sensible defaults for Development mode
-		if (string.IsNullOrWhiteSpace(_authorId))
-		{
-			_authorId = $"auth0|dev-{Guid.NewGuid().ToString().Substring(0, 8)}";
-		}
-		if (string.IsNullOrWhiteSpace(_authorName))
-		{
-			_authorName = "Author";
-		}
 
 		var categoriesResult = await Sender.Send(new GetCategoriesQuery());
 		if (categoriesResult is { Success: true })
@@ -132,7 +122,13 @@
 
 	private async Task HandleSubmit()
 	{
-		if (_model.IsPublished && (_categoriesLoadFailed || _model.CategoryId is null))
+		if (!TryGetSelectedCategoryId(out var categoryId))
+		{
+			_error = "Please select a valid category.";
+			return;
+		}
+
+		if (_model.IsPublished && (_categoriesLoadFailed || categoryId is null))
 		{
 			_error = _categoriesLoadFailed
 				? "Categories failed to load. Cannot publish until categories are available."
@@ -141,11 +137,29 @@
 		}
 
 		var author = new PostAuthor(_authorId, _authorName, _authorEmail, _authorRoles);
-		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished, _model.CategoryId));
+		var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author, _model.IsPublished, categoryId));
 		if (result.Success)
 			Navigation.NavigateTo("/blog");
 		else
 			_error = result.Error;
+	}
+
+	private bool TryGetSelectedCategoryId(out ObjectId? categoryId)
+	{
+		if (string.IsNullOrWhiteSpace(_model.CategoryId))
+		{
+			categoryId = null;
+			return true;
+		}
+
+		if (ObjectId.TryParse(_model.CategoryId, out var parsedCategoryId))
+		{
+			categoryId = parsedCategoryId;
+			return true;
+		}
+
+		categoryId = null;
+		return false;
 	}
 
 	private sealed class PostFormModel
@@ -158,6 +172,6 @@
 
 		public bool IsPublished { get; set; }
 
-		public Guid? CategoryId { get; set; }
+		public string? CategoryId { get; set; }
 	}
 }
