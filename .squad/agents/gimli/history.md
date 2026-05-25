@@ -237,7 +237,41 @@ and conventions.
 ### Key Learnings
 
 1. **MyBlog's testing stack is mature and battle-tested:**
-   - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
+    - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
+## Session: PR #385 Re-review — Clear Category Fix (2026-05-24)
+
+### Task
+
+Re-review PR #385 after Sam's category-clear fix and determine whether the prior
+release rejection is resolved.
+
+### Findings
+
+- `Edit.razor` now normalizes the empty `<select>` state into `CategoryId: null`
+  plus `ClearCategory: true`, so the placeholder option no longer falls into the
+  earlier parse/retain-category regression path.
+- `EditBlogPostHandlerTests` now covers the handler-level clear-category path and
+  verifies the post is persisted with `CategoryId == null`.
+- `ObjectIdWorkflowTests` now covers the UI regression path end-to-end by clearing
+  the category dropdown and asserting the edit command carries
+  `CategoryId == null` and `ClearCategory == true`.
+
+### Validation
+
+- ✅ `dotnet test tests/Web.Tests/Web.Tests.csproj` — 225 passed
+- ✅ `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj` — 109 passed
+
+### Verdict
+
+**APPROVE WITH NOTES** — the prior clear-category rejection is resolved, and the
+regression is now adequately covered for release by both handler and bUnit tests.
+
+### Remaining Non-Blocking Gap
+
+- No direct domain-focused assertion proves `BlogPost.Update(..., clearCategory:
+  true)` keeps the edit to a single `Version++`. The current handler comment
+  explains the concurrency risk, but that invariant is not yet locked down by a
+  dedicated test.
    - Unit tests: 59 tests with 91.64% line coverage, all handlers + domain + components covered
    - Architecture tests: VSA + layer rules enforced
    - bUnit component tests: Clean auth mocking pattern with TestAuthorizationService
