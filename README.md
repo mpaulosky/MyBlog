@@ -27,25 +27,26 @@ MyBlog is a Blazor Server blog application demonstrating modern .NET patterns: A
 
 ## Features
 
-- **Blog Management**: Create, edit, delete, publish/unpublish blog posts
+- **Blog Management**: Create, edit, delete, publish/unpublish blog posts with category assignment
 - **CQRS with MediatR**: All blog operations handled by MediatR command/query handlers with FluentValidation pipeline
-- **Redis Caching**: L1 (in-memory) + L2 (Redis distributed) cache via `IBlogPostCacheService` abstraction
+- **Redis Caching**: L1 (in-memory) + L2 (Redis distributed) cache via `IBlogPostCacheService` abstraction for BlogPosts and UserManagement
+- **MongoDB ObjectId Migration**: Category IDs now use native MongoDB ObjectId instead of string GUIDs for optimal performance
 - **Auth0 Authentication**: Secure login with Authorization Code + PKCE flow; Role-Based Authorization (Admin/User policies)
 - **Blazor TailwindCSS Theming**: Dark/light/system modes, 4 color schemes (Blue, Red, Green, Yellow), localStorage persistence
 - **Aspire Orchestration**: MongoDB + Redis as Aspire resources with health checks and OpenTelemetry
 
 ## Technology Stack
 
-- **.NET 10** with **C# 14**
-- **.NET Aspire 13.2.3** — Service orchestration, MongoDB + Redis resources, health checks
+- **.NET 10** (SDK 10.0.300) with **C# 14**
+- **.NET Aspire 13.3.5** — Service orchestration, MongoDB + Redis resources, health checks, distributed caching
 - **Blazor Server (Interactive Server Rendering)** — Dynamic UI with TailwindCSS v4 theming
-- **MongoDB** with **MongoDB.EntityFrameworkCore** — Blog post persistence
+- **MongoDB** with **MongoDB.EntityFrameworkCore 10.0.1** — Blog post persistence with ObjectId migration
 - **Redis** — Distributed caching (L2 cache via `IDistributedCache`)
-- **MediatR** — CQRS pattern (Create/Update/Delete/GetAll/GetById handlers)
-- **FluentValidation** — Validation pipeline behavior
+- **MediatR 14.1.0** — CQRS pattern (Create/Update/Delete/GetAll/GetById handlers)
+- **FluentValidation 12.1.1** — Validation pipeline behavior
 - **Auth0** — Authentication + role-based authorization
-- **xUnit** + **FluentAssertions** + **NSubstitute** — Test framework
-- **bUnit** — Blazor component testing
+- **xUnit v3** + **FluentAssertions** + **NSubstitute** — Test framework
+- **bUnit 2.7.2** — Blazor component testing
 - **NetArchTest.Rules** — Architecture validation
 
 ## Project Structure
@@ -184,7 +185,9 @@ dotnet test
 
 | Version | Date | Highlights |
 | --------- | ------ | ------------ |
-| [v1.5.2](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.2) | 2026-05-23 | **Markdown Editor & Categories** — Blog post categories, markdown editing, ObjectId migration |
+| [v1.7.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.7.0) | 2026-06-06 | **MongoDB ObjectId Migration & Cache Hardening** — Category ObjectId migration, dual-cache UserManagement, Sprint 20 polish |
+| [v1.6.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.6.0) | 2026-05-23 | **Markdown Editor & Categories** — Blog post categories, markdown editing, ObjectId adoption |
+| [v1.5.2](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.2) | 2026-05-23 | **Bug fixes** — Category and markdown stability patches |
 | [v1.5.1](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.1) | 2026-05-08 | **MongoDB Dev Commands** — AppHost diagnostic commands, resource refinement |
 | [v1.5.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.0) | 2026-05-08 | **MongoDB Refactoring** — Resource abstractions, Aspire dev commands, infrastructure hardening |
 | [v1.4.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.4.0) | 2026-05-08 | **Board Automation** — GitHub project automation, test harness hardening, CI/CD improvements |
@@ -200,4 +203,4 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ---
 
-**Status**: Training Project | **.NET 10** | **v1.5.2** | **Maintained by**: @mpaulosky
+**Status**: Training Project | **.NET 10** | **v1.7.0** | **Maintained by**: @mpaulosky
