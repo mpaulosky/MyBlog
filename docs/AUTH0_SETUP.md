@@ -297,6 +297,30 @@ exports.onExecutePostLogin = async (event, api) => {
 
 ---
 
+### Login times out with `IDX20803` / `test.auth0.com` in Development
+
+**Cause**: Auth0 credentials are not configured locally, so the app falls back to the
+placeholder domain `test.auth0.com`. Clicking **Login** then triggers a real OpenID Connect
+discovery call against that non-existent domain, which hangs until timeout
+(`IDX20803: Unable to obtain configuration from … test.auth0.com`).
+
+**Fix**: This is the expected fallback path. When no credentials are configured in
+Development or Testing, `/Account/Login` redirects straight to `/test/login`
+(the cookie-based test login endpoint) instead of performing an OIDC challenge.
+No action is required — simply click Login and you will be signed in as `Test User`.
+
+To use real Auth0 login locally, set your user secrets:
+
+```bash
+dotnet user-secrets set "Auth0:Domain"        "your-tenant.us.auth0.com" --project src/Web
+dotnet user-secrets set "Auth0:ClientId"      "YOUR_CLIENT_ID"           --project src/Web
+dotnet user-secrets set "Auth0:ClientSecret"  "YOUR_CLIENT_SECRET"       --project src/Web
+```
+
+Once set, the app detects real credentials and routes `/Account/Login` to Auth0 Universal Login.
+
+---
+
 ### Application starts but login redirects to wrong port
 
 **Cause**: Running under the `http` profile instead of `https`.

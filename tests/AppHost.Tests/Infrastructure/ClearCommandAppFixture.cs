@@ -45,6 +45,9 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 		// Inject the Testing env var directly into the web resource annotation so DCP
 		// uses the correct value when launching the child process.
 		SetWebEnvironmentVariable(Builder, "ASPNETCORE_ENVIRONMENT", "Testing");
+		SetWebEnvironmentVariable(Builder, "Auth0__Domain", string.Empty);
+		SetWebEnvironmentVariable(Builder, "Auth0__ClientId", string.Empty);
+		SetWebEnvironmentVariable(Builder, "Auth0__ClientSecret", string.Empty);
 
 		App = await Builder.BuildAsync();
 		await App.StartAsync();
