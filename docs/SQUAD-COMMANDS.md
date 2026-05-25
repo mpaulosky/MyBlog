@@ -155,6 +155,9 @@ Review PR #{N}
 
 ```text
 Go to Actions → Squad Mark Released → Run workflow
+Provide either:
+- release_pr_number = merged release PR to main
+- tag_name = published release tag (for example v1.7.0)
 ```
 
 ---

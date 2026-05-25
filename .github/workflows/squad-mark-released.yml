@@ -3,7 +3,16 @@ name: Squad Mark Released
 on:
   release:
     types: [published, released]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      release_pr_number:
+        description: "Merged release PR number targeting main"
+        required: false
+        type: string
+      tag_name:
+        description: "Tag name to resolve to a merged release PR"
+        required: false
+        type: string
 
 # NOTE: The default GITHUB_TOKEN cannot access GitHub Projects V2 via GraphQL.
 # This workflow requires a repository secret named GH_PROJECT_TOKEN set to a
@@ -37,28 +46,91 @@ jobs:
           fi
           echo "✅ GH_PROJECT_TOKEN secret is present."
 
-      - name: Move Done → Released on project board
+      - name: Checkout repository for tag resolution
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move shipped Done items → Released on project board
         uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GH_PROJECT_TOKEN }}
           script: |
-            const PROJECT_ID        = process.env.PROJECT_ID;
-            const STATUS_FIELD_ID   = process.env.STATUS_FIELD_ID;
-            const DONE_OPTION_ID    = process.env.DONE_OPTION_ID;
+            const { execFileSync } = require('node:child_process');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const PROJECT_ID = process.env.PROJECT_ID;
+            const STATUS_FIELD_ID = process.env.STATUS_FIELD_ID;
+            const DONE_OPTION_ID = process.env.DONE_OPTION_ID;
             const RELEASED_OPTION_ID = process.env.RELEASED_OPTION_ID;
 
-            let cursor = null;
-            let moved  = 0;
+            const parseClosingIssueNumbers = text => {
+              const issueNumbers = new Set();
+              const pattern = new RegExp(
+                `(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\\s*:?\\s+(?:${owner}\\/${repo})?#(\\d+)`,
+                'gi'
+              );
 
-            do {
-              const result = await github.graphql(`
-                query($projectId: ID!, $cursor: String) {
-                  node(id: $projectId) {
-                    ... on ProjectV2 {
-                      items(first: 100, after: $cursor) {
-                        pageInfo { hasNextPage endCursor }
+              for (const match of (text ?? '').matchAll(pattern)) {
+                issueNumbers.add(Number.parseInt(match[1], 10));
+              }
+
+              return [...issueNumbers].sort((left, right) => left - right);
+            };
+
+            const isReleasePullRequest = pullRequest => {
+              const title = pullRequest.title ?? '';
+              const headRef = pullRequest.head?.ref ?? '';
+
+              return (
+                pullRequest.merged_at &&
+                pullRequest.base?.ref === 'main' &&
+                (
+                  /^\[RELEASE\]\b/i.test(title) ||
+                  /^release:/i.test(title) ||
+                  /promote dev\s*(?:→|->|to)\s*main/i.test(title) ||
+                  headRef === 'dev' ||
+                  headRef.startsWith('release/') ||
+                  headRef.startsWith('hotfix/')
+                )
+              );
+            };
+
+            const updateReleasedStatus = async itemId => {
+              await github.graphql(`
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $projectId
+                    itemId:    $itemId
+                    fieldId:   $fieldId
+                    value:     { singleSelectOptionId: $optionId }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `, {
+                projectId: PROJECT_ID,
+                itemId,
+                fieldId: STATUS_FIELD_ID,
+                optionId: RELEASED_OPTION_ID,
+              });
+            };
+
+            const getIssueProjectItem = async issueNumber => {
+              const { data: issue } = await github.rest.issues.get({
+                owner,
+                repo,
+                issue_number: issueNumber,
+              });
+
+              const projectQuery = await github.graphql(`
+                query($nodeId: ID!) {
+                  node(id: $nodeId) {
+                    ... on Issue {
+                      projectItems(first: 20) {
                         nodes {
                           id
+                          project { id }
                           fieldValues(first: 50) {
                             nodes {
                               ... on ProjectV2ItemFieldSingleSelectValue {
@@ -74,40 +146,205 @@ jobs:
                     }
                   }
                 }
-              `, { projectId: PROJECT_ID, cursor });
+              `, { nodeId: issue.node_id });
 
-              const items = result.node.items;
-              cursor = items.pageInfo.hasNextPage ? items.pageInfo.endCursor : null;
+              const projectItem = projectQuery.node?.projectItems?.nodes?.find(
+                item => item.project.id === PROJECT_ID
+              );
 
-              for (const item of items.nodes) {
-                // Match by field ID (not name) to avoid brittleness on renames
-                const isDone = item.fieldValues.nodes.some(
-                  fv => fv.field?.id === STATUS_FIELD_ID && fv.optionId === DONE_OPTION_ID
-                );
-                if (!isDone) continue;
+              const isDone = projectItem?.fieldValues?.nodes?.some(
+                fieldValue => fieldValue.field?.id === STATUS_FIELD_ID && fieldValue.optionId === DONE_OPTION_ID
+              ) ?? false;
 
-                await github.graphql(`
-                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-                    updateProjectV2ItemFieldValue(input: {
-                      projectId: $projectId
-                      itemId:    $itemId
-                      fieldId:   $fieldId
-                      value:     { singleSelectOptionId: $optionId }
-                    }) {
-                      projectV2Item { id }
-                    }
-                  }
-                `, {
-                  projectId: PROJECT_ID,
-                  itemId:    item.id,
-                  fieldId:   STATUS_FIELD_ID,
-                  optionId:  RELEASED_OPTION_ID,
+              return {
+                issue,
+                isDone,
+                projectItem,
+              };
+            };
+
+            const getReleaseCommits = async pullNumber => {
+              const commits = await github.paginate(github.rest.pulls.listCommits, {
+                owner,
+                repo,
+                pull_number: pullNumber,
+                per_page: 100,
+              });
+
+              return commits.map(commit => ({
+                sha: commit.sha,
+                message: commit.commit?.message ?? '',
+              }));
+            };
+
+            const getAssociatedPullRequests = async commitSha => {
+              const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner,
+                repo,
+                commit_sha: commitSha,
+              });
+
+              return response.data ?? [];
+            };
+
+            const getPreviousReleasePullRequest = async currentPullRequest => {
+              const closedPullRequests = await github.paginate(github.rest.pulls.list, {
+                owner,
+                repo,
+                state: 'closed',
+                base: 'main',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              const previousRelease = closedPullRequests
+                .filter(candidate =>
+                  candidate.number !== currentPullRequest.number &&
+                  candidate.merged_at &&
+                  candidate.merged_at < currentPullRequest.merged_at &&
+                  isReleasePullRequest(candidate)
+                )
+                .sort((left, right) => right.merged_at.localeCompare(left.merged_at))[0];
+
+              return previousRelease ?? null;
+            };
+
+            // Compare the current release PR commit set to the previous release PR commit
+            // set so only newly shipped commits contribute Released board transitions.
+            const getShippedReleaseCommits = async currentPullRequest => {
+              const currentReleaseCommits = await getReleaseCommits(currentPullRequest.number);
+              const previousReleasePullRequest = await getPreviousReleasePullRequest(currentPullRequest);
+
+              if (!previousReleasePullRequest) {
+                return currentReleaseCommits;
+              }
+
+              const previousReleaseCommits = await getReleaseCommits(previousReleasePullRequest.number);
+              const previousReleaseCommitShas = new Set(previousReleaseCommits.map(commit => commit.sha));
+
+              return currentReleaseCommits.filter(commit => !previousReleaseCommitShas.has(commit.sha));
+            };
+
+            const resolveReleasePullRequest = async () => {
+              const manualPullNumber = context.payload.inputs?.release_pr_number?.trim();
+              const manualTagName = context.payload.inputs?.tag_name?.trim();
+              const releaseTagName = manualTagName || context.payload.release?.tag_name;
+
+              if (manualPullNumber) {
+                const pullNumber = Number.parseInt(manualPullNumber, 10);
+
+                if (!Number.isInteger(pullNumber)) {
+                  core.setFailed(`Invalid release_pr_number: ${manualPullNumber}`);
+                  return null;
+                }
+
+                const { data: pullRequest } = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: pullNumber,
                 });
 
-                moved++;
-                core.info(`✅ Item ${item.id} → Released`);
+                return { pullRequest, selectionLabel: `PR #${pullRequest.number}` };
               }
-            } while (cursor);
 
-            const tagName = context.payload.release?.tag_name ?? 'manual dispatch';
-            core.notice(`🎉 Moved ${moved} item(s) from Done → Released for ${tagName}`);
+              if (!releaseTagName) {
+                core.setFailed('Manual dispatch requires release_pr_number or tag_name.');
+                return null;
+              }
+
+              let tagCommitSha;
+
+              try {
+                tagCommitSha = execFileSync('git', ['rev-list', '-n', '1', releaseTagName], {
+                  encoding: 'utf8',
+                }).trim();
+              } catch (error) {
+                core.setFailed(`Could not resolve tag ${releaseTagName}: ${error.message}`);
+                return null;
+              }
+
+              const associatedPullRequests = await getAssociatedPullRequests(tagCommitSha);
+              const releasePullRequest = associatedPullRequests.find(isReleasePullRequest);
+
+              if (!releasePullRequest) {
+                core.setFailed(`Could not find a merged release PR targeting main for tag ${releaseTagName}.`);
+                return null;
+              }
+
+              return { pullRequest: releasePullRequest, selectionLabel: releaseTagName };
+            };
+
+            const resolvedRelease = await resolveReleasePullRequest();
+
+            if (!resolvedRelease) {
+              return;
+            }
+
+            const { pullRequest, selectionLabel } = resolvedRelease;
+
+            if (!isReleasePullRequest(pullRequest)) {
+              core.setFailed(`PR #${pullRequest.number} is not a merged MyBlog release PR to main.`);
+              return;
+            }
+
+            const releaseCommits = await getShippedReleaseCommits(pullRequest);
+            const relatedPullRequests = new Map();
+            const issueNumbers = new Set();
+
+            for (const { sha, message } of releaseCommits) {
+              const associatedPullRequests = await getAssociatedPullRequests(sha);
+
+              for (const associatedPullRequest of associatedPullRequests) {
+                if (
+                  !associatedPullRequest.merged_at ||
+                  associatedPullRequest.number === pullRequest.number ||
+                  isReleasePullRequest(associatedPullRequest)
+                ) {
+                  continue;
+                }
+
+                relatedPullRequests.set(associatedPullRequest.number, associatedPullRequest);
+              }
+
+              for (const issueNumber of parseClosingIssueNumbers(message)) {
+                issueNumbers.add(issueNumber);
+              }
+            }
+
+            for (const relatedPullRequest of relatedPullRequests.values()) {
+              for (const issueNumber of parseClosingIssueNumbers(relatedPullRequest.body)) {
+                issueNumbers.add(issueNumber);
+              }
+            }
+
+            if (issueNumbers.size === 0) {
+              core.notice(`${selectionLabel}: no shipped issues were identified`);
+              return;
+            }
+
+            let moved = 0;
+
+            for (const issueNumber of [...issueNumbers].sort((left, right) => left - right)) {
+              try {
+                const { issue, isDone, projectItem } = await getIssueProjectItem(issueNumber);
+
+                if (!projectItem) {
+                  core.info(`Skipping issue #${issueNumber}: not on the MyBlog project board`);
+                  continue;
+                }
+
+                if (!isDone) {
+                  core.info(`Skipping issue #${issueNumber}: current project status is not Done`);
+                  continue;
+                }
+
+                await updateReleasedStatus(projectItem.id);
+                moved++;
+                core.info(`✅ Issue #${issue.number} → Released`);
+              } catch (error) {
+                core.warning(`Could not evaluate issue #${issueNumber}: ${error.message}`);
+              }
+            }
+
+            core.notice(`🎉 ${selectionLabel}: moved ${moved} shipped item(s) from Done → Released`);
