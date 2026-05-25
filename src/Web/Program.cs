@@ -187,7 +187,7 @@ app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 	// straight to the test login endpoint instead.
 	if (isPlaceholderAuth0Config)
 	{
-		ctx.Response.Redirect("/test/login");
+		ctx.Response.Redirect($"/test/login?returnUrl={Uri.EscapeDataString(safeReturn)}");
 		return;
 	}
 
@@ -219,9 +219,13 @@ app.MapDefaultEndpoints();
 app.Run();
 
 [ExcludeFromCodeCoverage(Justification = "Test-only endpoint for E2E testing")]
-static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
+static async Task MapTestLoginEndpoint(HttpContext ctx, string? role, string? returnUrl)
 {
 	var roleValue = string.IsNullOrWhiteSpace(role) ? "user" : role;
+	var safeReturn = !string.IsNullOrEmpty(returnUrl)
+			&& Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+			? returnUrl
+			: "/";
 
 	// Create claims for the test user
 	var claims = new List<Claim>
@@ -241,7 +245,7 @@ static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
 		IsPersistent = true,
 	}).ConfigureAwait(false);
 
-	ctx.Response.Redirect("/");
+	ctx.Response.Redirect(safeReturn);
 }
 
 // Exclude the compiler-generated Program class (top-level bootstrap statements) from coverage.
