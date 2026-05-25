@@ -237,7 +237,9 @@ and conventions.
 ### Key Learnings
 
 1. **MyBlog's testing stack is mature and battle-tested:**
-    - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
+
+   - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
+
 ## Session: PR #385 Re-review — Clear Category Fix (2026-05-24)
 
 ### Task
@@ -272,29 +274,39 @@ regression is now adequately covered for release by both handler and bUnit tests
   true)` keeps the edit to a single `Version++`. The current handler comment
   explains the concurrency risk, but that invariant is not yet locked down by a
   dedicated test.
-   - Unit tests: 59 tests with 91.64% line coverage, all handlers + domain + components covered
-   - Architecture tests: VSA + layer rules enforced
-   - bUnit component tests: Clean auth mocking pattern with TestAuthorizationService
 
-2. **Patterns extraction requires grounding in real code:**
+### Additional Test Coverage Context
+
+- Unit tests: 59 tests with 91.64% line coverage, all handlers + domain +
+  components covered
+- Architecture tests: VSA + layer rules enforced
+- bUnit component tests: Clean auth mocking pattern with
+  TestAuthorizationService
+
+1. **Patterns extraction requires grounding in real code:**
+
    - Cannot document intent without seeing actual implementations
    - Real examples > abstract rules (code > explanation)
    - Test classes show the patterns better than generic guidance
 
-3. **Three distinct testing domains with different conventions:**
+2. **Three distinct testing domains with different conventions:**
+
    - **Integration**: Fixture + collection + per-test isolation
    - **Unit**: AAA + mocking + assertions, split by entity/handler/component
    - **Component**: bUnit with auth context + claim assertions
 
-4. **File headers are critical for team consistency:**
+3. **File headers are critical for team consistency:**
+
    - Every test file MUST have the 7-line block (charter rule #6)
    - This was flagged in PR #2 review — ALL test files were missing headers
    - Now documented explicitly in unit-test-conventions skill
 
-5. **No new skills created for existing patterns:**
+4. **No new skills created for existing patterns:**
+
    - testcontainers and webapp-testing were already good patterns
    - Refinement (not creation) is the right approach for 70–80% patterns
-   - Only created unit-test-conventions because it was extractable from 4+ test files and not documented
+   - Only created unit-test-conventions because it was extractable from 4+
+     test files and not documented
 
 ### Outcomes
 
@@ -1478,10 +1490,48 @@ Audit Sprint 20 for leftover Guid ID usage in domain/persistence/CQRS paths, har
 3. **Non-CQRS residual Guid usage remains in UI fallback code:** `src/Web/Features/BlogPosts/Create/Create.razor` still generates a dev-only author id with `Guid.NewGuid()`. This is outside the audited domain/persistence/CQRS layers, but it is still a leftover Guid-based code path.
 4. **Branch health blocker unrelated to my test changes:** local non-CI builds still try to run `npm install` from `src/Web/Web.csproj`; this environment has no `node`/`npm`, so raw non-`CI=true` builds fail before test execution.
 5. **Quality gate blocker still open:** `CI=true dotnet build MyBlog.slnx` passes, but the solution does **not** meet issue #363's `no warnings` acceptance bar because existing analyzer warnings remain across Architecture/Web/AppHost test projects.
-6. **Exploratory production bug observed:** editing a blog post while sending a category value still triggers a real concurrency failure because the entity version increments in multiple places before persistence. I did not codify that as a failing test because the charter for this round forbids fixing production code; Sam should investigate `BlogPost.AssignCategory` + `EditBlogPostHandler`/repository version handling.
+6. **Exploratory production bug observed:** editing a blog post while sending a
+   category value still triggers a real concurrency failure because the entity
+   version increments in multiple places before persistence. I did not codify
+   that as a failing test because the charter for this round forbids fixing
+   production code; Sam should investigate `BlogPost.AssignCategory` +
+   `EditBlogPostHandler`/repository version handling.
 
 ### Learnings
 
 1. The ObjectId migration broke bUnit fastest at DTO construction sites; UI tests needed contract updates before meaningful hardening work could continue.
 2. The right end-to-end proof for this branch is mixed: bUnit for stringify-at-edge, Mongo integration tests for CQRS/repository roundtrips, and AppHost tests for seed/runtime behavior.
 3. For Sprint 20, deterministic seed coverage should check both the primary seeded category ID and the foreign keys on seeded posts; primary document IDs still need product work.
+
+## 2026-05-25 — Issue #396 Login Fallback Test Coverage
+
+### Task
+
+Add the missing automated coverage for PR #397 so placeholder Auth0
+configuration in Testing redirects `/Account/Login` to the local
+`/test/login` endpoint instead of attempting an external OIDC challenge.
+
+### Work Done
+
+- Added `tests/AppHost.Tests/Tests/Auth/LoginFallbackTests.cs` to request
+  `/Account/Login` with redirects disabled and assert the runtime response stays
+  local.
+- Added `tests/Architecture.Tests/AuthFallbackContractTests.cs` to pin the
+  source contract that the placeholder-config short-circuit appears before
+  `ChallengeAsync` while preserving the real Auth0 challenge path.
+
+### Validation
+
+- `dotnet build MyBlog.slnx --configuration Release` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release` ✅
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+
+### Learnings
+
+1. The highest-value proof here is split across layers: AppHost verifies the
+   observable redirect, while the architecture contract guards the source-order
+   short-circuit that prevents accidental regression back to external OIDC.
+2. For auth fallback behavior, disabling redirects in the runtime test is the
+   simplest way to prove the app never leaves the local test harness.
