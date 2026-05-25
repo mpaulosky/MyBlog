@@ -46,7 +46,11 @@ builder.Services.AddRazorComponents()
 var auth0Domain = builder.Configuration["Auth0:Domain"];
 var auth0ClientId = builder.Configuration["Auth0:ClientId"];
 
-// In Development/Testing, provide mock values; in Production, require real credentials
+// In Development/Testing, provide mock values; in Production, require real credentials.
+// isPlaceholderAuth0Config stays false when real credentials ARE configured in Dev/Testing,
+// preserving the live Auth0 flow for developers who have set up their user secrets.
+var isPlaceholderAuth0Config = false;
+
 if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("Testing"))
 {
 	if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
@@ -60,9 +64,11 @@ if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("
 }
 else if (string.IsNullOrWhiteSpace(auth0Domain) || string.IsNullOrWhiteSpace(auth0ClientId))
 {
-	// Development/Testing: Use test/mock values if not configured
+	// Development/Testing without real Auth0 credentials: use placeholder values and flag
+	// so /Account/Login bypasses the OIDC discovery call (which would timeout against test.auth0.com).
 	auth0Domain = "test.auth0.com";
 	auth0ClientId = "test-client-id";
+	isPlaceholderAuth0Config = true;
 }
 
 var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
@@ -83,7 +89,10 @@ builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.Authenticati
 	var existingOnTokenValidated = options.Events.OnTokenValidated;
 	options.Events.OnTokenValidated = async context =>
 	{
-		await existingOnTokenValidated(context).ConfigureAwait(false);
+		if (existingOnTokenValidated != null)
+		{
+			await existingOnTokenValidated(context).ConfigureAwait(false);
+		}
 
 		if (context.Principal?.Identity is not ClaimsIdentity identity)
 		{
@@ -172,6 +181,16 @@ app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 			&& Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
 			? returnUrl
 			: "/";
+
+	// In Development/Testing with no real Auth0 credentials configured, bypass the OIDC
+	// discovery call — which would time out against the placeholder domain — and redirect
+	// straight to the test login endpoint instead.
+	if (isPlaceholderAuth0Config)
+	{
+		ctx.Response.Redirect("/test/login");
+		return;
+	}
+
 	var props = new LoginAuthenticationPropertiesBuilder()
 			.WithRedirectUri(safeReturn)
 			.Build();
