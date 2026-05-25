@@ -19,7 +19,9 @@ public sealed class AuthFallbackContractTests
 		// Arrange
 		var loginHandlerSource = ExtractLoginHandler(ReadRepoFile("src/Web/Program.cs"));
 		var placeholderGuardIndex = loginHandlerSource.IndexOf("if (isPlaceholderAuth0Config)", StringComparison.Ordinal);
-		var localRedirectIndex = loginHandlerSource.IndexOf("ctx.Response.Redirect(\"/test/login\")", StringComparison.Ordinal);
+		var localRedirectIndex = loginHandlerSource.IndexOf(
+			"ctx.Response.Redirect($\"/test/login?returnUrl={Uri.EscapeDataString(safeReturn)}\")",
+			StringComparison.Ordinal);
 		var challengeIndex = loginHandlerSource.IndexOf(
 			"await ctx.ChallengeAsync(Auth0Constants.AuthenticationScheme, props).ConfigureAwait(false);",
 			StringComparison.Ordinal);
