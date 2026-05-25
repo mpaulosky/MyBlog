@@ -44,7 +44,7 @@ public sealed class BlogPost
 		};
 	}
 
-	public void Update(string title, string content, ObjectId? categoryId = null)
+	public void Update(string title, string content, ObjectId? categoryId = null, bool clearCategory = false)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(title);
 		ArgumentException.ThrowIfNullOrWhiteSpace(content);
@@ -52,7 +52,13 @@ public sealed class BlogPost
 		Content = content;
 		UpdatedAt = DateTime.UtcNow;
 		if (categoryId.HasValue)
+		{
 			CategoryId = categoryId.Value;
+		}
+		else if (clearCategory)
+		{
+			CategoryId = null;
+		}
 		Version++;
 	}
 

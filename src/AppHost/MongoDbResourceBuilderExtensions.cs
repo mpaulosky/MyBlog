@@ -259,7 +259,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 
 				// Canonical category IDs referenced by seed blog posts.
 				var aspNetCoreId = new ObjectId("677db927900ea4af1b500cab");
-				var otherId      = new ObjectId("677db9bd900ea4af1b500cb1");
+				var otherId = new ObjectId("677db9bd900ea4af1b500cb1");
 
 				var authorId = "auth0|author-matthew-paulosky";
 				var authorDocument = new BsonDocument

@@ -183,7 +183,8 @@ else if (_model is not null)
     private async Task HandleSubmit()
     {
         if (_model is null) return;
-        if (_model.IsPublished && _model.CategoryId is null)
+        var hasCategorySelection = !string.IsNullOrWhiteSpace(_model.CategoryId);
+        if (_model.IsPublished && !hasCategorySelection)
         {
             _error = _categoriesLoadFailed
                 ? "Categories failed to load. Cannot publish until categories are available."
@@ -198,7 +199,8 @@ else if (_model is not null)
             _callerUserId,
             _callerIsAdmin,
             _model.IsPublished,
-            _model.CategoryId is not null ? ObjectId.Parse(_model.CategoryId) : null));
+            hasCategorySelection ? ObjectId.Parse(_model.CategoryId!) : null,
+            ClearCategory: !hasCategorySelection));
         if (result.Success)
             Navigation.NavigateTo("/blog");
         else

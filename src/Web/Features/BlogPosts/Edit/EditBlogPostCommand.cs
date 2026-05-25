@@ -18,4 +18,5 @@ internal sealed record EditBlogPostCommand(
 	string CallerUserId,
 	bool CallerIsAdmin,
 	bool? IsPublished = null,
-	ObjectId? CategoryId = null) : IRequest<Result>;
+	ObjectId? CategoryId = null,
+	bool ClearCategory = false) : IRequest<Result>;
