@@ -168,6 +168,8 @@ dotnet test
 <!-- BLOG_START -->
 | Date | Title | Tags |
 | ------ | ------- | ------ |
+| 2026-05-24 | [Release: v1.7.0 — MongoDB ObjectId Migration & Cache Hardening](docs/blog/2026-05-24-release-v1-7-0.md) | release, v1.7.0, mongodb, caching, sprint-20 |
+| 2026-05-23 | [Release: v1.6.0 — Markdown Editor and Blog Post Categories](docs/blog/2026-05-23-release-v1-6-0.md) | release, v1.6.0, blazor, ui, categories, markdown, sprint-19 |
 | 2026-05-23 | [Release: v1.5.2 — Markdown Editor and Blog Post Categories](docs/blog/2026-05-23-release-v1-5-2.md) | release, v1.5.2, blazor, ui, categories, markdown, sprint-19 |
 | 2026-05-08 | [Release: v1.5.1 — AppHost MongoDB Dev Commands Refactor](docs/blog/2026-05-08-release-v1-5-1.md) | release, v1.5.1, aspire, mongodb, sprint-18 |
 | 2026-05-08 | [Release: v1.5.0 — MongoDB Resource Refactoring and Aspire Dev Commands](docs/blog/2026-05-08-release-v1-5-0.md) | release, v1.5.0, aspire, mongodb, devops, sprint-14-18 |
@@ -178,12 +180,17 @@ dotnet test
 | 2026-04-20 | [Release: v1.0.0 — Semantic Versioning and Production Readiness](docs/blog/2026-04-20-release-v1-0-0.md) | release, semver, ci, devops |
 | 2026-04-20 | [Sprint 3: E2E Testing and CI Hardening](docs/blog/2026-04-20-sprint-3-e2e-tests-ci-hardening.md) | e2e, aspire, ci, testing, sprint-3 |
 | 2026-04-20 | [Sprint 2: CQRS and MediatR Deep Dive](docs/blog/2026-04-20-sprint-2-cqrs-mediatr.md) | cqrs, mediatr, testing, domain, sprint-2 |
+| 2026-04-18 | [MyBlog Project Kickoff: Building with .NET 10 and Clean Architecture](docs/blog/2026-04-18-myblog-project-kickoff.md) | aspire, blazor, clean-architecture, sprint-1 |
 <!-- BLOG_END -->
+
+**📖 [View the complete development blog →](docs/blog/index.md)** for full post archives, sprint summaries, and release notes.
 
 ## Release History
 
 | Version | Date | Highlights |
 | --------- | ------ | ------------ |
+| [v1.7.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.7.0) | 2026-05-24 | **MongoDB ObjectId Migration & Cache Hardening** — Entity ID migration to ObjectId, dual-layer caching for user management |
+| [v1.6.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.6.0) | 2026-05-23 | **Markdown Editor & Blog Categories** — Rich-text markdown editor, canonical category system, UX improvements |
 | [v1.5.2](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.2) | 2026-05-23 | **Markdown Editor & Categories** — Blog post categories, markdown editing, ObjectId migration |
 | [v1.5.1](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.1) | 2026-05-08 | **MongoDB Dev Commands** — AppHost diagnostic commands, resource refinement |
 | [v1.5.0](https://github.com/mpaulosky/MyBlog/releases/tag/v1.5.0) | 2026-05-08 | **MongoDB Refactoring** — Resource abstractions, Aspire dev commands, infrastructure hardening |
@@ -200,4 +207,4 @@ Licensed under the MIT License. See [LICENSE](LICENSE) file for details.
 
 ---
 
-**Status**: Training Project | **.NET 10** | **v1.5.2** | **Maintained by**: @mpaulosky
+**Status**: Training Project | **.NET 10** | **v1.7.0** | **Maintained by**: @mpaulosky
