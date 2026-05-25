@@ -6,6 +6,8 @@ Welcome to the MyBlog technical blog! Here we document the project's evolution�
 
 | Date | Title | Tags |
 |------|-------|------|
+| 2026-05-24 | [Release: v1.7.0 — MongoDB ObjectId Migration & Cache Hardening](./2026-05-24-release-v1-7-0.md) | release, v1.7.0, mongodb, caching, sprint-20 |
+| 2026-05-23 | [Release: v1.6.0 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-6-0.md) | release, v1.6.0, blazor, ui, categories, markdown, sprint-19 |
 | 2026-05-23 | [Release: v1.5.2 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-5-2.md) | release, v1.5.2, blazor, ui, categories, markdown, sprint-19 |
 | 2026-05-08 | [Release: v1.5.1 — AppHost MongoDB Dev Commands Refactor](./2026-05-08-release-v1-5-1.md) | release, v1.5.1, aspire, mongodb, sprint-18 |
 | 2026-05-08 | [Release: v1.5.0 — MongoDB Resource Refactoring and Aspire Dev Commands](./2026-05-08-release-v1-5-0.md) | release, v1.5.0, aspire, mongodb, devops, sprint-14-18 |
@@ -55,12 +57,18 @@ Welcome to the MyBlog technical blog! Here we document the project's evolution�
 
 ### Sprint 19: Markdown Editor & Categories
 
-- [Release: v1.5.2 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-5-2.md)
+- [Release: v1.6.0 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-6-0.md)
+
+### Sprint 20: ObjectId & Cache Hardening
+
+- [Release: v1.7.0 — MongoDB ObjectId Migration & Cache Hardening](./2026-05-24-release-v1-7-0.md)
 
 ## Release Timeline
 
 | Release | Date | Focus |
 |---------|------|-------|
+| [v1.7.0](./2026-05-24-release-v1-7-0.md) | 2026-05-24 | MongoDB ObjectId Migration & Cache Hardening |
+| [v1.6.0](./2026-05-23-release-v1-6-0.md) | 2026-05-23 | Polish, Markdown Editor & Categories |
 | [v1.5.2](./2026-05-23-release-v1-5-2.md) | 2026-05-23 | Markdown editor, blog post categories, ObjectId migration |
 | [v1.5.1](./2026-05-08-release-v1-5-1.md) | 2026-05-08 | MongoDB dev commands refinement, diagnostic tooling |
 | [v1.5.0](./2026-05-08-release-v1-5-0.md) | 2026-05-08 | MongoDB resource refactoring, Aspire dev commands |
@@ -76,4 +84,4 @@ Written by **Bilbo**, the MyBlog Tech Blogger. Posts document architecture, feat
 
 ---
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
