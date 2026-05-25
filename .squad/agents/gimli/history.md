@@ -1535,3 +1535,46 @@ configuration in Testing redirects `/Account/Login` to the local
    short-circuit that prevents accidental regression back to external OIDC.
 2. For auth fallback behavior, disabling redirects in the runtime test is the
    simplest way to prove the app never leaves the local test harness.
+
+## 2026-05-25 — PR #397 Auth0 Login Test Isolation
+
+### Task
+
+Revise the AppHost coverage for issue #396 / PR #397 so the login fallback test
+stays deterministic in CI even when the runner exposes real Auth0 environment
+values.
+
+### Work Done
+
+- Reproduced the failure mode locally by running `LoginFallbackTests` with
+  ambient `Auth0__Domain`, `Auth0__ClientId`, and `Auth0__ClientSecret`
+  variables set.
+- Updated the shared AppHost Testing fixtures to clear those Auth0 values on the
+  spawned `web` resource, so the Testing host always exercises the placeholder
+  branch intentionally instead of inheriting parent-process secrets.
+- Renamed the fallback test to describe the controlled placeholder-config setup
+  rather than assuming the process has no Auth0 secrets at all.
+
+### Validation
+
+- `Auth0__Domain=ci-real.auth0.com Auth0__ClientId=ci-real-client Auth0__ClientSecret=ci-real-secret dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --filter 'FullyQualifiedName~LoginFallbackTests' --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet restore MyBlog.slnx` ✅
+- `dotnet format MyBlog.slnx --verify-no-changes` ✅
+- `dotnet build MyBlog.slnx --configuration Release --no-restore` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Domain.Tests/Domain.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Web.Tests/Web.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+
+### Learnings
+
+1. AppHost runtime tests cannot assume a clean parent environment in CI; if the
+   behavior under test depends on missing secrets, the fixture must override the
+   child resource explicitly.
+2. For this login split, the best safety net is layered: AppHost proves the
+   observable `/test/login` redirect under isolated placeholder config, while
+   the architecture contract preserves the real OIDC challenge branch when valid
+   Auth0 settings exist.

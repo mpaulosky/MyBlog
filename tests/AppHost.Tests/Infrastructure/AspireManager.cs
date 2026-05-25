@@ -60,6 +60,11 @@ public class AspireManager : IAsyncLifetime
 		// value is applied at subprocess launch time, after DCP finishes its own setup.
 		_logger.LogInformation("Injecting ASPNETCORE_ENVIRONMENT=Testing into web resource...");
 		SetWebEnvironmentVariable(builder, "ASPNETCORE_ENVIRONMENT", "Testing");
+		_logger.LogInformation(
+			"Clearing Auth0 environment variables inside the web resource so AppHost tests stay deterministic even when the parent process has real secrets configured.");
+		SetWebEnvironmentVariable(builder, "Auth0__Domain", string.Empty);
+		SetWebEnvironmentVariable(builder, "Auth0__ClientId", string.Empty);
+		SetWebEnvironmentVariable(builder, "Auth0__ClientSecret", string.Empty);
 
 		if (ShouldUseFixedWebPort())
 		{

@@ -17,7 +17,7 @@ namespace AppHost.Tests;
 public sealed class LoginFallbackTests(AspireManager aspireManager)
 {
 	[Fact]
-	public async Task AccountLogin_InTestingWithoutAuth0Secrets_RedirectsToLocalTestLogin()
+	public async Task AccountLogin_InTestingWithPlaceholderAuth0Config_RedirectsToLocalTestLogin()
 	{
 		// Arrange
 		var endpoint = aspireManager.App?.GetEndpoint("web", "https")
