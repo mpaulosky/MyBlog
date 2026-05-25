@@ -13,6 +13,17 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; RE
 
 echo -e "${CYAN}━━━ Pre-Push Gate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
+# ── Tag passthrough: allow version tags without branch gates ───────────────
+# git passes refspecs on stdin: "<local-ref> <local-sha1> <remote-ref> <remote-sha1>"
+# Save stdin and check if ALL refs being pushed are tags.
+PUSH_REFS=$(cat)
+if [[ -n "$PUSH_REFS" ]] && echo "$PUSH_REFS" | grep -q "^refs/tags/"; then
+  if ! echo "$PUSH_REFS" | grep -qv "^refs/tags/"; then
+    echo -e "${GREEN}✅  Tag push — skipping branch gates.${RESET}"
+    exit 0
+  fi
+fi
+
 # ── Gate 0: Enforce branch naming conventions ──────────────────────────────
 # Merge hierarchy: squad/{issue}-{slug} → sprint/{N}-{slug} → dev → main (release only)
 CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || echo "")"
