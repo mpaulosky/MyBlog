@@ -1712,6 +1712,34 @@ Changes shipped clean with zero test failures (Architecture.Tests: 16/16 passed)
 
 ---
 
+## 2026-05-25 — Issue #393: Released board promotion now follows shipped release commit deltas
+
+**Context:** Sprint 20 release board automation was moving unrelated Done items to Released after
+`main` releases because the workflows trusted broad Done-column state and release PR body refs.
+
+### What changed
+
+- Updated `.github/workflows/project-board-automation.yml` and
+  `.github/workflows/squad-mark-released.yml` to compare the current release PR's commit list to
+  the previous merged release PR's commit list.
+- The workflows now derive shipped issues from newly introduced commit messages plus associated
+  non-release PR bodies, then move only matching Done cards to Released.
+- Manual recovery docs in `docs/SQUAD-COMMANDS.md` now call out both supported inputs:
+  `release_pr_number` and `tag_name`.
+
+### Key Learnings
+
+- **Release PR bodies are not reliable shipment scope.** Recovery release PRs can close meta issues
+  like `#384`; those refs must not drive board promotion.
+- **Release commit deltas are more reliable than merge timestamps.** Subtracting the previous
+  release PR commit set from the current one correctly isolated Sprint 20's 13 newly shipped
+  commits and excluded already released history.
+- **`listPullRequestsAssociatedWithCommit` still needs release-PR filtering.** Merge-back or
+  recovery commits can resolve to old release PRs, so Released selection must ignore release-shaped
+  PRs and use only feature PRs plus commit-message issue refs.
+
+---
+
 ## 2026-07-08 — Issue #350 Round 2: AppHost.Tests Mongo/Aspire Startup Verification
 
 **Context:** Gimli's verification reported 3 remaining AppHost.Tests Mongo/Aspire startup failures after prior round (node_modules, aspire.config.json fixes). Tasked with reproducing and diagnosing.
