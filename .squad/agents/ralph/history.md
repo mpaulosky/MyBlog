@@ -158,6 +158,26 @@ Initial setup complete.
 - **#269** — `blog-readme-sync.yml` direct push to `main` blocked by branch protection; changed to `git push origin HEAD:dev` (PR #270, squash-merged)
 
 **Notes:**
+
 - Board clear at end of session. No open squad issues or PRs.
 - `GH_PROJECT_TOKEN` secret must be set manually in repo Settings → Secrets with a PAT scoped to `project` for squad-mark-released to work.
+
+### 2026-05-06 — Sprint 20 Board Update: Done → Released
+
+**Trigger:** Manual request to move Sprint 20 Done items to Released column after release shipped.
+
+**Outcome:**
+
+- Queried project board via GraphQL, found 6 Sprint 20 items in Done status
+- Updated each item to Released using `updateProjectV2ItemFieldValue` mutation
+- **Items moved:**
+  - #367: Remove the squad-heartbeat workflow
+  - #369: Enhance test coverage
+  - #370: Review the Squad's Charters and update
+  - #371: Our documentation is outdated and missing Blog and release information
+  - #374: Prevent Ralph from stranding work on dev or wrong issue branches
+  - #384: Recover release PR #383 after squash-merge ancestry drift
+- All items now show "Released" status on project board
+
+**Learning:** GraphQL query syntax for ProjectV2 items requires separate `fieldValues` traversal; cannot alias multiple `fieldValueByName` queries in single call due to field conflict. Used `jq` filtering to extract Status field across all items.
 
