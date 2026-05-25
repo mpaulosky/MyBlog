@@ -160,6 +160,16 @@ Provide either:
 - tag_name = published release tag (for example v1.7.0)
 ```
 
+> **How "shipped items" are determined:**
+> The workflow scans three sources for `Closes #N` / `Fixes #N` references:
+>
+> 1. **Commit messages** in the release PR (new since the previous release)
+> 2. **Squad PR bodies** — bodies of merged non-release PRs associated with those commits
+> 3. **The release/hotfix PR body itself** — for hotfix releases the `Closes #N` reference typically lives only here
+>
+> Only issues whose project-board status is currently **Done** are promoted to **Released**.
+> Issues in any other column (In Sprint, In Review, Released, etc.) are skipped.
+
 ---
 
 > **Related files:** `.squad/routing.md` · `.squad/team.md` · `.squad/playbooks/` · `.squad/ceremonies.md`

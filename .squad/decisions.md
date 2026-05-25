@@ -3086,3 +3086,53 @@ Neither is a Web/backend code defect. All code paths are correct.
 - **Gimli:** commit and run `SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page` in Docker-enabled environment to confirm end-to-end coverage
 - **Boromir:** verify `mongo-data-v7` volume is fresh on all developer machines that previously ran `mongo-data` (MongoDB 8.x) configuration
 - **Sam:** no further action required for Issue #348 backend scope
+
+---
+
+### Decision 4: Release Board Promotion Uses Release PR Commit Deltas
+
+**Status:** ✅ Active  
+**Date:** 2026-05-25  
+**Author:** Boromir (Infrastructure / Release)  
+**Issue:** #393  
+**PR:** #394
+
+#### Finding
+
+The prior Sprint 20 release board automation moved unrelated Done items to Released status because it swept the entire Done column and trusted broad PR body refs (like recovery meta issue links). This caused scope creep and violated the principle that only newly shipped commits should drive board promotion.
+
+#### Solution Implemented
+
+Project board release promotion now:
+
+1. Retrieves the current merged release PR's commit list
+2. Retrieves the previous merged release PR's commit list
+3. Computes the delta (current − previous) to identify newly shipped commits
+4. Derives shipped issues from delta commits plus associated non-release PR bodies
+5. Moves only matching Done cards to Released status via Project V2 API
+
+#### Why This Works
+
+- **Release PR bodies are not reliable shipment scope.** Recovery release PRs can close meta issues (e.g., #384); those refs must not drive board promotion.
+- **Release commit deltas are more reliable than merge timestamps.** Subtracting the previous release PR commit set from the current one correctly isolated Sprint 20's 13 newly shipped commits and excluded already released history.
+- **Release PR filtering is essential in associated PR lookup.** Merge-back or recovery commits can resolve to old release PRs, so Released selection must ignore release-shaped PRs and use only feature PRs plus commit-message issue refs.
+
+#### Implementation
+
+**Files modified:**
+
+- `.github/workflows/project-board-automation.yml` — Added commit delta logic
+- `.github/workflows/squad-mark-released.yml` — Updated to support `release_pr_number` and `tag_name` inputs
+- `docs/SQUAD-COMMANDS.md` — Added recovery operation documentation
+
+#### Verification
+
+- ✅ Markdown lint passing on all workflow files
+- ✅ YAML schema validation passing
+- ✅ Release scope simulation against PR #385 confirmed correct commit delta
+- ✅ Full pre-push gates: lint, build, test suite
+- ✅ PR #394 pushed and ready for review
+
+#### Impact
+
+Future release board automation will correctly scope promotion to only newly shipped commits, preventing unrelated Done items from being marked Released and maintaining accurate sprint/release tracking.
