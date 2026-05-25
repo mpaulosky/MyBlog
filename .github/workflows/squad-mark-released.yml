@@ -318,6 +318,13 @@ jobs:
               }
             }
 
+            // Also parse the release/hotfix PR body itself.
+            // For hotfix PRs the Closes #N reference lives only on the PR body
+            // (there is no intermediary squad PR in the commit walk).
+            for (const issueNumber of parseClosingIssueNumbers(pullRequest.body)) {
+              issueNumbers.add(issueNumber);
+            }
+
             if (issueNumbers.size === 0) {
               core.notice(`${selectionLabel}: no shipped issues were identified`);
               return;
