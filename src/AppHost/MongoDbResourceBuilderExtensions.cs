@@ -16,12 +16,12 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace Aspire.Hosting;
+namespace MyBlog.AppHost;
 
 internal static partial class MongoDbResourceBuilderExtensions
 {
 	// Shared semaphore — guards all three dev commands (Clear, Seed, Stats) so only one runs at a time.
-	private static readonly SemaphoreSlim _dbMutex = new(1, 1);
+	private static readonly SemaphoreSlim DbMutex = new(1, 1);
 
 	[LoggerMessage(Level = LogLevel.Warning, Message = "Clear MyBlog data skipped on {ResourceName} — a clear operation is already in progress.")]
 	private static partial void LogClearSkipped(ILogger logger, string resourceName);
@@ -49,6 +49,8 @@ internal static partial class MongoDbResourceBuilderExtensions
 
 	[LoggerMessage(Level = LogLevel.Information, Message = "Seed MyBlog data complete: 7 categories upserted + {Count} blog post(s) inserted.")]
 	private static partial void LogSeedComplete(ILogger logger, int count);
+
+	private static readonly string[] LegacyCollectionsToDrop = ["posts", "tags"];
 
 	[LoggerMessage(Level = LogLevel.Warning, Message = "Show MyBlog stats skipped on {ResourceName} — a database operation is already in progress.")]
 	private static partial void LogStatsSkipped(ILogger logger, string resourceName);
@@ -88,7 +90,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 		executeCommand: async context =>
 		{
 			// AC2: Non-blocking acquire — return immediately if another clear is already in flight.
-			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
+			if (!await DbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
 				LogClearSkipped(context.Logger, context.ResourceName);
 
@@ -169,7 +171,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 			}
 			finally
 			{
-				_dbMutex.Release();
+				DbMutex.Release();
 			}
 		},
 		new CommandOptions
@@ -197,7 +199,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 		"🌱 Seed MyBlog Data",
 		executeCommand: async context =>
 		{
-			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
+			if (!await DbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
 				LogSeedSkipped(context.Logger, context.ResourceName);
 
@@ -229,6 +231,21 @@ internal static partial class MongoDbResourceBuilderExtensions
 
 				var client = new MongoClient(connectionString);
 				var database = client.GetDatabase(databaseName);
+				var collectionNames = await (await database.ListCollectionNamesAsync(cancellationToken: context.CancellationToken).ConfigureAwait(false))
+					.ToListAsync(context.CancellationToken)
+					.ConfigureAwait(false);
+
+				var droppedLegacyCollections = new List<string>();
+				foreach (var legacyCollectionName in LegacyCollectionsToDrop)
+				{
+					if (!collectionNames.Contains(legacyCollectionName, StringComparer.Ordinal))
+					{
+						continue;
+					}
+
+					await database.DropCollectionAsync(legacyCollectionName, context.CancellationToken).ConfigureAwait(false);
+					droppedLegacyCollections.Add(legacyCollectionName);
+				}
 
 				var categoriesCollection = database.GetCollection<BsonDocument>("categories");
 				var postsCollection = database.GetCollection<BsonDocument>("blogposts");
@@ -318,11 +335,14 @@ new()
 				{
 					Success = true,
 					Message = $"categories: 7 upserted (ASP.NET Core, Blazor Server, Blazor WebAssembly, C#, EF Core, .NET MAUI, Other); blogposts: {seedDocuments.Length} inserted (2 published, 1 draft)"
+						+ (droppedLegacyCollections.Count == 0
+							? string.Empty
+							: $"; dropped legacy collections: {string.Join(", ", droppedLegacyCollections)}")
 				};
 			}
 			finally
 			{
-				_dbMutex.Release();
+				DbMutex.Release();
 			}
 		},
 		new CommandOptions
@@ -345,7 +365,7 @@ new()
 		"📊 Show MyBlog Stats",
 		executeCommand: async context =>
 		{
-			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
+			if (!await DbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
 				LogStatsSkipped(context.Logger, context.ResourceName);
 
@@ -407,7 +427,7 @@ new()
 			}
 			finally
 			{
-				_dbMutex.Release();
+				DbMutex.Release();
 			}
 		},
 		new CommandOptions

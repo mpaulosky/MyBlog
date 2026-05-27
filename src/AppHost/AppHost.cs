@@ -7,6 +7,8 @@
 //Project Name :  AppHost
 //=======================================================
 
+using MyBlog.AppHost;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var mongo = builder.AddMongoDB("mongodb")

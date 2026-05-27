@@ -7,11 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-using System.Net;
-
 using AppHost.Tests.Infrastructure;
-
-using Aspire.Hosting;
 
 using FluentAssertions;
 
@@ -19,6 +15,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using MongoDB.Bson;
 using MongoDB.Driver;
+
+using MongoDbResourceBuilderExtensions = MyBlog.AppHost.MongoDbResourceBuilderExtensions;
 
 namespace AppHost.Tests;
 
@@ -151,6 +149,40 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	}
 
 	/// <summary>
+	/// Legacy collections from earlier schemas must be removed so the database converges on the
+	/// canonical MyBlog collection set: blogposts + categories.
+	/// </summary>
+	[Fact]
+	public async Task SeedMyBlogData_Drops_Legacy_Posts_And_Tags_Collections()
+	{
+		// Arrange
+		using var mongoClient = new MongoClient(fixture.MongoConnectionString);
+		await mongoClient.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
+		var db = mongoClient.GetDatabase("myblog");
+		await db.CreateCollectionAsync("posts", cancellationToken: TestContext.Current.CancellationToken);
+		await db.CreateCollectionAsync("tags", cancellationToken: TestContext.Current.CancellationToken);
+		await db.GetCollection<BsonDocument>("posts")
+			.InsertOneAsync(new BsonDocument("n", 1), cancellationToken: TestContext.Current.CancellationToken);
+		await db.GetCollection<BsonDocument>("tags")
+			.InsertOneAsync(new BsonDocument("n", 1), cancellationToken: TestContext.Current.CancellationToken);
+
+		var annotation = GetAnnotation();
+
+		// Act
+		var result = await annotation.ExecuteCommand(MakeContext());
+
+		// Assert
+		result.Success.Should().BeTrue("seeding should normalize the database before inserting canonical documents");
+		var collectionNames = await (await db.ListCollectionNamesAsync(cancellationToken: TestContext.Current.CancellationToken))
+			.ToListAsync(TestContext.Current.CancellationToken);
+		collectionNames.Should().Contain("blogposts");
+		collectionNames.Should().Contain("categories");
+		collectionNames.Should().NotContain("posts", "legacy posts collection should be dropped during seed normalization");
+		collectionNames.Should().NotContain("tags", "legacy tags collection should be dropped during seed normalization");
+		result.Message.Should().Contain("dropped legacy collections: posts, tags");
+	}
+
+	/// <summary>
 	/// The seed command must always upsert the canonical seven categories with their
 	/// documented ObjectIds so downstream features can rely on stable category identities.
 	/// </summary>
@@ -204,9 +236,9 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		var annotation = GetAnnotation();
 		var expectedCategoryByTitle = new Dictionary<string, ObjectId>(StringComparer.Ordinal)
 		{
-			["Welcome to MyBlog"] = new ObjectId("677db9bd900ea4af1b500cb1"),
-			["Getting Started with .NET Aspire"] = new ObjectId("677db927900ea4af1b500cab"),
-			["Draft: MongoDB Performance Tips"] = new ObjectId("677db9bd900ea4af1b500cb1"),
+			["Welcome to MyBlog"] = new("677db9bd900ea4af1b500cb1"),
+			["Getting Started with .NET Aspire"] = new("677db927900ea4af1b500cab"),
+			["Draft: MongoDB Performance Tips"] = new("677db9bd900ea4af1b500cb1"),
 		};
 
 		// Act

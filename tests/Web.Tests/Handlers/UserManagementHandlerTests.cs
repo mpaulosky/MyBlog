@@ -83,6 +83,21 @@ public class UserManagementHandlerTests
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
 	}
 
+	[Fact]
+	public async Task HandleGetUsersWithRolesDomainMissingReportsNestedFallbackKeyInErrorMessage()
+	{
+		// Arrange (none)
+
+		// Act
+		var result = await _handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Contain("Auth0Management:Domain not configured");
+		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
+		result.Error.Should().Contain("Auth0:Auth0Management:Domain not configured");
+	}
+
 	// ── ClientId missing ────────────────────────────────────────────────────────────────
 
 	[Fact]
@@ -319,6 +334,29 @@ public class UserManagementHandlerTests
 		requestBody.RootElement.GetProperty("grant_type").GetString().Should().Be("client_credentials");
 	}
 
+	[Fact]
+	public async Task HandleGetAvailableRolesNestedAuth0ManagementKeysFallBackToNestedConfig()
+	{
+		// Arrange
+		using var httpHandler = new RecordingTokenHttpHandler("{\"access_token\":\"\"}");
+		using var httpClient = new HttpClient(httpHandler, disposeHandler: false);
+		var handler = BuildHandlerWithNestedAuth0ManagementKeys(new StaticHttpClientFactory(httpClient));
+
+		// Act
+		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
+		httpHandler.LastRequestBody.Should().NotBeNullOrWhiteSpace();
+		using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be(InvalidAccessTokenError);
+		httpHandler.LastRequestUri.Should().Be(new Uri("https://nested.auth0.com/oauth/token"));
+		requestBody.RootElement.GetProperty("client_id").GetString().Should().Be("nested-client-id");
+		requestBody.RootElement.GetProperty("client_secret").GetString().Should().Be("nested-client-secret");
+		requestBody.RootElement.GetProperty("audience").GetString().Should().Be("https://nested.auth0.com/api/v2/");
+		requestBody.RootElement.GetProperty("grant_type").GetString().Should().Be("client_credentials");
+	}
+
 	[Theory]
 	[InlineData("{\"access_token\":\"\"}")]
 	[InlineData("{\"access_token\":\"   \"}")]
@@ -379,6 +417,15 @@ public class UserManagementHandlerTests
 		config["Auth0:ManagementApiDomain"].Returns("legacy.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("legacy-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns("legacy-client-secret");
+		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
+	}
+
+	private static UserManagementHandler BuildHandlerWithNestedAuth0ManagementKeys(IHttpClientFactory httpFactory)
+	{
+		var config = Substitute.For<IConfiguration>();
+		config["Auth0:Auth0Management:Domain"].Returns("nested.auth0.com");
+		config["Auth0:Auth0Management:ClientId"].Returns("nested-client-id");
+		config["Auth0:Auth0Management:ClientSecret"].Returns("nested-client-secret");
 		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
 	}
 
