@@ -7,11 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-using System.Net;
-
 using AppHost.Tests.Infrastructure;
-
-using Aspire.Hosting;
 
 using FluentAssertions;
 
@@ -19,6 +15,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using MongoDB.Bson;
 using MongoDB.Driver;
+
+using MongoDbResourceBuilderExtensions = MyBlog.AppHost.MongoDbResourceBuilderExtensions;
 
 namespace AppHost.Tests;
 
@@ -238,9 +236,9 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		var annotation = GetAnnotation();
 		var expectedCategoryByTitle = new Dictionary<string, ObjectId>(StringComparer.Ordinal)
 		{
-			["Welcome to MyBlog"] = new ObjectId("677db9bd900ea4af1b500cb1"),
-			["Getting Started with .NET Aspire"] = new ObjectId("677db927900ea4af1b500cab"),
-			["Draft: MongoDB Performance Tips"] = new ObjectId("677db9bd900ea4af1b500cb1"),
+			["Welcome to MyBlog"] = new("677db9bd900ea4af1b500cb1"),
+			["Getting Started with .NET Aspire"] = new("677db927900ea4af1b500cab"),
+			["Draft: MongoDB Performance Tips"] = new("677db9bd900ea4af1b500cb1"),
 		};
 
 		// Act

@@ -13,7 +13,6 @@ using Auth0.ManagementApi;
 using Auth0.ManagementApi.Users;
 
 using MyBlog.Domain.Abstractions;
-using MyBlog.Web.Infrastructure.Caching;
 
 namespace MyBlog.Web.Features.UserManagement;
 
@@ -53,7 +52,7 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 				}
 				return result;
 			}, cancellationToken).ConfigureAwait(false);
-			return Result.Ok<IReadOnlyList<UserWithRolesDto>>(users);
+			return Result.Ok(users);
 		}
 		catch (OperationCanceledException)
 		{
@@ -154,7 +153,7 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 				}
 				return result;
 			}, cancellationToken).ConfigureAwait(false);
-			return Result.Ok<IReadOnlyList<RoleDto>>(roles);
+			return Result.Ok(roles);
 		}
 		catch (OperationCanceledException)
 		{

@@ -16,12 +16,12 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace Aspire.Hosting;
+namespace MyBlog.AppHost;
 
 internal static partial class MongoDbResourceBuilderExtensions
 {
 	// Shared semaphore — guards all three dev commands (Clear, Seed, Stats) so only one runs at a time.
-	private static readonly SemaphoreSlim _dbMutex = new(1, 1);
+	private static readonly SemaphoreSlim DbMutex = new(1, 1);
 
 	[LoggerMessage(Level = LogLevel.Warning, Message = "Clear MyBlog data skipped on {ResourceName} — a clear operation is already in progress.")]
 	private static partial void LogClearSkipped(ILogger logger, string resourceName);
@@ -90,7 +90,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 		executeCommand: async context =>
 		{
 			// AC2: Non-blocking acquire — return immediately if another clear is already in flight.
-			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
+			if (!await DbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
 				LogClearSkipped(context.Logger, context.ResourceName);
 
@@ -171,7 +171,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 			}
 			finally
 			{
-				_dbMutex.Release();
+				DbMutex.Release();
 			}
 		},
 		new CommandOptions
@@ -199,7 +199,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 		"🌱 Seed MyBlog Data",
 		executeCommand: async context =>
 		{
-			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
+			if (!await DbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
 				LogSeedSkipped(context.Logger, context.ResourceName);
 
@@ -342,7 +342,7 @@ new()
 			}
 			finally
 			{
-				_dbMutex.Release();
+				DbMutex.Release();
 			}
 		},
 		new CommandOptions
@@ -365,7 +365,7 @@ new()
 		"📊 Show MyBlog Stats",
 		executeCommand: async context =>
 		{
-			if (!await _dbMutex.WaitAsync(0).ConfigureAwait(false))
+			if (!await DbMutex.WaitAsync(0).ConfigureAwait(false))
 			{
 				LogStatsSkipped(context.Logger, context.ResourceName);
 
@@ -427,7 +427,7 @@ new()
 			}
 			finally
 			{
-				_dbMutex.Release();
+				DbMutex.Release();
 			}
 		},
 		new CommandOptions

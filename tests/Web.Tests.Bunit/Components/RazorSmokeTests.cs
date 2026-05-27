@@ -226,7 +226,7 @@ public class RazorSmokeTests : BunitContext
 		// Arrange
 		var sender = Substitute.For<ISender>();
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(Array.Empty<BlogPostDto>())));
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>([])));
 
 		Services.AddSingleton(sender);
 
@@ -270,7 +270,7 @@ public class RazorSmokeTests : BunitContext
 		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
 				.Returns(
 						Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)),
-						Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(Array.Empty<BlogPostDto>())));
+						Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>([])));
 		sender.Send(Arg.Any<DeleteBlogPostCommand>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok()));
 
@@ -381,10 +381,10 @@ public class RazorSmokeTests : BunitContext
 		// Act
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
-		cut.FindAll("input")[0].Change("My title");
+		await cut.FindAll("input")[0].ChangeAsync("My title");
 		var textEditor = cut.FindComponent<TextEditor>();
 		await cut.InvokeAsync(() => textEditor.Instance.ContentChanged.InvokeAsync("Hello world"));
-		cut.Find("form").Submit();
+		await cut.Find("form").SubmitAsync();
 
 		// Assert
 		await sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
@@ -406,14 +406,14 @@ public class RazorSmokeTests : BunitContext
 		// Act
 		var cut = RenderWithUser<Create>(CreatePrincipal("Alice", ["Author"]));
 
-		cut.FindAll("input")[0].Change("My title");
+		await cut.FindAll("input")[0].ChangeAsync("My title");
 		var textEditor = cut.FindComponent<TextEditor>();
 		await cut.InvokeAsync(() => textEditor.Instance.ContentChanged.InvokeAsync("Hello world"));
-		cut.Find("form").Submit();
+		await cut.Find("form").SubmitAsync();
 
 		// Assert
 		cut.Markup.Should().Contain("Unable to create post.");
-		cut.Find("button.alert-dismiss").Click();
+		await cut.Find("button.alert-dismiss").ClickAsync();
 		cut.Markup.Should().NotContain("Unable to create post.");
 	}
 
@@ -638,8 +638,8 @@ public class RazorSmokeTests : BunitContext
 		// Assert
 		cut.Markup.Should().Contain("Loading users...");
 
-		usersTask.SetResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(Array.Empty<UserWithRolesDto>()));
-		rolesTask.SetResult(Result.Ok<IReadOnlyList<RoleDto>>(Array.Empty<RoleDto>()));
+		usersTask.SetResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>([]));
+		rolesTask.SetResult(Result.Ok<IReadOnlyList<RoleDto>>([]));
 		cut.WaitForAssertion(() => cut.Markup.Should().Contain("Actions"));
 	}
 
@@ -651,7 +651,7 @@ public class RazorSmokeTests : BunitContext
 		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Fail<IReadOnlyList<UserWithRolesDto>>("Unable to load users.")));
 		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(Array.Empty<RoleDto>())));
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>([])));
 
 		Services.AddSingleton(sender);
 

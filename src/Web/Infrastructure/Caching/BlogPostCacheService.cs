@@ -9,8 +9,6 @@
 
 using System.Text.Json;
 
-using MyBlog.Web.Data;
-
 namespace MyBlog.Web.Infrastructure.Caching;
 
 internal sealed class BlogPostCacheService(

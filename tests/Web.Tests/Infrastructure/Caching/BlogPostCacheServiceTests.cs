@@ -9,8 +9,6 @@
 
 using System.Text.Json;
 
-using Microsoft.Extensions.Caching.Memory;
-
 namespace Web.Infrastructure.Caching;
 
 public class BlogPostCacheServiceTests : IDisposable
@@ -44,10 +42,10 @@ public class BlogPostCacheServiceTests : IDisposable
 		_realLocalCache.Set(BlogPostCacheKeys.All, cachedList);
 
 		var fetchCalled = false;
-		Task<IReadOnlyList<BlogPostDto>> fetch() { fetchCalled = true; return Task.FromResult<IReadOnlyList<BlogPostDto>>([]); }
+		Task<IReadOnlyList<BlogPostDto>> Fetch() { fetchCalled = true; return Task.FromResult<IReadOnlyList<BlogPostDto>>([]); }
 
 		// Act
-		var result = await _sut.GetOrFetchAllAsync(fetch, CancellationToken.None);
+		var result = await _sut.GetOrFetchAllAsync(Fetch, CancellationToken.None);
 
 		// Assert
 		result.Should().HaveCount(2);
@@ -91,14 +89,14 @@ public class BlogPostCacheServiceTests : IDisposable
 		var expected = MakeDtos();
 		var fetchCalled = false;
 
-		Task<IReadOnlyList<BlogPostDto>> fetch()
+		Task<IReadOnlyList<BlogPostDto>> Fetch()
 		{
 			fetchCalled = true;
 			return Task.FromResult<IReadOnlyList<BlogPostDto>>(expected);
 		}
 
 		// Act
-		var result = await _sut.GetOrFetchAllAsync(fetch, CancellationToken.None);
+		var result = await _sut.GetOrFetchAllAsync(Fetch, CancellationToken.None);
 
 		// Assert
 		fetchCalled.Should().BeTrue();
@@ -121,14 +119,14 @@ public class BlogPostCacheServiceTests : IDisposable
 		var expected = MakeDtos();
 		var fetchCalled = false;
 
-		Task<IReadOnlyList<BlogPostDto>> fetch()
+		Task<IReadOnlyList<BlogPostDto>> Fetch()
 		{
 			fetchCalled = true;
 			return Task.FromResult<IReadOnlyList<BlogPostDto>>(expected);
 		}
 
 		// Act
-		var result = await _sut.GetOrFetchAllAsync(fetch, CancellationToken.None);
+		var result = await _sut.GetOrFetchAllAsync(Fetch, CancellationToken.None);
 
 		// Assert
 		fetchCalled.Should().BeTrue();
@@ -151,14 +149,14 @@ public class BlogPostCacheServiceTests : IDisposable
 
 		var expected = MakeDtos();
 		var fetchCalled = false;
-		Task<IReadOnlyList<BlogPostDto>> fetch()
+		Task<IReadOnlyList<BlogPostDto>> Fetch()
 		{
 			fetchCalled = true;
 			return Task.FromResult<IReadOnlyList<BlogPostDto>>(expected);
 		}
 
 		// Act
-		var result = await _sut.GetOrFetchAllAsync(fetch, CancellationToken.None);
+		var result = await _sut.GetOrFetchAllAsync(Fetch, CancellationToken.None);
 
 		// Assert
 		fetchCalled.Should().BeTrue();
@@ -231,7 +229,7 @@ public class BlogPostCacheServiceTests : IDisposable
 
 		// Assert
 		result.Should().NotBeNull();
-		result!.Id.Should().Be(id);
+		result.Id.Should().Be(id);
 		await _distributedCache.DidNotReceive().GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
 	}
 
@@ -251,7 +249,7 @@ public class BlogPostCacheServiceTests : IDisposable
 
 		// Assert
 		result.Should().NotBeNull();
-		result!.Id.Should().Be(id);
+		result.Id.Should().Be(id);
 		_realLocalCache.TryGetValue(key, out BlogPostDto? l1Val).Should().BeTrue();
 		l1Val!.Id.Should().Be(id);
 	}
@@ -273,10 +271,10 @@ public class BlogPostCacheServiceTests : IDisposable
 
 		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
 		var fetchCalled = false;
-		Task<BlogPostDto?> fetch() { fetchCalled = true; return Task.FromResult<BlogPostDto?>(dto); }
+		Task<BlogPostDto?> Fetch() { fetchCalled = true; return Task.FromResult<BlogPostDto?>(dto); }
 
 		// Act
-		var result = await _sut.GetOrFetchByIdAsync(id, fetch, CancellationToken.None);
+		var result = await _sut.GetOrFetchByIdAsync(id, Fetch, CancellationToken.None);
 
 		// Assert
 		fetchCalled.Should().BeTrue();

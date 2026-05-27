@@ -11,6 +11,4 @@ namespace Web.Infrastructure;
 
 [CollectionDefinition("RedisCaching")]
 public sealed class RedisCachingCollection
-: ICollectionFixture<RedisFixture>
-{
-}
+: ICollectionFixture<RedisFixture>;

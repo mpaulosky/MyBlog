@@ -233,10 +233,10 @@ static async Task MapTestLoginEndpoint(HttpContext ctx, string? role, string? re
 	// Create claims for the test user
 	var claims = new List<Claim>
 	{
-		new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
-		new Claim(ClaimTypes.Name, "Test User"),
-		new Claim(ClaimTypes.Email, "test@example.com"),
-		new Claim(ClaimTypes.Role, roleValue),
+		new(ClaimTypes.NameIdentifier, "test-user-id"),
+		new(ClaimTypes.Name, "Test User"),
+		new(ClaimTypes.Email, "test@example.com"),
+		new(ClaimTypes.Role, roleValue),
 	};
 
 	var identity = new ClaimsIdentity(claims, "TestScheme");
