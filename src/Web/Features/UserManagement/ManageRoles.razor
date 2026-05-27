@@ -22,9 +22,9 @@ else
 	@if (_availableRoles.Any())
 	{
 		<p>Available roles: @string.Join(
-			", ",
-			_availableRoles.Select(role => role.Name))</p>
-	}
+						", ",
+						_availableRoles.Select(role => role.Name))</p>
+		}
 
 		<div class="table-wrapper">
 			<table class="data-table">
@@ -49,17 +49,13 @@ else
 									var hasRole = user.Roles.Contains(role.Name);
 									if (hasRole)
 									{
-										<button
-											class="@ActiveRoleButtonClass"
-											@onclick="() => RemoveRole(user.UserId, role.Id)">
+										<button class="@ActiveRoleButtonClass" @onclick="() => RemoveRole(user.UserId, role.Id)">
 											@role.Name: Active (Remove)
 										</button>
 									}
 									else
 									{
-										<button
-											class="@InactiveRoleButtonClass"
-											@onclick="() => AssignRole(user.UserId, role.Id)">
+										<button class="@InactiveRoleButtonClass" @onclick="() => AssignRole(user.UserId, role.Id)">
 											@role.Name: Inactive (Add)
 										</button>
 									}
