@@ -78,6 +78,65 @@ public class BlogPostCacheServiceTests : IDisposable
 	}
 
 	[Fact]
+	public async Task GetOrFetchAllAsync_L1Hit_WithEmptyList_RemovesStaleEntryAndFallsThroughToFetch()
+	{
+		// Arrange
+		_realLocalCache.Set(BlogPostCacheKeys.All, new List<BlogPostDto>());
+		_distributedCache.GetAsync(BlogPostCacheKeys.All, Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult<byte[]?>(null));
+		_distributedCache.SetAsync(
+			Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<DistributedCacheEntryOptions>(), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
+
+		var expected = MakeDtos();
+		var fetchCalled = false;
+
+		Task<IReadOnlyList<BlogPostDto>> fetch()
+		{
+			fetchCalled = true;
+			return Task.FromResult<IReadOnlyList<BlogPostDto>>(expected);
+		}
+
+		// Act
+		var result = await _sut.GetOrFetchAllAsync(fetch, CancellationToken.None);
+
+		// Assert
+		fetchCalled.Should().BeTrue();
+		result.Should().BeEquivalentTo(expected);
+	}
+
+	[Fact]
+	public async Task GetOrFetchAllAsync_L2Hit_WithEmptyList_RemovesStaleEntryAndFallsThroughToFetch()
+	{
+		// Arrange
+		var emptyBytes = JsonSerializer.SerializeToUtf8Bytes(new List<BlogPostDto>(), JsonOpts);
+		_distributedCache.GetAsync(BlogPostCacheKeys.All, Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult<byte[]?>(emptyBytes));
+		_distributedCache.RemoveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
+		_distributedCache.SetAsync(
+			Arg.Any<string>(), Arg.Any<byte[]>(), Arg.Any<DistributedCacheEntryOptions>(), Arg.Any<CancellationToken>())
+			.Returns(Task.CompletedTask);
+
+		var expected = MakeDtos();
+		var fetchCalled = false;
+
+		Task<IReadOnlyList<BlogPostDto>> fetch()
+		{
+			fetchCalled = true;
+			return Task.FromResult<IReadOnlyList<BlogPostDto>>(expected);
+		}
+
+		// Act
+		var result = await _sut.GetOrFetchAllAsync(fetch, CancellationToken.None);
+
+		// Assert
+		fetchCalled.Should().BeTrue();
+		result.Should().BeEquivalentTo(expected);
+		await _distributedCache.Received().RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None);
+	}
+
+	[Fact]
 	public async Task GetOrFetchAllAsync_L2JsonCorrupt_RemovesAndFallsThroughToFetch()
 	{
 		// Arrange
@@ -129,6 +188,28 @@ public class BlogPostCacheServiceTests : IDisposable
 		l1Val.Should().HaveCount(2);
 		await _distributedCache.Received().SetAsync(
 			BlogPostCacheKeys.All,
+			Arg.Any<byte[]>(),
+			Arg.Any<DistributedCacheEntryOptions>(),
+			Arg.Any<CancellationToken>());
+	}
+
+	[Fact]
+	public async Task GetOrFetchAllAsync_FullMiss_WithEmptyFetchResult_DoesNotPopulateCache()
+	{
+		// Arrange
+		_distributedCache.GetAsync(BlogPostCacheKeys.All, Arg.Any<CancellationToken>())
+			.Returns(Task.FromResult<byte[]?>(null));
+
+		// Act
+		var result = await _sut.GetOrFetchAllAsync(
+			() => Task.FromResult<IReadOnlyList<BlogPostDto>>([]),
+			CancellationToken.None);
+
+		// Assert
+		result.Should().BeEmpty();
+		_realLocalCache.TryGetValue(BlogPostCacheKeys.All, out List<BlogPostDto>? _).Should().BeFalse();
+		await _distributedCache.DidNotReceive().SetAsync(
+			Arg.Any<string>(),
 			Arg.Any<byte[]>(),
 			Arg.Any<DistributedCacheEntryOptions>(),
 			Arg.Any<CancellationToken>());

@@ -178,10 +178,22 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 
 	private async Task<ManagementApiClient> GetManagementClientAsync(CancellationToken cancellationToken)
 	{
-		var domain = GetRequiredManagementSetting("Auth0Management:Domain", "Auth0:ManagementApiDomain");
-		var clientId = GetRequiredManagementSetting("Auth0Management:ClientId", "Auth0:ManagementApiClientId");
-		var clientSecret = GetRequiredManagementSetting("Auth0Management:ClientSecret", "Auth0:ManagementApiClientSecret");
-		var audience = GetOptionalManagementSetting("Auth0Management:Audience", "Auth0:ManagementApiAudience")
+		var domain = GetRequiredManagementSetting(
+			"Auth0Management:Domain",
+			"Auth0:ManagementApiDomain",
+			"Auth0:Auth0Management:Domain");
+		var clientId = GetRequiredManagementSetting(
+			"Auth0Management:ClientId",
+			"Auth0:ManagementApiClientId",
+			"Auth0:Auth0Management:ClientId");
+		var clientSecret = GetRequiredManagementSetting(
+			"Auth0Management:ClientSecret",
+			"Auth0:ManagementApiClientSecret",
+			"Auth0:Auth0Management:ClientSecret");
+		var audience = GetOptionalManagementSetting(
+			"Auth0Management:Audience",
+			"Auth0:ManagementApiAudience",
+			"Auth0:Auth0Management:Audience")
 				?? $"https://{domain}/api/v2/";
 
 		using var httpClient = httpClientFactory.CreateClient();
@@ -206,9 +218,14 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 		clientOptions: new ClientOptions { BaseUrl = $"https://{domain}/api/v2" });
 	}
 
-	private string GetRequiredManagementSetting(string primaryKey, string legacyKey)
+	private string GetRequiredManagementSetting(string primaryKey, string legacyKey, params string[] additionalKeys)
 	{
-		return GetOptionalManagementSetting(primaryKey, legacyKey)
+		var keys = new string[additionalKeys.Length + 2];
+		keys[0] = primaryKey;
+		keys[1] = legacyKey;
+		additionalKeys.CopyTo(keys, 2);
+
+		return GetOptionalManagementSetting(keys)
 				?? throw new InvalidOperationException(
 					$"{primaryKey} not configured. {legacyKey} not configured.");
 	}

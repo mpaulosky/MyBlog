@@ -545,8 +545,9 @@ public class RazorSmokeTests : BunitContext
 				};
 		var roles = new[]
 		{
-						new RoleDto("role-admin", "Admin"),
-						new RoleDto("role-author", "Author")
+						new RoleDto("role-viewer", "Viewer"),
+						new RoleDto("role-author", "Author"),
+						new RoleDto("role-admin", "Admin")
 				};
 
 		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
@@ -564,8 +565,56 @@ public class RazorSmokeTests : BunitContext
 
 		heading.TextContent.Trim().Should().Be("Manage User Roles");
 		heading.GetAttribute("class").Should().Contain("text-primary-900").And.Contain("dark:text-primary-50");
-		cut.Markup.Should().Contain("Available roles: Admin, Author");
+		cut.Markup.Should().Contain("Available roles: Admin, Author, Viewer");
 		cut.Markup.Should().Contain("admin@example.com");
+
+		var actionButtons = cut.FindAll("tbody button");
+		actionButtons.Select(button => button.TextContent.Trim()).Should().ContainInOrder(
+				"Admin: Active (Remove)",
+				"Author: Inactive (Add)",
+				"Viewer: Inactive (Add)");
+
+		var activeRoleButton = actionButtons.First(button => string.Equals(button.TextContent.Trim(), "Admin: Active (Remove)", StringComparison.Ordinal));
+		var inactiveRoleButton = actionButtons.First(button => string.Equals(button.TextContent.Trim(), "Author: Inactive (Add)", StringComparison.Ordinal));
+
+		activeRoleButton.GetAttribute("class").Should().Contain("border-green-600").And.Contain("text-green-600");
+		inactiveRoleButton.GetAttribute("class").Should().Contain("border-red-600").And.Contain("text-red-600");
+	}
+
+	[Fact]
+	public void ManageRolesSortsAvailableRolesCaseInsensitively()
+	{
+		// Arrange
+		var sender = Substitute.For<ISender>();
+		var users = new[]
+		{
+						new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["admin"])
+				};
+		var roles = new[]
+		{
+						new RoleDto("role-viewer", "viewer"),
+						new RoleDto("role-author", "Author"),
+						new RoleDto("role-admin", "admin")
+				};
+
+		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(users)));
+		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
+				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(roles)));
+
+		Services.AddSingleton(sender);
+
+		// Act
+		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
+
+		// Assert
+		cut.Markup.Should().Contain("Available roles: admin, Author, viewer");
+
+		var actionButtons = cut.FindAll("tbody button");
+		actionButtons.Select(button => button.TextContent.Trim()).Should().ContainInOrder(
+				"admin: Active (Remove)",
+				"Author: Inactive (Add)",
+				"viewer: Inactive (Add)");
 	}
 
 	[Fact]
@@ -648,7 +697,7 @@ public class RazorSmokeTests : BunitContext
 		// Act
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
-		cut.FindAll("button").First(button => button.TextContent.Contains("+ Author")).Click();
+		cut.FindAll("button").First(button => string.Equals(button.TextContent.Trim(), "Author: Inactive (Add)", StringComparison.Ordinal)).Click();
 
 		// Assert
 		sender.Received(1).Send(Arg.Is<AssignRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
@@ -688,13 +737,13 @@ public class RazorSmokeTests : BunitContext
 		// Act
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
 
-		cut.FindAll("button").First(button => button.TextContent.Contains("- Author")).Click();
+		cut.FindAll("button").First(button => string.Equals(button.TextContent.Trim(), "Author: Active (Remove)", StringComparison.Ordinal)).Click();
 
 		// Assert
 		sender.Received(1).Send(Arg.Is<RemoveRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
 		cut.WaitForAssertion(() =>
 		{
-			cut.Markup.Should().Contain("+ Author");
+			cut.Markup.Should().Contain("Author: Inactive (Add)");
 			cut.Markup.Should().Contain("<td>Admin</td>");
 		});
 	}

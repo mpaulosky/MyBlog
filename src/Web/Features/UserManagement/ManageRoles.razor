@@ -22,7 +22,7 @@ else
 	@if (_availableRoles.Any())
 	{
 		<p>Available roles: @string.Join(", ", _availableRoles.Select(r =>
-										r.Name))</p>
+																			r.Name))</p>
 		}
 
 		<div class="table-wrapper">
@@ -43,21 +43,25 @@ else
 							<td>@user.Email</td>
 							<td>@string.Join(", ", user.Roles)</td>
 							<td>
-								@foreach (var role in _availableRoles.Where(r => !user.Roles.Contains(r.Name)))
+								@foreach (var role in _availableRoles)
 								{
-									<button
-										class="inline-block px-3 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition mr-1 mb-1"
-										@onclick="() => AssignRole(user.UserId, role.Id)">
-										+ @role.Name
-									</button>
-								}
-								@foreach (var role in _availableRoles.Where(r => user.Roles.Contains(r.Name)))
-								{
-									<button
-										class="inline-block px-3 py-1 text-sm rounded border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition mr-1 mb-1"
-										@onclick="() => RemoveRole(user.UserId, role.Id)">
-										- @role.Name
-									</button>
+									var hasRole = user.Roles.Contains(role.Name);
+									if (hasRole)
+									{
+										<button
+											class="inline-block px-3 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition mr-1 mb-1"
+											@onclick="() => RemoveRole(user.UserId, role.Id)">
+											@role.Name: Active (Remove)
+										</button>
+									}
+									else
+									{
+										<button
+											class="inline-block px-3 py-1 text-sm rounded border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition mr-1 mb-1"
+											@onclick="() => AssignRole(user.UserId, role.Id)">
+											@role.Name: Inactive (Add)
+										</button>
+									}
 								}
 							</td>
 						</tr>
@@ -85,7 +89,9 @@ else
 		if (usersResult.Success) _users = usersResult.Value!;
 		else _error = usersResult.Error;
 
-		if (rolesResult.Success) _availableRoles = rolesResult.Value!;
+		if (rolesResult.Success) _availableRoles = rolesResult.Value!
+			.OrderBy(static role => role.Name, StringComparer.OrdinalIgnoreCase)
+			.ToArray();
 		else _error ??= rolesResult.Error;
 
 		_loading = false;

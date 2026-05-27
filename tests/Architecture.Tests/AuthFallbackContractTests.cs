@@ -14,11 +14,13 @@ public sealed class AuthFallbackContractTests
 	private static readonly string RepoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
 
 	[Fact]
-	public void AccountLogin_Should_ShortCircuitPlaceholderAuth0Config_BeforeOidcChallenge()
+	public void AccountLogin_Should_ShortCircuitPlaceholderAuth0Config_OnlyInTesting_BeforeOidcChallenge()
 	{
 		// Arrange
 		var loginHandlerSource = ExtractLoginHandler(ReadRepoFile("src/Web/Program.cs"));
-		var placeholderGuardIndex = loginHandlerSource.IndexOf("if (isPlaceholderAuth0Config)", StringComparison.Ordinal);
+		var placeholderGuardIndex = loginHandlerSource.IndexOf(
+			"if (usesLocalTestLoginFallback && app.Environment.IsEnvironment(\"Testing\"))",
+			StringComparison.Ordinal);
 		var localRedirectIndex = loginHandlerSource.IndexOf(
 			"ctx.Response.Redirect($\"/test/login?returnUrl={Uri.EscapeDataString(safeReturn)}\")",
 			StringComparison.Ordinal);
@@ -29,13 +31,40 @@ public sealed class AuthFallbackContractTests
 		// Act / Assert
 		placeholderGuardIndex.Should().BeGreaterThanOrEqualTo(
 			0,
-			because: "the login endpoint must detect placeholder Auth0 settings before trying OIDC");
+			because: "only the Testing environment may bypass Auth0 and short-circuit to the local test login");
 		localRedirectIndex.Should().BeGreaterThan(
 			placeholderGuardIndex,
-			because: "placeholder Auth0 settings in Development/Testing should redirect to the local test login endpoint");
+			because: "the Testing fallback must redirect to the local test login endpoint before issuing any OIDC challenge");
 		challengeIndex.Should().BeGreaterThan(
 			localRedirectIndex,
 			because: "real Auth0 credentials must still use the normal OIDC challenge flow");
+	}
+
+	[Fact]
+	public void TestLoginEndpoint_Should_Be_Registered_OnlyInTesting()
+	{
+		// Arrange
+		var programSource = ReadRepoFile("src/Web/Program.cs");
+		var testingGuardIndex = programSource.IndexOf(
+			"if (app.Environment.IsEnvironment(\"Testing\"))",
+			StringComparison.Ordinal);
+		var testLoginEndpointIndex = programSource.IndexOf(
+			"app.MapGet(\"/test/login\", MapTestLoginEndpoint).AllowAnonymous();",
+			StringComparison.Ordinal);
+		var legacyDevelopmentGuardIndex = programSource.IndexOf(
+			"if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment(\"Testing\"))",
+			StringComparison.Ordinal);
+
+		// Act / Assert
+		testingGuardIndex.Should().BeGreaterThanOrEqualTo(
+			0,
+			because: "the local test login endpoint must be fenced to the Testing environment");
+		testLoginEndpointIndex.Should().BeGreaterThan(
+			testingGuardIndex,
+			because: "the Testing-only guard must wrap the local test login endpoint registration");
+		legacyDevelopmentGuardIndex.Should().BeLessThan(
+			0,
+			because: "Development should go through real Auth0 rather than the local test login endpoint");
 	}
 
 	private static string ExtractLoginHandler(string programSource)
