@@ -67,6 +67,27 @@ public sealed class AuthFallbackContractTests
 			because: "Development should go through real Auth0 rather than the local test login endpoint");
 	}
 
+	[Fact]
+	public void OidcTokenValidatedHook_Should_NullGuard_ExistingDelegate_Before_Invoking_It()
+	{
+		// Arrange
+		var programSource = ReadRepoFile("src/Web/Program.cs");
+		var nullGuardIndex = programSource.IndexOf(
+			"if (existingOnTokenValidated is not null)",
+			StringComparison.Ordinal);
+		var callbackInvokeIndex = programSource.IndexOf(
+			"await existingOnTokenValidated(context).ConfigureAwait(false);",
+			StringComparison.Ordinal);
+
+		// Act / Assert
+		nullGuardIndex.Should().BeGreaterThanOrEqualTo(
+			0,
+			because: "the Auth0 SDK may leave the original token-validated callback unset");
+		callbackInvokeIndex.Should().BeGreaterThan(
+			nullGuardIndex,
+			because: "the wrapped token-validated callback must only invoke the original delegate after a null guard");
+	}
+
 	private static string ExtractLoginHandler(string programSource)
 	{
 		var start = programSource.IndexOf("app.MapGet(\"/Account/Login\"", StringComparison.Ordinal);

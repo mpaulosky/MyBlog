@@ -21,9 +21,10 @@ else
 
 	@if (_availableRoles.Any())
 	{
-		<p>Available roles: @string.Join(", ", _availableRoles.Select(r =>
-																			r.Name))</p>
-		}
+		<p>Available roles: @string.Join(
+			", ",
+			_availableRoles.Select(role => role.Name))</p>
+	}
 
 		<div class="table-wrapper">
 			<table class="data-table">
@@ -49,7 +50,7 @@ else
 									if (hasRole)
 									{
 										<button
-											class="inline-block px-3 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 transition mr-1 mb-1"
+											class="@ActiveRoleButtonClass"
 											@onclick="() => RemoveRole(user.UserId, role.Id)">
 											@role.Name: Active (Remove)
 										</button>
@@ -57,7 +58,7 @@ else
 									else
 									{
 										<button
-											class="inline-block px-3 py-1 text-sm rounded border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition mr-1 mb-1"
+											class="@InactiveRoleButtonClass"
 											@onclick="() => AssignRole(user.UserId, role.Id)">
 											@role.Name: Inactive (Add)
 										</button>
@@ -72,6 +73,14 @@ else
 	}
 
 @code {
+	private const string ActiveRoleButtonClass =
+		"inline-block px-3 py-1 text-sm rounded border border-green-600 text-green-600 " +
+		"hover:bg-green-50 dark:hover:bg-green-900/20 transition mr-1 mb-1";
+
+	private const string InactiveRoleButtonClass =
+		"inline-block px-3 py-1 text-sm rounded border border-red-600 text-red-600 " +
+		"hover:bg-red-50 dark:hover:bg-red-900/20 transition mr-1 mb-1";
+
 	private IReadOnlyList<UserWithRolesDto> _users = [];
 	private IReadOnlyList<RoleDto> _availableRoles = [];
 	private bool _loading = true;

@@ -83,6 +83,21 @@ public class UserManagementHandlerTests
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
 	}
 
+	[Fact]
+	public async Task HandleGetUsersWithRolesDomainMissingReportsNestedFallbackKeyInErrorMessage()
+	{
+		// Arrange (none)
+
+		// Act
+		var result = await _handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Contain("Auth0Management:Domain not configured");
+		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
+		result.Error.Should().Contain("Auth0:Auth0Management:Domain not configured");
+	}
+
 	// ── ClientId missing ────────────────────────────────────────────────────────────────
 
 	[Fact]

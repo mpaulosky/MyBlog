@@ -97,7 +97,10 @@ builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.Authenticati
 	var existingOnTokenValidated = options.Events.OnTokenValidated;
 	options.Events.OnTokenValidated = async context =>
 	{
-		await existingOnTokenValidated(context).ConfigureAwait(false);
+		if (existingOnTokenValidated is not null)
+		{
+			await existingOnTokenValidated(context).ConfigureAwait(false);
+		}
 
 		if (context.Principal?.Identity is not ClaimsIdentity identity)
 		{

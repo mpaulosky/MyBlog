@@ -226,7 +226,7 @@ IRequestHandler<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>
 
 		return GetOptionalManagementSetting(keys)
 				?? throw new InvalidOperationException(
-					$"{primaryKey} not configured. {legacyKey} not configured.");
+					string.Join(" ", Array.ConvertAll(keys, key => $"{key} not configured.")));
 	}
 
 	private string? GetOptionalManagementSetting(params string[] keys)
