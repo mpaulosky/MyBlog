@@ -273,10 +273,11 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 
 		var annotation = GetAnnotation();
 		var endpoint = fixture.App.GetEndpoint("web", "https");
-		using var handler = new HttpClientHandler();
-		handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-		using var webClient = new HttpClient(handler);
-		webClient.BaseAddress = endpoint;
+		using var handler = new HttpClientHandler
+		{
+			ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+		};
+		using var webClient = new HttpClient(handler) { BaseAddress = endpoint };
 		await WaitForWebReadyAsync(webClient);
 
 		// Act
