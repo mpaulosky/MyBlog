@@ -16,9 +16,7 @@ namespace Web.Infrastructure;
 public sealed class RedisFixture : IAsyncLifetime
 {
 	private readonly RedisContainer _container =
-#pragma warning disable CS0618
-		new RedisBuilder().Build();
-#pragma warning restore CS0618
+		new RedisBuilder("redis").Build();
 
 	public string ConnectionString { get; private set; } = string.Empty;
 

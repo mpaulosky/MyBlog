@@ -16,9 +16,7 @@ namespace Web.Infrastructure;
 public sealed class MongoDbFixture : IAsyncLifetime
 {
 	private readonly MongoDbContainer _container =
-#pragma warning disable CS0618
-		new MongoDbBuilder().Build();
-#pragma warning restore CS0618
+		new MongoDbBuilder("mongo").Build();
 
 	public string ConnectionString { get; private set; } = string.Empty;
 
