@@ -7,7 +7,7 @@
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
 		<RootNamespace>MyBlog.Architecture.Tests</RootNamespace>
-		<NoWarn>$(NoWarn);CA2007</NoWarn>
+		<NoWarn>$(NoWarn);CA2007;CA1014</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

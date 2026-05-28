@@ -54,7 +54,7 @@ public class DomainLayerTests
 		// Act
 		var types = Types.InAssembly(assembly)
 				.That()
-				.HaveNameEndingWith("InMemory")
+				.HaveNameEndingWith("InMemory", StringComparison.Ordinal)
 				.GetTypes();
 
 		// Assert
