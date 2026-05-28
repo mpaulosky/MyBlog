@@ -20,7 +20,7 @@ namespace Web.Handlers;
 public class EditBlogPostHandlerTests
 {
 	private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
-	private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
+	private readonly TestBlogPostCacheService _cache = new();
 	private readonly IHtmlSanitizer _sanitizer = Substitute.For<IHtmlSanitizer>();
 	private readonly EditBlogPostHandler _handler;
 
@@ -47,8 +47,8 @@ public class EditBlogPostHandlerTests
 		// Assert
 		result.Success.Should().BeTrue();
 		await _repo.Received(1).UpdateAsync(post, Arg.Any<CancellationToken>());
-		await _cache.Received(1).InvalidateAllAsync(Arg.Any<CancellationToken>());
-		await _cache.Received(1).InvalidateByIdAsync(post.Id, Arg.Any<CancellationToken>());
+		_cache.InvalidateAllCalls.Should().Be(1);
+		_cache.InvalidatedIds.Should().ContainSingle().Which.Should().Be(post.Id);
 		post.Title.Should().Be("New Title");
 		post.Content.Should().Be("New Content");
 	}
@@ -200,11 +200,7 @@ public class EditBlogPostHandlerTests
 		// Arrange
 		var id = ObjectId.GenerateNewId();
 		var dto = new BlogPostDto(id, "T", "C", string.Empty, "A", string.Empty, [], DateTime.UtcNow, null, false, null);
-		_cache.GetOrFetchByIdAsync(
-		Arg.Any<ObjectId>(),
-		Arg.Any<Func<Task<BlogPostDto?>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns(new ValueTask<BlogPostDto?>(dto));
+		_cache.GetOrFetchByIdAsyncHandler = (_, _, _) => ValueTask.FromResult<BlogPostDto?>(dto);
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
@@ -222,15 +218,7 @@ public class EditBlogPostHandlerTests
 		// Arrange
 		var id = ObjectId.GenerateNewId();
 		_repo.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns((BlogPost?)null);
-		_cache.GetOrFetchByIdAsync(
-		Arg.Any<ObjectId>(),
-		Arg.Any<Func<Task<BlogPostDto?>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns<ValueTask<BlogPostDto?>>(ci =>
-		{
-			var fetch = ci.Arg<Func<Task<BlogPostDto?>>>();
-			return new ValueTask<BlogPostDto?>(fetch().GetAwaiter().GetResult());
-		});
+		_cache.GetOrFetchByIdAsyncHandler = (_, fetch, _) => new ValueTask<BlogPostDto?>(fetch());
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
@@ -248,15 +236,7 @@ public class EditBlogPostHandlerTests
 		var categoryId = ObjectId.GenerateNewId();
 		post.AssignCategory(categoryId);
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
-		_cache.GetOrFetchByIdAsync(
-		Arg.Any<ObjectId>(),
-		Arg.Any<Func<Task<BlogPostDto?>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns<ValueTask<BlogPostDto?>>(ci =>
-		{
-			var fetch = ci.Arg<Func<Task<BlogPostDto?>>>();
-			return new ValueTask<BlogPostDto?>(fetch().GetAwaiter().GetResult());
-		});
+		_cache.GetOrFetchByIdAsyncHandler = (_, fetch, _) => new ValueTask<BlogPostDto?>(fetch());
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(post.Id), CancellationToken.None);
@@ -278,7 +258,7 @@ public class EditBlogPostHandlerTests
 		var command = new EditBlogPostCommand(post.Id, "New Title", "New Content", authorId, false);
 		_repo.GetByIdAsync(post.Id, Arg.Any<CancellationToken>()).Returns(post);
 		_repo.UpdateAsync(Arg.Any<BlogPost>(), Arg.Any<CancellationToken>())
-		.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new Exception()));
+		.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new InvalidOperationException("stale edit state")));
 
 		// Act
 		var result = await _handler.Handle(command, CancellationToken.None);
@@ -293,11 +273,7 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var id = ObjectId.GenerateNewId();
-		_cache.GetOrFetchByIdAsync(
-		id,
-		Arg.Any<Func<Task<BlogPostDto?>>>(),
-		Arg.Any<CancellationToken>())
-		.ThrowsAsync(new InvalidOperationException("redis down"));
+		_cache.GetOrFetchByIdAsyncHandler = (_, _, _) => throw new InvalidOperationException("redis down");
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
@@ -347,11 +323,7 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var id = ObjectId.GenerateNewId();
-		_cache.GetOrFetchByIdAsync(
-			id,
-			Arg.Any<Func<Task<BlogPostDto?>>>(),
-			Arg.Any<CancellationToken>())
-			.ThrowsAsync(new OperationCanceledException());
+		_cache.GetOrFetchByIdAsyncHandler = (_, _, _) => throw new OperationCanceledException();
 
 		// Act
 		Func<Task> act = () => _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
@@ -365,11 +337,7 @@ public class EditBlogPostHandlerTests
 	{
 		// Arrange
 		var id = ObjectId.GenerateNewId();
-		_cache.GetOrFetchByIdAsync(
-			id,
-			Arg.Any<Func<Task<BlogPostDto?>>>(),
-			Arg.Any<CancellationToken>())
-			.ThrowsAsync(new TimeoutException("db timeout"));
+		_cache.GetOrFetchByIdAsyncHandler = (_, _, _) => throw new TimeoutException("db timeout");
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostByIdQuery(id), CancellationToken.None);
@@ -377,5 +345,38 @@ public class EditBlogPostHandlerTests
 		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Be("An unexpected error occurred.");
+	}
+
+	private sealed class TestBlogPostCacheService : IBlogPostCacheService
+	{
+		public Func<ObjectId, Func<Task<BlogPostDto?>>, CancellationToken, ValueTask<BlogPostDto?>> GetOrFetchByIdAsyncHandler { get; set; } =
+			(_, _, _) => throw new NotSupportedException();
+
+		public int InvalidateAllCalls { get; private set; }
+
+		public List<ObjectId> InvalidatedIds { get; } = [];
+
+		public ValueTask<IReadOnlyList<BlogPostDto>> GetOrFetchAllAsync(
+			Func<Task<IReadOnlyList<BlogPostDto>>> fetch,
+			CancellationToken ct = default) =>
+			throw new NotSupportedException();
+
+		public ValueTask<BlogPostDto?> GetOrFetchByIdAsync(
+			ObjectId id,
+			Func<Task<BlogPostDto?>> fetch,
+			CancellationToken ct = default) =>
+			GetOrFetchByIdAsyncHandler(id, fetch, ct);
+
+		public Task InvalidateAllAsync(CancellationToken ct = default)
+		{
+			InvalidateAllCalls++;
+			return Task.CompletedTask;
+		}
+
+		public Task InvalidateByIdAsync(ObjectId id, CancellationToken ct = default)
+		{
+			InvalidatedIds.Add(id);
+			return Task.CompletedTask;
+		}
 	}
 }

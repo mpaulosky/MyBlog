@@ -66,7 +66,7 @@ public class DeleteBlogPostHandlerTests
 		var id = ObjectId.GenerateNewId();
 		var command = new DeleteBlogPostCommand(id);
 		_repo.DeleteAsync(id, Arg.Any<CancellationToken>())
-		.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new Exception()));
+		.ThrowsAsync(new DbUpdateConcurrencyException("conflict", new InvalidOperationException("stale delete state")));
 
 		// Act
 		var result = await _handler.Handle(command, CancellationToken.None);
