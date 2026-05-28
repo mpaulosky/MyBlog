@@ -14,7 +14,7 @@ namespace Web.Handlers;
 public class GetBlogPostsHandlerTests
 {
 	private readonly IBlogPostRepository _repo = Substitute.For<IBlogPostRepository>();
-	private readonly IBlogPostCacheService _cache = Substitute.For<IBlogPostCacheService>();
+	private readonly PassThroughBlogPostCacheService _cache = new();
 	private readonly GetBlogPostsHandler _handler;
 
 	public GetBlogPostsHandlerTests()
@@ -33,10 +33,7 @@ public class GetBlogPostsHandlerTests
 	{
 		// Arrange
 		var cachedList = MakeDtos();
-		_cache.GetOrFetchAllAsync(
-		Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns(new ValueTask<IReadOnlyList<BlogPostDto>>(cachedList));
+		_cache.GetOrFetchAllAsyncHandler = (_, _) => new ValueTask<IReadOnlyList<BlogPostDto>>(cachedList);
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -53,10 +50,7 @@ public class GetBlogPostsHandlerTests
 	{
 		// Arrange
 		var cachedList = MakeDtos();
-		_cache.GetOrFetchAllAsync(
-		Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns(new ValueTask<IReadOnlyList<BlogPostDto>>(cachedList));
+		_cache.GetOrFetchAllAsyncHandler = (_, _) => new ValueTask<IReadOnlyList<BlogPostDto>>(cachedList);
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -78,14 +72,7 @@ public class GetBlogPostsHandlerTests
 		var post2 = BlogPost.Create("T2", "C2", new PostAuthor("", "Test Author", "", []));
 		_repo.GetAllAsync(Arg.Any<CancellationToken>())
 		.Returns(new List<BlogPost> { post1, post2 });
-		_cache.GetOrFetchAllAsync(
-		Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns<ValueTask<IReadOnlyList<BlogPostDto>>>(ci =>
-		{
-			var fetch = ci.Arg<Func<Task<IReadOnlyList<BlogPostDto>>>>();
-			return new ValueTask<IReadOnlyList<BlogPostDto>>(fetch().GetAwaiter().GetResult());
-		});
+		_cache.GetOrFetchAllAsyncHandler = (fetch, _) => new ValueTask<IReadOnlyList<BlogPostDto>>(fetch());
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -103,12 +90,9 @@ public class GetBlogPostsHandlerTests
 	public async Task Handle_RepoThrows_ReturnsFailResult()
 	{
 		// Arrange
-		_cache.GetOrFetchAllAsync(
-		Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-		Arg.Any<CancellationToken>())
-		.Returns(new ValueTask<IReadOnlyList<BlogPostDto>>(
-		Task.FromException<IReadOnlyList<BlogPostDto>>(
-		new InvalidOperationException("db error"))));
+		_repo.GetAllAsync(Arg.Any<CancellationToken>())
+			.Returns(Task.FromException<IReadOnlyList<BlogPost>>(
+				new InvalidOperationException("db error")));
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -122,10 +106,7 @@ public class GetBlogPostsHandlerTests
 	public async Task Handle_CacheServiceThrows_ReturnsFailResult()
 	{
 		// Arrange
-		_cache.GetOrFetchAllAsync(
-		Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-		Arg.Any<CancellationToken>())
-		.ThrowsAsync(new InvalidOperationException("redis down"));
+		_cache.GetOrFetchAllAsyncHandler = (_, _) => throw new InvalidOperationException("redis down");
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -139,10 +120,7 @@ public class GetBlogPostsHandlerTests
 	public async Task Handle_OperationCanceled_Rethrows()
 	{
 		// Arrange
-		_cache.GetOrFetchAllAsync(
-			Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-			Arg.Any<CancellationToken>())
-			.ThrowsAsync(new OperationCanceledException());
+		_cache.GetOrFetchAllAsyncHandler = (_, _) => throw new OperationCanceledException();
 
 		// Act
 		Func<Task> act = () => _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -155,10 +133,7 @@ public class GetBlogPostsHandlerTests
 	public async Task Handle_UnexpectedException_ReturnsUnexpectedErrorResult()
 	{
 		// Arrange
-		_cache.GetOrFetchAllAsync(
-			Arg.Any<Func<Task<IReadOnlyList<BlogPostDto>>>>(),
-			Arg.Any<CancellationToken>())
-			.ThrowsAsync(new TimeoutException("db timeout"));
+		_cache.GetOrFetchAllAsyncHandler = (_, _) => throw new TimeoutException("db timeout");
 
 		// Act
 		var result = await _handler.Handle(new GetBlogPostsQuery(), CancellationToken.None);
@@ -166,5 +141,26 @@ public class GetBlogPostsHandlerTests
 		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Be("An unexpected error occurred.");
+	}
+
+	private sealed class PassThroughBlogPostCacheService : IBlogPostCacheService
+	{
+		public Func<Func<Task<IReadOnlyList<BlogPostDto>>>, CancellationToken, ValueTask<IReadOnlyList<BlogPostDto>>> GetOrFetchAllAsyncHandler { get; set; } =
+			(fetch, _) => new ValueTask<IReadOnlyList<BlogPostDto>>(fetch());
+
+		public ValueTask<IReadOnlyList<BlogPostDto>> GetOrFetchAllAsync(
+			Func<Task<IReadOnlyList<BlogPostDto>>> fetch,
+			CancellationToken ct = default) =>
+			GetOrFetchAllAsyncHandler(fetch, ct);
+
+		public ValueTask<BlogPostDto?> GetOrFetchByIdAsync(
+			ObjectId id,
+			Func<Task<BlogPostDto?>> fetch,
+			CancellationToken ct = default) =>
+			throw new NotSupportedException();
+
+		public Task InvalidateAllAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+		public Task InvalidateByIdAsync(ObjectId id, CancellationToken ct = default) => Task.CompletedTask;
 	}
 }

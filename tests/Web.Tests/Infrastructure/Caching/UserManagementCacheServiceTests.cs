@@ -13,7 +13,7 @@ using MyBlog.Web.Features.UserManagement;
 
 namespace Web.Infrastructure.Caching;
 
-public class UserManagementCacheServiceTests : IDisposable
+public sealed class UserManagementCacheServiceTests : IDisposable
 {
 	private readonly MemoryCache _localCache = new(new MemoryCacheOptions());
 	private readonly IDistributedCache _distributedCache = Substitute.For<IDistributedCache>();
@@ -26,7 +26,10 @@ public class UserManagementCacheServiceTests : IDisposable
 		_sut = new UserManagementCacheService(_localCache, _distributedCache);
 	}
 
-	public void Dispose() => _localCache.Dispose();
+	public void Dispose()
+	{
+		_localCache.Dispose();
+	}
 
 	private static List<UserWithRolesDto> MakeUsers() =>
 	[

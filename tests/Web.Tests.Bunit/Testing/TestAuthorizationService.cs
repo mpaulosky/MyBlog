@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace Web.Testing;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by the test DI container in bUnit fixtures.")]
 internal sealed class TestAuthorizationService : IAuthorizationService
 {
 	public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, IEnumerable<IAuthorizationRequirement> requirements)

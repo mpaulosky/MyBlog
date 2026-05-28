@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace Web.Infrastructure.Caching;
 
-public class BlogPostCacheServiceTests : IDisposable
+public sealed class BlogPostCacheServiceTests : IDisposable
 {
 	private readonly MemoryCache _realLocalCache = new(new MemoryCacheOptions());
 	private readonly IDistributedCache _distributedCache = Substitute.For<IDistributedCache>();
@@ -22,7 +22,10 @@ public class BlogPostCacheServiceTests : IDisposable
 		_sut = new BlogPostCacheService(_realLocalCache, _distributedCache);
 	}
 
-	public void Dispose() => _realLocalCache.Dispose();
+	public void Dispose()
+	{
+		_realLocalCache.Dispose();
+	}
 
 	private static readonly JsonSerializerOptions JsonOpts = BlogPostCacheService.JsonOpts;
 

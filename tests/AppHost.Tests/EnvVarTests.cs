@@ -11,6 +11,8 @@ using Aspire.Hosting;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace AppHost.Tests;
 
 /// <summary>
@@ -35,13 +37,16 @@ public class EnvVarTests
 			.Single(static r => r.Name == "web");
 
 		// Act
-#pragma warning disable CS0618 // Type or member is obsolete
-		var envVars = await webResource.GetEnvironmentVariableValuesAsync(
-			DistributedApplicationOperation.Publish);
-#pragma warning restore CS0618 // Type or member is obsolete
+		var executionContext = new DistributedApplicationExecutionContext(DistributedApplicationOperation.Publish);
+		var resolvedConfig = await ExecutionConfigurationBuilder
+			.Create(webResource)
+			.WithEnvironmentVariablesConfig()
+			.BuildAsync(executionContext, NullLogger.Instance, TestContext.Current.CancellationToken);
 
 		// Assert
-		envVars.Should().ContainKey("ConnectionStrings__myblog");
+		resolvedConfig.EnvironmentVariables
+			.Select(kvp => kvp.Key)
+			.Should().Contain("ConnectionStrings__myblog");
 	}
 
 	[Fact]
@@ -61,12 +66,15 @@ public class EnvVarTests
 			.Single(static r => r.Name == "web");
 
 		// Act
-#pragma warning disable CS0618 // Type or member is obsolete
-		var envVars = await webResource.GetEnvironmentVariableValuesAsync(
-			DistributedApplicationOperation.Publish);
-#pragma warning restore CS0618 // Type or member is obsolete
+		var executionContext = new DistributedApplicationExecutionContext(DistributedApplicationOperation.Publish);
+		var resolvedConfig = await ExecutionConfigurationBuilder
+			.Create(webResource)
+			.WithEnvironmentVariablesConfig()
+			.BuildAsync(executionContext, NullLogger.Instance, TestContext.Current.CancellationToken);
 
 		// Assert
-		envVars.Should().ContainKey("ConnectionStrings__redis");
+		resolvedConfig.EnvironmentVariables
+			.Select(kvp => kvp.Key)
+			.Should().Contain("ConnectionStrings__redis");
 	}
 }
