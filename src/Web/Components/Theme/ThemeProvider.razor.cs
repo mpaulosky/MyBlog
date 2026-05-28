@@ -7,11 +7,14 @@
 //Project Name :  Web
 //=======================================================
 
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 namespace MyBlog.Web.Components.Theme;
 
+[SuppressMessage("Design", "CA1515:Consider making public types internal", Justification = "Razor component discovery and bUnit rendering require the component type to remain public.")]
 public partial class ThemeProvider : ComponentBase
 {
 	[Inject] private IJSRuntime Js { get; set; } = default!;
@@ -28,32 +31,43 @@ public partial class ThemeProvider : ComponentBase
 			return;
 		}
 
-		CurrentColor = await GetStoredThemeValueAsync("themeManager.getColor", CurrentColor);
-		CurrentBrightness = await GetStoredThemeValueAsync("themeManager.getBrightness", CurrentBrightness);
+		var currentColor = await GetStoredThemeValueAsync("themeManager.getColor", CurrentColor).ConfigureAwait(false);
+		var currentBrightness = await GetStoredThemeValueAsync("themeManager.getBrightness", CurrentBrightness).ConfigureAwait(false);
 
-		await TryMarkInitializedAsync();
-		await InvokeAsync(StateHasChanged);
+		await TryMarkInitializedAsync().ConfigureAwait(false);
+		await InvokeAsync(() =>
+		{
+			CurrentColor = currentColor;
+			CurrentBrightness = currentBrightness;
+			StateHasChanged();
+		}).ConfigureAwait(false);
 	}
 
 	public async Task SetColor(string color)
 	{
-		CurrentColor = color;
-		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setColor", color);
+		await Js.InvokeVoidAsync("themeManager.setColor", color).ConfigureAwait(false);
+		await InvokeAsync(() =>
+		{
+			CurrentColor = color;
+			StateHasChanged();
+		}).ConfigureAwait(false);
 	}
 
 	public async Task SetBrightness(string brightness)
 	{
-		CurrentBrightness = brightness;
-		StateHasChanged();
-		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness);
+		await Js.InvokeVoidAsync("themeManager.setBrightness", brightness).ConfigureAwait(false);
+		await InvokeAsync(() =>
+		{
+			CurrentBrightness = brightness;
+			StateHasChanged();
+		}).ConfigureAwait(false);
 	}
 
 	private async Task<string> GetStoredThemeValueAsync(string identifier, string fallback)
 	{
 		try
 		{
-			return await Js.InvokeAsync<string>(identifier);
+			return await Js.InvokeAsync<string>(identifier).ConfigureAwait(false);
 		}
 		catch (JSException)
 		{
@@ -71,7 +85,7 @@ public partial class ThemeProvider : ComponentBase
 	{
 		try
 		{
-			await Js.InvokeVoidAsync("themeManager.markInitialized");
+			await Js.InvokeVoidAsync("themeManager.markInitialized").ConfigureAwait(false);
 		}
 		catch (JSException)
 		{

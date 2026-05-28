@@ -73,7 +73,7 @@ internal static class RoleClaimsHelper
 
 		var trimmed = claimValue.Trim();
 
-		if (trimmed.StartsWith("[", StringComparison.Ordinal))
+		if (trimmed[0] == '[')
 		{
 			try
 			{
