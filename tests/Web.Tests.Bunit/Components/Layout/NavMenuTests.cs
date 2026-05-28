@@ -90,7 +90,8 @@ public class NavMenuTests : BunitContext
 
 		// Interact with theme controls
 		cut.Find("select").Change("yellow");
-		cut.FindAll("button").Last().Click();
+		var buttons = cut.FindAll("button");
+		buttons[buttons.Count - 1].Click();
 
 		// Assert JS set-calls were triggered
 		cut.WaitForAssertion(() =>

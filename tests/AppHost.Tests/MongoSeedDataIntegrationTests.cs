@@ -41,7 +41,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	public async Task SeedMyBlogData_Inserts_Expected_Documents_Into_BlogPosts_Collection()
 	{
 		// Arrange — drop and recreate an empty blogposts collection
-		var client = new MongoClient(fixture.MongoConnectionString);
+		using var client = new MongoClient(fixture.MongoConnectionString);
 		var db = client.GetDatabase("myblog");
 		await db.DropCollectionAsync("blogposts", TestContext.Current.CancellationToken);
 		await db.CreateCollectionAsync("blogposts", cancellationToken: TestContext.Current.CancellationToken);
@@ -76,7 +76,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	public async Task SeedMyBlogData_Concurrent_Invocations_Allow_Only_One_Run()
 	{
 		// Arrange
-		var client = new MongoClient(fixture.MongoConnectionString);
+		using var client = new MongoClient(fixture.MongoConnectionString);
 		var db = client.GetDatabase("myblog");
 		await db.DropCollectionAsync("blogposts", TestContext.Current.CancellationToken);
 		await db.CreateCollectionAsync("blogposts", cancellationToken: TestContext.Current.CancellationToken);
@@ -129,7 +129,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	public async Task SeedMyBlogData_Empty_Database_Results_In_BlogPosts_After_Seed()
 	{
 		// Arrange — drop the entire database so no collection exists
-		var client = new MongoClient(fixture.MongoConnectionString);
+		using var client = new MongoClient(fixture.MongoConnectionString);
 		await client.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
 
 		var annotation = GetAnnotation();
@@ -273,11 +273,10 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 
 		var annotation = GetAnnotation();
 		var endpoint = fixture.App.GetEndpoint("web", "https");
-		using var handler = new HttpClientHandler
-		{
-			ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-		};
-		using var webClient = new HttpClient(handler) { BaseAddress = endpoint };
+		using var handler = new HttpClientHandler();
+		handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+		using var webClient = new HttpClient(handler);
+		webClient.BaseAddress = endpoint;
 		await WaitForWebReadyAsync(webClient);
 
 		// Act

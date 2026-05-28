@@ -92,21 +92,21 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 		// entirely synchronously (fast local MongoDB) and release the semaphore before the
 		// second call even starts, causing both to succeed (flake).
 		var ct = TestContext.Current.CancellationToken;
-		using var startGate = new SemaphoreSlim(0, 2);
+		var startGate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		var firstTask = Task.Run(async () =>
 		{
-			await startGate.WaitAsync(ct);
+			await startGate.Task.WaitAsync(ct);
 			return await annotation.ExecuteCommand(MakeContext());
 		}, ct);
 
 		var secondTask = Task.Run(async () =>
 		{
-			await startGate.WaitAsync(ct);
+			await startGate.Task.WaitAsync(ct);
 			return await annotation.ExecuteCommand(MakeContext());
 		}, ct);
 
-		startGate.Release(2); // open the gate — both workers race for _dbMutex
+		startGate.TrySetResult(true); // open the gate — both workers race for _dbMutex
 		var results = await Task.WhenAll(firstTask, secondTask);
 
 		// Assert
@@ -125,7 +125,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 
 	private async Task PrepareAsync(int blogPostCount = 0)
 	{
-		var client = new MongoClient(fixture.MongoConnectionString);
+		using var client = new MongoClient(fixture.MongoConnectionString);
 		await client.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
 		if (blogPostCount > 0)
 		{

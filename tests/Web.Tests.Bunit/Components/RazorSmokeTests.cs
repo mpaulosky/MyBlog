@@ -280,7 +280,7 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.Find("button").Click();
-		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
+		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete", StringComparison.Ordinal)).Click();
 
 		// Assert
 		sender.Received(1).Send(Arg.Is<DeleteBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
@@ -309,7 +309,7 @@ public class RazorSmokeTests : BunitContext
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
 
 		cut.Find("button").Click();
-		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete")).Click();
+		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete", StringComparison.Ordinal)).Click();
 
 		// Assert
 		cut.WaitForAssertion(() =>

@@ -17,14 +17,12 @@ public class UserManagementHandlerTests
 
 	private readonly IConfiguration _config = Substitute.For<IConfiguration>();
 	private readonly IHttpClientFactory _httpFactory = Substitute.For<IHttpClientFactory>();
-	private readonly IUserManagementCacheService _cache;
 	private readonly UserManagementHandler _handler;
 
 	public UserManagementHandlerTests()
 	{
 		_config["Auth0:ManagementApiDomain"].Returns((string?)null);
-		_cache = BuildPassThroughCache();
-		_handler = new UserManagementHandler(_config, _httpFactory, _cache);
+		_handler = new UserManagementHandler(_config, _httpFactory, BuildPassThroughCache());
 	}
 
 	// ── Domain missing ──────────────────────────────────────────────────────────────
@@ -378,21 +376,8 @@ public class UserManagementHandlerTests
 
 	// ── helpers ───────────────────────────────────────────────────────────────────────────────
 
-	private static IUserManagementCacheService BuildPassThroughCache()
-	{
-		var cache = Substitute.For<IUserManagementCacheService>();
-		cache.GetOrFetchUsersAsync(
-				Arg.Any<Func<Task<IReadOnlyList<UserWithRolesDto>>>>(),
-				Arg.Any<CancellationToken>())
-			.Returns(ci => new ValueTask<IReadOnlyList<UserWithRolesDto>>(
-				ci.Arg<Func<Task<IReadOnlyList<UserWithRolesDto>>>>()()));
-		cache.GetOrFetchRolesAsync(
-				Arg.Any<Func<Task<IReadOnlyList<RoleDto>>>>(),
-				Arg.Any<CancellationToken>())
-			.Returns(ci => new ValueTask<IReadOnlyList<RoleDto>>(
-				ci.Arg<Func<Task<IReadOnlyList<RoleDto>>>>()()));
-		return cache;
-	}
+	private static PassThroughUserManagementCacheService BuildPassThroughCache()
+		=> new PassThroughUserManagementCacheService();
 
 	private static UserManagementHandler BuildHandlerWithPrimaryKeys(IHttpClientFactory httpFactory, string audience)
 	{
@@ -465,6 +450,23 @@ public class UserManagementHandlerTests
 	private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
 	{
 		public HttpClient CreateClient(string name) => httpClient;
+	}
+
+	private sealed class PassThroughUserManagementCacheService : IUserManagementCacheService
+	{
+		public async ValueTask<IReadOnlyList<UserWithRolesDto>> GetOrFetchUsersAsync(
+			Func<Task<IReadOnlyList<UserWithRolesDto>>> fetch,
+			CancellationToken _ = default) =>
+			await fetch().ConfigureAwait(false);
+
+		public async ValueTask<IReadOnlyList<RoleDto>> GetOrFetchRolesAsync(
+			Func<Task<IReadOnlyList<RoleDto>>> fetch,
+			CancellationToken _ = default) =>
+			await fetch().ConfigureAwait(false);
+
+		public Task InvalidateUsersAsync(CancellationToken _ = default) => Task.CompletedTask;
+
+		public Task InvalidateRolesAsync(CancellationToken _ = default) => Task.CompletedTask;
 	}
 
 	private sealed class RecordingTokenHttpHandler(string responseJson) : HttpMessageHandler
