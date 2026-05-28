@@ -155,7 +155,7 @@ public class EditBlogPostHandlerTests
 
 		// Assert
 		result.Failure.Should().BeTrue();
-		result.ErrorCode.Should().Be(MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized);
+		result.ErrorCode.Should().Be(ResultErrorCode.Unauthorized);
 		result.Error.Should().Contain("not authorized");
 	}
 
