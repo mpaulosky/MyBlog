@@ -101,7 +101,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 
 
 internal static class ThemeToggleTestRuntime
-	{
+{
 	internal static async Task<bool> WaitForThemeReadyAsync(IPage page, ILocator toggleButton, TimeSpan? timeout = null)
 	{
 		var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));
