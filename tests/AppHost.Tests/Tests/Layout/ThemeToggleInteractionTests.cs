@@ -51,15 +51,20 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 
 			await toggleButton.ClickAsync();
 
-			var toggledToDark = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, toggleButton, expectedBrightness: "dark", expectedDarkClass: true);
-			if (!toggledToDark)
+			var toggledState = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, toggleButton, expectedBrightness: "dark", expectedDarkClass: true);
+			var themeSignalsBeforeNavigation = toggledState.Signals;
+			if (!toggledState.MatchedExpectedState && !themeSignalsBeforeNavigation.IsTrustworthyInteractiveState())
 			{
-				var blockedSignals = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, toggleButton);
 				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
-				Assert.Skip($"AppHost Testing never applied the light→dark toggle deterministically, so the /blog persistence scenario cannot be trusted. Observed after clicking the home-page toggle: {ThemeToggleTestRuntime.DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
+				Assert.Skip($"AppHost Testing never applied the light→dark toggle deterministically because the page never reached a trustworthy interactive state after the click. Observed after clicking the home-page toggle: {ThemeToggleTestRuntime.DescribeSignals(themeSignalsBeforeNavigation)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
 			}
 
-			var themeSignalsBeforeNavigation = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, toggleButton);
+			themeSignalsBeforeNavigation.HasDarkClass.Should().BeTrue(
+					because: "the home-page toggle should apply the html dark class before navigating to Blog Posts");
+			themeSignalsBeforeNavigation.StoredBrightness.Should().Be("dark",
+					because: "the home-page toggle should persist dark mode before navigating to Blog Posts");
+			themeSignalsBeforeNavigation.AriaLabel.Should().Contain("currently dark",
+					because: "the home-page toggle label should describe the updated dark-mode state before navigation");
 
 			var blogPostsLink = page.Locator("nav[aria-label=\"Main navigation\"] a[href=\"blog\"]").First;
 			await blogPostsLink.ClickAsync();
@@ -73,14 +78,13 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 			await blogToggleButton.WaitForAsync();
 
 			var persistedOnBlogPage = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, blogToggleButton, expectedBrightness: "dark", expectedDarkClass: true);
-			if (!persistedOnBlogPage)
+			var themeSignalsAfterNavigation = persistedOnBlogPage.Signals;
+			if (!persistedOnBlogPage.MatchedExpectedState && !themeSignalsAfterNavigation.IsTrustworthyInteractiveState())
 			{
-				var blockedSignals = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, blogToggleButton);
 				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
-				Assert.Skip($"AppHost Testing reached /blog but the persisted dark-mode signals were not trustworthy after navigation. Expected the chosen theme to hold on the Blog Posts page, but observed: {ThemeToggleTestRuntime.DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
+				Assert.Skip($"AppHost Testing reached /blog but the persisted dark-mode signals were not trustworthy after navigation. Expected the chosen theme to hold on the Blog Posts page, but observed: {ThemeToggleTestRuntime.DescribeSignals(themeSignalsAfterNavigation)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
 			}
 
-			var themeSignalsAfterNavigation = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, blogToggleButton);
 			var headingText = await blogHeading.TextContentAsync();
 
 			// Assert

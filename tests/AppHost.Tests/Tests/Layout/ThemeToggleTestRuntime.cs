@@ -29,7 +29,7 @@ internal static class ThemeToggleTestRuntime
 		return false;
 	}
 
-	internal static async Task<bool> WaitForThemeStateAsync(
+	internal static async Task<ThemeStateWaitResult> WaitForThemeStateAsync(
 			IPage page,
 			ILocator toggleButton,
 			string expectedBrightness,
@@ -37,22 +37,25 @@ internal static class ThemeToggleTestRuntime
 			TimeSpan? timeout = null)
 	{
 		var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));
+		ThemeSignals? lastSignals = null;
 
 		while (DateTime.UtcNow < deadline)
 		{
-			var signals = await ReadThemeSignalsAsync(page, toggleButton);
-			if (signals.IsTrustworthyInteractiveState()
-					&& signals.HasDarkClass == expectedDarkClass
-					&& string.Equals(signals.StoredBrightness, expectedBrightness, StringComparison.Ordinal)
-					&& (signals.AriaLabel?.Contains($"currently {expectedBrightness}", StringComparison.Ordinal) ?? false))
+			lastSignals = await ReadThemeSignalsAsync(page, toggleButton);
+			if (lastSignals.IsTrustworthyInteractiveState()
+					&& lastSignals.HasDarkClass == expectedDarkClass
+					&& string.Equals(lastSignals.StoredBrightness, expectedBrightness, StringComparison.Ordinal)
+					&& (lastSignals.AriaLabel?.Contains($"currently {expectedBrightness}", StringComparison.Ordinal) ?? false))
 			{
-				return true;
+				return new(lastSignals, true);
 			}
 
 			await Task.Delay(250);
 		}
 
-		return false;
+		lastSignals ??= await ReadThemeSignalsAsync(page, toggleButton);
+
+		return new(lastSignals, false);
 	}
 
 	internal static async Task<ThemeSignals> ReadThemeSignalsAsync(IPage page, ILocator toggleButton)
@@ -160,6 +163,8 @@ internal static class ThemeToggleTestRuntime
 						|| (HasThemeManager && HasBlazor))
 				&& !string.IsNullOrWhiteSpace(AriaLabel);
 	}
+
+	internal sealed record ThemeStateWaitResult(ThemeSignals Signals, bool MatchedExpectedState);
 
 	internal sealed class BrowserRuntimeDiagnostics
 	{
