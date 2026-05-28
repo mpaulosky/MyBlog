@@ -27,7 +27,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		// Arrange
 		await InteractWithPageAsync("web", async page =>
 		{
-			var runtimeDiagnostics = BrowserRuntimeDiagnostics.Attach(page);
+			var runtimeDiagnostics = ThemeToggleTestRuntime.BrowserRuntimeDiagnostics.Attach(page);
 
 			await page.EmulateMediaAsync(new()
 			{
@@ -41,25 +41,25 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 			var toggleButton = page.Locator("button[aria-label*=\"Toggle dark mode\"]").First;
 			await toggleButton.WaitForAsync();
 
-			var becameInteractive = await WaitForThemeReadyAsync(page, toggleButton);
+			var becameInteractive = await ThemeToggleTestRuntime.WaitForThemeReadyAsync(page, toggleButton);
 			if (!becameInteractive)
 			{
-				var blockedSignals = await ReadThemeSignalsAsync(page, toggleButton);
-				var assetDiagnostics = await ReadAssetFetchDiagnosticsAsync(page);
-				Assert.Skip($"AppHost Testing never reached a trustworthy interactive theme state for the /blog persistence flow. Observed on the home page before toggling: {DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
+				var blockedSignals = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, toggleButton);
+				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
+				Assert.Skip($"AppHost Testing never reached a trustworthy interactive theme state for the /blog persistence flow. Observed on the home page before toggling: {ThemeToggleTestRuntime.DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
 			}
 
 			await toggleButton.ClickAsync();
 
-			var toggledToDark = await WaitForThemeStateAsync(page, toggleButton, expectedBrightness: "dark", expectedDarkClass: true);
+			var toggledToDark = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, toggleButton, expectedBrightness: "dark", expectedDarkClass: true);
 			if (!toggledToDark)
 			{
-				var blockedSignals = await ReadThemeSignalsAsync(page, toggleButton);
-				var assetDiagnostics = await ReadAssetFetchDiagnosticsAsync(page);
-				Assert.Skip($"AppHost Testing never applied the light→dark toggle deterministically, so the /blog persistence scenario cannot be trusted. Observed after clicking the home-page toggle: {DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
+				var blockedSignals = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, toggleButton);
+				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
+				Assert.Skip($"AppHost Testing never applied the light→dark toggle deterministically, so the /blog persistence scenario cannot be trusted. Observed after clicking the home-page toggle: {ThemeToggleTestRuntime.DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
 			}
 
-			var themeSignalsBeforeNavigation = await ReadThemeSignalsAsync(page, toggleButton);
+			var themeSignalsBeforeNavigation = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, toggleButton);
 
 			var blogPostsLink = page.Locator("nav[aria-label=\"Main navigation\"] a[href=\"blog\"]").First;
 			await blogPostsLink.ClickAsync();
@@ -72,15 +72,15 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 			var blogToggleButton = page.Locator("button[aria-label*=\"Toggle dark mode\"]").First;
 			await blogToggleButton.WaitForAsync();
 
-			var persistedOnBlogPage = await WaitForThemeStateAsync(page, blogToggleButton, expectedBrightness: "dark", expectedDarkClass: true);
+			var persistedOnBlogPage = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, blogToggleButton, expectedBrightness: "dark", expectedDarkClass: true);
 			if (!persistedOnBlogPage)
 			{
-				var blockedSignals = await ReadThemeSignalsAsync(page, blogToggleButton);
-				var assetDiagnostics = await ReadAssetFetchDiagnosticsAsync(page);
-				Assert.Skip($"AppHost Testing reached /blog but the persisted dark-mode signals were not trustworthy after navigation. Expected the chosen theme to hold on the Blog Posts page, but observed: {DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
+				var blockedSignals = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, blogToggleButton);
+				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
+				Assert.Skip($"AppHost Testing reached /blog but the persisted dark-mode signals were not trustworthy after navigation. Expected the chosen theme to hold on the Blog Posts page, but observed: {ThemeToggleTestRuntime.DescribeSignals(blockedSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
 			}
 
-			var themeSignalsAfterNavigation = await ReadThemeSignalsAsync(page, blogToggleButton);
+			var themeSignalsAfterNavigation = await ThemeToggleTestRuntime.ReadThemeSignalsAsync(page, blogToggleButton);
 			var headingText = await blogHeading.TextContentAsync();
 
 			// Assert
@@ -97,7 +97,12 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		});
 	}
 
-	private static async Task<bool> WaitForThemeReadyAsync(IPage page, ILocator toggleButton, TimeSpan? timeout = null)
+}
+
+
+internal static class ThemeToggleTestRuntime
+	{
+	internal static async Task<bool> WaitForThemeReadyAsync(IPage page, ILocator toggleButton, TimeSpan? timeout = null)
 	{
 		var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));
 
@@ -115,7 +120,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		return false;
 	}
 
-	private static async Task<bool> WaitForThemeStateAsync(
+	internal static async Task<bool> WaitForThemeStateAsync(
 		IPage page,
 		ILocator toggleButton,
 		string expectedBrightness,
@@ -141,7 +146,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		return false;
 	}
 
-	private static async Task<ThemeSignals> ReadThemeSignalsAsync(IPage page, ILocator toggleButton)
+	internal static async Task<ThemeSignals> ReadThemeSignalsAsync(IPage page, ILocator toggleButton)
 	{
 		var hasDarkClass = await page.EvaluateAsync<bool>("() => document.documentElement.classList.contains('dark')");
 		var storedBrightness = await page.EvaluateAsync<string?>("() => localStorage.getItem('theme-mode')");
@@ -165,7 +170,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 			sawBlazorScriptResource);
 	}
 
-	private static async Task<string> ReadAssetFetchDiagnosticsAsync(IPage page)
+	internal static async Task<string> ReadAssetFetchDiagnosticsAsync(IPage page)
 	{
 		var diagnostics = await page.EvaluateAsync<string>(
 			"""
@@ -219,7 +224,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		return string.IsNullOrWhiteSpace(diagnostics) ? "[]" : diagnostics;
 	}
 
-	private static string DescribeSignals(ThemeSignals signals)
+	internal static string DescribeSignals(ThemeSignals signals)
 	{
 		var darkClass = signals.HasDarkClass ? "true" : "false";
 		var themeManager = signals.HasThemeManager ? "present" : "missing";
@@ -230,7 +235,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		return $"data-theme-ready='{signals.ReadinessMarker ?? "<null>"}', aria-label='{signals.AriaLabel ?? "<null>"}', html.dark={darkClass}, localStorage['theme-mode']='{signals.StoredBrightness ?? "<null>"}', localStorage['theme-color']='{signals.StoredColor ?? "<null>"}', window.themeManager={themeManager}, window.Blazor={blazor}, theme.js={themeScript}, blazor.web.js={blazorScript}";
 	}
 
-	private sealed record ThemeSignals(
+	internal sealed record ThemeSignals(
 		bool HasDarkClass,
 		string? StoredBrightness,
 		string? StoredColor,
@@ -241,18 +246,18 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 		bool SawThemeScriptResource,
 		bool SawBlazorScriptResource)
 	{
-		public bool IsTrustworthyInteractiveState() =>
+		internal bool IsTrustworthyInteractiveState() =>
 			(string.Equals(ReadinessMarker, "true", StringComparison.Ordinal)
 				|| (HasThemeManager && HasBlazor))
 			&& !string.IsNullOrWhiteSpace(AriaLabel);
 	}
 
-	private sealed class BrowserRuntimeDiagnostics
+	internal sealed class BrowserRuntimeDiagnostics
 	{
 		private readonly List<string> _events = [];
 		private readonly object _gate = new();
 
-		public static BrowserRuntimeDiagnostics Attach(IPage page)
+		internal static BrowserRuntimeDiagnostics Attach(IPage page)
 		{
 			var diagnostics = new BrowserRuntimeDiagnostics();
 
@@ -263,7 +268,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 			return diagnostics;
 		}
 
-		public string Describe()
+		internal string Describe()
 		{
 			lock (_gate)
 			{

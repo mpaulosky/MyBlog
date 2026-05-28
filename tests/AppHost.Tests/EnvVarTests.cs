@@ -8,7 +8,6 @@
 // =============================================
 
 using Aspire.Hosting;
-using Aspire.Hosting.ApplicationModel;
 
 using FluentAssertions;
 
@@ -42,7 +41,7 @@ public class EnvVarTests
 		var resolvedConfig = await ExecutionConfigurationBuilder
 			.Create(webResource)
 			.WithEnvironmentVariablesConfig()
-			.BuildAsync(executionContext, NullLogger.Instance);
+			.BuildAsync(executionContext, NullLogger.Instance, TestContext.Current.CancellationToken);
 
 		// Assert
 		resolvedConfig.EnvironmentVariables
@@ -71,7 +70,7 @@ public class EnvVarTests
 		var resolvedConfig = await ExecutionConfigurationBuilder
 			.Create(webResource)
 			.WithEnvironmentVariablesConfig()
-			.BuildAsync(executionContext, NullLogger.Instance);
+			.BuildAsync(executionContext, NullLogger.Instance, TestContext.Current.CancellationToken);
 
 		// Assert
 		resolvedConfig.EnvironmentVariables
