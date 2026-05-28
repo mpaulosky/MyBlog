@@ -30,32 +30,38 @@ internal static class ThemeToggleTestRuntime
 	}
 
 	internal static async Task<ThemeStateWaitResult> WaitForThemeStateAsync(
-			IPage page,
-			ILocator toggleButton,
-			string expectedBrightness,
-			bool expectedDarkClass,
-			TimeSpan? timeout = null)
+					IPage page,
+					ILocator toggleButton,
+					string expectedBrightness,
+					bool expectedDarkClass,
+					TimeSpan? timeout = null)
 	{
 		var deadline = DateTime.UtcNow.Add(timeout ?? TimeSpan.FromSeconds(10));
 		ThemeSignals? lastSignals = null;
+		var sawTrustworthyInteractiveState = false;
 
 		while (DateTime.UtcNow < deadline)
 		{
 			lastSignals = await ReadThemeSignalsAsync(page, toggleButton);
-			if (lastSignals.IsTrustworthyInteractiveState()
-					&& lastSignals.HasDarkClass == expectedDarkClass
-					&& string.Equals(lastSignals.StoredBrightness, expectedBrightness, StringComparison.Ordinal)
-					&& (lastSignals.AriaLabel?.Contains($"currently {expectedBrightness}", StringComparison.Ordinal) ?? false))
+			if (lastSignals.IsTrustworthyInteractiveState())
 			{
-				return new(lastSignals, true);
+				sawTrustworthyInteractiveState = true;
+
+				if (lastSignals.HasDarkClass == expectedDarkClass
+							&& string.Equals(lastSignals.StoredBrightness, expectedBrightness, StringComparison.Ordinal)
+							&& (lastSignals.AriaLabel?.Contains($"currently {expectedBrightness}", StringComparison.Ordinal) ?? false))
+				{
+					return new(lastSignals, true, sawTrustworthyInteractiveState);
+				}
 			}
 
 			await Task.Delay(250);
 		}
 
 		lastSignals ??= await ReadThemeSignalsAsync(page, toggleButton);
+		sawTrustworthyInteractiveState |= lastSignals.IsTrustworthyInteractiveState();
 
-		return new(lastSignals, false);
+		return new(lastSignals, false, sawTrustworthyInteractiveState);
 	}
 
 	internal static async Task<ThemeSignals> ReadThemeSignalsAsync(IPage page, ILocator toggleButton)
@@ -71,21 +77,21 @@ internal static class ThemeToggleTestRuntime
 		var sawBlazorScriptResource = await page.EvaluateAsync<bool>("() => performance.getEntriesByType('resource').some(entry => entry.name.includes('blazor.web.js'))");
 
 		return new ThemeSignals(
-				hasDarkClass,
-				storedBrightness,
-				storedColor,
-				ariaLabel,
-				readinessMarker,
-				hasThemeManager,
-				hasBlazor,
-				sawThemeScriptResource,
-				sawBlazorScriptResource);
+						hasDarkClass,
+						storedBrightness,
+						storedColor,
+						ariaLabel,
+						readinessMarker,
+						hasThemeManager,
+						hasBlazor,
+						sawThemeScriptResource,
+						sawBlazorScriptResource);
 	}
 
 	internal static async Task<string> ReadAssetFetchDiagnosticsAsync(IPage page)
 	{
 		var diagnostics = await page.EvaluateAsync<string>(
-				"""
+						"""
 			async () => {
 				const interestingPaths = new Set([
 					'/_framework/blazor.web.js',
@@ -148,23 +154,23 @@ internal static class ThemeToggleTestRuntime
 	}
 
 	internal sealed record ThemeSignals(
-			bool HasDarkClass,
-			string? StoredBrightness,
-			string? StoredColor,
-			string? AriaLabel,
-			string? ReadinessMarker,
-			bool HasThemeManager,
-			bool HasBlazor,
-			bool SawThemeScriptResource,
-			bool SawBlazorScriptResource)
+					bool HasDarkClass,
+					string? StoredBrightness,
+					string? StoredColor,
+					string? AriaLabel,
+					string? ReadinessMarker,
+					bool HasThemeManager,
+					bool HasBlazor,
+					bool SawThemeScriptResource,
+					bool SawBlazorScriptResource)
 	{
 		internal bool IsTrustworthyInteractiveState() =>
-				(string.Equals(ReadinessMarker, "true", StringComparison.Ordinal)
-						|| (HasThemeManager && HasBlazor))
-				&& !string.IsNullOrWhiteSpace(AriaLabel);
+						(string.Equals(ReadinessMarker, "true", StringComparison.Ordinal)
+										|| (HasThemeManager && HasBlazor))
+						&& !string.IsNullOrWhiteSpace(AriaLabel);
 	}
 
-	internal sealed record ThemeStateWaitResult(ThemeSignals Signals, bool MatchedExpectedState);
+	internal sealed record ThemeStateWaitResult(ThemeSignals Signals, bool MatchedExpectedState, bool SawTrustworthyInteractiveState);
 
 	internal sealed class BrowserRuntimeDiagnostics
 	{
@@ -187,8 +193,8 @@ internal static class ThemeToggleTestRuntime
 			lock (_gate)
 			{
 				return _events.Count == 0
-						? "no console, pageerror, or requestfailed events captured"
-						: string.Join(" | ", _events.TakeLast(6));
+								? "no console, pageerror, or requestfailed events captured"
+								: string.Join(" | ", _events.TakeLast(6));
 			}
 		}
 

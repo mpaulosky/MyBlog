@@ -57,7 +57,7 @@ public sealed class LayoutThemeToggleTests : BasePlaywrightTests
 					initialBrightness,
 					initialHasDarkClass);
 			var startingSignals = initialState.Signals;
-			if (!initialState.MatchedExpectedState && !startingSignals.IsTrustworthyInteractiveState())
+			if (!initialState.MatchedExpectedState && !initialState.SawTrustworthyInteractiveState)
 			{
 				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
 				Assert.Skip($"AppHost Testing never reached a trustworthy interactive theme state for the reload/bootstrap flow seeded with '{initialBrightness}'. Observed after reload while waiting for the seeded state: {ThemeToggleTestRuntime.DescribeSignals(startingSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
@@ -83,7 +83,9 @@ public sealed class LayoutThemeToggleTests : BasePlaywrightTests
 					expectedDarkClass);
 
 			var endingSignals = toggledState.Signals;
-			if (!toggledState.MatchedExpectedState && !endingSignals.IsTrustworthyInteractiveState())
+			if (!toggledState.MatchedExpectedState
+						&& !toggledState.SawTrustworthyInteractiveState
+						&& !initialState.SawTrustworthyInteractiveState)
 			{
 				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
 				Assert.Skip($"AppHost Testing lost a trustworthy interactive theme state after clicking the reload/bootstrap toggle seeded with '{initialBrightness}'. Observed after clicking: {ThemeToggleTestRuntime.DescribeSignals(endingSignals)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");

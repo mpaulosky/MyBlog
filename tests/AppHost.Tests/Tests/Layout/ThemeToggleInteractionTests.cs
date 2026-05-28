@@ -53,7 +53,9 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 
 			var toggledState = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, toggleButton, expectedBrightness: "dark", expectedDarkClass: true);
 			var themeSignalsBeforeNavigation = toggledState.Signals;
-			if (!toggledState.MatchedExpectedState && !themeSignalsBeforeNavigation.IsTrustworthyInteractiveState())
+			if (!toggledState.MatchedExpectedState
+						&& !toggledState.SawTrustworthyInteractiveState
+						&& !becameInteractive)
 			{
 				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
 				Assert.Skip($"AppHost Testing never applied the light→dark toggle deterministically because the page never reached a trustworthy interactive state after the click. Observed after clicking the home-page toggle: {ThemeToggleTestRuntime.DescribeSignals(themeSignalsBeforeNavigation)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
@@ -79,7 +81,9 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 
 			var persistedOnBlogPage = await ThemeToggleTestRuntime.WaitForThemeStateAsync(page, blogToggleButton, expectedBrightness: "dark", expectedDarkClass: true);
 			var themeSignalsAfterNavigation = persistedOnBlogPage.Signals;
-			if (!persistedOnBlogPage.MatchedExpectedState && !themeSignalsAfterNavigation.IsTrustworthyInteractiveState())
+			if (!persistedOnBlogPage.MatchedExpectedState
+						&& !persistedOnBlogPage.SawTrustworthyInteractiveState
+						&& !becameInteractive)
 			{
 				var assetDiagnostics = await ThemeToggleTestRuntime.ReadAssetFetchDiagnosticsAsync(page);
 				Assert.Skip($"AppHost Testing reached /blog but the persisted dark-mode signals were not trustworthy after navigation. Expected the chosen theme to hold on the Blog Posts page, but observed: {ThemeToggleTestRuntime.DescribeSignals(themeSignalsAfterNavigation)}. Browser diagnostics: {runtimeDiagnostics.Describe()}. Asset fetch diagnostics: {assetDiagnostics}.");
