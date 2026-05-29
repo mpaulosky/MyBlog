@@ -9,6 +9,10 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+# Ensure dotnet SDK is in PATH for the hook
+export DOTNET_ROOT="${DOTNET_ROOT:-${HOME}/.dotnet}"
+export PATH="${DOTNET_ROOT}:${PATH}"
+
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; RESET='\033[0m'
 
 echo -e "${CYAN}━━━ Pre-Push Gate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
