@@ -12,7 +12,7 @@
     <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.3.5" />
     <!-- Auth0 Packages -->
     <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
-    <PackageVersion Include="Auth0.ManagementApi" Version="8.3.0" />
+    <PackageVersion Include="Auth0.ManagementApi" Version="8.4.0" />
     <!-- Validation -->
     <!-- 9.1.x-beta uses AngleSharp 1.4.0 (compatible with bunit 2.7.2); 9.0.x used 0.17.1 which clashed -->
     <PackageVersion Include="HtmlSanitizer" Version="9.1.923-beta" />
@@ -27,8 +27,8 @@
     <!-- CQRS/Mediator -->
     <PackageVersion Include="MediatR" Version="14.1.0" />
     <!-- Database -->
-    <PackageVersion Include="MongoDB.Bson" Version="3.8.1" />
-    <PackageVersion Include="MongoDB.Driver" Version="3.8.1" />
+    <PackageVersion Include="MongoDB.Bson" Version="3.9.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
     <!-- Transitive pin: MongoDB.Driver resolves an older SharpCompress; pinned to 1.0.0 -->
     <PackageVersion Include="SharpCompress" Version="1.0.0" />
@@ -37,7 +37,7 @@
     <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.60.0" />
     <!-- OpenTelemetry -->
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />

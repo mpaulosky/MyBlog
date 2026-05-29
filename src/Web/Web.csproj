@@ -31,18 +31,33 @@
     <PublishTrimmed>false</PublishTrimmed>
     <InvariantGlobalization>false</InvariantGlobalization>
     <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
+    <NpmCommand Condition="'$(NpmCommand)' == ''">npm</NpmCommand>
   </PropertyGroup>
+
+  <Target Name="DetectNpm" BeforeTargets="EnsureNpmPackages;BuildTailwind" Condition="'$(CI)' != 'true' AND '$(CI)' != '1'">
+    <Exec Command="$(NpmCommand) --version" IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="NpmExitCode" />
+    </Exec>
+    <PropertyGroup>
+      <NpmAvailable Condition="'$(NpmExitCode)' == '0'">true</NpmAvailable>
+      <NpmAvailable Condition="'$(NpmExitCode)' != '0'">false</NpmAvailable>
+    </PropertyGroup>
+    <Error Condition="'$(NpmAvailable)' != 'true' AND !Exists('$(MSBuildProjectDirectory)/wwwroot/css/tailwind.css')"
+           Text="npm was not found and no pre-built tailwind.css exists. Install Node.js/npm and run 'cd src/Web &amp;&amp; npm ci' before building." />
+    <Warning Condition="'$(NpmAvailable)' != 'true' AND Exists('$(MSBuildProjectDirectory)/wwwroot/css/tailwind.css')"
+             Text="npm was not found. Skipping Tailwind build and using the existing generated CSS at wwwroot/css/tailwind.css." />
+  </Target>
 
   <!-- On a fresh machine, node_modules won't exist. Auto-run npm install before Tailwind builds. -->
   <Target Name="EnsureNpmPackages" BeforeTargets="BuildTailwind"
-          Condition="'$(CI)' != 'true' AND !Exists('$(MSBuildProjectDirectory)/../../node_modules')">
+          Condition="'$(CI)' != 'true' AND '$(CI)' != '1' AND '$(NpmAvailable)' == 'true' AND !Exists('$(MSBuildProjectDirectory)/node_modules')">
     <Message Importance="high" Text="node_modules not found — running npm install..." />
-    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 
   <!-- Build Tailwind CSS (skip on CI environments where npm is not installed) -->
-  <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true'">
-    <Exec Command="npm run tw:build" WorkingDirectory="$(MSBuildProjectDirectory)/../.." />
+  <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true' AND '$(CI)' != '1' AND '$(NpmAvailable)' == 'true'">
+    <Exec Command="npm run tw:build" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 
 
