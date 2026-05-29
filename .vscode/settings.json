@@ -1,6 +1,7 @@
 {
 	"cSpell.words": [
 		"ASPNETCORE",
+		"autobuild",
 		"cref",
 		"EECOM",
 		"inheritdoc",
@@ -8,5 +9,9 @@
 		"rendermode",
 		"reskill",
 		"toplevel"
-	]
+	],
+	"dotnet.server.environmentVariables": {
+		"DOTNET_ROOT": "/home/mpaulosky/.dotnet",
+		"PATH": "/home/mpaulosky/.dotnet:${env:PATH}"
+	}
 }
