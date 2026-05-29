@@ -9,9 +9,5 @@
 		"rendermode",
 		"reskill",
 		"toplevel"
-	],
-	"dotnet.server.environmentVariables": {
-		"DOTNET_ROOT": "/home/mpaulosky/.dotnet",
-		"PATH": "/home/mpaulosky/.dotnet:${env:PATH}"
-	}
+	]
 }

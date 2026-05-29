@@ -111,7 +111,7 @@ MyBlog/
 3. **Install npm dependencies** (for TailwindCSS)
 
    ```bash
-   npm ci
+   cd src/Web && npm ci && cd ../..
    ```
 
 4. **Build the solution**

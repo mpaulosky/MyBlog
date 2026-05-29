@@ -68,8 +68,8 @@ fi
 
 # ── Gate 2: markdownlint check ─────────────────────────────────────────────
 echo -e "\n${CYAN}📝 Checking Markdown lint (markdownlint-cli2)...${RESET}"
-if [[ -x "$ROOT/node_modules/.bin/markdownlint-cli2" ]]; then
-  "$ROOT/node_modules/.bin/markdownlint-cli2" "**/*.md" \
+if [[ -x "$ROOT/src/Web/node_modules/.bin/markdownlint-cli2" ]]; then
+  "$ROOT/src/Web/node_modules/.bin/markdownlint-cli2" "**/*.md" \
     "!**/node_modules/**" \
     "!**/bin/**" \
     "!**/obj/**" \
@@ -81,13 +81,14 @@ if [[ -x "$ROOT/node_modules/.bin/markdownlint-cli2" ]]; then
     --config "$ROOT/.markdownlint.json"
   MD_EXIT=$?
 else
-  echo -e "${YELLOW}⚠️  markdownlint-cli2 not found at node_modules/.bin — run 'npm install'.${RESET}"
-  exit 1
+  echo -e "${YELLOW}⚠️  markdownlint-cli2 not found — skipping local lint (CI enforces it).${RESET}"
+  echo -e "${YELLOW}    To run locally: cd src/Web && npm ci${RESET}"
+  MD_EXIT=0
 fi
 
 if [[ $MD_EXIT -ne 0 ]]; then
   echo -e "${RED}❌  Markdownlint violations detected.${RESET}"
-  echo -e "${YELLOW}    Fix:  npx markdownlint-cli2 \"**/*.md\"${RESET}"
+  echo -e "${YELLOW}    Fix:  cd src/Web && npx markdownlint-cli2 \"**/*.md\"${RESET}"
   echo -e "${YELLOW}    Then: git add -u && git commit (or --amend), then re-push.${RESET}"
   exit 1
 fi
