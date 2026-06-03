@@ -1543,6 +1543,17 @@ Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md
 
 ## Learnings
 
+### 2026-05-29 — Issue #407: AppHost console URL is the dashboard source of truth
+
+- `dotnet run --project src/AppHost/AppHost.csproj` started successfully on the
+   issue branch; the perceived local-startup failure came from stale docs that
+   still pointed to `http://localhost:15100`.
+- For local Aspire troubleshooting, trust the dashboard URL printed by the
+   running AppHost console instead of any hard-coded port in docs or prior
+   sessions.
+- On this machine, the direct runtime check reported the active AppHost URL as
+   `https://localhost:17091`.
+
 ### Issue #299 — Pre-Push Gate: AppHost.Tests Was Missing from Live Hook (2026-05-11)
 
 **Root cause:** The playbook and SKILL.md documented `AppHost.Tests` as mandatory in Gate 5, but the live `.github/hooks/pre-push` `INTEGRATION_PROJECTS` array only contained `Web.Tests.Integration`. The hook and docs were out of sync.

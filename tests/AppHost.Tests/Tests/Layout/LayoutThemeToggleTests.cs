@@ -39,8 +39,31 @@ public sealed class LayoutThemeToggleTests : BasePlaywrightTests
 
 			// Navigate first so the page has a real origin, then seed localStorage and
 			// reload to exercise the real bootstrap path with deterministic storage.
-			await page.GotoAsync("/");
-			await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+			// Retry initial navigation to handle transient network errors during Aspire startup
+			var maxRetries = 3;
+			var retryDelay = TimeSpan.FromSeconds(2);
+			Exception? lastException = null;
+
+			for (var attempt = 0; attempt < maxRetries; attempt++)
+			{
+				try
+				{
+					await page.GotoAsync("/");
+					await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+					lastException = null;
+					break;
+				}
+				catch (PlaywrightException ex) when (ex.Message.Contains("ERR_NETWORK_CHANGED", StringComparison.OrdinalIgnoreCase) && attempt < maxRetries - 1)
+				{
+					lastException = ex;
+					await Task.Delay(retryDelay);
+				}
+			}
+
+			if (lastException != null)
+			{
+				throw lastException;
+			}
 			await page.EvaluateAsync(
 					"brightness => { localStorage.setItem('theme-color', 'blue'); localStorage.setItem('theme-mode', brightness); }",
 					initialBrightness);
