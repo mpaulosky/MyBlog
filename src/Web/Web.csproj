@@ -1,5 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
+   	<!-- Ensure Blazor static assets are generated during build for E2E tests -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <NpmCommand Condition="'$(NpmCommand)' == ''">npm</NpmCommand>
+    <RootNamespace>MyBlog.Web</RootNamespace>
+    <UserSecretsId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
@@ -19,20 +30,6 @@
     <PackageReference Include="PSC.Blazor.Components.MarkdownEditor" />
     <PackageReference Include="Snappier" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
-    <RootNamespace>MyBlog.Web</RootNamespace>
-    <UserSecretsId>a1b2c3d4-e5f6-7890-abcd-ef1234567890</UserSecretsId>
-    <!-- Ensure Blazor static assets are generated during build for E2E tests -->
-    <PublishTrimmed>false</PublishTrimmed>
-    <InvariantGlobalization>false</InvariantGlobalization>
-    <IncludeNETCoreAppRuntime>false</IncludeNETCoreAppRuntime>
-    <NpmCommand Condition="'$(NpmCommand)' == ''">npm</NpmCommand>
-  </PropertyGroup>
 
   <Target Name="DetectNpm" BeforeTargets="EnsureNpmPackages;BuildTailwind" Condition="'$(CI)' != 'true' AND '$(CI)' != '1'">
     <Exec Command="$(NpmCommand) --version" IgnoreExitCode="true">
@@ -59,7 +56,5 @@
   <Target Name="BuildTailwind" BeforeTargets="Build" Condition="'$(CI)' != 'true' AND '$(CI)' != '1' AND '$(NpmAvailable)' == 'true'">
     <Exec Command="npm run tw:build" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
-
-
 
 </Project>

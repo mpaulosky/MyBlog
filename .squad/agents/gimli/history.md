@@ -1530,6 +1530,17 @@ configuration in Testing redirects `/Account/Login` to the local
 
 ### Learnings
 
+### 2026-05-29 — Issue #407: Keep one smoke test on AppHost startup wiring
+
+- `tests/AppHost.Tests/AppHostStartupSmokeTests.cs` now covers the happy-path
+   startup contract that AppHost starts the web resource and resolves the MongoDB
+   connection string.
+- The focused proof for this issue was
+   `AppHostStartupSmokeTests.AppHost_Starts_Web_And_Resolves_MongoDb_Connection_String`,
+   which passed after the docs fix converged with runtime validation.
+- When local startup reports drift from docs, keep one narrow AppHost smoke test
+   in place before escalating to broader runtime defect hunting.
+
 1. The highest-value proof here is split across layers: AppHost verifies the
    observable redirect, while the architecture contract guards the source-order
    short-circuit that prevents accidental regression back to external OIDC.
