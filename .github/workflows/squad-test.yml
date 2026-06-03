@@ -71,11 +71,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Discover solution file
+        run: |
+          mapfile -t matches < <(find . -maxdepth 1 -name '*.slnx')
+          count=${#matches[@]}
+          if [[ $count -eq 0 ]]; then
+            echo "::error::No *.slnx file found at the repository root."
+            exit 1
+          elif [[ $count -gt 1 ]]; then
+            echo "::error::Multiple *.slnx files found at the repository root: ${matches[*]}"
+            exit 1
+          fi
+          echo "SOLUTION_FILE=${matches[0]}" >> "$GITHUB_ENV"
+          echo "Discovered solution: ${matches[0]}"
+
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore "$SOLUTION_FILE"
 
       - name: Build solution
-        run: dotnet build MyBlog.slnx --configuration Release --no-restore
+        run: dotnet build "$SOLUTION_FILE" --configuration Release --no-restore
 
       - name: Cache build artifacts
         uses: actions/cache@v5
