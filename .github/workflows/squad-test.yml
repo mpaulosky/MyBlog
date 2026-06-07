@@ -560,7 +560,7 @@ jobs:
           path: coverage-output
 
       - name: Publish to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: always()
         with:
           fail_ci_if_error: false
