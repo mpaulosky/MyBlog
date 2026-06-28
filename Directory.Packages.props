@@ -5,14 +5,14 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Aspire Packages -->
-    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.3.5" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.3.5" />
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.3.5" />
-    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.3.5" />
-    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.3.5" />
+    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
+    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.4.6" />
+    <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.4.6" />
     <!-- Auth0 Packages -->
-    <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.7.0" />
-    <PackageVersion Include="Auth0.ManagementApi" Version="8.4.0" />
+    <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.7.1" />
+    <PackageVersion Include="Auth0.ManagementApi" Version="8.5.0" />
     <!-- Validation -->
     <!-- 9.1.x-beta uses AngleSharp 1.4.0 (compatible with bunit 2.7.2); 9.0.x used 0.17.1 which clashed -->
     <PackageVersion Include="HtmlSanitizer" Version="9.1.923-beta" />
@@ -22,28 +22,28 @@
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <!-- Markdown editor -->
-    <PackageVersion Include="Markdig" Version="1.2.0" />
+    <PackageVersion Include="Markdig" Version="1.3.2" />
     <PackageVersion Include="PSC.Blazor.Components.MarkdownEditor" Version="10.0.9" />
     <!-- CQRS/Mediator -->
     <PackageVersion Include="MediatR" Version="14.1.0" />
     <!-- Database -->
     <PackageVersion Include="MongoDB.Bson" Version="3.9.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
-    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
+    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.2" />
     <!-- Transitive pin: MongoDB.Driver resolves an older SharpCompress; pinned to 1.0.0 -->
     <PackageVersion Include="SharpCompress" Version="1.0.0" />
     <PackageVersion Include="Snappier" Version="1.3.1" />
     <!-- Microsoft Packages -->
-    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.60.0" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.61.0" />
     <!-- OpenTelemetry -->
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
     <!-- Rich Text Editor -->
     <PackageVersion Include="RTBlazorfied" Version="2.0.20" />
