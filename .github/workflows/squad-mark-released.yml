@@ -47,7 +47,7 @@ jobs:
           echo "✅ GH_PROJECT_TOKEN secret is present."
 
       - name: Checkout repository for tag resolution
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
