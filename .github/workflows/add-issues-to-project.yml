@@ -54,7 +54,12 @@ jobs:
 
               // Set Status to Backlog
               await github.graphql(`
-                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                mutation(
+                  $projectId: ID!
+                  $itemId: ID!
+                  $fieldId: ID!
+                  $optionId: String!
+                ) {
                   updateProjectV2ItemFieldValue(input: {
                     projectId: $projectId
                     itemId: $itemId
@@ -74,7 +79,9 @@ jobs:
               core.info(`✅ Issue #${issue.number} added to project → Backlog`);
             } catch (err) {
               if (err.message.includes('403')) {
-                core.warning(`Access denied (403). If this persists, create a PAT with 'project' scope and store as secrets.GH_PROJECT_TOKEN`);
+                const tokenMsg = "Access denied (403). Create a PAT with 'project' scope " +
+                  "and store as secrets.GH_PROJECT_TOKEN";
+                core.warning(tokenMsg);
               } else {
                 core.warning(`Could not add issue to project: ${err.message}`);
               }
