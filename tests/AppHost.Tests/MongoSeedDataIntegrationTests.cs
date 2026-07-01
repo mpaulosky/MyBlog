@@ -339,6 +339,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
+		Arguments = [],
 	};
 
 	private static async Task WaitForWebReadyAsync(HttpClient client)

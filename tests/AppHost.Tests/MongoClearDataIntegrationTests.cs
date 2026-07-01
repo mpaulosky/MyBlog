@@ -268,5 +268,6 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
+		Arguments = [],
 	};
 }
