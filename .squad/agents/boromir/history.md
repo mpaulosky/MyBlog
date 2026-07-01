@@ -1783,3 +1783,45 @@ container crashed (exit 139/SIGSEGV). Each collection's fixture failure cascaded
 - When Aspire integration test collections fail at fixture init (not test body), ALL tests in the collection report as failed — making "3 failures" actually mean "3 fixture startup failures affecting N tests total"
 - `Assert.Skip()` (xUnit v3) skips appear in CI as Skipped not Failed — a 1-skip result on the theme toggle test is expected/normal behavior
 - The Mongo volume state matters across sessions: `mongo-data` (FCV-contaminated with mongo:8.2 UUID idents) must never be used with `mongo:7`; only `mongo-data-v7` is safe
+
+---
+
+## Issue #420 — Dependabot npm_and_yarn bump (js-yaml, markdown-it)
+
+**Date:** 2026-07-01  
+**PR created:** #423 (Node 22 workflow fix)
+
+### Work Done
+
+Reviewed Dependabot PR #420 bumping root-level npm devDependencies:
+
+| Package | Before | After |
+|---|---|---|
+| markdownlint-cli2 | 0.22.1 | 0.23.0 |
+| js-yaml (transitive) | 4.1.1 | 5.2.0 |
+| markdown-it (transitive) | 14.1.1 | 14.2.0 |
+| markdownlint (transitive) | 0.40.0 | 0.41.0 |
+
+- js-yaml 5.x is a **major version** but only used internally by markdownlint-cli2; no direct usage in our code.
+- All affected packages are **devDependencies** — zero production impact.
+- `markdownlint` CI check passes ✅ on the PR.
+- Build failures on the PR are pre-existing `MessagePack 2.5.192` vulnerability (NU1902/NU1903) — unrelated.
+
+### Node 22 Fix (PR #423)
+
+`markdownlint-cli2 0.23.0` and `markdownlint 0.41.0` raised minimum Node from 20 → 22.  
+Updated `.github/workflows/squad-standard-lint-markdown.yml` `node-version: "20"` → `"22"`.  
+Note: `lint-markdown.yml` uses `markdownlint-cli2-action@v23` (GitHub composite action) — no `setup-node` needed, unaffected.
+
+Approved PR #420 and enabled auto-merge. Created PR #423 as companion Node 22 workflow fix.
+
+### Key File Paths
+
+- `.github/workflows/squad-standard-lint-markdown.yml` — uses `setup-node@v5` (node-version must be kept current)
+- `.github/workflows/lint-markdown.yml` — uses `markdownlint-cli2-action@v23` (node-agnostic)
+
+## Learnings
+
+**Pattern:** When reviewing Dependabot npm PRs, check both the direct dep version AND the transitive deps' engine requirements. A minor bump of `markdownlint-cli2` carried a Node >=22 requirement via its transitive `markdownlint` dep.
+
+**Pattern:** `squad-dependabot-auto-merge.yml` only fires for PRs targeting `dev`. Dependabot PRs that target `main` must be manually approved/merged or have auto-merge enabled by hand.
