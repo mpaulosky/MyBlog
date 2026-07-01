@@ -22,4 +22,3 @@ jobs:
             exit 0
           fi
           yamllint -s $files
-

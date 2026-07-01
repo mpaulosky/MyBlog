@@ -20,4 +20,3 @@ jobs:
             if (source !== "dev") {
               core.setFailed(`PRs to main must come from dev. Current source: ${source}`);
             }
-
