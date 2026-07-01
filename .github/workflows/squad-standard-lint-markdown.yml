@@ -1,0 +1,24 @@
+name: lint-markdown
+
+on:
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+jobs:
+  lint-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+      - name: Run markdownlint
+        run: |
+          files=$(git ls-files '*.md')
+          if [ -z "$files" ]; then
+            echo "No markdown files found."
+            exit 0
+          fi
+          npx --yes markdownlint-cli $files
+
