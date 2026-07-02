@@ -72,7 +72,8 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 		{
 			Builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(
 				args: [],
-				configureBuilder: static (options, _) => { options.DisableDashboard = true; });
+				configureBuilder: static (options, _) => { options.DisableDashboard = true; },
+				cancellationToken: CancellationToken.None);
 
 			// Inject the Testing env var directly into the web resource annotation so DCP
 			// uses the correct value when launching the child process.
@@ -81,8 +82,8 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 			SetWebEnvironmentVariable(Builder, "Auth0__ClientId", string.Empty);
 			SetWebEnvironmentVariable(Builder, "Auth0__ClientSecret", string.Empty);
 
-			App = await Builder.BuildAsync();
-			await App.StartAsync();
+			App = await Builder.BuildAsync(CancellationToken.None);
+			await App.StartAsync(CancellationToken.None);
 		});
 
 		// Wait for the MongoDB container to be Running before tests try to seed data.

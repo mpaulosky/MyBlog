@@ -84,13 +84,8 @@ public class AspireManager : IAsyncLifetime
 					configureBuilder: static (options, _) =>
 					{
 						options.DisableDashboard = true;
-					});
-
-			_logger.LogInformation("Builder created successfully. Configuring...");
-			builder.Configuration["ASPIRE_ALLOW_UNSECURED_TRANSPORT"] = "true";
-
-			// Explicitly inject ASPNETCORE_ENVIRONMENT=Testing into the web resource via
-			// EnvironmentCallbackAnnotation. Setting it on the parent process alone is not
+				},
+				cancellationToken: CancellationToken.None);
 			// sufficient — Aspire DCP may override ASPNETCORE_ENVIRONMENT based on its own
 			// EnvironmentName when launching child processes. The annotation guarantees the
 			// value is applied at subprocess launch time, after DCP finishes its own setup.
@@ -118,11 +113,11 @@ public class AspireManager : IAsyncLifetime
 			}
 
 			_logger.LogInformation("Building Aspire application...");
-			App = await builder.BuildAsync();
+			App = await builder.BuildAsync(CancellationToken.None);
 			_logger.LogInformation("Aspire application built successfully");
 
 			_logger.LogInformation("Starting Aspire application services...");
-			await App.StartAsync();
+			await App.StartAsync(CancellationToken.None);
 			_logger.LogInformation("Aspire application started successfully");
 		});
 
