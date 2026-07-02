@@ -43,6 +43,39 @@ The pre-push hook automatically runs before every `git push` and enforces
 **Retry logic:** Gates 4–6 allow up to **3 attempts**. Between failures, the
 hook pauses and prompts you to fix errors, then retries automatically.
 
+### AppHost.Tests in CI
+
+**AppHost.Tests are skipped in CI environments** due to a hardcoded 20-second Aspire DCP (Docker Compose Proxy) timeout that exceeds cold-start latency on GitHub Actions runners.
+
+#### Why skip in CI?
+
+- Aspire's `DistributedApplicationTestingBuilder` enforces a 20-second initialization timeout
+- On cold-start (first run), DCP typically needs 25-40 seconds to pull base images and initialize the Kubernetes namespace
+- Even with retry backoff and pre-warming, cold-start consistently times out in CI environments
+- Skipping in CI prevents false failures while preserving local E2E test coverage
+
+#### How to run locally
+
+```bash
+# Tests run normally when CI environment variable is NOT set
+dotnet test tests/AppHost.Tests
+```
+
+#### Simulating CI locally
+
+To verify the skip behavior:
+
+```bash
+CI=true dotnet test tests/AppHost.Tests
+# Output shows: ⏭️ {TestName} — SKIP: AppHost.Tests skipped in CI...
+```
+
+#### Expected behavior
+
+- **Locally** (`CI` not set): Tests run and pass after the first warm-start
+- **In CI** (`CI=true`): Tests show as skipped with reason; build succeeds
+- **No impact**: Other test projects (Domain.Tests, Web.Tests, Web.Tests.Integration) run normally in both environments
+
 ### Branch Naming (Strict)
 
 All work must be on a `squad/{issue}-{slug}` branch. Examples:

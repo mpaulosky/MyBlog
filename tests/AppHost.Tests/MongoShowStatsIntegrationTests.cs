@@ -35,7 +35,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	/// When at least one collection with documents exists, the command returns success and
 	/// reports the collection count in its message.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ShowMyBlogStats_Returns_Collection_Names_And_Counts_In_Markdown()
 	{
 		// Arrange — drop db, then insert documents into blogposts
@@ -57,7 +57,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	/// When the database is completely empty (no user collections), the command must still
 	/// succeed — an empty database is not an error condition.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ShowMyBlogStats_Empty_Database_Returns_No_Collections_Found()
 	{
 		// Arrange — drop the entire myblog database so no collection exists
@@ -79,7 +79,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	/// Two simultaneous stats attempts must not run together: exactly one proceeds and
 	/// the other fails fast with operator-visible feedback.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ShowMyBlogStats_Concurrent_Invocations_Allow_Only_One_Run()
 	{
 		// Arrange
@@ -92,21 +92,21 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 		// entirely synchronously (fast local MongoDB) and release the semaphore before the
 		// second call even starts, causing both to succeed (flake).
 		var ct = TestContext.Current.CancellationToken;
-		using var startGate = new SemaphoreSlim(0, 2);
+		var startGate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		var firstTask = Task.Run(async () =>
 		{
-			await startGate.WaitAsync(ct);
+			await startGate.Task.WaitAsync(ct);
 			return await annotation.ExecuteCommand(MakeContext());
 		}, ct);
 
 		var secondTask = Task.Run(async () =>
 		{
-			await startGate.WaitAsync(ct);
+			await startGate.Task.WaitAsync(ct);
 			return await annotation.ExecuteCommand(MakeContext());
 		}, ct);
 
-		startGate.Release(2); // open the gate — both workers race for _dbMutex
+		startGate.TrySetResult(true); // open the gate — both workers race for _dbMutex
 		var results = await Task.WhenAll(firstTask, secondTask);
 
 		// Assert
@@ -125,7 +125,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 
 	private async Task PrepareAsync(int blogPostCount = 0)
 	{
-		var client = new MongoClient(fixture.MongoConnectionString);
+		using var client = new MongoClient(fixture.MongoConnectionString);
 		await client.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
 		if (blogPostCount > 0)
 		{
@@ -153,5 +153,6 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
+		Arguments = default!,
 	};
 }

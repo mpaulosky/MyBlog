@@ -366,6 +366,52 @@ The AppHost seed command writes documents via the raw MongoDB driver. Always use
 
 ---
 
+## 2026-05-24 — PR #385: Release Recovery Backend Review
+
+### Task
+
+Review the release-recovery branch for PR #385 and confirm whether the backend
+ObjectId migration, repository contracts, MediatR handlers, cache-key/cache
+serialization work, and AppHost runtime wiring were recovered safely after
+merging `origin/dev` into the release branch.
+
+### Findings
+
+- All requested backend migration files in `src/Domain`, `src/Web`, and caching
+  remain aligned with `origin/dev`.
+- The only backend file that differs from `origin/dev` on this branch is
+  `src/AppHost/MongoDbResourceBuilderExtensions.cs`, and that diff is
+  whitespace-only (`git diff -w origin/dev..HEAD -- ...` is clean).
+- Repository contracts consistently use `ObjectId` and remain matched to the
+  EF/Mongo implementations and MediatR handlers.
+- Cache serialization hardening is present via
+  `src/Web/Infrastructure/Caching/ObjectIdJsonConverter.cs`, and the
+  AppHost/Web integration still points at the `myblog` Aspire Mongo resource.
+
+### Changed Files
+
+None. Review only; no backend production fix was needed.
+
+### Validation Performed
+
+- ✅ `dotnet test tests/Domain.Tests/Domain.Tests.csproj -c Release` — 68/68 passed
+- ✅ `dotnet test tests/Web.Tests/Web.Tests.csproj -c Release` — 224/224 passed
+- ✅ `dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj -c Release` — 36/36 passed
+- ✅ `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj -c Release` — 55 passed, 1 skipped, 0 failed
+- ✅ `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj -c Release` — 16/16 passed
+
+## Learnings
+
+### Recovery-branch backend review should first diff against `origin/dev`, not just the PR base
+
+For release-recovery PRs created from `main` and then merged with `origin/dev`,
+the fastest backend safety check is to diff the critical backend files against
+`origin/dev`. If that comparison is unchanged (or whitespace-only), the recovery
+merge did not introduce a new backend regression; remaining review can focus on
+the already-known feature payload rather than conflict fallout.
+
+---
+
 ## 2026-05-15 — PR #338: Skill Template Compliance Fix
 
 ### Task
@@ -844,3 +890,83 @@ Both tracks shipped with zero test failures:
 ### Status
 
 ✅ Completed. Open gates (AppHost.Tests startup failures) assigned to Boromir/Gimli follow-up agents.
+
+---
+
+## 2026-05-26 — Issue #360: ObjectId Foundation and AppHost Seeding Rules
+
+### Task
+
+Establish MongoDB-native `ObjectId` as the identifier type across all domain entities, repository contracts, commands/queries/handlers, cache infrastructure, and AppHost seed data. Migrate from `System.Guid`.
+
+### What Was Implemented
+
+**New file**:
+
+- `src/Domain/ValueObjects/ObjectIdExtensions.cs` — `TryParseObjectId`, `ParseObjectId`, `DeterministicId(int slot)` helpers
+
+**Domain layer** (`src/Domain/`):
+
+- `Domain.csproj` — added `MongoDB.Bson` PackageReference
+- `Entities/BlogPost.cs`, `Entities/Category.cs` — `Guid Id` → `ObjectId Id`, `Guid.NewGuid()` → `ObjectId.GenerateNewId()`
+- `Interfaces/IBlogPostRepository.cs`, `Interfaces/ICategoryRepository.cs` — all `Guid` params → `ObjectId`
+
+**Web layer** (`src/Web/`):
+
+- `GlobalUsings.cs` — `global using MongoDB.Bson`
+- DTOs: `BlogPostDto.cs`, `CategoryDto.cs` — IDs as `string` (JSON compatibility)
+- `Data/BlogPostMappings.cs`, `Data/CategoryMappings.cs` — `.ToString()` bridge
+- Repository impls, all commands/queries/handlers, cache infrastructure — `Guid` → `ObjectId`
+- Blazor pages — route `{Id:guid}` → `{Id}`, `string Id` params + `ObjectId.Parse(Id)` at use
+
+**AppHost** (`src/AppHost/MongoDbResourceBuilderExtensions.cs`):
+
+- General category seed uses deterministic `new ObjectId("000000000000000000000001")`
+- Blog post seeds use `ObjectId.GenerateNewId()`
+
+**Test files** — all compile errors resolved (Guid → ObjectId call sites, `.NotBeEmpty()` → `.NotBe(ObjectId.Empty)`, ValidationBehavior type constraint updated)
+
+### Results
+
+- Build: `0 Error(s), 0 Warning(s)`
+- Domain.Tests: 67/67 passed
+- Web.Tests: 210/210 passed
+- Architecture.Tests: 16/16 passed
+
+### Decisions Recorded
+
+- `ObjectId` is the canonical ID type in domain entities (not Guid, not string)
+
+- DTOs use `string` IDs for JSON/Redis serialization compatibility
+
+- AppHost seed uses deterministic `ObjectId` hex strings for stable upserts
+
+### Status
+
+✅ Completed. Production code and tests all green.
+
+---
+
+## Issue #361 — Sprint 20: Migrate Category entity and queries to ObjectId
+
+**Branch:** `sprint/20-mongo-objectid-migration`
+**Approach:** Fast-forward merged `origin/dev` (containing PR #360 commits) into the sprint/20 worktree branch. PR #360 already contained all production code required for issue #361.
+
+### Verified Acceptance Criteria
+
+- ✅ `Category.Id` is `ObjectId`; `Create()` factory uses `ObjectId.GenerateNewId()`
+- ✅ `CreateCategoryCommand`, `EditCategoryCommand` accept `ObjectId` parameters
+- ✅ `GetCategoryByIdQuery`, `GetCategoriesQuery` — CategoryDto returns `string Id` (stringified at edge)
+- ✅ `MongoDbCategoryRepository` uses `ObjectId` in all filter/insert/update paths
+- ✅ Category UI (Index.razor) holds `string? _editingId`; calls `ObjectId.Parse()` before sending commands
+- ✅ `IBlogPostRepository.ExistsByCategoryAsync(ObjectId)` aligned
+- ✅ Build: 0 errors; Domain.Tests 67/67, Web.Tests 210/210, Architecture.Tests 16/16, Bunit 104/104 — all green
+- ⏳ **[Gimli]** Unit + integration tests for Category commands/queries with ObjectId signatures
+
+### Key Decision Confirmed
+
+Commands take `ObjectId` directly; Blazor components hold string IDs from DTOs and call `ObjectId.Parse()` at the point of command dispatch. This places the string↔ObjectId boundary at the UI entry point, not inside command validators or handlers.
+
+### Status
+
+✅ Sam scope complete. Gimli owns test updates (see issue #361 Gimli checklist).

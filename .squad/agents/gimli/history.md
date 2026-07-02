@@ -237,30 +237,76 @@ and conventions.
 ### Key Learnings
 
 1. **MyBlog's testing stack is mature and battle-tested:**
-   - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
-   - Unit tests: 59 tests with 91.64% line coverage, all handlers + domain + components covered
-   - Architecture tests: VSA + layer rules enforced
-   - bUnit component tests: Clean auth mocking pattern with TestAuthorizationService
 
-2. **Patterns extraction requires grounding in real code:**
+   - Integration tests: MongoDbFixture + collection isolation working well (9 tests)
+
+## Session: PR #385 Re-review — Clear Category Fix (2026-05-24)
+
+### Task
+
+Re-review PR #385 after Sam's category-clear fix and determine whether the prior
+release rejection is resolved.
+
+### Findings
+
+- `Edit.razor` now normalizes the empty `<select>` state into `CategoryId: null`
+  plus `ClearCategory: true`, so the placeholder option no longer falls into the
+  earlier parse/retain-category regression path.
+- `EditBlogPostHandlerTests` now covers the handler-level clear-category path and
+  verifies the post is persisted with `CategoryId == null`.
+- `ObjectIdWorkflowTests` now covers the UI regression path end-to-end by clearing
+  the category dropdown and asserting the edit command carries
+  `CategoryId == null` and `ClearCategory == true`.
+
+### Validation
+
+- ✅ `dotnet test tests/Web.Tests/Web.Tests.csproj` — 225 passed
+- ✅ `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj` — 109 passed
+
+### Verdict
+
+**APPROVE WITH NOTES** — the prior clear-category rejection is resolved, and the
+regression is now adequately covered for release by both handler and bUnit tests.
+
+### Remaining Non-Blocking Gap
+
+- No direct domain-focused assertion proves `BlogPost.Update(..., clearCategory:
+  true)` keeps the edit to a single `Version++`. The current handler comment
+  explains the concurrency risk, but that invariant is not yet locked down by a
+  dedicated test.
+
+### Additional Test Coverage Context
+
+- Unit tests: 59 tests with 91.64% line coverage, all handlers + domain +
+  components covered
+- Architecture tests: VSA + layer rules enforced
+- bUnit component tests: Clean auth mocking pattern with
+  TestAuthorizationService
+
+1. **Patterns extraction requires grounding in real code:**
+
    - Cannot document intent without seeing actual implementations
    - Real examples > abstract rules (code > explanation)
    - Test classes show the patterns better than generic guidance
 
-3. **Three distinct testing domains with different conventions:**
+2. **Three distinct testing domains with different conventions:**
+
    - **Integration**: Fixture + collection + per-test isolation
    - **Unit**: AAA + mocking + assertions, split by entity/handler/component
    - **Component**: bUnit with auth context + claim assertions
 
-4. **File headers are critical for team consistency:**
+3. **File headers are critical for team consistency:**
+
    - Every test file MUST have the 7-line block (charter rule #6)
    - This was flagged in PR #2 review — ALL test files were missing headers
    - Now documented explicitly in unit-test-conventions skill
 
-5. **No new skills created for existing patterns:**
+4. **No new skills created for existing patterns:**
+
    - testcontainers and webapp-testing were already good patterns
    - Refinement (not creation) is the right approach for 70–80% patterns
-   - Only created unit-test-conventions because it was extractable from 4+ test files and not documented
+   - Only created unit-test-conventions because it was extractable from 4+
+     test files and not documented
 
 ### Outcomes
 
@@ -1304,3 +1350,242 @@ Inspect current AppHost/Web database startup and runtime connectivity coverage f
 
 1. The pre-existing gap was runtime read coverage: no test exercised `/blog` against the real Aspire/AppHost MongoDB connection, so wiring regressions could slip past command-level and repository-level tests.
 2. A seed-command-plus-page-read test is the smallest useful tracer bullet here because it proves the full public path: AppHost Mongo wiring -> Web DI -> repository/handler -> rendered page.
+
+## Session: Issue #361 — Category ObjectId Test Coverage (2026-05-24)
+
+### Task
+
+Update Category-focused domain, handler, and MongoDB integration tests for the Sprint 20 ObjectId migration without touching production code.
+
+### Work Done
+
+- Added a domain regression proving `Category.Create` produces a non-empty `ObjectId` that round-trips through its string form.
+- Tightened Category query handler tests so `GetCategoryByIdHandler` and `GetCategoriesHandler` now expect DTOs to preserve `ObjectId` values instead of stringifying them in the application layer.
+- Expanded `MongoDbCategoryRepositoryTests` with ObjectId-specific retrieval, update isolation, and delete isolation workflows against the Testcontainers-backed Mongo repository.
+- Validated targeted suites with `CI=true dotnet test`; domain and integration coverage passed, while Category query handler tests now fail on the current DTO stringification gap.
+
+### Learnings
+
+1. `CI=true` is the reliable way to run Web test projects locally in this worktree when npm is unavailable, because it skips the Tailwind build target inside `Web.csproj`.
+2. For the Category ObjectId migration, the current blocker is not repository persistence: the failing seam is the read-model mapping layer, where `CategoryDto` and `CategoryMappings.ToDto()` still stringify IDs before the UI boundary.
+
+## Session: Issue #361 — Category Review After Aragorn Revision (2026-05-24)
+
+### Task
+
+Review Issue #361 after Aragorn's revision by rerunning the updated Category
+test coverage and deciding whether the issue is now approved or still blocked.
+
+### Work Done
+
+- Reran the Category-focused test slices in `Domain.Tests`, `Web.Tests`, and
+  `Web.Tests.Integration` with `CI=true` and the repo-local .NET 10 SDK from
+  `/home/mpaulosky/.dotnet`.
+- Rechecked the Category read-model seam to confirm `CategoryDto` and
+  `CategoryMappings.ToDto()` now preserve `ObjectId` values instead of
+  stringifying them before the UI edge.
+- Reviewed the current Category feature surface and related follow-up issues to
+  confirm #361 can close cleanly while #362 and #363 carry the remaining
+  BlogPost migration and hardening work.
+
+### Learnings
+
+1. In this worktree, an approval pass is fastest when the shell exports
+   `DOTNET_ROOT=/home/mpaulosky/.dotnet` before running `dotnet test`, because
+   the SDK is installed locally but not on the default `PATH`.
+2. After the mapping fix landed, the same Category-focused suites that
+   previously exposed the DTO stringification seam now pass unchanged, which is
+   a good signal that the fix happened at the correct observable boundary.
+
+## Session: Issue #362 — BlogPost ObjectId Test Coverage (2026-05-24)
+
+### Task
+
+Update the BlogPost test slice for the `ObjectId` migration without changing
+production code, and report any exact production gaps the new tests uncover.
+
+### Work Done
+
+- Updated BlogPost handler, mapping, and cache tests so they assert `ObjectId`
+  IDs and category relationships instead of legacy string IDs.
+- Extended Mongo-backed BlogPost repository and category relationship tests to
+  cover category `ObjectId` round-trips and category-specific existence checks.
+- Ran focused `Domain.Tests`, `Web.Tests`, and `Web.Tests.Integration` suites
+  with `CI=true`; the non-cache BlogPost tests passed, while the cache tests now
+  expose the remaining production gap.
+
+### Learnings
+
+1. `BlogPostCacheService` currently serializes `BlogPostDto` with plain
+   `System.Text.Json` web defaults; after the DTO switched to `ObjectId`,
+   Redis/L2 deserialization round-trips IDs back as `ObjectId.Empty`, so cache
+   coverage is the correct regression net for this migration.
+2. In this worktree, `CI=true` is still required for `Web` test projects when
+   local Node/npm is unavailable, because it skips the Tailwind build target in
+   `src/Web/Web.csproj`.
+
+## Session: Issue #362 — BlogPost Review After Aragorn Revision (2026-05-24)
+
+### Task
+
+Review Issue #362 after Aragorn's revision by rerunning the BlogPost-focused
+test slices and deciding whether the issue is approved or still blocked.
+
+### Work Done
+
+- Reran the BlogPost-focused `Web.Tests` handler, mapping, and cache slices with
+  `CI=true` and the repo-local .NET 10 SDK from `/home/mpaulosky/.dotnet`.
+- Reran the BlogPost-focused `Web.Tests.Integration` repository, Redis cache,
+  and category-relationship slices to confirm `ObjectId` and `CategoryId`
+  round-trips now survive MongoDB and Redis boundaries.
+- Verified the review target moved at the right seam: `BlogPostDto`,
+  `BlogPostMappings`, and `BlogPostCacheService` now preserve `ObjectId`
+  values without falling back to string IDs or `ObjectId.Empty`.
+
+### Learnings
+
+1. The approval signal for this issue is cross-boundary, not just repository
+   green: once both the MongoDB integration tests and Redis cache round-trip
+   tests pass unchanged, the `ObjectId` migration is behaving correctly at the
+   observable BlogPost seams.
+2. In this environment, `CI=true` plus `/home/mpaulosky/.dotnet` on `PATH` is
+   the stable review setup for `Web` test projects because Node/npm are absent
+   and `Web.csproj` otherwise tries to run Tailwind build steps during test
+   execution.
+
+## 2026-05-24 — Sprint 20: ObjectId Hardening Audit (#363)
+
+### Task
+
+Audit Sprint 20 for leftover Guid ID usage in domain/persistence/CQRS paths, harden integration + bUnit coverage for Category and BlogPost ObjectId workflows, and verify AppHost seed determinism without changing production code.
+
+### Work Done
+
+- Fixed the broken `Web.Tests.Bunit` suite after DTO contracts moved from string IDs to `ObjectId`/`ObjectId?`.
+- Added `tests/Web.Tests.Bunit/Features/ObjectIdWorkflowTests.cs` to prove UI stringify-at-edge behavior:
+  - Create post parses selected category string into `CreateBlogPostCommand.CategoryId`
+  - Edit post parses selected category string into `EditBlogPostCommand.CategoryId`
+  - Category admin edit/delete flows preserve `ObjectId` values into CQRS commands
+- Added integration helpers + coverage:
+  - `tests/Web.Tests.Integration/Infrastructure/PassthroughBlogPostCacheService.cs`
+  - `tests/Web.Tests.Integration/Categories/CategoryObjectIdWorkflowTests.cs`
+  - `tests/Web.Tests.Integration/BlogPosts/BlogPostHandlerObjectIdWorkflowTests.cs`
+- Added `SeedMyBlogData_Uses_Deterministic_General_Category_ObjectId()` to `tests/AppHost.Tests/MongoSeedDataIntegrationTests.cs`.
+- Renamed stale test names that still said `Guid` when they were asserting `ObjectId` behavior.
+
+### Validation
+
+- `CI=true dotnet test tests/Domain.Tests/Domain.Tests.csproj` ✅
+- `CI=true dotnet test tests/Web.Tests/Web.Tests.csproj` ✅
+- `CI=true dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj` ✅
+- `CI=true dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj` ✅
+- `CI=true dotnet test tests/AppHost.Tests/AppHost.Tests.csproj` ✅ (1 existing skip)
+- `CI=true dotnet test MyBlog.slnx` ✅
+- `CI=true dotnet build MyBlog.slnx` ✅, but the solution still emits pre-existing analyzer warnings
+
+### Findings / Blockers
+
+1. **Domain/persistence/CQRS audit:** no residual `Guid` ID usage remains in `src/Domain`, `src/Web/Data`, or `src/Web/Features` command/query/repository paths.
+2. **AppHost seed determinism gap remains:** `src/AppHost/MongoDbResourceBuilderExtensions.cs` uses deterministic `ObjectId("000000000000000000000001")` for the General category, but seeded blog post `_id` values still come from `ObjectId.GenerateNewId()` (three occurrences in the seed document array). That means seeding is only partially deterministic.
+3. **Non-CQRS residual Guid usage remains in UI fallback code:** `src/Web/Features/BlogPosts/Create/Create.razor` still generates a dev-only author id with `Guid.NewGuid()`. This is outside the audited domain/persistence/CQRS layers, but it is still a leftover Guid-based code path.
+4. **Branch health blocker unrelated to my test changes:** local non-CI builds still try to run `npm install` from `src/Web/Web.csproj`; this environment has no `node`/`npm`, so raw non-`CI=true` builds fail before test execution.
+5. **Quality gate blocker still open:** `CI=true dotnet build MyBlog.slnx` passes, but the solution does **not** meet issue #363's `no warnings` acceptance bar because existing analyzer warnings remain across Architecture/Web/AppHost test projects.
+6. **Exploratory production bug observed:** editing a blog post while sending a
+   category value still triggers a real concurrency failure because the entity
+   version increments in multiple places before persistence. I did not codify
+   that as a failing test because the charter for this round forbids fixing
+   production code; Sam should investigate `BlogPost.AssignCategory` +
+   `EditBlogPostHandler`/repository version handling.
+
+### Learnings
+
+1. The ObjectId migration broke bUnit fastest at DTO construction sites; UI tests needed contract updates before meaningful hardening work could continue.
+2. The right end-to-end proof for this branch is mixed: bUnit for stringify-at-edge, Mongo integration tests for CQRS/repository roundtrips, and AppHost tests for seed/runtime behavior.
+3. For Sprint 20, deterministic seed coverage should check both the primary seeded category ID and the foreign keys on seeded posts; primary document IDs still need product work.
+
+## 2026-05-25 — Issue #396 Login Fallback Test Coverage
+
+### Task
+
+Add the missing automated coverage for PR #397 so placeholder Auth0
+configuration in Testing redirects `/Account/Login` to the local
+`/test/login` endpoint instead of attempting an external OIDC challenge.
+
+### Work Done
+
+- Added `tests/AppHost.Tests/Tests/Auth/LoginFallbackTests.cs` to request
+  `/Account/Login` with redirects disabled and assert the runtime response stays
+  local.
+- Added `tests/Architecture.Tests/AuthFallbackContractTests.cs` to pin the
+  source contract that the placeholder-config short-circuit appears before
+  `ChallengeAsync` while preserving the real Auth0 challenge path.
+
+### Validation
+
+- `dotnet build MyBlog.slnx --configuration Release` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release` ✅
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+
+### Learnings
+
+### 2026-05-29 — Issue #407: Keep one smoke test on AppHost startup wiring
+
+- `tests/AppHost.Tests/AppHostStartupSmokeTests.cs` now covers the happy-path
+   startup contract that AppHost starts the web resource and resolves the MongoDB
+   connection string.
+- The focused proof for this issue was
+   `AppHostStartupSmokeTests.AppHost_Starts_Web_And_Resolves_MongoDb_Connection_String`,
+   which passed after the docs fix converged with runtime validation.
+- When local startup reports drift from docs, keep one narrow AppHost smoke test
+   in place before escalating to broader runtime defect hunting.
+
+1. The highest-value proof here is split across layers: AppHost verifies the
+   observable redirect, while the architecture contract guards the source-order
+   short-circuit that prevents accidental regression back to external OIDC.
+2. For auth fallback behavior, disabling redirects in the runtime test is the
+   simplest way to prove the app never leaves the local test harness.
+
+## 2026-05-25 — PR #397 Auth0 Login Test Isolation
+
+### Task
+
+Revise the AppHost coverage for issue #396 / PR #397 so the login fallback test
+stays deterministic in CI even when the runner exposes real Auth0 environment
+values.
+
+### Work Done
+
+- Reproduced the failure mode locally by running `LoginFallbackTests` with
+  ambient `Auth0__Domain`, `Auth0__ClientId`, and `Auth0__ClientSecret`
+  variables set.
+- Updated the shared AppHost Testing fixtures to clear those Auth0 values on the
+  spawned `web` resource, so the Testing host always exercises the placeholder
+  branch intentionally instead of inheriting parent-process secrets.
+- Renamed the fallback test to describe the controlled placeholder-config setup
+  rather than assuming the process has no Auth0 secrets at all.
+
+### Validation
+
+- `Auth0__Domain=ci-real.auth0.com Auth0__ClientId=ci-real-client Auth0__ClientSecret=ci-real-secret dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --filter 'FullyQualifiedName~LoginFallbackTests' --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet restore MyBlog.slnx` ✅
+- `dotnet format MyBlog.slnx --verify-no-changes` ✅
+- `dotnet build MyBlog.slnx --configuration Release --no-restore` ✅
+- `dotnet test tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Domain.Tests/Domain.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Web.Tests/Web.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Web.Tests.Bunit/Web.Tests.Bunit.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/Web.Tests.Integration/Web.Tests.Integration.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+- `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --no-build --nologo --logger 'console;verbosity=minimal'` ✅
+
+### Learnings
+
+1. AppHost runtime tests cannot assume a clean parent environment in CI; if the
+   behavior under test depends on missing secrets, the fixture must override the
+   child resource explicitly.
+2. For this login split, the best safety net is layered: AppHost proves the
+   observable `/test/login` redirect under isolated placeholder config, while
+   the architecture contract preserves the real OIDC challenge branch when valid
+   Auth0 settings exist.

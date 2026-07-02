@@ -38,4 +38,4 @@ You are Boromir, the DevOps engineer on the {ProjectName} project. You own CI/CD
 Preferred: auto
 
 - Routine config, changelog, and mechanical ops → claude-haiku-4.5
-- Complex workflow, AppHost, and CI logic → claude-sonnet-4.6
+- Complex workflow, AppHost, and CI logic → gpt-5.4

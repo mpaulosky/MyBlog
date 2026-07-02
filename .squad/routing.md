@@ -70,51 +70,66 @@ After Sprint 1.1, these process assets are part of normal squad flow:
    sprint prefix or milestone, correct it before touching any file. See the Hard Gate
    section in `.squad/playbooks/sprint-planning.md`.
 
-2. **Before any push-ready handoff**, route through the pre-push gate skill and
+2. **Before opening or modifying any file for issue-owned work**, verify checkout
+   alignment with that issue. Confirm all of the following first:
+
+   - `git branch --show-current` is the issue branch `squad/{issue}-{slug}` for the
+     active issue — never `dev`
+   - `git rev-parse --show-toplevel` and your current directory point at the correct
+     sprint or issue worktree for that same issue
+   - if a `squad/{issue}-*` branch or issue worktree already exists, reuse it instead
+     of continuing from a different checkout
+
+   If any check fails, stop. Recover or stash local edits if needed, switch to the
+   correct branch/worktree, and only then touch files. This applies to Ralph before
+   spawning issue-owned work and to every routed agent before continuing it.
+
+3. **Before any push-ready handoff**, route through the pre-push gate skill and
    pre-push playbook so agents respect the live MyBlog hook: `squad/{issue}-{slug}`
    branch naming, Release build, `Architecture.Tests`, `Unit.Tests`, and
    `Integration.Tests`.
 
-3. **When build or test health is red**, route through build repair first. Do not
+4. **When build or test health is red**, route through build repair first. Do not
    treat a broken branch as normal feature work.
 
-4. **When PR work starts**, Aragorn and any spawned reviewers use the PR merge
+5. **When PR work starts**, Aragorn and any spawned reviewers use the PR merge
    playbook as the governing checklist.
 
-5. **When a session resumes on an older squad branch**, apply the merged-PR guard
+6. **When a session resumes on an older squad branch**, apply the merged-PR guard
    before committing so work does not strand on a merged branch.
 
-6. **Do not reintroduce deleted imports.** Only route assets with an explicit
+7. **Do not reintroduce deleted imports.** Only route assets with an explicit
    MyBlog owner, fit, and usage rule.
 
-7. **When any `plan.md` is created or materially updated**, Ralph and Aragorn run
+8. **When any `plan.md` is created or materially updated**, Ralph and Aragorn run
    the Sprint Planning ceremony: decompose into sprints, create milestones + issues,
    add to the MyBlog project board, and Boromir sets up worktrees. See
    `.squad/playbooks/sprint-planning.md`.
 
-8. **When a user makes any coding request** (direct instruction, `[[PLAN]]`, or
+9. **When a user makes any coding request** (direct instruction, `[[PLAN]]`, or
    follow-on work), the very first agent action is to check whether a GitHub issue
    exists with a `[Sprint N]` title prefix and a sprint milestone set. If the issue
    is missing, create it. If it exists but lacks the prefix or milestone, fix those
-   fields before any file is opened or modified.
+   fields. Then verify branch/worktree alignment for that same issue before any file
+   is opened or modified.
 
-9. **When any production code is written or modified** (Domain, Web, Persistence,
+10. **When any production code is written or modified** (Domain, Web, Persistence,
    AppHost), Gimli MUST be spawned in parallel to write or update unit tests.
    No feature branch closes without corresponding test authoring. The coverage gate
    (currently 89% line threshold in `Unit.Tests.csproj`) must pass locally before
    push. This is not optional — test coverage is a first-class deliverable.
 
-10. **`git push --no-verify` is PROHIBITED.** It bypasses all pre-push quality gates
-    (build, tests, coverage) and wastes CI time when failures are discovered
-    remotely. If the hook fails due to a local SDK mismatch, fix the root cause:
-    install the SDK version pinned in `global.json` (e.g., `dotnet-install.sh`
-    or download from https://dot.net). SDK mismatch is never a valid bypass reason.
-    Any `--no-verify` push requires prior documented approval from Ralph + Aragorn.
+11. **`git push --no-verify` is PROHIBITED.** It bypasses all pre-push quality gates
+     (build, tests, coverage) and wastes CI time when failures are discovered
+     remotely. If the hook fails due to a local SDK mismatch, fix the root cause:
+     install the SDK version pinned in `global.json` (e.g., `dotnet-install.sh`
+     or download from https://dot.net). SDK mismatch is never a valid bypass reason.
+     Any `--no-verify` push requires prior documented approval from Ralph + Aragorn.
 
-11. **When new architectural patterns are introduced** (new CQRS handler type, new
-    service abstraction, new Blazor rendering pattern, new repository strategy), a
-    rubber duck review MUST be run before the branch is pushed. Document the
-    pattern decision in `.squad/decisions/inbox/` and route to Aragorn for ADR.
+12. **When new architectural patterns are introduced** (new CQRS handler type, new
+     service abstraction, new Blazor rendering pattern, new repository strategy), a
+     rubber duck review MUST be run before the branch is pushed. Document the
+     pattern decision in `.squad/decisions/inbox/` and route to Aragorn for ADR.
 
 ## Rules
 

@@ -7,6 +7,8 @@
 //Project Name :  AppHost
 //=======================================================
 
+using MyBlog.AppHost;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var mongo = builder.AddMongoDB("mongodb")
@@ -29,4 +31,4 @@ builder.Build().Run();
 
 // Exclude the compiler-generated Program class from coverage.
 [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage(Justification = "Aspire host bootstrap — not business logic")]
-public partial class Program { }
+internal partial class Program { }

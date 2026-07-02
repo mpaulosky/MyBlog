@@ -6,7 +6,7 @@ A personal squad is a user-level collection of AI agents that travel with you ac
 
 ## Directory Structure
 
-```
+```text
 ~/.config/squad/personal-squad/    # Linux/macOS
 %APPDATA%/squad/personal-squad/    # Windows
 ├── agents/
@@ -15,7 +15,7 @@ A personal squad is a user-level collection of AI agents that travel with you ac
 │   │   └── history.md
 │   └── ...
 └── config.json                    # Optional: personal squad config
-```
+```text
 
 ## How It Works
 
@@ -51,7 +51,7 @@ Optional `config.json` in the personal squad directory:
   "ghostProtocol": true,
   "agents": {}
 }
-```
+```text
 
 ## Environment Variables
 

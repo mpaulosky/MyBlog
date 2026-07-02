@@ -11,9 +11,7 @@ using AppHost.Tests.Infrastructure;
 
 using FluentAssertions;
 
-using Microsoft.Playwright;
-
-namespace AppHost.Tests;
+namespace AppHost.Tests.Tests.Pages;
 
 /// <summary>
 /// Playwright E2E tests for the Home page (guest and authenticated views).
@@ -22,7 +20,7 @@ public class HomePageTests : BasePlaywrightTests
 {
 	public HomePageTests(AspireManager aspireManager) : base(aspireManager) { }
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task HomePage_GuestView_ShowsWelcomeHeading()
 	{
 		// Arrange
@@ -42,7 +40,7 @@ public class HomePageTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task HomePage_GuestView_ShowsLoginButton()
 	{
 		// Arrange
@@ -63,7 +61,7 @@ public class HomePageTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task HomePage_AuthenticatedView_ShowsWelcomeBackHeading()
 	{
 		// Arrange / Act / Assert
@@ -83,7 +81,7 @@ public class HomePageTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task HomePage_AuthenticatedView_PageLoads()
 	{
 		// Arrange / Act / Assert

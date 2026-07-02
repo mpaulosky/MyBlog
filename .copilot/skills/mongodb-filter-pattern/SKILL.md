@@ -24,7 +24,7 @@ Task<Result<(IReadOnlyList<TDto> Items, long Total)>> GetAllAsync(
     string? searchTerm = null,
     string? authorName = null,
     CancellationToken cancellationToken = default);
-```
+```text
 
 **Key principles:**
 
@@ -68,7 +68,7 @@ var entities = await _collection
     .Skip((page - 1) * pageSize)
     .Limit(pageSize)
     .ToListAsync(cancellationToken);
-```
+```text
 
 **Key principles:**
 
@@ -93,7 +93,7 @@ RuleFor(x => x.AuthorName)
     .MaximumLength(200)
     .When(x => !string.IsNullOrWhiteSpace(x.AuthorName))
     .WithMessage("Author name must not exceed 200 characters.");
-```
+```text
 
 **Key principles:**
 
@@ -122,7 +122,7 @@ group.MapGet("", async (
     var result = await handler.Handle(query);
     return Results.Ok(result);
 })
-```
+```text
 
 **Key principles:**
 
@@ -146,7 +146,7 @@ if (!string.IsNullOrWhiteSpace(authorName))
 }
 
 var result = await _httpClient.GetFromJsonAsync<TResponse>(url, cancellationToken);
-```
+```text
 
 **Key principles:**
 
@@ -162,7 +162,7 @@ Update test mocks to match new interface signature:
 ```csharp
 _repository.GetAllAsync(1, 20, null, null, Arg.Any<CancellationToken>())
     .Returns(((IReadOnlyList<TDto>)items, total));
-```
+```text
 
 **Key principles:**
 
@@ -187,13 +187,13 @@ Combine flags: `"im"` for case-insensitive multi-line
 
 ```csharp
 filterBuilder.Eq(x => x.Status, "Active")
-```
+```text
 
 ### Text search (case-insensitive)
 
 ```csharp
 filterBuilder.Regex(x => x.Title, new BsonRegularExpression(searchTerm, "i"))
-```
+```text
 
 ### Multi-field search (OR)
 
@@ -202,13 +202,13 @@ filterBuilder.Or(
     filterBuilder.Regex(x => x.Title, new BsonRegularExpression(term, "i")),
     filterBuilder.Regex(x => x.Description, new BsonRegularExpression(term, "i"))
 )
-```
+```text
 
 ### Nested field search
 
 ```csharp
 filterBuilder.Regex(x => x.Author.Name, new BsonRegularExpression(name, "i"))
-```
+```text
 
 ### Date range
 
@@ -217,13 +217,13 @@ filterBuilder.And(
     filterBuilder.Gte(x => x.CreatedAt, startDate),
     filterBuilder.Lte(x => x.CreatedAt, endDate)
 )
-```
+```text
 
 ### Array contains
 
 ```csharp
 filterBuilder.AnyEq(x => x.Tags, tagValue)
-```
+```text
 
 ## Gotchas
 

@@ -1767,3 +1767,99 @@ Ran the full PR gate for #340 (Sprint 19 Categories feature, issue #339) request
   `already merged` and you can clean up the local branch separately.
 - For PRs where the human repo owner is the GitHub author of record, `gh pr review --approve` still typically blocks self-approval. Aragorn gate-pass via `gh pr comment` documenting Copilot dispositions + CI/Codecov status remains the working approval signal, then `gh pr merge --squash --delete-branch` performs the merge directly.
 - When Codecov fails to post a bot comment, prefer the in-pipeline `Coverage Analysis` job result as the coverage gate signal rather than blocking the PR for missing bot output.
+
+## Issue #362 — ObjectId Cache Serialization Fix (2026-05-XX)
+
+Diagnosed and fixed the production-code gap reported by Gimli: `BlogPostDto.Id` and
+`BlogPostDto.CategoryId` (both `ObjectId`) were silently round-tripping to
+`ObjectId.Empty` when deserializing from Redis because `System.Text.Json` has no
+built-in `ObjectId` converter and was reflecting private fields, producing a zero struct.
+
+### Changes made
+
+| File | Change |
+| --- | --- |
+| `src/Web/Infrastructure/Caching/ObjectIdJsonConverter.cs` | New — `JsonConverter<ObjectId>` that reads/writes the 24-char hex string |
+| `src/Web/Infrastructure/Caching/BlogPostCacheService.cs` | `JsonOpts` changed from `private static` to `internal static`; wired in `ObjectIdJsonConverter` via `BuildJsonOpts()` helper |
+| `tests/Web.Tests/Infrastructure/Caching/BlogPostCacheServiceTests.cs` | Updated local `JsonOpts` to reference `BlogPostCacheService.JsonOpts` so both sides stay in sync |
+
+### Learnings
+
+- `System.Text.Json` silently produces `default(T)` (i.e., `ObjectId.Empty`) when
+  deserializing an unrecognised struct without a converter, rather than throwing.
+  This makes the bug invisible at the serialization site but manifests as bad IDs at read time.
+- The correct fix is a `JsonConverter<ObjectId>` using `ObjectId.TryParse` + `ToString()`.
+- Exposing the `JsonSerializerOptions` as `internal static` (visibility widened, not public)
+  lets test code share the same instance without duplicating converter registration —
+  prevents future drift if new converters are added.
+- Scope is correctly limited to the BlogPost caching path; `UserManagementCacheService`
+  does not serialize `ObjectId` values and was left untouched.
+
+## 2026-05-24 — Release PR #383 conflict review
+
+Reviewed release PR #383 (`dev` → `main`) after the user reported a large merge-conflict
+burst on the release branch.
+
+### Findings
+
+- `origin/main` is only **1 commit** ahead of `origin/dev`, but that one commit is the
+  squash-merged Sprint 19 release commit: `c7e4c3a` (`[RELEASE] Sprint 19 — Polish,
+  Markdown Editor & Categories (#352)`).
+- `origin/dev` does **not** contain `c7e4c3a`; `git branch --contains c7e4c3a` returns
+  only `main`.
+- The earlier `main` → `dev` ancestry-unblock work for PR #352 (`bf8919a`, `3b1f1dc`,
+  `e0a46c6`) happened **before** GitHub created the final squash commit on `main`, so the
+  exact release commit was never replayed back into `dev`.
+- `git merge-tree --write-tree --name-only --no-messages origin/main origin/dev` reports
+  **55 real conflicted files**, concentrated in:
+  - `src/Web/Features/BlogPosts` (6)
+  - `src/Web/Features/Categories` (6)
+  - `src/Web/Data` (4)
+  - `src/Domain` (4)
+  - `tests/Web.Tests/Categories` (7)
+  - `tests/Web.Tests.Bunit/Features` (4)
+  - plus `Directory.Packages.props`, `src/AppHost/MongoDbResourceBuilderExtensions.cs`,
+    `tests/AppHost.Tests/MongoSeedDataIntegrationTests.cs`, `.github/workflows/squad-heartbeat.yml`,
+    and `.squad/playbooks/pre-push-process.md`
+
+### Learnings
+
+- **Squash-merging recurring `dev` → `main` release PRs causes ancestry drift.** The next
+  release PR sees the prior release as a brand-new main-only commit and re-conflicts on
+  every overlapping file.
+- **Pre-merge ancestry fixes are not enough** if the final GitHub merge creates a new
+  single-parent squash commit afterward; that exact commit must either be merged back to
+  `dev` or future release work should use a merge strategy that preserves ancestry.
+- **Do release-conflict recovery in a dedicated clean worktree.** This repo currently has
+  many local modifications on `dev`, including files inside the present conflict set, so
+  resolving on the primary checkout would be high risk.
+
+---
+
+## 2026-05-24 — PR #385 final release gate (replacement for #383)
+
+Conducted the final release-candidate gate for replacement PR #385 after recovery commits
+`04e4847`, `872a732`, and `fcb7f5a`, using Boromir's recovery summary plus Sam and Gimli
+review evidence.
+
+### Gate Outcome
+
+- **Verdict:** approve-with-notes
+- **Supersession:** PR #385 should replace PR #383 for the Sprint 20 release path; PR #383
+  remains conflict-stuck and should not be merged.
+- **Branch shape:** clean worktree recovery from `origin/main` with a single
+  `origin/dev` merge is intact, and the two follow-up fixes were applied on the same
+  recovery branch without disturbing the recovered release payload.
+- **Validation:** the create/edit category regressions are now covered, and local
+  `Web.Tests` + `Web.Tests.Bunit` validation passed on the recovery branch.
+- **Final outstanding requirement before merge:** wait for the in-flight
+  `AppHost.Tests` / downstream PR checks on #385 to finish green.
+
+### Learnings
+
+- A recovery branch can be judged the correct release candidate before it is fully
+  merge-ready, but the actual merge still waits for terminal green CI on the replacement
+  PR.
+- Once squash ancestry drift has already exploded the original `dev` → `main` PR, a clean
+  replacement PR is the safer release path than trying to keep resolving conflicts in the
+  original branch.

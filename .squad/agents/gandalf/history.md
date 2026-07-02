@@ -93,7 +93,10 @@ Security findings:
 
 **Key Findings:**
 
-1. **[HIGH] Open Redirect in `/Account/Login`** — `returnUrl` query parameter is passed directly to `WithRedirectUri(returnUrl ?? "/")` in `Program.cs:111` with no local-path validation. An attacker could craft `/Account/Login?returnUrl=https://evil.com` to redirect a user to a phishing site after login. Fix: validate `returnUrl` is a relative/local path before use (e.g., `LocalRedirect` or `Uri.IsWellFormedUriString` check).
+1. **[HIGH] Open Redirect in `/Account/Login`** — `returnUrl` parameter is passed directly to
+   `WithRedirectUri(returnUrl ?? "/")` in `Program.cs:111` with no local-path validation.
+   An attacker could craft `/Account/Login?returnUrl=https://evil.com` to redirect after login.
+   Fix: validate `returnUrl` is a relative/local path (e.g., `Uri.IsWellFormedUriString` check).
 
 2. **[MEDIUM] Potential NullReferenceException in `OnTokenValidated` handler** — `Program.cs:46` captures `options.Events.OnTokenValidated` before the PostConfigure, but Auth0 SDK may set this to `null`. The line `await existingOnTokenValidated(context)` will throw `NullReferenceException` if null, breaking all logins. Fix: guard with `if (existingOnTokenValidated != null)`.
 
@@ -216,3 +219,50 @@ Resolved 7 add/add conflicts in `.squad/skills/` by accepting `origin/dev` versi
 - webapp-testing/SKILL.md
 
 **Learning:** Add/add conflicts in skill files result from parallel imports. The `origin/dev` versions are authoritative when adapted for MyBlog conventions (file paths, ownership rules, real examples).
+
+### Issue #396 — Fix Local Login Failure with Placeholder Auth0 Config — 2026-05-14
+
+**Branch:** `squad/396-fix-local-login-placeholder-auth0`
+**PR:** Opens against `dev`
+
+**Problem:** In Development/Testing, missing Auth0 credentials caused `Program.cs` to fall
+back to `test.auth0.com` / `test-client-id`. Navigating to `/Account/Login` then triggered
+a real OIDC discovery call against that non-existent domain, producing `IDX20803` timeout.
+
+**Fix applied (Program.cs):**
+
+1. **`isPlaceholderAuth0Config` flag** — set to `true` only when the `else if` branch
+   activates (Dev/Testing, no real credentials). Developers who supply real user secrets are
+   unaffected; the flag stays `false` and the live OIDC flow is preserved.
+
+2. **`/Account/Login` short-circuit** — when `isPlaceholderAuth0Config` is `true`, the
+   endpoint redirects to `/test/login` instead of issuing a `ChallengeAsync` to the
+   placeholder domain. The test-only cookie login completes instantly.
+
+3. **`existingOnTokenValidated` null guard** — added `if (existingOnTokenValidated != null)`
+   before invoking the captured delegate. Without this guard any login where the Auth0 SDK
+   left that delegate null would throw a `NullReferenceException` on token validation.
+
+**Docs updated:** `docs/AUTH0_SETUP.md` — new troubleshooting entry for the `IDX20803`
+timeout pattern, explaining the auto-redirect and how to enable real Auth0 login locally.
+
+**Security test scenarios specified for Gimli:**
+
+1. `GET /Account/Login` when `isPlaceholderAuth0Config = true` → assert 302 redirect to `/test/login`, no OIDC challenge issued.
+2. `GET /Account/Login` when real Auth0 credentials are configured → assert OIDC challenge is issued (302 to Auth0 domain), `/test/login` is NOT called.
+3. `GET /Account/Login` in Production environment without credentials → assert `InvalidOperationException` is thrown at startup (not a redirect).
+4. `GET /test/login` in Development → assert cookie set, redirect to `/`, user is authenticated.
+5. `GET /test/login` in Production → assert 404 (endpoint not registered outside Dev/Testing).
+6. `OnTokenValidated` with null prior handler → assert no `NullReferenceException`; role claims are added normally.
+
+**Decision record:** `.squad/decisions/inbox/gandalf-auth0-placeholder-login.md`
+
+**Key learnings:**
+
+- Placeholder fallback values (`test.auth0.com`) are safe for DI registration but MUST be
+  guarded at the request boundary — the OIDC discovery call fires at request time, not at
+  startup, so startup guards alone are insufficient.
+- A boolean flag captures intent cleanly without duplicating environment checks across
+  multiple handlers; the closure captures it safely in a top-level statement program.
+- The `existingOnTokenValidated` null-guard is a recurring pattern when wrapping
+  Auth0 SDK event delegates — always check for null before invoking captured delegates.

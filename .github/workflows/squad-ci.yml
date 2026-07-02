@@ -3,10 +3,10 @@ name: Squad CI
 
 on:
   pull_request:
-    branches: [dev, preview, main, insider]
+    branches: [dev, main]
     types: [opened, synchronize, reopened]
   push:
-    branches: [dev, insider]
+    branches: [dev]
 
 permissions:
   contents: read
@@ -18,15 +18,29 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
+      - name: Discover solution file
+        run: |
+          mapfile -t matches < <(find . -maxdepth 1 -name '*.slnx')
+          count=${#matches[@]}
+          if [[ $count -eq 0 ]]; then
+            echo "::error::No *.slnx file found at the repository root."
+            exit 1
+          elif [[ $count -gt 1 ]]; then
+            echo "::error::Multiple *.slnx files found at the repository root: ${matches[*]}"
+            exit 1
+          fi
+          echo "SOLUTION_FILE=${matches[0]}" >> "$GITHUB_ENV"
+          echo "Discovered solution: ${matches[0]}"
+
       - name: Restore dependencies
-        run: dotnet restore MyBlog.slnx
+        run: dotnet restore "$SOLUTION_FILE"
 
       - name: Build (Release)
-        run: dotnet build MyBlog.slnx --configuration Release --no-restore
+        run: dotnet build "$SOLUTION_FILE" --configuration Release --no-restore

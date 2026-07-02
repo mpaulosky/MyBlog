@@ -58,7 +58,7 @@ public sealed class TokenForwardingHandler : DelegatingHandler
         return await base.SendAsync(request, cancellationToken);
     }
 }
-```
+```text
 
 ### Step 2: Register Handler and Attach to HttpClients
 
@@ -76,7 +76,7 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
     client.BaseAddress = new Uri("https+http://api"))
     .AddServiceDiscovery()
     .AddHttpMessageHandler<TokenForwardingHandler>();
-```
+```text
 
 Repeat `.AddHttpMessageHandler<TokenForwardingHandler>()` for **all HttpClient registrations** that call protected APIs.
 
@@ -92,7 +92,7 @@ builder.Services.AddAuth0WebAppAuthentication(options =>
     options.ClientSecret = clientSecret;
     options.SaveTokens = true;  // CRITICAL: Enables GetTokenAsync("access_token")
 });
-```
+```text
 
 ## How It Works
 
@@ -165,7 +165,7 @@ public async Task TokenForwardingHandler_AttachesTokenWhenPresent()
     request.Headers.Authorization.Scheme.Should().Be("Bearer");
     request.Headers.Authorization.Parameter.Should().Be("fake-jwt-token");
 }
-```
+```text
 
 ## Common Pitfalls
 

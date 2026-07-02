@@ -11,8 +11,6 @@ using AppHost.Tests.Infrastructure;
 
 using FluentAssertions;
 
-using Microsoft.Playwright;
-
 namespace AppHost.Tests;
 
 /// <summary>
@@ -22,7 +20,7 @@ public class NotFoundPageTests : BasePlaywrightTests
 {
 	public NotFoundPageTests(AspireManager aspireManager) : base(aspireManager) { }
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task NotFoundPage_ShowsNotFoundHeading()
 	{
 		// Arrange
@@ -45,7 +43,7 @@ public class NotFoundPageTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task NotFoundPage_ShowsHelpfulMessage()
 	{
 		// Arrange

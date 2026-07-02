@@ -36,7 +36,7 @@ You are Sam, the Backend Developer on the {ProjectName} project. You own MongoDB
 
 ## Model
 
-Preferred: auto (backend implementation resolves to claude-sonnet-4.6)
+Preferred: gpt-5.4
 
 ## Critical Rules
 

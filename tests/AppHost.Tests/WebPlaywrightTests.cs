@@ -18,10 +18,9 @@ namespace AppHost.Tests;
 /// </summary>
 public class WebPlaywrightTests(AspireManager aspireManager) : BasePlaywrightTests(aspireManager)
 {
-	[Fact]
+	[SkipInCIFact]
 	public async Task WebHomePageLoads()
 	{
-
 		await InteractWithPageAsync("web", async page =>
 		{
 			await page.GotoAsync("/");
@@ -31,7 +30,7 @@ public class WebPlaywrightTests(AspireManager aspireManager) : BasePlaywrightTes
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task WebHomePageHasContent()
 	{
 

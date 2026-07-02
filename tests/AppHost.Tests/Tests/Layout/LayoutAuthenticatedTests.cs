@@ -11,9 +11,7 @@ using AppHost.Tests.Infrastructure;
 
 using FluentAssertions;
 
-using Microsoft.Playwright;
-
-namespace AppHost.Tests;
+namespace AppHost.Tests.Tests.Layout;
 
 /// <summary>
 /// Playwright E2E tests for the Web application layout visible to authenticated users.
@@ -24,7 +22,7 @@ public class LayoutAuthenticatedTests : BasePlaywrightTests
 {
 	public LayoutAuthenticatedTests(AspireManager aspireManager) : base(aspireManager) { }
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_NavMenu_IsVisibleWhenAuthenticated()
 	{
 		// Arrange / Act / Assert
@@ -43,7 +41,7 @@ public class LayoutAuthenticatedTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_NavMenu_ContainsExpectedLinks()
 	{
 		// Arrange / Act / Assert
@@ -63,7 +61,7 @@ public class LayoutAuthenticatedTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_Footer_IsAlwaysVisible()
 	{
 		// Arrange / Act / Assert
@@ -82,7 +80,7 @@ public class LayoutAuthenticatedTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_Header_HidesLoginLinkWhenAuthenticated()
 	{
 		// Arrange / Act / Assert
