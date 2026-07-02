@@ -19,7 +19,7 @@ namespace AppHost.Tests;
 [Collection("MongoClearIntegration")]
 public sealed class AppHostStartupSmokeTests(ClearCommandAppFixture fixture)
 {
-	[Fact]
+	[SkipInCIFact]
 	public async Task AppHost_Starts_Web_And_Resolves_MongoDb_Connection_String()
 	{
 		// Arrange

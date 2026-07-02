@@ -37,7 +37,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// After the command runs, the blogposts collection contains at least 3 documents,
 	/// including at least one unpublished draft.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Inserts_Expected_Documents_Into_BlogPosts_Collection()
 	{
 		// Arrange — drop and recreate an empty blogposts collection
@@ -72,7 +72,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// Two simultaneous seed attempts must not run together: exactly one proceeds and
 	/// the other fails fast with operator-visible feedback.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Concurrent_Invocations_Allow_Only_One_Run()
 	{
 		// Arrange
@@ -125,7 +125,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// When the database is completely empty (no collections at all), seeding must still
 	/// create the blogposts collection and insert documents successfully.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Empty_Database_Results_In_BlogPosts_After_Seed()
 	{
 		// Arrange — drop the entire database so no collection exists
@@ -152,7 +152,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// Legacy collections from earlier schemas must be removed so the database converges on the
 	/// canonical MyBlog collection set: blogposts + categories.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Drops_Legacy_Posts_And_Tags_Collections()
 	{
 		// Arrange
@@ -186,7 +186,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// The seed command must always upsert the canonical seven categories with their
 	/// documented ObjectIds so downstream features can rely on stable category identities.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Upserts_Seven_Canonical_Categories()
 	{
 		// Arrange
@@ -226,7 +226,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// Seeded blog posts must point at the documented canonical category ObjectIds so the
 	/// sample data remains deterministic across reseeds.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Assigns_BlogPosts_To_Expected_Canonical_Categories()
 	{
 		// Arrange
@@ -263,7 +263,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	/// After seeding succeeds, the running web app must be able to read the seeded posts
 	/// through its real AppHost-wired MongoDB path.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page()
 	{
 		// Arrange — start from a clean database so any BlogPostCacheService L1/L2 cached

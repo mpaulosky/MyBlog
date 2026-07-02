@@ -9,8 +9,6 @@
 
 using System.Text.RegularExpressions;
 
-using Aspire.Hosting;
-
 using FluentAssertions;
 
 namespace AppHost.Tests;
@@ -91,7 +89,7 @@ public sealed class MongoDbContainerConfigurationTests
 		// Assert
 		foundMounts.Should().BeTrue("the MongoDB resource should expose its data volume mount");
 		dataMount.Should().NotBeNull("MongoDB should mount a named volume at /data/db");
-		dataMount!.Type.Should().Be(ContainerMountType.Volume,
+		dataMount.Type.Should().Be(ContainerMountType.Volume,
 			"the AppHost should continue using a named Docker volume for MongoDB data");
 		dataMount.Source.Should().Be(PinnedMongoDataVolume,
 			$"the pinned MongoDB {PinnedStableMongoTag} container must not reuse the legacy '{LegacyMongoDataVolume}' volume that carries MongoDB {KnownCrashingAspireMongoTag} feature compatibility metadata");

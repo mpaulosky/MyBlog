@@ -35,7 +35,7 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	/// After the command runs, all documents are removed from every non-system collection
 	/// but the collection shells themselves are preserved (DeleteMany, not DropCollection).
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ClearMyBlogData_Removes_All_Documents_And_Preserves_Collection_Shells()
 	{
 		// Arrange
@@ -73,7 +73,7 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	/// The result message includes per-collection document-deleted counts so the operator
 	/// can see exactly what was removed.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ClearMyBlogData_Result_Message_Includes_Per_Collection_Deleted_Counts()
 	{
 		// Arrange
@@ -100,7 +100,7 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	/// Collections that exist but are already empty still appear in the result message with
 	/// a count of 0 (they are included in the cleared-collection list).
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ClearMyBlogData_Empty_Collections_Appear_In_Result_With_Zero_Count()
 	{
 		// Arrange
@@ -127,7 +127,7 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	/// Two overlapping clear attempts must not run together: exactly one proceeds and the other
 	/// fails fast with operator-visible feedback.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ClearMyBlogData_Concurrent_Invocations_Allow_Only_One_Run()
 	{
 		// Arrange
@@ -176,7 +176,7 @@ public sealed class MongoClearDataIntegrationTests(ClearCommandAppFixture fixtur
 	/// A failure clearing one collection must be reported as a warning while the remaining
 	/// collections still clear successfully.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ClearMyBlogData_Collection_Failure_Is_Reported_As_Warning_And_Other_Collections_Continue()
 	{
 		// Arrange

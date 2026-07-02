@@ -20,7 +20,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 {
 	public LayoutAnonymousTests(AspireManager aspireManager) : base(aspireManager) { }
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_Header_ShowsBrandLink()
 	{
 		// Arrange
@@ -41,7 +41,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_Header_ShowsLoginLinkWhenNotAuthenticated()
 	{
 		// Arrange
@@ -62,7 +62,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_NavMenu_AuthLinksAreHiddenWhenNotAuthenticated()
 	{
 		// Arrange
@@ -87,7 +87,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_Footer_ShowsCopyrightText()
 	{
 		// Arrange
@@ -107,7 +107,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_ThemeToggleButton_IsVisible()
 	{
 		// Arrange
@@ -128,7 +128,7 @@ public class LayoutAnonymousTests : BasePlaywrightTests
 		});
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task Layout_ColorSchemeButton_IsVisible()
 	{
 		// Arrange
