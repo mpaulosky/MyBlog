@@ -1,0 +1,17 @@
+  Domain -> /home/teqs/github/MyBlog/src/Domain/bin/Debug/net10.0/Domain.dll
+  ServiceDefaults -> /home/teqs/github/MyBlog/src/ServiceDefaults/bin/Debug/net10.0/ServiceDefaults.dll
+  Domain.Tests -> /home/teqs/github/MyBlog/tests/Domain.Tests/bin/Debug/net10.0/Domain.Tests.dll
+  Web -> /home/teqs/github/MyBlog/src/Web/bin/Debug/net10.0/Web.dll
+  11.16.0
+  Architecture.Tests -> /home/teqs/github/MyBlog/tests/Architecture.Tests/bin/Debug/net10.0/Architecture.Tests.dll
+  Web.Tests.Bunit -> /home/teqs/github/MyBlog/tests/Web.Tests.Bunit/bin/Debug/net10.0/Web.Tests.Bunit.dll
+  AppHost -> /home/teqs/github/MyBlog/src/AppHost/bin/Debug/net10.0/AppHost.dll
+  Web.Tests -> /home/teqs/github/MyBlog/tests/Web.Tests/bin/Debug/net10.0/Web.Tests.dll
+  Web.Tests.Integration -> /home/teqs/github/MyBlog/tests/Web.Tests.Integration/bin/Debug/net10.0/Web.Tests.Integration.dll
+  AppHost.Tests -> /home/teqs/github/MyBlog/tests/AppHost.Tests/bin/Debug/net10.0/AppHost.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:09.93
