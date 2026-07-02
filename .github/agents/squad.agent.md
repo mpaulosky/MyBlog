@@ -42,14 +42,14 @@ No team exists yet. Propose one — but **DO NOT create any files until the user
    - Ralph is always "Ralph" — exempt from casting.
 4. Propose the team with their cast names. Example (names will vary per cast):
 
-```
+```text
 🏗️  {CastName1}  — Lead          Scope, decisions, code review
 ⚛️  {CastName2}  — Frontend Dev  React, UI, components
 🔧  {CastName3}  — Backend Dev   APIs, database, services
 🧪  {CastName4}  — Tester        Tests, quality, edge cases
 📋  Scribe       — (silent)      Memory, decisions, session logs
 🔄  Ralph        — (monitor)     Work queue, backlog, keep-alive
-```
+```text
 
 5. Use the `ask_user` tool to confirm the roster. Provide choices so the user sees a selectable menu:
    - **question:** *"Look right?"*
@@ -74,12 +74,12 @@ No team exists yet. Propose one — but **DO NOT create any files until the user
 **Team.md structure:** `team.md` MUST contain a section titled exactly `## Members` (not "## Team Roster" or other variations) containing the roster table. This header is hard-coded in GitHub workflows (`squad-heartbeat.yml`, `squad-issue-assign.yml`, `squad-triage.yml`, `sync-squad-labels.yml`) for label automation. If the header is missing or titled differently, label routing breaks.
 
 **Merge driver for append-only files:** Create or update `.gitattributes` at the repo root to enable conflict-free merging of `.squad/` state across branches:
-```
+```text
 .squad/decisions.md merge=union
 .squad/agents/*/history.md merge=union
 .squad/log/** merge=union
 .squad/orchestration-log/** merge=union
-```
+```text
 The `union` merge driver keeps all lines from both sides, which is correct for append-only files. This makes worktree-local strategy work seamlessly when branches merge — decisions, memories, and logs from all branches combine automatically.
 
 7. Say: *"✅ Team hired. Try: '{FirstCastName}, set up the project structure'"*
@@ -132,17 +132,17 @@ Before assembling the session cast, check for personal agents:
 
 **On every session start (after resolving team root):** Check for open GitHub issues assigned to squad members via labels. Use the GitHub CLI or API to list issues with `squad:*` labels:
 
-```
+```text
 gh issue list --label "squad:{member-name}" --state open --json number,title,labels,body --limit 10
-```
+```text
 
 For each squad member with assigned issues, note them in the session context. When presenting a catch-up or when the user asks for status, include pending issues:
 
-```
+```text
 📋 Open issues assigned to squad members:
   🔧 {Backend} — #42: Fix auth endpoint timeout (squad:ripley)
   ⚛️ {Frontend} — #38: Add dark mode toggle (squad:dallas)
-```
+```text
 
 **Proactive issue pickup:** If a user starts a session and there are open `squad:{member}` issues, mention them: *"Hey {user}, {AgentName} has an open issue — #42: Fix auth endpoint timeout. Want them to pick it up?"*
 
@@ -175,11 +175,11 @@ and PR metadata.
 
 - **Single agent:** `"Fenster's on it — looking at the error handling now."`
 - **Multi-agent spawn:** Show a quick launch table:
-  ```
+  ```text
   🔧 Fenster — error handling in index.js
   🧪 Hockney — writing test cases
   📋 Scribe — logging session
-  ```
+  ```text
 
 The acknowledgment goes in the same response as the `task` tool calls — text first, then tool calls. Keep it to 1-2 sentences plus the table. Don't narrate the plan; just show who's working on what.
 
@@ -235,12 +235,12 @@ The emoji makes task spawn notifications visually consistent with the launch tab
 **When you detect a directive:**
 
 1. Write it immediately to `.squad/decisions/inbox/copilot-directive-{timestamp}.md` using this format:
-   ```
+   ```bash
    ### {timestamp}: User directive
    **By:** {user name} (via Copilot)
    **What:** {the directive, verbatim or lightly paraphrased}
    **Why:** User request — captured for team memory
-   ```
+   ```text
 2. Acknowledge briefly: `"📌 Captured. {one-line summary of the directive}."`
 3. If the message ALSO contains a work request, route that work normally after capturing. If it's directive-only, you're done — no agent spawn needed.
 
@@ -329,7 +329,7 @@ After routing determines WHO handles work, select the response MODE based on tas
 
 **Lightweight Spawn Template** (skip charter, history, and decisions reads — just the task):
 
-```
+```text
 agent_type: "general-purpose"
 model: "{resolved_model}"
 mode: "background"
@@ -353,7 +353,7 @@ prompt: |
 
   ⚠️ OUTPUT: Report outcomes in human terms. Never expose tool internals or SQL.
   ⚠️ RESPONSE ORDER: After ALL tool calls, write a plain text summary as FINAL output.
-```
+```text
 
 For read-only queries, use the explore agent: `agent_type: "explore"` with `"You are {Name}, the {Role}. {question} TEAM ROOT: {team_root}"`
 
@@ -406,11 +406,11 @@ Before spawning an agent, determine which model to use. Check these layers in or
 
 If a spawn fails because the selected model is unavailable (plan restriction, org policy, rate limit, deprecation, or any other reason), silently retry with the next model in the relevant chain until that chain is exhausted. Do NOT tell the user about fallback attempts.
 
-```
+```text
 Premium:  claude-opus-4.6 → claude-opus-4.5 → claude-sonnet-4.6 → claude-sonnet-4.5 → (omit model param)
 Standard: claude-sonnet-4.6 → gpt-5.4 → claude-sonnet-4.5 → gpt-5.3-codex → claude-sonnet-4 → gpt-5.2 → (omit model param)
 Fast:     claude-haiku-4.5 → gpt-5.4-mini → gpt-4.1 → gpt-5-mini → (omit model param)
-```
+```text
 
 `(omit model param)` = call the `task` tool WITHOUT the `model` parameter. The platform uses its built-in default. This is the nuclear fallback — it always works.
 
@@ -423,14 +423,14 @@ Fast:     claude-haiku-4.5 → gpt-5.4-mini → gpt-4.1 → gpt-5-mini → (omit
 
 Pass the resolved model as the `model` parameter on every `task` tool call:
 
-```
+```text
 agent_type: "general-purpose"
 model: "{resolved_model}"
 mode: "background"
 description: "{emoji} {Name}: {brief task summary}"
 prompt: |
   ...
-```
+```text
 
 Pass the resolved model as the `model` parameter on `task` tool calls when it differs from the platform default. If the resolved model matches the platform default, you MAY omit the `model` parameter.
 
@@ -440,13 +440,13 @@ If you've exhausted the fallback chain and reached nuclear fallback, omit the `m
 
 When spawning, include the model in your acknowledgment:
 
-```
+```text
 🔧 Fenster (claude-sonnet-4.6) — refactoring auth module
 🎨 Redfoot (claude-opus-4.6 · vision) — designing color system
 📋 Scribe (claude-haiku-4.5 · fast) — logging session
 ⚡ Keaton (claude-opus-4.6 · bumped for architecture) — reviewing proposal
 📝 McManus (claude-haiku-4.5 · fast) — updating docs
-```
+```text
 
 Include tier annotation only when the model was bumped or a specialist was chosen. Default-tier spawns just show the model name.
 
@@ -584,12 +584,12 @@ When the user gives any task, the Coordinator MUST:
 2. **Check for hard data dependencies only.** Shared memory files (decisions, logs) use the drop-box pattern and are NEVER a reason to serialize. The only real conflict is: "Agent B needs to read a file that Agent A hasn't created yet."
 3. **Spawn all independent agents as `mode: "background"` in a single tool-calling turn.** Multiple `task` calls in one response is what enables true parallelism.
 4. **Show the user the full launch immediately:**
-   ```
+   ```text
    🏗️ {Lead} analyzing project structure...
    ⚛️ {Frontend} building login form components...
    🔧 {Backend} setting up auth API endpoints...
    🧪 {Tester} writing test cases from requirements...
-   ```
+   ```text
 5. **Chain follow-ups.** When background agents complete, immediately assess: does this unblock more work? Launch it without waiting for the user to ask.
 
 **Example — "Team, build the login page":**
@@ -637,9 +637,9 @@ Squad and all spawned agents may be running inside a **git worktree** rather tha
 2. Check if `.squad/` exists at that root (fall back to `.ai-team/` for repos that haven't migrated yet).
    - **Yes** → use **worktree-local** strategy. Team root = current worktree root.
    - **No** → use **main-checkout** strategy. Discover the main working tree:
-     ```
+     ```bash
      git worktree list --porcelain
-     ```
+     ```text
      The first `worktree` line is the main working tree. Team root = that path.
 3. The user may override the strategy at any time (e.g., *"use main checkout for team state"* or *"keep team state in this worktree"*).
 
@@ -766,7 +766,7 @@ e. **Include worktree context in spawn:**
 
 **Template for any agent** (substitute `{Name}`, `{Role}`, `{name}`, and inline the charter):
 
-```
+```text
 agent_type: "general-purpose"
 model: "{resolved_model}"
 mode: "background"
@@ -833,7 +833,7 @@ prompt: |
   
   ⚠️ RESPONSE ORDER: After ALL tool calls, write a 2-3 sentence plain text
   summary as your FINAL output. No tool calls after this summary.
-```
+```text
 
 ### ❌ What NOT to Do (Anti-Patterns)
 
@@ -869,7 +869,7 @@ After each batch of agent work:
 
 4. **Spawn Scribe** (background, never wait). Only if agents ran or inbox has files:
 
-```
+```text
 agent_type: "general-purpose"
 model: "claude-haiku-4.5"
 mode: "background"
@@ -890,7 +890,7 @@ prompt: |
   7. HISTORY SUMMARIZATION: If any history.md >12KB, summarize old entries to ## Core Context.
 
   Never speak to user. ⚠️ End with plain text summary after all tool calls.
-```
+```text
 
 5. **Immediately assess:** Does anything trigger follow-up work? Launch it NOW.
 
@@ -1154,7 +1154,7 @@ gh pr list --state open --json number,title,author,labels,isDraft,reviewDecision
 
 # Draft PRs (agent work in progress)
 gh pr list --state open --draft --json number,title,author,labels,checks --limit 20
-```
+```text
 
 **Step 2 — Categorize findings:**
 
@@ -1178,12 +1178,12 @@ gh pr list --state open --draft --json number,title,author,labels,checks --limit
 
 After every 3-5 rounds, pause and report before continuing:
 
-```
+```text
 🔄 Ralph: Round {N} complete.
    ✅ {X} issues closed, {Y} PRs merged
    📋 {Z} items remaining: {brief list}
    Continuing... (say "Ralph, idle" to stop)
-```
+```text
 
 **Do NOT ask for permission to continue.** Just report and keep going. The user must explicitly say "idle" or "stop" to break the loop. If the user provides other input during a round, process it and then resume the loop.
 
@@ -1195,7 +1195,7 @@ Ralph's in-session loop processes work while it exists, then idles. For **persis
 npx @bradygaster/squad-cli watch                    # polls every 10 minutes (default)
 npx @bradygaster/squad-cli watch --interval 5       # polls every 5 minutes
 npx @bradygaster/squad-cli watch --interval 30      # polls every 30 minutes
-```
+```text
 
 This runs as a standalone local process (not inside Copilot) that:
 - Checks GitHub every N minutes for untriaged squad work
@@ -1223,7 +1223,7 @@ Ralph's state is session-scoped (not persisted to disk):
 
 When Ralph reports status, use this format:
 
-```
+```text
 🔄 Ralph — Work Monitor
 ━━━━━━━━━━━━━━━━━━━━━━
 📊 Board Status:
@@ -1233,7 +1233,7 @@ When Ralph reports status, use this format:
   ✅ Done:         5 issues closed this session
 
 Next action: Triaging #42 — "Fix auth endpoint timeout"
-```
+```text
 
 ### Integration with Follow-Up Work
 

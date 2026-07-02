@@ -1,3 +1,30 @@
+## 2026-05-24 Session Log: Issue #371 Docs Recovery & Branch Alignment Guardrail
+
+Boromir recovered dirty issue #371 documentation work that had been started on `dev`
+and rehomed it onto the proper branch:
+`squad/371-our-documentation-is-outdated-and-missing-blog-and-release-information`.
+
+### What changed
+
+- Safely stashed only the issue-owned docs files from `dev` and reapplied them on the
+  issue branch created from `origin/dev`
+- Preserved the recovered docs scope to:
+  `README.md`, `docs/blog/index.md`, `docs/index.html`, and five release posts under
+  `docs/blog/`
+- Added a reusable process guardrail:
+  `.squad/skills/issue-branch-alignment/SKILL.md`
+- Routed the new guardrail in `.squad/routing.md`
+- Updated `.squad/playbooks/pre-push-process.md` with the stash-and-rehome recovery flow
+- Recorded the team-facing decision in
+  `.squad/decisions/inbox/boromir-issue-branch-alignment.md`
+
+### Verification
+
+- Markdown lint passed for all changed Markdown files
+- Local gate passed with:
+  `dotnet restore`, `dotnet build MyBlog.slnx --configuration Release`, and all required
+  test projects including `tests/AppHost.Tests/AppHost.Tests.csproj`
+
 ## Core Context
 
 ### MyBlog DevOps & Infrastructure Patterns
@@ -47,6 +74,27 @@
 ---
 
 ## Learnings
+
+### 2026-05-24 — Issue #384: Recover release PR #383 after squash-merge ancestry drift
+
+**What worked:** Rebuild the replacement release branch from `origin/main` in a
+clean worktree, merge `origin/dev`, resolve conflicts once, then strip every
+`.squad/` path back to the `main` version before commit. That keeps the release
+PR scoped to product/docs/workflow changes only.
+
+**Release recovery rule:** For ancestry-drift repairs, treat `origin/dev` as the
+source of truth for active product code and tests. Preserve only intentional
+main-only release differences, such as workflow deletions already accepted on
+`dev`.
+
+**Validation gotchas:** Local toolchains placed inside the repo can break the
+pre-push markdownlint gate because it scans `**/*.md`. Keep ad-hoc SDK/Node
+installs outside the worktree, and install Playwright Chromium before running
+`tests/AppHost.Tests`.
+
+**Key paths:** `src/AppHost/MongoDbResourceBuilderExtensions.cs`,
+`Directory.Packages.props`, `.github/workflows/dependabot-auto-merge.yml`,
+`.github/workflows/squad-heartbeat.yml`, and `tests/AppHost.Tests`.
 
 ### 2026-05-19 — Issue #348: Resolve Remaining Database Runtime Issues (post-PR #346 investigation)
 
@@ -1495,6 +1543,17 @@ Decision #26: Lint Workflow Pattern for MyBlog (merged into `.squad/decisions.md
 
 ## Learnings
 
+### 2026-05-29 — Issue #407: AppHost console URL is the dashboard source of truth
+
+- `dotnet run --project src/AppHost/AppHost.csproj` started successfully on the
+   issue branch; the perceived local-startup failure came from stale docs that
+   still pointed to `http://localhost:15100`.
+- For local Aspire troubleshooting, trust the dashboard URL printed by the
+   running AppHost console instead of any hard-coded port in docs or prior
+   sessions.
+- On this machine, the direct runtime check reported the active AppHost URL as
+   `https://localhost:17091`.
+
 ### Issue #299 — Pre-Push Gate: AppHost.Tests Was Missing from Live Hook (2026-05-11)
 
 **Root cause:** The playbook and SKILL.md documented `AppHost.Tests` as mandatory in Gate 5, but the live `.github/hooks/pre-push` `INTEGRATION_PROJECTS` array only contained `Web.Tests.Integration`. The hook and docs were out of sync.
@@ -1664,6 +1723,34 @@ Changes shipped clean with zero test failures (Architecture.Tests: 16/16 passed)
 
 ---
 
+## 2026-05-25 — Issue #393: Released board promotion now follows shipped release commit deltas
+
+**Context:** Sprint 20 release board automation was moving unrelated Done items to Released after
+`main` releases because the workflows trusted broad Done-column state and release PR body refs.
+
+### What changed
+
+- Updated `.github/workflows/project-board-automation.yml` and
+  `.github/workflows/squad-mark-released.yml` to compare the current release PR's commit list to
+  the previous merged release PR's commit list.
+- The workflows now derive shipped issues from newly introduced commit messages plus associated
+  non-release PR bodies, then move only matching Done cards to Released.
+- Manual recovery docs in `docs/SQUAD-COMMANDS.md` now call out both supported inputs:
+  `release_pr_number` and `tag_name`.
+
+### Key Learnings
+
+- **Release PR bodies are not reliable shipment scope.** Recovery release PRs can close meta issues
+  like `#384`; those refs must not drive board promotion.
+- **Release commit deltas are more reliable than merge timestamps.** Subtracting the previous
+  release PR commit set from the current one correctly isolated Sprint 20's 13 newly shipped
+  commits and excluded already released history.
+- **`listPullRequestsAssociatedWithCommit` still needs release-PR filtering.** Merge-back or
+  recovery commits can resolve to old release PRs, so Released selection must ignore release-shaped
+  PRs and use only feature PRs plus commit-message issue refs.
+
+---
+
 ## 2026-07-08 — Issue #350 Round 2: AppHost.Tests Mongo/Aspire Startup Verification
 
 **Context:** Gimli's verification reported 3 remaining AppHost.Tests Mongo/Aspire startup failures after prior round (node_modules, aspire.config.json fixes). Tasked with reproducing and diagnosing.
@@ -1696,3 +1783,45 @@ container crashed (exit 139/SIGSEGV). Each collection's fixture failure cascaded
 - When Aspire integration test collections fail at fixture init (not test body), ALL tests in the collection report as failed — making "3 failures" actually mean "3 fixture startup failures affecting N tests total"
 - `Assert.Skip()` (xUnit v3) skips appear in CI as Skipped not Failed — a 1-skip result on the theme toggle test is expected/normal behavior
 - The Mongo volume state matters across sessions: `mongo-data` (FCV-contaminated with mongo:8.2 UUID idents) must never be used with `mongo:7`; only `mongo-data-v7` is safe
+
+---
+
+## Issue #420 — Dependabot npm_and_yarn bump (js-yaml, markdown-it)
+
+**Date:** 2026-07-01  
+**PR created:** #423 (Node 22 workflow fix)
+
+### Work Done
+
+Reviewed Dependabot PR #420 bumping root-level npm devDependencies:
+
+| Package | Before | After |
+|---|---|---|
+| markdownlint-cli2 | 0.22.1 | 0.23.0 |
+| js-yaml (transitive) | 4.1.1 | 5.2.0 |
+| markdown-it (transitive) | 14.1.1 | 14.2.0 |
+| markdownlint (transitive) | 0.40.0 | 0.41.0 |
+
+- js-yaml 5.x is a **major version** but only used internally by markdownlint-cli2; no direct usage in our code.
+- All affected packages are **devDependencies** — zero production impact.
+- `markdownlint` CI check passes ✅ on the PR.
+- Build failures on the PR are pre-existing `MessagePack 2.5.192` vulnerability (NU1902/NU1903) — unrelated.
+
+### Node 22 Fix (PR #423)
+
+`markdownlint-cli2 0.23.0` and `markdownlint 0.41.0` raised minimum Node from 20 → 22.  
+Updated `.github/workflows/squad-standard-lint-markdown.yml` `node-version: "20"` → `"22"`.  
+Note: `lint-markdown.yml` uses `markdownlint-cli2-action@v23` (GitHub composite action) — no `setup-node` needed, unaffected.
+
+Approved PR #420 and enabled auto-merge. Created PR #423 as companion Node 22 workflow fix.
+
+### Key File Paths
+
+- `.github/workflows/squad-standard-lint-markdown.yml` — uses `setup-node@v5` (node-version must be kept current)
+- `.github/workflows/lint-markdown.yml` — uses `markdownlint-cli2-action@v23` (node-agnostic)
+
+## Learnings
+
+**Pattern:** When reviewing Dependabot npm PRs, check both the direct dep version AND the transitive deps' engine requirements. A minor bump of `markdownlint-cli2` carried a Node >=22 requirement via its transitive `markdownlint` dep.
+
+**Pattern:** `squad-dependabot-auto-merge.yml` only fires for PRs targeting `dev`. Dependabot PRs that target `main` must be manually approved/merged or have auto-merge enabled by hand.

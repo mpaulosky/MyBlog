@@ -23,7 +23,7 @@ updates:
       - "mpaulosky"
     groups:
       all-actions:
-        patterns: [ "*" ]
+        patterns: ["*"]
 
   # Maintain dependencies for nuget
   - package-ecosystem: "nuget"
@@ -41,7 +41,7 @@ updates:
       - "mpaulosky"
     groups:
       all-actions:
-        patterns: [ "*" ]
+        patterns: ["*"]
 
   # Maintain DotNet Sdk
   - package-ecosystem: "dotnet-sdk"
@@ -59,4 +59,4 @@ updates:
       - "mpaulosky"
     groups:
       all-actions:
-        patterns: [ "*" ]
+        patterns: ["*"]

@@ -36,7 +36,7 @@ public class VsaLayerTests
 		// Arrange / Act — All types named *Handler in Web assembly should be sealed classes
 		var result = Types.InAssembly(WebAssembly)
 				.That()
-				.HaveNameEndingWith("Handler")
+				.HaveNameEndingWith("Handler", StringComparison.Ordinal)
 				.Should()
 				.BeSealed()
 				.GetResult();

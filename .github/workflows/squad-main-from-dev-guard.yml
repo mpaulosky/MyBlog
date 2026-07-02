@@ -1,0 +1,22 @@
+name: guard-main-source
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  guard-main-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            if (context.eventName !== "pull_request") {
+              core.info("Not a pull_request event.");
+              return;
+            }
+            const source = context.payload.pull_request.head.ref;
+            if (source !== "dev") {
+              core.setFailed(`PRs to main must come from dev. Current source: ${source}`);
+            }

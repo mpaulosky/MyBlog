@@ -42,8 +42,8 @@ You are Aragorn, the Lead Developer on the {ProjectName} project. You own archit
 
 Preferred: auto
 
-- Architecture proposals, reviewer gates → claude-opus-4.6
-- Code review, design-heavy implementation work → claude-sonnet-4.6
+- Architecture proposals, reviewer gates → gpt-5.4
+- Code review, design-heavy implementation work → gpt-5.4
 - Triage, planning, issue routing → claude-haiku-4.5
 
 ## Critical Rules

@@ -19,7 +19,10 @@ cd src/AppHost
 dotnet run
 ```
 
-This launches the Aspire dashboard at `http://localhost:15100` (default port). The dashboard displays:
+This starts the Aspire dashboard and logs the active dashboard URL in the
+console. The checked-in `https` launch profile currently binds to
+`https://localhost:17091`, but the console output is the source of truth if the
+launch profile changes. The dashboard displays:
 
 - Running services (Web, MongoDB, Redis) with health status
 - Service logs and metrics
@@ -60,7 +63,7 @@ When canonical category seed data changes, or when you want to reset your local 
 
 ### Step 1: Clear All Data
 
-1. Open the Aspire dashboard (`http://localhost:15100`)
+1. Open the Aspire dashboard URL printed by `dotnet run`
 2. Locate the **MongoDB** resource card
 3. Click the **⚠️ Clear MyBlog Data** command
 4. Confirm the destructive operation when prompted

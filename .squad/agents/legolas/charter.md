@@ -55,7 +55,7 @@ Key patterns it covers: unified `tailwind-color-theme` storage key, anti-FOUC II
 
 ## Model
 
-Preferred: auto (frontend implementation resolves to claude-sonnet-4.6)
+Preferred: gpt-5.4
 
 ## Naming Conventions
 

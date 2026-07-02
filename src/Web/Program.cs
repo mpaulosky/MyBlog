@@ -42,36 +42,50 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
 		.AddInteractiveServerComponents();
 
-// Auth0 authentication — required only in Production
+// Auth0 authentication — real credentials required outside the Testing environment.
 var auth0Domain = builder.Configuration["Auth0:Domain"];
 var auth0ClientId = builder.Configuration["Auth0:ClientId"];
+var auth0ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+var isTestingEnvironment = builder.Environment.IsEnvironment("Testing");
+var usesLocalTestLoginFallback = Auth0ConfigurationHelper.ShouldUseLocalTestLogin(
+	isTestingEnvironment,
+	auth0Domain,
+	auth0ClientId,
+	auth0ClientSecret);
 
-// In Development/Testing, provide mock values; in Production, require real credentials
-if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("Testing"))
+// The local cookie-based test login exists only for the Testing environment that powers
+// AppHost and browser automation. Development and Production must use real Auth0 settings.
+if (!isTestingEnvironment)
 {
-	if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0ClientId))
+	if (Auth0ConfigurationHelper.UsesPlaceholderWebAppLogin(auth0Domain, auth0ClientId, auth0ClientSecret))
 	{
 		throw new InvalidOperationException(
-				"Auth0 configuration is missing or incomplete. Set these user secrets for the Web project:\n" +
+				"Auth0 configuration is missing or using placeholder values. The Web project requires real Auth0 credentials outside the Testing environment. Set these user secrets for the Web project:\n" +
 				"  dotnet user-secrets set \"Auth0:Domain\" \"<your-tenant>.auth0.com\" --project src/Web\n" +
 				"  dotnet user-secrets set \"Auth0:ClientId\" \"<your-client-id>\" --project src/Web\n" +
 				"  dotnet user-secrets set \"Auth0:ClientSecret\" \"<your-client-secret>\" --project src/Web");
 	}
 }
-else if (string.IsNullOrWhiteSpace(auth0Domain) || string.IsNullOrWhiteSpace(auth0ClientId))
+else if (usesLocalTestLoginFallback)
 {
-	// Development/Testing: Use test/mock values if not configured
+	// Testing without real Auth0 credentials: use placeholder values and flag so the
+	// AppHost and Playwright test harness can short-circuit to the local cookie login.
 	auth0Domain = "test.auth0.com";
 	auth0ClientId = "test-client-id";
+	auth0ClientSecret = "test-client-secret";
 }
+
+var resolvedAuth0Domain = auth0Domain ?? throw new InvalidOperationException("Auth0 domain was not resolved.");
+var resolvedAuth0ClientId = auth0ClientId ?? throw new InvalidOperationException("Auth0 client ID was not resolved.");
+var resolvedAuth0ClientSecret = auth0ClientSecret ?? throw new InvalidOperationException("Auth0 client secret was not resolved.");
 
 var auth0RoleClaimTypes = RoleClaimsHelper.GetRoleClaimTypes(builder.Configuration);
 
 builder.Services.AddAuth0WebAppAuthentication(opts =>
 {
-	opts.Domain = auth0Domain;
-	opts.ClientId = auth0ClientId;
-	opts.ClientSecret = builder.Configuration["Auth0:ClientSecret"];
+	opts.Domain = resolvedAuth0Domain;
+	opts.ClientId = resolvedAuth0ClientId;
+	opts.ClientSecret = resolvedAuth0ClientSecret;
 	opts.Scope = "openid profile email";
 	opts.CallbackPath = "/signin-auth0";
 });
@@ -83,7 +97,10 @@ builder.Services.PostConfigure<OpenIdConnectOptions>(Auth0Constants.Authenticati
 	var existingOnTokenValidated = options.Events.OnTokenValidated;
 	options.Events.OnTokenValidated = async context =>
 	{
-		await existingOnTokenValidated(context).ConfigureAwait(false);
+		if (existingOnTokenValidated is not null)
+		{
+			await existingOnTokenValidated(context).ConfigureAwait(false);
+		}
 
 		if (context.Principal?.Identity is not ClaimsIdentity identity)
 		{
@@ -172,6 +189,14 @@ app.MapGet("/Account/Login", async (HttpContext ctx, string? returnUrl) =>
 			&& Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
 			? returnUrl
 			: "/";
+
+	// Only the Testing environment may bypass Auth0 and use the local cookie-based test login.
+	if (usesLocalTestLoginFallback && app.Environment.IsEnvironment("Testing"))
+	{
+		ctx.Response.Redirect($"/test/login?returnUrl={Uri.EscapeDataString(safeReturn)}");
+		return;
+	}
+
 	var props = new LoginAuthenticationPropertiesBuilder()
 			.WithRedirectUri(safeReturn)
 			.Build();
@@ -187,8 +212,8 @@ app.MapGet("/Account/Logout", async ctx =>
 	await ctx.SignOutAsync().ConfigureAwait(false);
 }).RequireAuthorization();
 
-// Test-only login endpoint for E2E testing (Development/Testing environments only)
-if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+// Test-only login endpoint for E2E testing (Testing environment only)
+if (app.Environment.IsEnvironment("Testing"))
 {
 	app.MapGet("/test/login", MapTestLoginEndpoint).AllowAnonymous();
 }
@@ -200,17 +225,21 @@ app.MapDefaultEndpoints();
 app.Run();
 
 [ExcludeFromCodeCoverage(Justification = "Test-only endpoint for E2E testing")]
-static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
+static async Task MapTestLoginEndpoint(HttpContext ctx, string? role, string? returnUrl)
 {
 	var roleValue = string.IsNullOrWhiteSpace(role) ? "user" : role;
+	var safeReturn = !string.IsNullOrEmpty(returnUrl)
+			&& Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
+			? returnUrl
+			: "/";
 
 	// Create claims for the test user
 	var claims = new List<Claim>
 	{
-		new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
-		new Claim(ClaimTypes.Name, "Test User"),
-		new Claim(ClaimTypes.Email, "test@example.com"),
-		new Claim(ClaimTypes.Role, roleValue),
+		new(ClaimTypes.NameIdentifier, "test-user-id"),
+		new(ClaimTypes.Name, "Test User"),
+		new(ClaimTypes.Email, "test@example.com"),
+		new(ClaimTypes.Role, roleValue),
 	};
 
 	var identity = new ClaimsIdentity(claims, "TestScheme");
@@ -222,7 +251,7 @@ static async Task MapTestLoginEndpoint(HttpContext ctx, string? role)
 		IsPersistent = true,
 	}).ConfigureAwait(false);
 
-	ctx.Response.Redirect("/");
+	ctx.Response.Redirect(safeReturn);
 }
 
 // Exclude the compiler-generated Program class (top-level bootstrap statements) from coverage.

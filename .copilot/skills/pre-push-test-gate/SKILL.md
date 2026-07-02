@@ -28,16 +28,16 @@ The pre-push hook (`.github/hooks/pre-push`) enforces **5 gates** that mirror CI
 
 ### Gate 3 — Unit Test Projects (2 total)
 
-```
+```text
 tests/Architecture.Tests/Architecture.Tests.csproj
 tests/Unit.Tests/Unit.Tests.csproj
-```
+```text
 
 ### Gate 4 — Integration Test Projects (1 total, Docker required)
 
-```
+```text
 tests/Integration.Tests/Integration.Tests.csproj
-```
+```text
 
 These use Testcontainers (MongoDb) and Aspire DCP. Docker daemon MUST be running.
 
@@ -53,7 +53,7 @@ The hook source is committed at `.github/hooks/pre-push`. Install once per clone
 ```bash
 cp .github/hooks/pre-push .git/hooks/pre-push
 chmod +x .git/hooks/pre-push
-```
+```text
 
 > ⚠️ Do NOT create inline hook scripts. Always copy from `.github/hooks/pre-push` to get the full 5-gate version.
 

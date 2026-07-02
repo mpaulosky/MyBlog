@@ -273,8 +273,8 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 		JSInterop.Mode = JSRuntimeMode.Loose;
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setColor");
-		JSInterop.SetupVoid("themeManager.setBrightness");
+		JSInterop.SetupVoid("themeManager.setColor").SetVoidResult();
+		JSInterop.SetupVoid("themeManager.setBrightness").SetVoidResult();
 	}
 
 	[Fact]
@@ -317,7 +317,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	public void ColorDropdownChangeInsideThemeProviderCallsSetColorJs()
 	{
 		// Arrange
-		JSInterop.SetupVoid("themeManager.setColor", "yellow");
+		JSInterop.SetupVoid("themeManager.setColor", "yellow").SetVoidResult();
 
 		var cut = Render<ThemeProvider>(parameters => parameters
 				.AddChildContent<ThemeSelector>());
@@ -338,7 +338,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	{
 		// Arrange
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark").SetVoidResult();
 
 		var cut = Render<ThemeProvider>(parameters => parameters
 				.AddChildContent<ThemeSelector>());
@@ -359,7 +359,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 		// Arrange — proves the full toggle pipeline: click → HandleBrightnessChanged → Provider.SetBrightness → CurrentBrightness
 		JSInterop.Setup<string>("themeManager.getColor").SetResult("blue");
 		JSInterop.Setup<string>("themeManager.getBrightness").SetResult("light");
-		JSInterop.SetupVoid("themeManager.setBrightness", "dark");
+		JSInterop.SetupVoid("themeManager.setBrightness", "dark").SetVoidResult();
 
 		var cut = Render<ThemeProvider>(parameters => parameters
 				.AddChildContent<ThemeSelector>());
@@ -377,7 +377,7 @@ public sealed class ThemeProviderWithSelectorIntegrationTests : BunitContext
 	public void ColorDropdownChangeInsideThemeProviderUpdatesCurrentColorInCascade()
 	{
 		// Arrange — proves the full color pipeline: change → HandleColorChanged → Provider.SetColor → CurrentColor
-		JSInterop.SetupVoid("themeManager.setColor", "yellow");
+		JSInterop.SetupVoid("themeManager.setColor", "yellow").SetVoidResult();
 
 		var cut = Render<ThemeProvider>(parameters => parameters
 				.AddChildContent<ThemeSelector>());

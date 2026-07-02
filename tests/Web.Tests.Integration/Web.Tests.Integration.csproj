@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <RootNamespace>Web</RootNamespace>
+    <!-- Test-project suppressions:
+         CA2007 - ConfigureAwait not needed in xUnit test context
+         CA1711 - xUnit CollectionDefinition class must end in 'Collection' -->
+    <NoWarn>$(NoWarn);CA2007;CA1711</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

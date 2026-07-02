@@ -9,12 +9,9 @@
 
 using System.Collections.Immutable;
 
-using Aspire.Hosting;
-
 using FluentAssertions;
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AppHost.Tests;
 

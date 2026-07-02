@@ -9,8 +9,6 @@
 
 using System.Text.Json;
 
-using MyBlog.Web.Data;
-
 namespace MyBlog.Web.Infrastructure.Caching;
 
 internal sealed class BlogPostCacheService(
@@ -38,7 +36,14 @@ internal sealed class BlogPostCacheService(
 	{
 		// L1 hit (synchronous — no heap allocation)
 		if (localCache.TryGetValue(BlogPostCacheKeys.All, out List<BlogPostDto>? cached) && cached is not null)
-			return cached;
+		{
+			if (cached.Count > 0)
+			{
+				return cached;
+			}
+
+			localCache.Remove(BlogPostCacheKeys.All);
+		}
 
 		// L2 hit
 		var bytes = await distributedCache.GetAsync(BlogPostCacheKeys.All, ct).ConfigureAwait(false);
@@ -47,10 +52,15 @@ internal sealed class BlogPostCacheService(
 			try
 			{
 				var fromRedis = JsonSerializer.Deserialize<List<BlogPostDto>>(bytes, JsonOpts);
-				if (fromRedis is not null)
+				if (fromRedis is { Count: > 0 })
 				{
 					localCache.Set(BlogPostCacheKeys.All, fromRedis, LocalOpts);
 					return fromRedis;
+				}
+
+				if (fromRedis is not null)
+				{
+					await distributedCache.RemoveAsync(BlogPostCacheKeys.All, CancellationToken.None).ConfigureAwait(false);
 				}
 			}
 			catch (JsonException)
@@ -63,13 +73,18 @@ internal sealed class BlogPostCacheService(
 		// DB via caller-supplied fetch
 		var result = await fetch().ConfigureAwait(false);
 		var list = result as List<BlogPostDto> ?? result.ToList();
+		if (list.Count == 0)
+		{
+			return list;
+		}
+
 		localCache.Set(BlogPostCacheKeys.All, list, LocalOpts);
 		await distributedCache.SetAsync(
 			BlogPostCacheKeys.All,
 			JsonSerializer.SerializeToUtf8Bytes(list, JsonOpts),
 			RedisOpts,
 			ct).ConfigureAwait(false);
-		return result;
+		return list;
 	}
 
 	public async ValueTask<BlogPostDto?> GetOrFetchByIdAsync(

@@ -297,6 +297,30 @@ exports.onExecutePostLogin = async (event, api) => {
 
 ---
 
+### Development fails to start with `test.auth0.com` or other placeholder Auth0 settings
+
+**Cause**: The local cookie-based `Test User` login is reserved for the `Testing`
+environment used by AppHost and Playwright automation. Normal `Development`
+requires real Auth0 credentials. Placeholder values such as `test.auth0.com` or
+`test-client-id` are treated as invalid outside `Testing`.
+
+**Fix**: Set your user secrets for the Web project:
+
+```bash
+dotnet user-secrets set "Auth0:Domain"        "your-tenant.us.auth0.com" --project src/Web
+dotnet user-secrets set "Auth0:ClientId"      "YOUR_CLIENT_ID"           --project src/Web
+dotnet user-secrets set "Auth0:ClientSecret"  "YOUR_CLIENT_SECRET"       --project src/Web
+```
+
+Once set, the app routes `/Account/Login` to Auth0 Universal Login and `/Account/Logout`
+signs out through Auth0.
+
+If you are unexpectedly signed in as `Test User`, verify that the app is not running
+with `ASPNETCORE_ENVIRONMENT=Testing` and that you did not navigate directly to
+`/test/login`.
+
+---
+
 ### Application starts but login redirects to wrong port
 
 **Cause**: Running under the `http` profile instead of `https`.

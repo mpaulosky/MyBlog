@@ -17,14 +17,12 @@ public class UserManagementHandlerTests
 
 	private readonly IConfiguration _config = Substitute.For<IConfiguration>();
 	private readonly IHttpClientFactory _httpFactory = Substitute.For<IHttpClientFactory>();
-	private readonly IUserManagementCacheService _cache;
 	private readonly UserManagementHandler _handler;
 
 	public UserManagementHandlerTests()
 	{
 		_config["Auth0:ManagementApiDomain"].Returns((string?)null);
-		_cache = BuildPassThroughCache();
-		_handler = new UserManagementHandler(_config, _httpFactory, _cache);
+		_handler = new UserManagementHandler(_config, _httpFactory, BuildPassThroughCache());
 	}
 
 	// ── Domain missing ──────────────────────────────────────────────────────────────
@@ -81,6 +79,21 @@ public class UserManagementHandlerTests
 		// Assert
 		result.Failure.Should().BeTrue();
 		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
+	}
+
+	[Fact]
+	public async Task HandleGetUsersWithRolesDomainMissingReportsNestedFallbackKeyInErrorMessage()
+	{
+		// Arrange (none)
+
+		// Act
+		var result = await _handler.Handle(new GetUsersWithRolesQuery(), CancellationToken.None);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Contain("Auth0Management:Domain not configured");
+		result.Error.Should().Contain("Auth0:ManagementApiDomain not configured");
+		result.Error.Should().Contain("Auth0:Auth0Management:Domain not configured");
 	}
 
 	// ── ClientId missing ────────────────────────────────────────────────────────────────
@@ -319,6 +332,29 @@ public class UserManagementHandlerTests
 		requestBody.RootElement.GetProperty("grant_type").GetString().Should().Be("client_credentials");
 	}
 
+	[Fact]
+	public async Task HandleGetAvailableRolesNestedAuth0ManagementKeysFallBackToNestedConfig()
+	{
+		// Arrange
+		using var httpHandler = new RecordingTokenHttpHandler("{\"access_token\":\"\"}");
+		using var httpClient = new HttpClient(httpHandler, disposeHandler: false);
+		var handler = BuildHandlerWithNestedAuth0ManagementKeys(new StaticHttpClientFactory(httpClient));
+
+		// Act
+		var result = await handler.Handle(new GetAvailableRolesQuery(), CancellationToken.None);
+		httpHandler.LastRequestBody.Should().NotBeNullOrWhiteSpace();
+		using var requestBody = JsonDocument.Parse(httpHandler.LastRequestBody!);
+
+		// Assert
+		result.Failure.Should().BeTrue();
+		result.Error.Should().Be(InvalidAccessTokenError);
+		httpHandler.LastRequestUri.Should().Be(new Uri("https://nested.auth0.com/oauth/token"));
+		requestBody.RootElement.GetProperty("client_id").GetString().Should().Be("nested-client-id");
+		requestBody.RootElement.GetProperty("client_secret").GetString().Should().Be("nested-client-secret");
+		requestBody.RootElement.GetProperty("audience").GetString().Should().Be("https://nested.auth0.com/api/v2/");
+		requestBody.RootElement.GetProperty("grant_type").GetString().Should().Be("client_credentials");
+	}
+
 	[Theory]
 	[InlineData("{\"access_token\":\"\"}")]
 	[InlineData("{\"access_token\":\"   \"}")]
@@ -340,21 +376,8 @@ public class UserManagementHandlerTests
 
 	// ── helpers ───────────────────────────────────────────────────────────────────────────────
 
-	private static IUserManagementCacheService BuildPassThroughCache()
-	{
-		var cache = Substitute.For<IUserManagementCacheService>();
-		cache.GetOrFetchUsersAsync(
-				Arg.Any<Func<Task<IReadOnlyList<UserWithRolesDto>>>>(),
-				Arg.Any<CancellationToken>())
-			.Returns(ci => new ValueTask<IReadOnlyList<UserWithRolesDto>>(
-				ci.Arg<Func<Task<IReadOnlyList<UserWithRolesDto>>>>()()));
-		cache.GetOrFetchRolesAsync(
-				Arg.Any<Func<Task<IReadOnlyList<RoleDto>>>>(),
-				Arg.Any<CancellationToken>())
-			.Returns(ci => new ValueTask<IReadOnlyList<RoleDto>>(
-				ci.Arg<Func<Task<IReadOnlyList<RoleDto>>>>()()));
-		return cache;
-	}
+	private static PassThroughUserManagementCacheService BuildPassThroughCache()
+		=> new PassThroughUserManagementCacheService();
 
 	private static UserManagementHandler BuildHandlerWithPrimaryKeys(IHttpClientFactory httpFactory, string audience)
 	{
@@ -379,6 +402,15 @@ public class UserManagementHandlerTests
 		config["Auth0:ManagementApiDomain"].Returns("legacy.auth0.com");
 		config["Auth0:ManagementApiClientId"].Returns("legacy-client-id");
 		config["Auth0:ManagementApiClientSecret"].Returns("legacy-client-secret");
+		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
+	}
+
+	private static UserManagementHandler BuildHandlerWithNestedAuth0ManagementKeys(IHttpClientFactory httpFactory)
+	{
+		var config = Substitute.For<IConfiguration>();
+		config["Auth0:Auth0Management:Domain"].Returns("nested.auth0.com");
+		config["Auth0:Auth0Management:ClientId"].Returns("nested-client-id");
+		config["Auth0:Auth0Management:ClientSecret"].Returns("nested-client-secret");
 		return new UserManagementHandler(config, httpFactory, BuildPassThroughCache());
 	}
 
@@ -418,6 +450,23 @@ public class UserManagementHandlerTests
 	private sealed class StaticHttpClientFactory(HttpClient httpClient) : IHttpClientFactory
 	{
 		public HttpClient CreateClient(string name) => httpClient;
+	}
+
+	private sealed class PassThroughUserManagementCacheService : IUserManagementCacheService
+	{
+		public async ValueTask<IReadOnlyList<UserWithRolesDto>> GetOrFetchUsersAsync(
+			Func<Task<IReadOnlyList<UserWithRolesDto>>> fetch,
+			CancellationToken _ = default) =>
+			await fetch().ConfigureAwait(false);
+
+		public async ValueTask<IReadOnlyList<RoleDto>> GetOrFetchRolesAsync(
+			Func<Task<IReadOnlyList<RoleDto>>> fetch,
+			CancellationToken _ = default) =>
+			await fetch().ConfigureAwait(false);
+
+		public Task InvalidateUsersAsync(CancellationToken _ = default) => Task.CompletedTask;
+
+		public Task InvalidateRolesAsync(CancellationToken _ = default) => Task.CompletedTask;
 	}
 
 	private sealed class RecordingTokenHttpHandler(string responseJson) : HttpMessageHandler

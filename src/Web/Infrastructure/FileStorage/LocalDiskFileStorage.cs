@@ -58,10 +58,17 @@ internal sealed partial class LocalDiskFileStorage : IFileStorage
 		var uniqueName = $"{Guid.NewGuid()}{extension}";
 		var filePath = Path.Combine(uploadsPath, uniqueName);
 
-		await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-		await file.Content.CopyToAsync(fs).ConfigureAwait(false);
+		var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+		try
+		{
+			await file.Content.CopyToAsync(fs).ConfigureAwait(false);
 
-		LogFileSaved(_logger, uniqueName);
-		return uniqueName;
+			LogFileSaved(_logger, uniqueName);
+			return uniqueName;
+		}
+		finally
+		{
+			await fs.DisposeAsync().ConfigureAwait(false);
+		}
 	}
 }

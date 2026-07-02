@@ -9,8 +9,6 @@
 
 using System.Diagnostics;
 
-using Microsoft.Playwright;
-
 namespace AppHost.Tests.Infrastructure;
 
 /// <summary>
@@ -19,7 +17,7 @@ namespace AppHost.Tests.Infrastructure;
 public class PlaywrightManager : IAsyncLifetime
 {
 	private static bool IsDebugging => Debugger.IsAttached;
-	private static bool IsHeadless => IsDebugging is false;
+	private static bool IsHeadless => !IsDebugging;
 
 	private IPlaywright? _playwright;
 
