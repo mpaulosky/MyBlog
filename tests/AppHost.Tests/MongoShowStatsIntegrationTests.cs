@@ -153,6 +153,6 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
-		Arguments = [],
+		Arguments = default!,
 	};
 }
