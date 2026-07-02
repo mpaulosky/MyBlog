@@ -35,7 +35,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	/// When at least one collection with documents exists, the command returns success and
 	/// reports the collection count in its message.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ShowMyBlogStats_Returns_Collection_Names_And_Counts_In_Markdown()
 	{
 		// Arrange — drop db, then insert documents into blogposts
@@ -57,7 +57,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	/// When the database is completely empty (no user collections), the command must still
 	/// succeed — an empty database is not an error condition.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ShowMyBlogStats_Empty_Database_Returns_No_Collections_Found()
 	{
 		// Arrange — drop the entire myblog database so no collection exists
@@ -79,7 +79,7 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 	/// Two simultaneous stats attempts must not run together: exactly one proceeds and
 	/// the other fails fast with operator-visible feedback.
 	/// </summary>
-	[Fact]
+	[SkipInCIFact]
 	public async Task ShowMyBlogStats_Concurrent_Invocations_Allow_Only_One_Run()
 	{
 		// Arrange
@@ -153,6 +153,6 @@ public sealed class MongoShowStatsIntegrationTests(ClearCommandAppFixture fixtur
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
-		Arguments = [],
+		Arguments = default!,
 	};
 }

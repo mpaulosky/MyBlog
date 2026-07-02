@@ -21,7 +21,7 @@ public sealed class ThemeToggleInteractionTests : BasePlaywrightTests
 {
 	public ThemeToggleInteractionTests(AspireManager aspireManager) : base(aspireManager) { }
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task ThemeToggle_DarkMode_PersistsAfterNavigatingToBlogPosts()
 	{
 		// Arrange

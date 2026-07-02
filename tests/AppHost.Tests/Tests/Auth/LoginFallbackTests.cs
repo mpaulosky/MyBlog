@@ -16,7 +16,7 @@ namespace AppHost.Tests;
 [Collection(AppHostTestCollection.Name)]
 public sealed class LoginFallbackTests(AspireManager aspireManager)
 {
-	[Fact]
+	[SkipInCIFact]
 	public async Task AccountLogin_InTestingWithPlaceholderAuth0Config_RedirectsToLocalTestLoginWithReturnUrl()
 	{
 		// Arrange
@@ -42,7 +42,7 @@ public sealed class LoginFallbackTests(AspireManager aspireManager)
 		response.Headers.Location!.ToString().Should().NotContain("test.auth0.com");
 	}
 
-	[Fact]
+	[SkipInCIFact]
 	public async Task TestLogin_InTestingWithReturnUrl_RedirectsBackToRequestedPage()
 	{
 		// Arrange

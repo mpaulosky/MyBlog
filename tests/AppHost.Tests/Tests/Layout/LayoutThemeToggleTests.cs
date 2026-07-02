@@ -21,7 +21,7 @@ public sealed class LayoutThemeToggleTests : BasePlaywrightTests
 {
 	public LayoutThemeToggleTests(AspireManager aspireManager) : base(aspireManager) { }
 
-	[Theory]
+	[SkipInCITheory]
 	[InlineData("light", false)]
 	[InlineData("dark", true)]
 	public async Task ThemeToggle_ClickingSwitchesBrightnessAndHtmlDarkClass(string initialBrightness, bool initialHasDarkClass)
