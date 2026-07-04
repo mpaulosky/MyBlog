@@ -1,8 +1,5 @@
 name: lint-yaml
 
-# Ensures YAML lint workflow runs on conflict-fix PRs that touch this file.
-# Keep this workflow touched when resolving recurring PR context mismatches.
-
 on:
   pull_request:
     branches: [dev, main]
@@ -12,23 +9,16 @@ jobs:
   lint-yaml:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
       - name: Run yamllint
         run: |
           python -m pip install --quiet yamllint
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags origin "${{ github.base_ref }}:${{ github.base_ref }}"
-            files=$(git diff --name-only "${{ github.base_ref }}...HEAD" -- '*.yml' '*.yaml')
-          else
-            files=$(git ls-files '*.yml' '*.yaml')
-          fi
+          files=$(git ls-files '*.yml' '*.yaml')
           if [ -z "$files" ]; then
-            echo "No YAML files to lint."
+            echo "No YAML files found."
             exit 0
           fi
           yamllint -s $files

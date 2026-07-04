@@ -9,22 +9,15 @@ jobs:
   lint-markdown:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
       - name: Run markdownlint
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags origin "${{ github.base_ref }}:${{ github.base_ref }}"
-            files=$(git diff --name-only "${{ github.base_ref }}...HEAD" -- '*.md')
-          else
-            files=$(git ls-files '*.md')
-          fi
+          files=$(git ls-files '*.md')
           if [ -z "$files" ]; then
-            echo "No markdown files to lint."
+            echo "No markdown files found."
             exit 0
           fi
           npx --yes markdownlint-cli $files
