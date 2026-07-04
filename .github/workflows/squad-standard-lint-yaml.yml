@@ -1,6 +1,7 @@
 name: lint-yaml
 
 # Ensures YAML lint workflow runs on conflict-fix PRs that touch this file.
+# Keep this workflow touched when resolving recurring PR context mismatches.
 
 on:
   pull_request:
