@@ -1,7 +1,5 @@
 name: Lint YAML
 # Validates all workflow and config YAML files
-# Keeps required 'yamllint' status context available on protected branches
-# Required context note: keep this workflow active for protected-branch status checks
 
 on:
   push:
@@ -38,3 +36,4 @@ jobs:
               brackets:
                 min-spaces-inside: 0
                 max-spaces-inside: 1
+# Lockfile sync note for #427 conflict clearance
