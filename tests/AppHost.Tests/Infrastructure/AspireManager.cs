@@ -84,7 +84,7 @@ public class AspireManager : IAsyncLifetime
 					configureBuilder: static (options, _) =>
 					{
 						options.DisableDashboard = true;
-				},
+					},
 				cancellationToken: CancellationToken.None);
 			// sufficient — Aspire DCP may override ASPNETCORE_ENVIRONMENT based on its own
 			// EnvironmentName when launching child processes. The annotation guarantees the
