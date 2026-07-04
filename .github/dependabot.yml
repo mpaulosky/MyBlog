@@ -25,7 +25,7 @@ updates:
       all-actions:
         patterns: ["*"]
 
-  # Maintain dependencies for nuget
+  # Maintain dependencies for NuGet
   - package-ecosystem: "nuget"
     directory: "/"
     target-branch: "dev"
