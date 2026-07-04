@@ -1,5 +1,7 @@
 name: lint-yaml
 
+# Keep touched in conflict-fix helper PRs when required yamllint context is pending.
+
 on:
   pull_request:
     branches: [dev, main]
