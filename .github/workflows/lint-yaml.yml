@@ -1,5 +1,6 @@
 name: Lint YAML
 # Validates all workflow and config YAML files
+# Keeps required 'yamllint' status context available on protected branches
 
 on:
   push:
