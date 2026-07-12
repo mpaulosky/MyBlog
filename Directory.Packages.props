@@ -11,7 +11,7 @@
     <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.4.6" />
     <PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.4.6" />
     <!-- Auth0 Packages -->
-    <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.8.0" />
+    <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.9.0" />
     <PackageVersion Include="Auth0.ManagementApi" Version="8.6.0" />
     <!-- Validation -->
     <!-- 9.1.x-beta uses AngleSharp 1.4.0 (compatible with bunit 2.7.2); 9.0.x used 0.17.1 which clashed -->
@@ -27,8 +27,8 @@
     <!-- CQRS/Mediator -->
     <PackageVersion Include="MediatR" Version="14.2.0" />
     <!-- Database -->
-    <PackageVersion Include="MongoDB.Bson" Version="3.9.0" />
-    <PackageVersion Include="MongoDB.Driver" Version="3.9.0" />
+    <PackageVersion Include="MongoDB.Bson" Version="3.10.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.10.0" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.2" />
     <!-- Transitive pin: MongoDB.Driver resolves an older SharpCompress; pinned to 1.0.0 -->
     <PackageVersion Include="SharpCompress" Version="1.0.0" />
@@ -44,12 +44,12 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.16.0" />
     <!-- Rich Text Editor -->
     <PackageVersion Include="RTBlazorfied" Version="2.9.89" />
     <!-- Testing -->
     <PackageVersion Include="FluentAssertions" Version="8.10.0" />
-    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <PackageVersion Include="NSubstitute" Version="6.0.0" />
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <PackageVersion Include="Testcontainers.MongoDb" Version="4.13.0" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.13.0" />
