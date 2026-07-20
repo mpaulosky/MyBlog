@@ -3,15 +3,15 @@
 // File Name :     NotFoundPageTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests;
+namespace AppHost.Pages;
 
 /// <summary>
 /// Playwright E2E tests for the Not Found (404) page.

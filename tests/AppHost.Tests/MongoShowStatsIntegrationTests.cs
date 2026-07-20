@@ -7,7 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Full integration tests for the "show-myblog-stats" operator command (issue #261).

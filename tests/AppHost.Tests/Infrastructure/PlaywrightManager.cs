@@ -3,13 +3,13 @@
 // File Name :     PlaywrightManager.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
 using System.Diagnostics;
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// Configure Playwright for interacting with the browser in tests.

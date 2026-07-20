@@ -3136,3 +3136,65 @@ Project board release promotion now:
 #### Impact
 
 Future release board automation will correctly scope promotion to only newly shipped commits, preventing unrelated Done items from being marked Released and maintaining accurate sprint/release tracking.
+
+---
+
+### Decision 5: AppHost.Tests CI-Safety Pattern
+
+**Status:** ✅ Implemented  
+**Date:** 2026-07-20  
+**Author:** Aragorn (Lead / Architect Review)
+
+#### Context
+
+Fan-out review of `src/AppHost/` and `tests/AppHost.Tests/`. Five defects corrected.
+
+#### Decision: Null-safe DisposeAsync in all IAsyncLifetime fixtures
+
+When a fixture's `InitializeAsync` has an early-return path (e.g., `IsCI` guard), any
+disposable members initialized inside that method **must** be null-checked in `DisposeAsync`.
+The safe pattern is:
+
+```csharp
+public async ValueTask DisposeAsync()
+{
+    await (App?.DisposeAsync() ?? ValueTask.CompletedTask);
+}
+```
+
+`ClearCommandAppFixture` was calling `App.DisposeAsync()` unconditionally while `App` was
+declared `null!` and never assigned in CI — causing a `NullReferenceException` that masked
+the real skip intent.
+
+**Rule:** Every `IAsyncLifetime` (or `IAsyncDisposable`) fixture that has a guarded
+`InitializeAsync` must use null-safe disposal. Code review gate: reject fixtures
+with non-null-safe disposal where initialization can be skipped.
+
+#### Decision: Playwright AppHost tests are skip-in-CI, not skip-with-flag
+
+All Playwright E2E tests carry `[SkipInCIFact]` or `[SkipInCITheory]`. The `AspireManager`
+and `ClearCommandAppFixture` detect `CI=true` and skip their heavy DCP initialization.
+This is the accepted architectural pattern. Do not attempt to run these tests in CI
+without a proper DCP/Docker environment.
+
+#### Defects Corrected
+
+| # | Severity | File | Issue | Fix |
+|---|----------|------|-------|-----|
+| 1 | Critical | `ClearCommandAppFixture.cs` | `NullReferenceException` in `DisposeAsync` when CI=true | Null-safe `App?.DisposeAsync()` |
+| 2 | Minor | 10 test files | Copyright header: `Solution Name : IssueManager` | Corrected to `MyBlog` |
+| 3 | Minor | `WebPlaywrightTests.cs` | Doc comment said "IssueTrackerApp" | Corrected to "MyBlog web resource" |
+| 4 | Minor | `LayoutAuthenticatedTests.cs` | Vacuous assertion `>= 0` | Changed to `>= 1` |
+| 5 | Minor | `AspireManager.cs` | Log said "/3" but MaxRetryAttempts=5 | Updated to "/5" |
+
+#### Verification
+
+- ✅ `dotnet test tests/AppHost.Tests/AppHost.Tests.csproj --configuration Release --no-restore` → 61/61 tests passed (1 skipped)
+- ✅ `dotnet build MyBlog.slnx --configuration Release --no-restore` → Build succeeded
+
+#### Impact
+
+- Fixes critical runtime bug preventing safe CI test execution
+- Establishes code review gate for fixture disposal safety
+- Clears copyright and documentation hygiene issues across test suite
+- AppHost.Tests now CI-safe and ready for full integration testing

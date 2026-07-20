@@ -7,7 +7,7 @@
 //Project Name :  AppHost.Tests
 //=======================================================
 
-namespace AppHost.Tests.Tests.Layout;
+namespace AppHost.Layout;
 
 internal static class ThemeToggleTestRuntime
 {

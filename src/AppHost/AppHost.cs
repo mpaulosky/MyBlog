@@ -7,7 +7,7 @@
 //Project Name :  AppHost
 //=======================================================
 
-using MyBlog.AppHost;
+using AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -22,10 +22,10 @@ var redis = builder.AddRedis("redis");
 mongo.WithMongoDbDevCommands("myblog");
 
 builder.AddProject<Projects.Web>("web")
-		.WithReference(mongoDb)
-		.WithReference(redis)
-		.WaitFor(mongo)
-		.WaitFor(redis);
+	.WithReference(redis)
+	.WaitFor(redis)
+	.WithReference(mongoDb)
+	.WaitFor(mongoDb);
 
 builder.Build().Run();
 

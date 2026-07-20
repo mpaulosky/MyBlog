@@ -7,7 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// Custom [Fact] attribute that automatically skips tests when running in CI environment.

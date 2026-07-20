@@ -3,18 +3,18 @@
 // File Name :     WebPlaywrightTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
-/// Playwright tests for the IssueTrackerApp web resource.
+/// Playwright tests for the MyBlog web resource.
 /// </summary>
 public class WebPlaywrightTests(AspireManager aspireManager) : BasePlaywrightTests(aspireManager)
 {

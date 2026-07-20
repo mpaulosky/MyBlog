@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
-		<RootNamespace>MyBlog.Domain.Tests</RootNamespace>
+		<RootNamespace>Domain</RootNamespace>
 		<NoWarn>$(NoWarn);CA2007</NoWarn>
 	</PropertyGroup>
 
