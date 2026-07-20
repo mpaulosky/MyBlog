@@ -24,21 +24,45 @@ jobs:
           script: |
             const pullRequestId = context.payload.pull_request.node_id;
             const pullNumber = context.payload.pull_request.number;
-            try {
-              await github.graphql(
-                `mutation EnableAutoMerge($pullRequestId: ID!) {
-                   enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: SQUASH }) {
-                     pullRequest { number }
-                   }
-                 }`,
-                { pullRequestId }
-              );
-              core.info(`Enabled auto-merge for PR #${pullNumber}.`);
-            } catch (error) {
-              const message = error.message ?? String(error);
-              if (message.includes("already enabled")) {
-                core.info(`Auto-merge already enabled for PR #${pullNumber}.`);
-                return;
+            const mutation = `mutation EnableAutoMerge($pullRequestId: ID!) {
+              enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: SQUASH }) {
+                pullRequest { number }
               }
-              throw error;
+            }`;
+
+            const isUnstable = message =>
+              message.includes("unstable status") ||
+              message.includes("UNPROCESSABLE");
+
+            for (let attempt = 1; attempt <= 5; attempt++) {
+              try {
+                await github.graphql(mutation, { pullRequestId });
+                core.info(`Enabled auto-merge for PR #${pullNumber}.`);
+                return;
+              } catch (error) {
+                const message = error.message ?? String(error);
+
+                if (message.includes("already enabled")) {
+                  core.info(`Auto-merge already enabled for PR #${pullNumber}.`);
+                  return;
+                }
+
+                if (isUnstable(message) && attempt < 5) {
+                  const delayMs = attempt * 5000;
+                  core.info(
+                    `PR #${pullNumber} is not stable yet (attempt ${attempt}/5). Retrying in ${delayMs / 1000}s...`
+                  );
+                  await new Promise(resolve => setTimeout(resolve, delayMs));
+                  continue;
+                }
+
+                if (isUnstable(message)) {
+                  core.warning(
+                    `PR #${pullNumber} remained unstable after retries. Auto-merge was not enabled in this run.`
+                  );
+                  return;
+                }
+
+                throw error;
+              }
             }

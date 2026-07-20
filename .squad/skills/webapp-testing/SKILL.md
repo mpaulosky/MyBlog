@@ -77,9 +77,8 @@ await InteractWithPageAsync("web", async page =>
 within 10 s, the test calls `Assert.Skip(...)` rather than failing — this is correct
 behavior for a slow-start CI-like environment.
 
-
-  - `tests/Unit.Tests/Features/UserManagement/ProfileTests.cs` — Profile component claim assertions
-  - bUnit tests use `BunitContext` (base class from bUnit; test-specific helpers in `TestAuthorizationService.cs`)
+- `tests/Unit.Tests/Features/UserManagement/ProfileTests.cs` — Profile component claim assertions
+- bUnit tests use `BunitContext` (base class from bUnit; test-specific helpers in `TestAuthorizationService.cs`)
 
 - **No** Playwright or dedicated browser-test project exists today.
 

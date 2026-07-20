@@ -180,4 +180,3 @@ Initial setup complete.
 - All items now show "Released" status on project board
 
 **Learning:** GraphQL query syntax for ProjectV2 items requires separate `fieldValues` traversal; cannot alias multiple `fieldValueByName` queries in single call due to field conflict. Used `jq` filtering to extract Status field across all items.
-
