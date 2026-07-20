@@ -3,10 +3,10 @@ name: Lint YAML
 
 on:
   push:
-    branches: [dev, insider]
+    branches: [dev, release]
     paths: ['**.yml', '**.yaml']
   pull_request:
-    branches: [dev, preview, main, insider]
+    branches: [dev, release]
     paths: ['**.yml', '**.yaml']
 
 permissions:
