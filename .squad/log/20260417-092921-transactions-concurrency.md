@@ -8,6 +8,7 @@
 ## Context
 
 MyBlog is a training project using MongoDB via EF Core adapter with Vertical Slice Architecture. The project currently has:
+
 - Single-document CRUD operations only
 - No multi-document workflows
 - Aspire local MongoDB container (standalone instance)
@@ -22,6 +23,7 @@ MyBlog is a training project using MongoDB via EF Core adapter with Vertical Sli
 **Conclusion:** NO
 
 **Reasoning:**
+
 - Transactions require replica set; Aspire provides standalone MongoDB
 - All operations are single-document (inherently atomic)
 - No multi-document consistency requirements
@@ -35,6 +37,7 @@ MyBlog is a training project using MongoDB via EF Core adapter with Vertical Sli
 **Conclusion:** Implement optimistic concurrency
 
 **Implementation approach:**
+
 1. Add `Version` field to BlogPost entity (int)
 2. Increment version on each update
 3. Configure as concurrency token in DbContext
@@ -42,6 +45,7 @@ MyBlog is a training project using MongoDB via EF Core adapter with Vertical Sli
 5. Return Concurrency error code to client with server version info
 
 **Benefits:**
+
 - Simple, lightweight approach
 - Fits training project scope
 - Allows client-side conflict resolution UI
