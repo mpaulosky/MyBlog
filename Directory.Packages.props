@@ -14,10 +14,10 @@
     <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.8.0" />
     <PackageVersion Include="Auth0.ManagementApi" Version="8.6.0" />
     <!-- Validation -->
-    <!-- 9.1.x-beta uses AngleSharp 1.4.0 (compatible with bunit 2.7.2); 9.0.x used 0.17.1 which clashed -->
+    <!-- bunit 2.7.2 and HtmlSanitizer 9.1.923-beta both accept AngleSharp 1.x -->
     <PackageVersion Include="HtmlSanitizer" Version="9.1.923-beta" />
-    <!-- Transitive pins to satisfy both bunit 2.7.2 (>= beta.157) and HtmlSanitizer 9.1.x (>= beta.213) -->
-    <PackageVersion Include="AngleSharp" Version="1.5.1" />
+    <!-- Transitive pin to keep the bUnit + HtmlSanitizer DOM stack on a shared, non-vulnerable AngleSharp build -->
+    <PackageVersion Include="AngleSharp" Version="1.5.2" />
     <PackageVersion Include="AngleSharp.Css" Version="1.0.0-beta.216" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
