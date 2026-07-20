@@ -7,7 +7,7 @@
 //Project Name :  Domain.Tests
 //=======================================================
 
-namespace Tests.Domain.Entities;
+namespace Domain.Entities;
 
 /// <summary>
 /// Tests for BlogPost behavior related to Issue #339 — Category assignment,

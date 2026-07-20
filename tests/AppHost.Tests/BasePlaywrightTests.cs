@@ -3,13 +3,13 @@
 // File Name :     BasePlaywrightTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Base class for Playwright tests, providing common functionality and setup for Playwright testing with ASP.NET Core.
@@ -58,15 +58,18 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 		var endpoint = GetEndpoint(serviceName);
 		await WaitForWebReadyAsync(endpoint, DefaultTimeout);
 
-		var page = await CreatePageAsync(endpoint, size);
-		try
+		await RetryOnNetworkChangedAsync(async () =>
 		{
-			await test(page);
-		}
-		finally
-		{
-			await page.CloseAsync();
-		}
+			var page = await CreatePageAsync(endpoint, size);
+			try
+			{
+				await test(page);
+			}
+			finally
+			{
+				await page.CloseAsync();
+			}
+		});
 	}
 
 	/// <summary>
@@ -106,25 +109,53 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 		var endpoint = GetEndpoint(serviceName);
 		await WaitForWebReadyAsync(endpoint, DefaultTimeout);
 
-		var page = await CreatePageAsync(endpoint, size);
-
-		// Authenticate by navigating to the test login endpoint.
-		// The web app (in Testing mode) sets a cookie-auth session with the requested role claims.
-		await page.GotoAsync($"/test/login?role={role}");
-
-		try
+		await RetryOnNetworkChangedAsync(async () =>
 		{
-			await test(page);
-		}
-		finally
-		{
-			await page.CloseAsync();
-		}
+			var page = await CreatePageAsync(endpoint, size);
+
+			// Authenticate by navigating to the test login endpoint.
+			// The web app (in Testing mode) sets a cookie-auth session with the requested role claims.
+			await page.GotoAsync($"/test/login?role={role}");
+
+			try
+			{
+				await test(page);
+			}
+			finally
+			{
+				await page.CloseAsync();
+			}
+		});
 	}
 
 	private Uri GetEndpoint(string serviceName) =>
 		AspireManager.App?.GetEndpoint(serviceName, "https")
 			?? throw new InvalidOperationException($"Service '{serviceName}' not found in the application endpoints.");
+
+	/// <summary>
+	/// Retries the given action up to 3 times when a transient <c>ERR_NETWORK_CHANGED</c>
+	/// Playwright error occurs (e.g., host DHCP renewal or routing table update mid-navigation).
+	/// </summary>
+	private static async Task RetryOnNetworkChangedAsync(Func<Task> action, int maxAttempts = 3)
+	{
+		Exception? lastException = null;
+		for (var attempt = 0; attempt < maxAttempts; attempt++)
+		{
+			try
+			{
+				await action();
+				return;
+			}
+			catch (PlaywrightException ex) when (
+				ex.Message.Contains("ERR_NETWORK_CHANGED", StringComparison.OrdinalIgnoreCase)
+				&& attempt < maxAttempts - 1)
+			{
+				lastException = ex;
+				await Task.Delay(TimeSpan.FromSeconds(2));
+			}
+		}
+		if (lastException is not null) throw lastException;
+	}
 
 	private async Task<IPage> CreatePageAsync(Uri uri, ViewportSize? size = null)
 	{
@@ -149,8 +180,7 @@ public abstract class BasePlaywrightTests(AspireManager aspireManager) : IAsyncD
 	{
 		using var handler = new HttpClientHandler();
 		handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-		using var client = new HttpClient(handler);
-		client.BaseAddress = endpoint;
+		using var client = new HttpClient(handler) { BaseAddress = endpoint, Timeout = timeout };
 
 		using var cts = new CancellationTokenSource(timeout);
 

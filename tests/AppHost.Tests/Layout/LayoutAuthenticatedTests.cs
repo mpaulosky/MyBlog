@@ -3,15 +3,15 @@
 // File Name :     LayoutAuthenticatedTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests.Tests.Layout;
+namespace AppHost.Layout;
 
 /// <summary>
 /// Playwright E2E tests for the Web application layout visible to authenticated users.
@@ -54,10 +54,10 @@ public class LayoutAuthenticatedTests : BasePlaywrightTests
 			var nav = page.Locator("nav[aria-label=\"Main navigation\"]");
 			await nav.WaitForAsync();
 
-			// Assert — for MyBlog, just verify nav is present and contains links
+			// Assert — for MyBlog, verify nav contains at least one link
 			var navLinks = nav.Locator("a");
 			var linkCount = await navLinks.CountAsync();
-			linkCount.Should().BeGreaterThanOrEqualTo(0);
+			linkCount.Should().BeGreaterThanOrEqualTo(1);
 		});
 	}
 

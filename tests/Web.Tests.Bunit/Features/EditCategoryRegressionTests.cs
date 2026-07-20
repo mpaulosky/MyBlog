@@ -63,9 +63,9 @@ public class EditCategoryRegressionTests : BunitContext
 				Task.FromResult(Result.Fail<IReadOnlyList<CategoryDto>>("Category service unavailable.")),
 				Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(new[] { category })));
 
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == firstPostId), Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == secondPostId), Arg.Any<CancellationToken>())
 			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(secondPost)));
 
 		Services.AddSingleton(sender);
@@ -97,7 +97,7 @@ public class EditCategoryRegressionTests : BunitContext
 	public void EditAllowsSaveOfPublishedPostThatAlreadyHasCategoryEvenWhenCategoryListFails()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var categoryId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
@@ -106,16 +106,15 @@ public class EditCategoryRegressionTests : BunitContext
 		var post = new BlogPostDto(postId, "Published Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, IsPublished: true, CategoryId: categoryId);
 
-		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Fail<IReadOnlyList<CategoryDto>>("Category service unavailable.")));
+		sender.Register<GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Fail<IReadOnlyList<CategoryDto>>("Category service unavailable."));
 
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
 
-		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok()));
+		sender.Register<EditBlogPostCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
 		var cut = RenderWithUser<Edit>(
@@ -141,7 +140,7 @@ public class EditCategoryRegressionTests : BunitContext
 			cut.Markup.Should().NotContain("Cannot publish until categories are available",
 				because: "guard must not block an already-categorized published post"));
 
-		sender.Received(1).Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>());
+		sender.ReceivedCount<EditBlogPostCommand>().Should().Be(1);
 		navigation.Uri.Should().EndWith("/blog");
 	}
 
@@ -151,7 +150,7 @@ public class EditCategoryRegressionTests : BunitContext
 	public void EditBlocksPublishWhenCategoryIdIsNullAndCategoryListFailed()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 
@@ -159,13 +158,13 @@ public class EditCategoryRegressionTests : BunitContext
 		var post = new BlogPostDto(postId, "Draft Post", "Content", OwnerSub, "Owner",
 			string.Empty, [], DateTime.UtcNow, null, IsPublished: true, CategoryId: null);
 
-		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Fail<IReadOnlyList<CategoryDto>>("Category service unavailable.")));
+		sender.Register<GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Fail<IReadOnlyList<CategoryDto>>("Category service unavailable."));
 
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
 		var cut = RenderWithUser<Edit>(
@@ -185,7 +184,7 @@ public class EditCategoryRegressionTests : BunitContext
 				because: "guard must block a published post with no CategoryId when category list failed"));
 
 		navigation.Uri.Should().NotEndWith("/blog");
-		sender.DidNotReceive().Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>());
+		sender.ReceivedCount<EditBlogPostCommand>().Should().Be(0);
 	}
 
 	private IRenderedComponent<TComponent> RenderWithUser<TComponent>(

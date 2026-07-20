@@ -1005,6 +1005,7 @@ Always rebuild (`dotnet build tests/Web.Tests.Bunit`) after changing razor files
 - No new tests required — existing smoke tests cover the render paths; no behaviour-breaking changes to existing test contracts.
 
 ## 2026-05-24 — PR #385 create-flow placeholder crash recovery
+
 - Fixed `src/Web/Features/BlogPosts/Create/Create.razor` to treat the placeholder category option as `null` for drafts and surface validation instead of throwing on publish.
 - Kept the revision scoped to the UI fix plus Gimli's regression coverage in `tests/Web.Tests.Bunit/Features/ObjectIdWorkflowTests.cs`.
 - Full pre-push validation passed locally: markdown lint, `dotnet format --verify-no-changes`, Release build, Domain/Web/bUnit/Architecture/Integration/AppHost tests.

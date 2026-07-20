@@ -6,6 +6,7 @@ Welcome to the MyBlog technical blog! Here we document the project's evolution�
 
 | Date | Title | Tags |
 |------|-------|------|
+| 2026-07-20 | [Release: v1.7.1 - AppHost Stability, CI Lint Hardening, and Workflow Cleanup](./2026-07-20-release-v1-7-1.md) | release, v1.7.1, apphost, ci, devops, sprint-21 |
 | 2026-05-24 | [Release: v1.7.0 — MongoDB ObjectId Migration & Cache Hardening](./2026-05-24-release-v1-7-0.md) | release, v1.7.0, mongodb, caching, sprint-20 |
 | 2026-05-23 | [Release: v1.6.0 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-6-0.md) | release, v1.6.0, blazor, ui, categories, markdown, sprint-19 |
 | 2026-05-23 | [Release: v1.5.2 — Markdown Editor and Blog Post Categories](./2026-05-23-release-v1-5-2.md) | release, v1.5.2, blazor, ui, categories, markdown, sprint-19 |

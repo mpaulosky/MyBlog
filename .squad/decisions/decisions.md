@@ -2375,7 +2375,6 @@ GitHub Actions caches workflow definitions on the `dev` branch. ENV variable upd
 - **Option B (Organization project):** Rejected — adds complexity, requires org changes
 - **Option C (User project + GH_PROJECT_TOKEN) ← CHOSEN:** Simpler, already functional
 
-
 ---
 
 ### 2026-05-11T18:48:17Z: Architecture — PostAuthor value object for #296
@@ -2423,18 +2422,21 @@ public sealed record PostAuthor(
 ## Domain Change: BlogPost.cs
 
 **Before:**
+
 ```csharp
 public string Author { get; private set; } = string.Empty;
 public static BlogPost Create(string title, string content, string author) { ... }
 ```
 
 **After:**
+
 ```csharp
 public PostAuthor Author { get; private set; } = default!;
 public static BlogPost Create(string title, string content, PostAuthor author) { ... }
 ```
 
 `BlogPost.Create` guard:
+
 ```csharp
 ArgumentNullException.ThrowIfNull(author);
 ArgumentException.ThrowIfNullOrWhiteSpace(author.Name);
@@ -2501,6 +2503,7 @@ simpler to bind in Razor without a nested null-check. The `Author` string proper
 **removed** — all call sites must be updated.
 
 **BlogPostMappings.cs update:**
+
 ```csharp
 internal static BlogPostDto ToDto(this BlogPost post) => new(
     post.Id, post.Title, post.Content,
@@ -2513,13 +2516,16 @@ internal static BlogPostDto ToDto(this BlogPost post) => new(
 ## MongoDB Schema: Breaking Change Assessment
 
 ⚠️ **Breaking change.** Existing documents store `Author` as a plain string:
+
 ```json
 { "Author": "Test Author" }
 ```
+
 Once `BlogPost.Author` becomes a `PostAuthor` owned entity, the EF Core MongoDB provider will
 attempt to deserialize the string field as an embedded document and throw.
 
 **Mitigation for Sprint 19 (dev/test environment):**
+
 1. Drop and recreate the `blogposts` collection in the local dev Atlas deployment.
 2. Integration tests (`MongoDbBlogPostRepositoryTests`) already create a fresh database —
    no changes needed to test infrastructure.
@@ -2533,12 +2539,14 @@ This is **out of scope for Sprint 19** — document in the PR and create a follo
 ## CreateBlogPostCommand Change
 
 **Before:**
+
 ```csharp
 internal sealed record CreateBlogPostCommand(string Title, string Content, string Author)
     : IRequest<Result<Guid>>;
 ```
 
 **After:**
+
 ```csharp
 internal sealed record CreateBlogPostCommand(string Title, string Content, PostAuthor Author)
     : IRequest<Result<Guid>>;
@@ -2580,10 +2588,13 @@ The handler is blissfully unaware of where the `PostAuthor` came from.
 1. **Remove** the `<InputText @bind-Value="_model.Author" />` input field and its form group.
 2. **Remove** `Author` from `PostFormModel`.
 3. **Inject** auth state:
+
    ```razor
    @inject AuthenticationStateProvider AuthStateProvider
    ```
+
 4. **Build PostAuthor in HandleSubmit:**
+
    ```csharp
    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
    var user = authState.User;
@@ -2594,10 +2605,13 @@ The handler is blissfully unaware of where the `PostAuthor` came from.
        RoleClaimsHelper.GetRoles(user));
    var result = await Sender.Send(new CreateBlogPostCommand(_model.Title, _model.Content, author));
    ```
+
 5. **Show read-only author name** above the form (optional UX, Legolas to judge):
+
    ```razor
    <p class="form-label">Author: <span class="font-semibold">@_authorName</span></p>
    ```
+
    Populate `_authorName` in `OnInitializedAsync`.
 
 ---
@@ -2622,6 +2636,7 @@ covers the first part.
 
 **"Authors can only edit their own posts"** (comparing `post.Author.Id` to the current user's
 `sub` claim) is **NOT in scope for Sprint 19.** This requires:
+
 - A query-time or UI-time ownership check
 - Potentially a 403 response or redirect if a non-owner Author tries to edit
 
@@ -2632,7 +2647,7 @@ covers the first part.
 
 ## Work Breakdown
 
-### Sam (backend) implements:
+### Sam (backend) implements
 
 | File | Change |
 |------|--------|
@@ -2645,7 +2660,7 @@ covers the first part.
 | `src/Web/Features/BlogPosts/Create/CreateBlogPostCommandValidator.cs` | Replace string rules with null/name guard |
 | `src/Web/Features/BlogPosts/Create/CreateBlogPostHandler.cs` | No logic change; compiles via type change |
 
-### Legolas (UI) implements:
+### Legolas (UI) implements
 
 | File | Change |
 |------|--------|
@@ -2653,7 +2668,7 @@ covers the first part.
 | `src/Web/Features/BlogPosts/List/Index.razor` | Update any `dto.Author` string references to `dto.AuthorName` |
 | `src/Web/Features/BlogPosts/Edit/Edit.razor` | Update any `dto.Author` string references (if displayed) |
 
-### Gimli (tests) implements:
+### Gimli (tests) implements
 
 | File | Change |
 |------|--------|
@@ -2669,7 +2684,6 @@ covers the first part.
 ## Branch
 
 `squad/296-post-author-value-object`
-
 
 ---
 
@@ -2717,7 +2731,6 @@ private static IUserManagementCacheService BuildPassThroughCache()
 ```
 
 A no-op stub returning `default(ValueTask<T>)` would cause tests to receive `null` instead of propagating config-missing exceptions — making config-validation tests silently false-pass.
-
 
 ---
 
@@ -2776,7 +2789,6 @@ authorization must be enforced at the server-side write boundary:
 - Acceptance criteria that mention "redirect with an error or show 403" require visible denial
   feedback, not a silent navigation
 
-
 ---
 
 # Triage Decision: PRs #306 and #308
@@ -2788,6 +2800,7 @@ authorization must be enforced at the server-side write boundary:
 ## Summary
 
 Triaged two squad-labeled PRs:
+
 - **PR #306**: "Merge dev: resolve project board automation option IDs conflict (#305)" → **ROUTE TO BOROMIR** (ready for review)
 - **PR #308**: "fix(ui): redirect to /blog when post not found in Edit page (#307)" → **CLOSE AS DUPLICATE** (superseded by PR #306)
 
@@ -2799,6 +2812,7 @@ Triaged two squad-labeled PRs:
 **Author:** Boromir (DevOps)
 
 **CI Status:**
+
 - ✅ All 21 checks passing (squad CI, linting, tests, coverage)
 - ✅ Codecov gate passing (patch + project)
 - ✅ No merge conflicts
@@ -2822,11 +2836,13 @@ Triaged two squad-labeled PRs:
    - This fix was identified in Copilot's review of PR #304 but missed before merge
 
 **Copilot Review:** 3 comments generated (reviewed all 7 files)
+
 - No flagged bugs or security issues
 - No test or coverage concerns
 - Minor documentation/formatting issues (all addressed in diff)
 
 **Triage Decision:** ✅ **ROUTE TO BOROMIR**
+
 - Boromir owns the DevOps/CI changes and merge conflict resolution
 - Boromir should review the workflow logic and option ID corrections
 - **Secondary review required:** Aragorn (architecture/patterns) + Legolas (Blazor component changes)
@@ -2841,18 +2857,22 @@ Triaged two squad-labeled PRs:
 **Base commit:** 7e15cdd (BEFORE the merge conflict resolution in PR #306)
 
 **Content:** Contains ONLY:
+
 - Edit.razor redirect fix (identical to PR #306 commit 8c7b15f)
 - EditAclTests.cs regression test (identical to PR #306)
 
 **Problem:** This PR duplicates the UI changes already in PR #306:
+
 - Commit hashes differ (8c7b15f vs 8cf7981) but content is identical
 - PR #308 is based on old commit 7e15cdd (before merge conflict)
 - If merged separately, creates merge conflicts in the redirect logic
 
 **Copilot Review:** 1 comment generated (reviewed 2 files)
+
 - No issues flagged
 
 **Triage Decision:** ⚠️ **CLOSE WITHOUT MERGE**
+
 - Reason: Duplicate of PR #306 UI changes
 - The bug fix WILL be delivered via PR #306 (which covers issue #307)
 - Both GitHub issues (#305, #307) will be resolved by PR #306 merge
@@ -2878,11 +2898,13 @@ Triaged two squad-labeled PRs:
 ## Decision Rationale
 
 **Why route #306 to Boromir?**
+
 - Primary concern is DevOps/CI (token, option IDs, workflows) → Boromir's domain
 - Merge conflict resolution is DevOps responsibility
 - UI bug fix is secondary; already tested by Copilot + CI
 
 **Why close #308?**
+
 - Duplicate content creates merge conflicts if both merge
 - Git history is cleaner with single PR per issue
 - Both issues are resolved by PR #306 merge
@@ -2898,8 +2920,6 @@ Triaged two squad-labeled PRs:
 - Issue #305 (project board token/option ID sync)
 - Issue #307 (Edit page null post redirect)
 
-
-
 ---
 
 # Triage Routing: Issues #298 & #299
@@ -2911,6 +2931,7 @@ Triaged two squad-labeled PRs:
 ## Issue #298: PostAuthor Value Object PR
 
 **Current State:**
+
 - PR (not issue) labeled only with `squad` (untriaged)
 - Title: "feat(domain): introduce PostAuthor value object for blog post authorship (#296)"
 - PR body explicitly states: "Working as Sam (Backend Developer)"
@@ -2919,6 +2940,7 @@ Triaged two squad-labeled PRs:
 Route to `squad:sam` — removes `squad` label (triage inbox indicator).
 
 **Rationale:**
+
 - PostAuthor is a domain value object (Domain layer)
 - Changes span: Domain, Infrastructure (MongoDB mapping), DTO, Command/Validation, Tests
 - All identified changes are backend/infrastructure concerns
@@ -2926,6 +2948,7 @@ Route to `squad:sam` — removes `squad` label (triage inbox indicator).
 - Legolas noted as downstream (Create.razor UI placeholder needs AuthenticationStateProvider injection)
 
 **Action Taken:**
+
 - ✅ Added `squad:sam` label
 - ✅ Removed `squad` label  
 - ✅ Posted triage comment noting downstream Legolas work
@@ -2935,6 +2958,7 @@ Route to `squad:sam` — removes `squad` label (triage inbox indicator).
 ## Issue #299: Pre-Push Gate & Process Alignment
 
 **Current State:**
+
 - Issue labeled: `squad`, `enhancement`, `squad:legolas`, `go:needs-research`
 - Title: "[Sprint 19] fix(process): align worktree pre-push gate with required tests"
 - Work: pre-push hook alignment, AppHost.Tests inclusion, process docs reconciliation
@@ -2943,6 +2967,7 @@ Route to `squad:sam` — removes `squad` label (triage inbox indicator).
 Reroute from `squad:legolas` → `squad:boromir` — removes `squad` label (triage inbox indicator).
 
 **Rationale:**
+
 - This is DevOps / CI/CD infrastructure work, NOT frontend
 - Per routing.md: CI/CD, build pipeline → **Boromir (DevOps Engineer)**
 - Pre-push hook updates require build/test system knowledge
@@ -2954,6 +2979,7 @@ Reroute from `squad:legolas` → `squad:boromir` — removes `squad` label (tria
 Issue was initially misrouted to Legolas (likely boilerplate label applied without domain verification).
 
 **Action Taken:**
+
 - ✅ Removed `squad:legolas` label
 - ✅ Added `squad:boromir` label  
 - ✅ Removed `squad` label
@@ -2964,11 +2990,11 @@ Issue was initially misrouted to Legolas (likely boilerplate label applied witho
 ## Team Impact
 
 Both issues now have correct domain ownership:
+
 - **#298 (Backend):** Sam can proceed with PostAuthor implementation; Legolas queued for UI follow-up
 - **#299 (DevOps):** Boromir owns pre-push gate hardening; Sprint 19 blocker now has clear owner
 
 No architectural decisions or breaking changes introduced — routing only.
-
 
 ---
 
@@ -3029,7 +3055,6 @@ was set to match `DONE_OPTION_ID` rather than an actual distinct board option.
 - Issue #305 (project board token/option ID sync)
 - Workflows: `project-board-automation.yml`, `squad-mark-released.yml`
 
-
 ---
 
 # PR #306 Post-Triage Assessment: Ready for Review
@@ -3060,12 +3085,14 @@ PR #306 ("Merge dev: resolve project board automation option IDs conflict") has 
 ### ✅ Workflow Logic Review
 
 **Files Changed (DevOps scope):**
+
 - `.github/workflows/add-issues-to-project.yml` — Token switch: `GITHUB_TOKEN` → `GH_PROJECT_TOKEN`
 - `.github/workflows/project-board-automation.yml` — Option IDs updated: IN_SPRINT (61e4505c → f75ad846), IN_REVIEW (df73e18b → 47fc9ee4), RELEASED (8e246b27 → 98236657)
 - `.github/workflows/squad-mark-released.yml` — RELEASED_OPTION_ID corrected to 98236657
 - `.github/workflows/project-board-audit.yml` — Documentation comments added (project ID PVT_kwHOA5k0b84BXZpa)
 
 **Verdict:**
+
 - ✅ Token change is appropriate and necessary for project board mutations (fixes 403 auth errors)
 - ✅ Option ID updates are consistent across workflows (no partial updates)
 - ✅ Documentation links to recent board automation repair (commits 135f9fd, 3fb7406)
@@ -3078,6 +3105,7 @@ The `GH_PROJECT_TOKEN` secret **must be configured** in repository settings befo
 ### ✅ Secondary Content OK
 
 While this PR includes non-DevOps changes (Blazor redirect fix + test), they are:
+
 - Already tested by CI (Web.Tests.Bunit passes)
 - Reviewed by Copilot (no issues flagged)
 - Out of scope for my review (routed to Legolas + Gimli)
@@ -3089,8 +3117,9 @@ While this PR includes non-DevOps changes (Blazor redirect fix + test), they are
 **✅ APPROVE FOR REVIEWER SPAWN**
 
 **Required Reviewers (per playbook):**
+
 1. **Aragorn** (Lead Developer) — Architecture, patterns, design
-2. **Boromir** (DevOps) — *(I've already verified CI/infra; PR author cannot self-approve)*
+2. **Boromir** (DevOps) — _(I've already verified CI/infra; PR author cannot self-approve)_
 3. **Legolas** (Frontend/UI) — Blazor Edit.razor redirect logic
 4. **Gimli** (Test Specialist) — bUnit test coverage validation
 
@@ -3120,8 +3149,6 @@ While this PR includes non-DevOps changes (Blazor redirect fix + test), they are
 
 Ralph: Spawn Aragorn (lead, required) + Legolas (UI) + Gimli (tests) for domain reviews.  
 Once all reviewers approve and CI remains green → proceed with squash merge.
-
-
 
 ---
 
@@ -3161,7 +3188,6 @@ tests). Skipping it locally is equivalent to a silent `--no-verify` for Playwrig
 Unchanged: `git push --no-verify` is prohibited without prior written approval from
 Ralph + Aragorn documented in a GitHub issue comment (per playbook hard-block).
 
-
 ---
 
 # Worktree Pre-Push Gate Investigation
@@ -3176,6 +3202,7 @@ Ralph + Aragorn documented in a GitHub issue comment (per playbook hard-block).
 ## Problem Statement
 
 Team members report that worktrees can still push code that violates process:
+
 - Code fails tests locally
 - New test suites are not being run before push
 - Formatting issues slip through
@@ -3216,17 +3243,20 @@ The **live `.github/hooks/pre-push` hook does not run all required test suites**
 #### What the Hook Actually Runs
 
 **Unit tests (4):**
+
 - `tests/Architecture.Tests`
 - `tests/Domain.Tests`
 - `tests/Web.Tests`
 - `tests/Web.Tests.Bunit`
 
 **Integration tests (1):**
+
 - `tests/Web.Tests.Integration`
 
 #### What's Missing
 
 **AppHost.Tests** — **MANDATORY per skill and playbook**
+
 - Playwright E2E tests
 - Runs under Docker via Aspire DistributedApplicationTestingBuilder
 - Currently skipped by local gate
@@ -3234,6 +3264,7 @@ The **live `.github/hooks/pre-push` hook does not run all required test suites**
 #### Why This Matters
 
 When developers push:
+
 1. They run the pre-push hook locally
 2. Hook runs 5 test suites but NOT AppHost.Tests
 3. AppHost.Tests PASS or FAIL on CI (GitHub Actions)
@@ -3248,6 +3279,7 @@ When developers push:
 ### Hook Source vs. Playbook Mismatch
 
 **Live hook runs:**
+
 ```bash
 TEST_PROJECTS=(
   "tests/Architecture.Tests/Architecture.Tests.csproj"
@@ -3262,6 +3294,7 @@ INTEGRATION_PROJECTS=(
 ```
 
 **Playbook expects (excerpt):**
+
 ```
 dotnet test tests/Architecture.Tests/Architecture.Tests.csproj ...
 dotnet test tests/Domain.Tests/Domain.Tests.csproj ...
@@ -3272,6 +3305,7 @@ dotnet test tests/Persistence.AzureStorage.Tests/Persistence.AzureStorage.Tests.
 ```
 
 **Skill requirements:**
+
 ```
 ⚠️ AppHost.Tests (Playwright E2E) is MANDATORY.
 It must be run locally before every push.
@@ -3285,6 +3319,7 @@ Gate 5: Integration + Playwright E2E — AppHost.Tests included
 ### 1. **Hook Incomplete — AppHost.Tests Missing** (HIGH)
 
 **Evidence:**
+
 - AppHost.Tests exists in repo (`tests/AppHost.Tests/AppHost.Tests.csproj`)
 - Hook doesn't include it in INTEGRATION_PROJECTS array
 - Skill explicitly requires it before every push
@@ -3296,6 +3331,7 @@ Gate 5: Integration + Playwright E2E — AppHost.Tests included
 ### 2. **Playbook Documents Non-Existent Tests** (MEDIUM)
 
 **Evidence:**
+
 - Playbook lists `Persistence.MongoDb.Tests` and `Persistence.AzureStorage.Tests`
 - These projects don't exist in repo
 - Playbook also lists non-existent integration variants
@@ -3305,6 +3341,7 @@ Gate 5: Integration + Playwright E2E — AppHost.Tests included
 ### 3. **Multiple Hook Backup Files Suggest Rapid Iteration** (LOW)
 
 **Evidence:**
+
 - 50+ `pre-push.bak.*` files in `.git/hooks/` 
 - Most recent backups from May 10-11, timestamps 05:00-05:02
 - Suggests `install-hooks.sh` is being run repeatedly
@@ -3343,6 +3380,7 @@ INTEGRATION_PROJECTS=(
 ```
 
 **Rationale:**
+
 - AppHost.Tests is already in the repo
 - Skill requires it before every push
 - Fixing the hook prevents E2E regressions from reaching CI
@@ -3352,6 +3390,7 @@ INTEGRATION_PROJECTS=(
 **Reconcile Playbook with Reality**
 
 Remove references to non-existent test projects from `.squad/playbooks/pre-push-process.md`:
+
 - `Persistence.MongoDb.Tests` → don't list until project exists
 - `Persistence.AzureStorage.Tests` → don't list until project exists
 - Same for integration test variants
@@ -3388,7 +3427,6 @@ These are noise and not needed once the hook is stable.
 
 **No amount of hook installation or worktree configuration will fix this — the hook source must be updated.**
 
-
 ---
 
 # Decision: EditBlogPostCommand now carries CallerUserId + CallerIsAdmin
@@ -3412,6 +3450,7 @@ internal sealed record EditBlogPostCommand(
 ```
 
 The handler now enforces server-side:  
+
 - If the post's `Author.Id != CallerUserId` AND `CallerIsAdmin == false` → returns `Result.Fail(..., ResultErrorCode.Unauthorized)`.
 
 `ResultErrorCode.Unauthorized = 5` has been added to the domain enum.
@@ -3419,6 +3458,7 @@ The handler now enforces server-side:
 ## For Legolas (Frontend)
 
 `Edit.razor` already updated to:
+
 1. Store `_callerUserId` / `_callerIsAdmin` from `AuthStateProvider` in `OnParametersSetAsync`.
 2. Pass them when sending the command in `HandleSubmit`.
 3. Redirect to `/blog` when `result.ErrorCode == ResultErrorCode.Unauthorized`.
@@ -3431,7 +3471,6 @@ No further UI changes needed for the authorization redirect flow, but you may wa
 global::MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized  // = 5
 ```
 
-
 ---
 
 # Board Sync Repair & Automation Fix
@@ -3443,6 +3482,7 @@ global::MyBlog.Domain.Abstractions.ResultErrorCode.Unauthorized  // = 5
 ## Issue
 
 Project board automation workflows were broken due to hardcoded non-existent project IDs. All issue/PR sync was failing silently:
+
 - `.github/workflows/add-issues-to-project.yml` — Issues not added to board
 - `.github/workflows/project-board-automation.yml` — PR state changes not synced
 - `.github/workflows/project-board-audit.yml` — Audit not executing
@@ -3455,14 +3495,17 @@ Three workflows referenced invalid project ID: `PVT_kwHOA5k0b84BVFTy` (does not 
 ## Resolution
 
 ### Phase 1: Create New Project ✅
+
 - Created new project: MyBlog Project Board (https://github.com/users/mpaulosky/projects/5)
 - **New Project ID:** `PVT_kwHOA5k0b84BXZpa`
 - **Status Field ID:** `PVTSSF_lAHOA5k0b84BXZpazhSmuGY`
 
 ### Phase 2: Status Options Setup ⏳
+
 Default options created: Todo, In Progress, Done
 
 **Action Required:** The GitHub GraphQL API does not support adding field options via mutations. Status options must be added manually via GitHub UI:
+
 1. Go to https://github.com/users/mpaulosky/projects/5
 2. Click "Status" field settings
 3. Add missing options: "Backlog", "In Sprint", "In Review", "Released"
@@ -3471,12 +3514,15 @@ Default options created: Todo, In Progress, Done
 OR: Rename existing options to match workflow expectations and update workflows accordingly.
 
 ### Phase 3: Update Workflows (Pending)
+
 Once field options are finalized, update all four workflows with:
+
 - New PROJECT_ID: `PVT_kwHOA5k0b84BXZpa`
 - New STATUS_FIELD_ID: `PVTSSF_lAHOA5k0b84BXZpazhSmuGY`
 - Updated option IDs for: BACKLOG, IN_SPRINT, IN_REVIEW, DONE, RELEASED
 
 ### Phase 4: Test & Verify
+
 - Trigger `add-issues-to-project.yml` with sprint-labeled issue
 - Verify issue appears on board with Backlog status
 - Create PR linked to issue, verify PR status automations work
@@ -3487,11 +3533,13 @@ Once field options are finalized, update all four workflows with:
 **CRITICAL:** GitHub Actions is caching workflow definitions on the `dev` branch. Env var updates are not being picked up even after commits/pushes. This blocks workflow testing on `dev`.
 
 **Workaround Options:**
+
 1. **Option A:** Manually navigate to project board and configure field options via UI (Backlog, In Sprint, In Review, Released), then update workflows with exact option IDs
 2. **Option B:** Dispatch workflows from GitHub UI manually to bypass local caching
 3. **Option C:** Create a new branch with updated workflows, test there, then merge to `dev`
 
 **Current Project Configuration:**
+
 - **Project Name:** MyBlog Project Board  
 - **Project URL:** https://github.com/users/mpaulosky/projects/5
 - **Project ID (GraphQL):** `PVT_kwHOA5k0b84BXZpa` ✅ (correct)
@@ -3500,6 +3548,7 @@ Once field options are finalized, update all four workflows with:
 - **GH_PROJECT_TOKEN Secret:** ✅ (created and stored)
 
 **Files Updated (Awaiting Verification):**
+
 - `.github/workflows/add-issues-to-project.yml` — New PROJECT_ID, GH_PROJECT_TOKEN
 - `.github/workflows/project-board-automation.yml` — New PROJECT_ID, new option IDs, GH_PROJECT_TOKEN
 - `.github/workflows/project-board-audit.yml` — New PROJECT_ID, GH_PROJECT_TOKEN  
@@ -3512,10 +3561,10 @@ Once field options are finalized, update all four workflows with:
 **Next Action:** User to configure project field options via UI, Ralph to validate on new branch
 
 ## References
+
 - Project board: https://github.com/users/mpaulosky/projects/5
 - Workflows: .github/workflows/add-issues-to-project.yml, project-board-automation.yml, project-board-audit.yml, squad-mark-released.yml
 - GitHub Projects API: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects
-
 
 ---
 
@@ -3524,6 +3573,7 @@ Once field options are finalized, update all four workflows with:
 **By:** mpaulosky (via Copilot)
 
 **What:** Incorporate orphan branch/worktree cleanup into Ralph's standard work-check cycle. After scanning for work, Ralph should:
+
 1. Check for merged squad branches (local and remote)
 2. List active worktrees and verify they map to open issues
 3. Remove orphaned worktrees and delete merged branches
@@ -3532,7 +3582,6 @@ Once field options are finalized, update all four workflows with:
 **Why:** Keep repo state clean between work cycles. User ran manual cleanup and wants it automated as part of Ralph's "go" loop.
 
 **Integration:** Add to Ralph's Step 1 (Scan for work) — run cleanup checks in parallel with issue/PR scans. Report: "🗑️ Cleaned up {count} branches, removed {count} worktrees."
-
 
 ---
 
@@ -3550,12 +3599,15 @@ All UI work for restricting blog post editing to the post author or Admin is **c
 ## What is in place
 
 ### `src/Web/Features/BlogPosts/Edit/Edit.razor`
+
 - `@attribute [Authorize(Roles = "Author,Admin")]` — route-level guard (anonymous users cannot reach the page at all)
 - In `OnParametersSetAsync`: after loading the post, reads `sub` claim from `AuthenticationStateProvider`; checks `user.IsInRole("Admin")` and `post.AuthorId == _callerUserId`; **redirects to `/blog`** if neither condition is true
 - In `HandleSubmit`: passes `_callerUserId` and `_callerIsAdmin` to `EditBlogPostCommand`; if the server returns `ResultErrorCode.Unauthorized`, shows an inline error message ("You don't have permission to edit this post.") without navigating away
 
 ### `tests/Web.Tests.Bunit/Features/EditAclTests.cs`
+
 Four bUnit tests covering all branches:
+
 1. `EditRedirectsToBlogWhenAuthorIsNotPostOwner` — non-owner Author role → redirected to `/blog`
 2. `EditAllowsAccessWhenAuthorIsPostOwner` — matching `sub`/`AuthorId` → form rendered
 3. `EditAllowsAdminToEditAnyPost` — Admin role → form rendered regardless of `AuthorId`
@@ -3566,7 +3618,6 @@ Four bUnit tests covering all branches:
 - All 88 bUnit tests pass
 - All 154 Web.Tests unit tests pass
 - Build has 0 errors (pre-existing warnings only)
-
 
 ---
 
@@ -3585,6 +3636,7 @@ for async-loaded Blazor pages. Wrap the `OnParametersSetAsync` body in `try/fina
 ## Rationale
 
 The derived condition `_model is null && _error is null` fails to clear when:
+
 - `NavigateTo` + `return` exits early (null post, unauthorized author)
 - Any future code path that doesn't set either field
 
@@ -3630,7 +3682,6 @@ or `OnInitializedAsync` that render a conditional loading state.
 - `src/Web/Features/BlogPosts/Edit/Edit.razor`
 - `tests/Web.Tests.Bunit/Features/EditAclTests.cs`
 
-
 ---
 
 # PR #295 Review Fix Decisions
@@ -3657,7 +3708,6 @@ Added a `default` switch arm that renders `<h1>`. Predictable output over silent
 
 All of `.btn-primary` (green), `.btn-secondary` (blue), `.btn-warning` (amber), `.btn-destructive` (red) use fixed Tailwind colour classes. None follow the user's colour-theme switch. The history.md learning entry from Issue #292 incorrectly stated that primary/secondary used `var(--primary-*)` tokens — corrected.
 
-
 ---
 
 # Decision: UserManagement L1+L2 Caching Design (Issue #293)
@@ -3670,6 +3720,7 @@ All of `.btn-primary` (green), `.btn-secondary` (blue), `.btn-warning` (amber), 
 ## Context
 
 The ManageRoles.razor page triggered two expensive Auth0 Management API calls on every navigation:
+
 1. `GetUsersWithRolesQuery` — lists all users, then fetches roles per user (N+1 pattern)
 2. `GetAvailableRolesQuery` — lists all available roles
 
@@ -3705,7 +3756,6 @@ These are shorter than blog post TTLs (1min/5min) because user/role data is more
 - Reduces Auth0 Management API calls from N+2 per page load to 0 during cache hits.
 - Under normal usage (multiple page navigations within 2 minutes), API calls drop to once per 2-minute window.
 - Cache invalidation ensures role changes are visible within 30 seconds (next L1 miss).
-
 
 ---
 
@@ -3770,7 +3820,6 @@ If additional edge-case coverage is desired (e.g., empty `CallerUserId` with
 non-admin → Unauthorized), that is Gimli's territory. The current three tests
 cover the functional requirements of issue #300.
 
-
 ---
 
 # Test Ownership Note: Issue #300 Backend Authorization Tests
@@ -3782,7 +3831,7 @@ cover the functional requirements of issue #300.
 ## Context
 
 Per Sam's charter, test files are owned by Gimli. The handler tests for issue
-#300 were written in the same commit as the backend implementation (`ee0aafb`)
+# 300 were written in the same commit as the backend implementation (`ee0aafb`)
 to keep the change atomic. All three authorization tests are in:
 
 ```
@@ -3808,7 +3857,6 @@ tests/Web.Tests/Handlers/EditBlogPostHandlerTests.cs
 All required authorization scenarios are validated. Ball is with Gimli if
 additional coverage is desired.
 
-
 ---
 
 # Decision: Edit page `_isLoading` must be reset at the top of `OnParametersSetAsync`
@@ -3830,6 +3878,7 @@ Blazor Server components can be reused across navigation events — the router c
 - The template renders the stale `_model` form content while the new fetch is in flight, because `_isLoading = false` means the `else if (_model is not null)` branch is entered immediately.
 
 Setting `_isLoading = true` before the `try` guarantees:
+
 1. The loading indicator shows at the start of every fetch (initial + reuse).
 2. The `finally` block always brings it back to `false`, so no state is leaked.
 
@@ -3904,6 +3953,7 @@ The test file was staged under the name `UpdateCategoryCommandValidatorTests` bu
 ### 3. "Cannot Delete Category In Use" — Covered at Two Levels
 
 The AC is covered at:
+
 - **Handler level** (`DeleteCategoryHandlerTests.cs`): mocks `IBlogPostRepository.ExistsByCategoryAsync` returning `true`, verifies `Conflict` result and that `DeleteAsync` is never called.
 - **Integration level** (`MongoDbBlogPostCategoryTests.cs`): real MongoDB via Testcontainers, creates a post with a `CategoryId`, and verifies `ExistsByCategoryAsync` returns `true` for that ID.
 
@@ -3996,7 +4046,7 @@ source: "earned"
 
 - The playbook gate description ("coverage gate passing") is a binary CI check: either the gate passes or fails
 - In practice, squad members can justify a ≥1% regression in the PR body if the change warrants it (e.g., refactoring that reduces lines but maintains test coverage)
-- The actual gate is *transparency*: PR authors must document why coverage decreased, not a rigid 1% threshold
+- The actual gate is _transparency_: PR authors must document why coverage decreased, not a rigid 1% threshold
 - Revised language clarifies intent and aligns with observed squad practice where domain specialists evaluate context
 
 **Related change:** The "Do Not Use This Path When" section was updated to mirror this intent:

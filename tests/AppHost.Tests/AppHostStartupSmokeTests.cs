@@ -7,11 +7,11 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Focused startup smoke coverage for the real Aspire AppHost.
@@ -30,8 +30,7 @@ public sealed class AppHostStartupSmokeTests(ClearCommandAppFixture fixture)
 		using var handler = new HttpClientHandler();
 		handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
 
-		using var client = new HttpClient(handler);
-		client.BaseAddress = webEndpoint;
+		using var client = new HttpClient(handler) { BaseAddress = webEndpoint };
 
 		// Act
 		using var response = await WaitForAliveAsync(client, TimeSpan.FromMinutes(3));
@@ -42,6 +41,7 @@ public sealed class AppHostStartupSmokeTests(ClearCommandAppFixture fixture)
 
 	private static async Task<HttpResponseMessage> WaitForAliveAsync(HttpClient client, TimeSpan timeout)
 	{
+		client.Timeout = timeout;
 		using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 		cts.CancelAfter(timeout);
 

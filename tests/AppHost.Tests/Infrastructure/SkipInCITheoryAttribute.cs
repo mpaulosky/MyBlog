@@ -7,7 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// Custom [Theory] attribute that automatically skips theory-based tests when running in CI environment.

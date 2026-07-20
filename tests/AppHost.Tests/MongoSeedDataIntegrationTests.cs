@@ -7,7 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
@@ -16,9 +16,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-using MongoDbResourceBuilderExtensions = MyBlog.AppHost.MongoDbResourceBuilderExtensions;
+using MongoDbResourceBuilderExtensions = AppHost.MongoDbResourceBuilderExtensions;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Full integration tests for the "seed-myblog-data" operator command (issue #260).
@@ -223,8 +223,8 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	}
 
 	/// <summary>
-	/// Seeded blog posts must point at the documented canonical category ObjectIds so the
-	/// sample data remains deterministic across reseeds.
+	/// Seeded blog posts must point at the documented canonical category ObjectIds, so the
+	/// sample data remains deterministic across reseeding.
 	/// </summary>
 	[SkipInCIFact]
 	public async Task SeedMyBlogData_Assigns_BlogPosts_To_Expected_Canonical_Categories()
@@ -266,7 +266,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 	[SkipInCIFact]
 	public async Task SeedMyBlogData_Makes_Seeded_Posts_Visible_On_The_Blog_Page()
 	{
-		// Arrange — start from a clean database so any BlogPostCacheService L1/L2 cached
+		// Arrange — start from a clean database, so any BlogPostCacheService L1/L2 cached
 		// state cannot satisfy the assertions without a real MongoDB read.
 		using var mongoClient = new MongoClient(fixture.MongoConnectionString);
 		await mongoClient.DropDatabaseAsync("myblog", TestContext.Current.CancellationToken);
@@ -278,7 +278,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 			ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
 		};
 		using var webClient = new HttpClient(handler) { BaseAddress = endpoint };
-		await WaitForWebReadyAsync(webClient);
+		await WaitForWebReadyAsync(webClient, TimeSpan.FromMinutes(2));
 
 		// Act
 		var seedResult = await annotation.ExecuteCommand(MakeContext());
@@ -305,7 +305,7 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		// PollBlogUntilSeededTitleVisibleAsync throws TimeoutException (with a sanitized
 		// last-status / last-body summary) if the title never appears, preventing a stale
 		// cached empty-list from passing silently.  The 2-minute window exceeds the
-		// BlogPostCacheService L1 TTL (1 min) so any pre-reseed cached state can expire
+		// BlogPostCacheService L1 TTL (1 min) so any pre-reseed cached state can expire,
 		// and the handler re-queries MongoDB, making the test order-independent.
 		const string seededTitle = "Welcome to MyBlog";
 		var pageHtml = await PollBlogUntilSeededTitleVisibleAsync(
@@ -339,12 +339,13 @@ public sealed class MongoSeedDataIntegrationTests(ClearCommandAppFixture fixture
 		ServiceProvider = new ServiceCollection().BuildServiceProvider(),
 		Logger = NullLogger.Instance,
 		CancellationToken = TestContext.Current.CancellationToken,
-		Arguments = default!,
+		Arguments = null!
 	};
 
-	private static async Task WaitForWebReadyAsync(HttpClient client)
+	private static async Task WaitForWebReadyAsync(HttpClient client, TimeSpan timeout)
 	{
-		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+		using var cts = new CancellationTokenSource(timeout);
+		client.Timeout = timeout;
 
 		while (true)
 		{

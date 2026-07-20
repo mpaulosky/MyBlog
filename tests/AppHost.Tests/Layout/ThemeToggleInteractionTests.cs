@@ -7,11 +7,11 @@
 //Project Name :  AppHost.Tests
 //=======================================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests.Tests.Layout;
+namespace AppHost.Layout;
 
 /// <summary>
 /// Runtime-focused browser coverage for theme toggle persistence while navigating

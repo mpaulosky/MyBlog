@@ -113,18 +113,20 @@ public class EditAclTests : BunitContext
 	public void EditShowsErrorWhenServerReturnsUnauthorized()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
 		var post = new BlogPostDto(postId, "Test Post", "Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
+		sender.Register<MyBlog.Web.Features.Categories.List.GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>([]));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
 
-		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized)));
+		sender.Register<EditBlogPostCommand, Result>(
+			Result.Fail("You are not authorized to edit this post.", ResultErrorCode.Unauthorized));
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
@@ -180,9 +182,9 @@ public class EditAclTests : BunitContext
 		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 		var secondPost = new BlogPostDto(secondPostId, "Second Post Title", "Second Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == firstPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == secondPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(secondPost)));
 
 		Services.AddSingleton(sender);
@@ -215,9 +217,9 @@ public class EditAclTests : BunitContext
 
 		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == firstPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == secondPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Fail<BlogPostDto?>("Post could not be loaded.")));
 
 		Services.AddSingleton(sender);
@@ -249,9 +251,9 @@ public class EditAclTests : BunitContext
 
 		var firstPost = new BlogPostDto(firstPostId, "First Post Title", "First Content", OwnerSub, "Owner", string.Empty, [], DateTime.UtcNow, null, false, null);
 
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == firstPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == firstPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(firstPost)));
-		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q.Id == secondPostId), Arg.Any<CancellationToken>())
+		sender.Send(Arg.Is<GetBlogPostByIdQuery>(q => q != null && q.Id == secondPostId), Arg.Any<CancellationToken>())
 				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(null)));
 
 		Services.AddSingleton(sender);

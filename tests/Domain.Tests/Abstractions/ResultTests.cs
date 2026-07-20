@@ -7,7 +7,7 @@
 //Project Name :  Domain.Tests
 //=======================================================
 
-namespace Tests.Domain.Abstractions;
+namespace Domain.Abstractions;
 
 public class ResultTests
 {

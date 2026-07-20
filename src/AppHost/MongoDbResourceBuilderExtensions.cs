@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace MyBlog.AppHost;
+namespace AppHost;
 
 internal static partial class MongoDbResourceBuilderExtensions
 {
@@ -127,7 +127,7 @@ internal static partial class MongoDbResourceBuilderExtensions
 
 				foreach (var name in collectionNames)
 				{
-					// Skip MongoDB internal system collections (e.g. system.views, system.users).
+					// Skip MongoDB internal system collections (e.g., system.views, system.users).
 					if (name.StartsWith("system.", StringComparison.OrdinalIgnoreCase))
 						continue;
 
