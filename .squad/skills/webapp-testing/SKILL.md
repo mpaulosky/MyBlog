@@ -10,9 +10,74 @@ description: >
 
 ### Current repo fit
 
-- **Automated UI coverage** lives in `tests/Unit.Tests` with **bUnit**:
-  - `tests/Unit.Tests/Components/Layout/NavMenuTests.cs` — Navigation menu auth states, theme toggle, JS interop
-  - `tests/Unit.Tests/Components/RazorSmokeTests.cs` — Component rendering smoke tests
+- **Automated UI coverage** — two complementary layers:
+  - **bUnit** (`tests/Web.Tests.Bunit`) — component rendering, auth states, JS interop mocks
+  - **Playwright E2E** (`tests/AppHost.Tests`) — full AppHost boot, real browser, MongoDB + Redis integration
+
+- **AppHost.Tests project** (Playwright + Aspire) lives at `tests/AppHost.Tests/`:
+  - `Layout/` — anonymous and authenticated nav, theme toggle persistence, color scheme picker
+  - `Pages/` — home page, 404 page
+  - `Auth/` — login fallback, /test/login cookie endpoint
+  - `MongoSeed/Clear/StatsIntegrationTests` — real MongoDB container via ClearCommandAppFixture
+  - Tests are **skipped in CI** via `[SkipInCIFact]` / `[SkipInCITheory]`; run locally with `dotnet test tests/AppHost.Tests`
+
+### AppHost.Tests Infrastructure Patterns
+
+#### ClearCommandAppFixture — MongoDB integration fixture
+
+```csharp
+[Collection("MyDomainIntegration")]
+public sealed class MyIntegrationTests(ClearCommandAppFixture fixture)
+{
+    [SkipInCIFact]
+    public async Task Something_Works()
+    {
+        using var client = new MongoClient(fixture.MongoConnectionString);
+        // ... test against live MongoDB container
+    }
+}
+```
+
+**Critical rules for ClearCommandAppFixture:**
+
+1. **No pre-warm**: Never call `PreWarmDcpAsync()` before starting MongoDB. The pre-warm
+   starts the AppHost (including MongoDB), stops it, and leaves the WiredTiger journal dirty.
+   Across multiple sequential collection fixtures sharing `mongo-data-v7`, this accumulates
+   to MongoDB exit-code-100 (unrecoverable storage engine). The retry policy is sufficient.
+
+2. **StopAsync before DisposeAsync**: `DisposeAsync` must call `App.StopAsync()` before
+   `App.DisposeAsync()` so MongoDB flushes the WiredTiger journal cleanly. Without this,
+   the next collection fixture finds a dirty volume and MongoDB exits immediately.
+
+3. **WaitForResourceAsync inside retry**: `App.ResourceNotifications.WaitForResourceAsync()`
+   for MongoDB must be inside the Polly retry boundary (not after it). MongoDB exit-code-100
+   fires an `OperationCanceledException` from that call, and only the retry policy can
+   recover from it.
+
+#### BasePlaywrightTests — ERR_NETWORK_CHANGED
+
+Playwright tests can encounter transient `ERR_NETWORK_CHANGED` on the first navigation
+(DHCP renewal, routing table update). `BasePlaywrightTests.RetryOnNetworkChangedAsync`
+wraps the entire page interaction with up to 3 retries. All `InteractWithPageAsync` and
+`InteractWithRolePageAsync` calls already use it — no per-test retry code needed.
+
+```csharp
+// In your test:
+await InteractWithPageAsync("web", async page =>
+{
+    await page.GotoAsync("/");  // ERR_NETWORK_CHANGED auto-retried by base class
+    // ...
+});
+```
+
+#### Theme toggle tests — trustworthy interactive state
+
+`ThemeToggleTestRuntime.WaitForThemeStateAsync` polls until Blazor is interactive
+(`window.themeManager` + `window.Blazor` present) before asserting. If never reached
+within 10 s, the test calls `Assert.Skip(...)` rather than failing — this is correct
+behavior for a slow-start CI-like environment.
+
+
   - `tests/Unit.Tests/Features/UserManagement/ProfileTests.cs` — Profile component claim assertions
   - bUnit tests use `BunitContext` (base class from bUnit; test-specific helpers in `TestAuthorizationService.cs`)
 
