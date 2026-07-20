@@ -3,15 +3,15 @@
 // File Name :     LayoutAnonymousTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests.Tests.Layout;
+namespace AppHost.Layout;
 
 /// <summary>
 /// Playwright E2E tests for the Web application layout visible to anonymous (unauthenticated) users.

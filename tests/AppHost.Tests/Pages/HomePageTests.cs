@@ -3,15 +3,15 @@
 // File Name :     HomePageTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests.Tests.Pages;
+namespace AppHost.Pages;
 
 /// <summary>
 /// Playwright E2E tests for the Home page (guest and authenticated views).

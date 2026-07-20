@@ -3,7 +3,7 @@
 // File Name :     AspireManager.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 using Polly;
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// Startup and configure the Aspire application for testing.
@@ -58,10 +58,10 @@ public class AspireManager : IAsyncLifetime
 		var retryPolicy = new ResiliencePipelineBuilder()
 			.AddRetry(new Polly.Retry.RetryStrategyOptions
 			{
-				MaxRetryAttempts = 3,
-				Delay = TimeSpan.FromSeconds(10),  // Initial 10-second backoff
+				MaxRetryAttempts = 5,
+				Delay = TimeSpan.FromSeconds(15),  // Initial 15-second backoff
 				BackoffType = Polly.DelayBackoffType.Exponential,
-				UseJitter = false,
+				UseJitter = true, // Added jitter to avoid thundering herd
 				ShouldHandle = new Polly.PredicateBuilder()
 					.Handle<System.OperationCanceledException>()
 					.Handle<Polly.Timeout.TimeoutRejectedException>(),
@@ -69,7 +69,7 @@ public class AspireManager : IAsyncLifetime
 				{
 					var delay = args.RetryDelay;
 					_logger.LogWarning(
-						"DCP timeout detected. Waiting {DelaySeconds}s before retry (attempt {Attempt}/3)...",
+						"DCP timeout detected. Waiting {DelaySeconds}s before retry (attempt {Attempt}/5)...",
 						delay.TotalSeconds, args.AttemptNumber);
 					return default;
 				}
@@ -125,7 +125,7 @@ public class AspireManager : IAsyncLifetime
 		// Uses /alive (not /health) to avoid blocking on Redis/MongoDB in CI.
 		// CI cold-start can take up to 3 min; local dev is typically ~10 s.
 		_logger.LogInformation("Waiting for web app to become healthy...");
-		await WaitForWebHealthyAsync(TimeSpan.FromSeconds(180));
+		await WaitForWebHealthyAsync(TimeSpan.FromSeconds(300));
 		_logger.LogInformation("Web app is healthy and ready for tests");
 	}
 
@@ -205,7 +205,7 @@ public class AspireManager : IAsyncLifetime
 		{
 			ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 		};
-		using var client = new HttpClient(handler) { BaseAddress = endpoint };
+		using var client = new HttpClient(handler) { BaseAddress = endpoint, Timeout = timeout };
 		using var cts = new CancellationTokenSource(timeout);
 
 		var startTime = DateTime.UtcNow;

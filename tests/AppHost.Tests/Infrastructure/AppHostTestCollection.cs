@@ -3,11 +3,11 @@
 // File Name :     AppHostTestCollection.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// Defines a single xUnit collection that shares one <see cref="AspireManager"/> instance across

@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
+		<RootNamespace>AppHost</RootNamespace>
 		<UserSecretsId>789c7356-2f72-4f40-8ab2-1813d4b1cd84</UserSecretsId>
 		<!-- Test-project suppressions:
 		     CA2007 – ConfigureAwait not needed in xUnit test context

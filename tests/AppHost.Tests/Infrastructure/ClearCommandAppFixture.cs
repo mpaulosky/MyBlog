@@ -11,7 +11,7 @@ using Aspire.Hosting;
 
 using Polly;
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// xUnit <see cref="IAsyncLifetime"/> fixture that boots the full Aspire host and waits
@@ -47,14 +47,19 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 		// Propagate Testing mode so the web resource starts fast (in-memory fakes).
 		Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
 
-		// Pre-warm DCP by attempting one quick initialization cycle.
-		// This helps DCP get past initial setup and reduces cold-start latency.
-		await PreWarmDcpAsync();
+		// NOTE: No DCP pre-warm here intentionally.
+		// ClearCommandAppFixture starts MongoDB in a named Docker volume (mongo-data-v7).
+		// Pre-warming starts the AppHost (including MongoDB), stops it, then the main start
+		// also starts MongoDB — but each abrupt stop leaves the WiredTiger journal dirty.
+		// Enough dirty stops across sequential collections cause MongoDB to exit with code 100
+		// (unrecoverable storage engine). The retry policy with exponential backoff below is
+		// sufficient to handle DCP cold-start latency without starting and killing MongoDB first.
 
 		// DCP initialization can timeout with the hardcoded 20-second Aspire timeout on first run.
 		// On slow systems (CI VMs, CachyOS), DCP consistently takes >20 seconds for cold-start.
-		// Use Polly retry with LARGE exponential backoff (10s, 20s, 40s) to allow DCP time to
-		// recover between attempts. Each retry waits progressively longer before reattempting.
+		// The retry also covers MongoDB exit-code-100 (WiredTiger dirty journal from a previous
+		// collection's abrupt stop): the 10s backoff gives the Docker daemon time to fully release
+		// the named volume lock before the next startup attempt.
 		var retryPolicy = new ResiliencePipelineBuilder()
 			.AddRetry(new Polly.Retry.RetryStrategyOptions
 			{
@@ -64,12 +69,32 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 				UseJitter = false,
 				ShouldHandle = new PredicateBuilder()
 					.Handle<OperationCanceledException>()
-					.Handle<Polly.Timeout.TimeoutRejectedException>()
+					.Handle<Polly.Timeout.TimeoutRejectedException>(),
+				OnRetry = args =>
+				{
+					var delay = args.RetryDelay;
+					Console.Error.WriteLine(
+						$"[ClearCommandAppFixture] Retry {args.AttemptNumber}/3 after {delay.TotalSeconds:F0}s — " +
+						"likely DCP timeout or MongoDB WiredTiger dirty-journal recovery.");
+					return default;
+				}
 			})
 			.Build();
 
 		await retryPolicy.ExecuteAsync(async _ =>
 		{
+			// Dispose any partially-started app from a previous attempt to avoid orphaned
+			// Docker containers holding the WiredTiger.lock on the named volume.
+			if (App is not null)
+			{
+				await App.StopAsync(CancellationToken.None);
+				await App.DisposeAsync();
+				App = null!;
+				// Brief pause to allow the Docker daemon to fully release the volume lock
+				// before the next container start attempts to acquire it.
+				await Task.Delay(TimeSpan.FromSeconds(3), CancellationToken.None);
+			}
+
 			Builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(
 				args: [],
 				configureBuilder: static (options, _) => { options.DisableDashboard = true; },
@@ -84,55 +109,32 @@ public sealed class ClearCommandAppFixture : IAsyncLifetime
 
 			App = await Builder.BuildAsync(CancellationToken.None);
 			await App.StartAsync(CancellationToken.None);
+
+			// Wait for the MongoDB container to reach Running state inside the retry boundary
+			// so that a MongoDB exit-code-100 (dirty journal) is treated as a retryable failure.
+			using var mongoCts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+			await App.ResourceNotifications.WaitForResourceAsync(
+				"mongodb",
+				KnownResourceStates.Running,
+				mongoCts.Token);
 		});
 
-		// Wait for the MongoDB container to be Running before tests try to seed data.
-		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-		await App.ResourceNotifications.WaitForResourceAsync(
-			"mongodb",
-			KnownResourceStates.Running,
-			cts.Token);
-
+		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 		MongoConnectionString = await App.GetConnectionStringAsync("mongodb", cts.Token)
 			?? throw new InvalidOperationException(
 				"Could not resolve the MongoDB connection string from the Aspire host.");
 	}
 
-	/// <summary>
-	/// Pre-warm DCP by attempting one quick initialization cycle.
-	/// This helps DCP get past initial setup and reduces cold-start latency for main initialization.
-	/// Best-effort: does not block main initialization if it fails.
-	/// </summary>
-	private static async Task PreWarmDcpAsync()
-	{
-		try
-		{
-			var preWarmTimeout = TimeSpan.FromSeconds(60);
-			using var cts = new CancellationTokenSource(preWarmTimeout);
-
-			var preWarmBuilder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(
-				args: [],
-				configureBuilder: static (options, _) => { options.DisableDashboard = true; },
-				cancellationToken: cts.Token);
-
-			var preWarmApp = await preWarmBuilder.BuildAsync();
-			await preWarmApp.StartAsync(cts.Token);
-			await preWarmApp.StopAsync();
-			await preWarmApp.DisposeAsync();
-		}
-		catch (OperationCanceledException)
-		{
-			// Pre-warm timed out; proceed with main initialization (will retry if needed).
-		}
-		catch (Exception)
-		{
-			// Pre-warm failed; proceed with main initialization (will retry if needed).
-		}
-	}
-
 	public async ValueTask DisposeAsync()
 	{
-		await App.DisposeAsync();
+		if (App is not null)
+		{
+			// Explicitly stop before dispose so MongoDB has time to flush the WiredTiger
+			// journal cleanly. Without this, the next collection's fixture may find a dirty
+			// journal and fail to start MongoDB (exit code 100).
+			await App.StopAsync();
+			await App.DisposeAsync();
+		}
 	}
 
 	private static void SetWebEnvironmentVariable(

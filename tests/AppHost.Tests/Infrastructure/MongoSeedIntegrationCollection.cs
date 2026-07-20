@@ -7,7 +7,7 @@
 // Project Name :  AppHost.Tests
 // =============================================
 
-namespace AppHost.Tests.Infrastructure;
+namespace AppHost.Infrastructure;
 
 /// <summary>
 /// xUnit collection that shares one <see cref="ClearCommandAppFixture"/> across all tests

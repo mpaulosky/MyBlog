@@ -13,7 +13,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Model-level tests for the local-only MongoDB seed-data operator command (issue #260).

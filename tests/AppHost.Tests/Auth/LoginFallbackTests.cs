@@ -7,11 +7,11 @@
 //Project Name :  AppHost.Tests
 //=======================================================
 
-using AppHost.Tests.Infrastructure;
+using AppHost.Infrastructure;
 
 using FluentAssertions;
 
-namespace AppHost.Tests;
+namespace AppHost.Auth;
 
 [Collection(AppHostTestCollection.Name)]
 public sealed class LoginFallbackTests(AspireManager aspireManager)

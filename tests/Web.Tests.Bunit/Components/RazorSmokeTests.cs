@@ -260,21 +260,19 @@ public class RazorSmokeTests : BunitContext
 	public void BlogIndexConfirmDeleteSendsDeleteCommandAndRefreshesList()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var posts = new[]
 		{
 						new BlogPostDto(postId, "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null)
 				};
 
-		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
-				.Returns(
-						Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)),
-						Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>([])));
-		sender.Send(Arg.Any<DeleteBlogPostCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok()));
+		sender.RegisterSequence<GetBlogPostsQuery, Result<IReadOnlyList<BlogPostDto>>>(
+			Result.Ok<IReadOnlyList<BlogPostDto>>(posts),
+			Result.Ok<IReadOnlyList<BlogPostDto>>([]));
+		sender.Register<DeleteBlogPostCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
@@ -283,7 +281,7 @@ public class RazorSmokeTests : BunitContext
 		cut.FindAll("button").Last(button => button.TextContent.Contains("Delete", StringComparison.Ordinal)).Click();
 
 		// Assert
-		sender.Received(1).Send(Arg.Is<DeleteBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
+		sender.ReceivedCount<DeleteBlogPostCommand>(command => command.Id == postId).Should().Be(1);
 		cut.WaitForAssertion(() => cut.Markup.Should().Contain("No posts yet."));
 	}
 
@@ -291,19 +289,19 @@ public class RazorSmokeTests : BunitContext
 	public void BlogIndexShowsConcurrencyWarningWhenDeleteFailsWithConcurrency()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var posts = new[]
 		{
 						new BlogPostDto(postId, "First", "Content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null)
 				};
 
-		sender.Send(Arg.Any<GetBlogPostsQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<BlogPostDto>>(posts)));
-		sender.Send(Arg.Any<DeleteBlogPostCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Fail("Concurrency error", ResultErrorCode.Concurrency)));
+		sender.Register<GetBlogPostsQuery, Result<IReadOnlyList<BlogPostDto>>>(
+			Result.Ok<IReadOnlyList<BlogPostDto>>(posts));
+		sender.Register<DeleteBlogPostCommand, Result>(
+			Result.Fail("Concurrency error", ResultErrorCode.Concurrency));
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<MyBlog.Web.Features.BlogPosts.List.Index>(CreatePrincipal("Alice", ["Author"]));
@@ -388,6 +386,7 @@ public class RazorSmokeTests : BunitContext
 
 		// Assert
 		await sender.Received(1).Send(Arg.Is<CreateBlogPostCommand>(command =>
+				command != null &&
 				command.Title == "My title" &&
 				command.Author.Name == "Alice" &&
 				command.Content == "Hello world"), Arg.Any<CancellationToken>());
@@ -487,16 +486,18 @@ public class RazorSmokeTests : BunitContext
 	public void EditPostShowsConcurrencyMessageWhenSaveFailsWithConcurrency()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var post = new BlogPostDto(postId, "Existing title", "Existing content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
-		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Fail("Concurrency error", ResultErrorCode.Concurrency)));
+		sender.Register<MyBlog.Web.Features.Categories.List.GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>([]));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
+		sender.Register<EditBlogPostCommand, Result>(
+			Result.Fail("Concurrency error", ResultErrorCode.Concurrency));
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<Edit>(CreatePrincipal("Alice", ["Author"]), parameters => parameters.Add(p => p.Id, postId.ToString()));
@@ -511,16 +512,17 @@ public class RazorSmokeTests : BunitContext
 	public void EditPostSubmitsAndNavigatesToBlogWhenSaveSucceeds()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var post = new BlogPostDto(postId, "Existing title", "Existing content", string.Empty, "Alice", string.Empty, [], DateTime.UtcNow, null, false, null);
 
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
-		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok()));
+		sender.Register<MyBlog.Web.Features.Categories.List.GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>([]));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
+		sender.Register<EditBlogPostCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
@@ -530,7 +532,7 @@ public class RazorSmokeTests : BunitContext
 		cut.Find("form").Submit();
 
 		// Assert
-		sender.Received(1).Send(Arg.Is<EditBlogPostCommand>(command => command.Id == postId), Arg.Any<CancellationToken>());
+		sender.ReceivedCount<EditBlogPostCommand>(command => command.Id == postId).Should().Be(1);
 		navigation.Uri.Should().EndWith("/blog");
 	}
 
@@ -668,7 +670,7 @@ public class RazorSmokeTests : BunitContext
 	public void ManageRolesAssignButtonSendsCommandAndRefreshesUsers()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var users = new[]
 		{
 						new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin"])
@@ -683,16 +685,14 @@ public class RazorSmokeTests : BunitContext
 						new RoleDto("role-author", "Author")
 				};
 
-		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
-				.Returns(
-						Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(users)),
-						Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(refreshedUsers)));
-		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(roles)));
-		sender.Send(Arg.Any<AssignRoleCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok()));
+		sender.RegisterSequence<GetUsersWithRolesQuery, Result<IReadOnlyList<UserWithRolesDto>>>(
+			Result.Ok<IReadOnlyList<UserWithRolesDto>>(users),
+			Result.Ok<IReadOnlyList<UserWithRolesDto>>(refreshedUsers));
+		sender.Register<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>(
+			Result.Ok<IReadOnlyList<RoleDto>>(roles));
+		sender.Register<AssignRoleCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
@@ -700,7 +700,7 @@ public class RazorSmokeTests : BunitContext
 		cut.FindAll("button").First(button => string.Equals(button.TextContent.Trim(), "Author: Inactive (Add)", StringComparison.Ordinal)).Click();
 
 		// Assert
-		sender.Received(1).Send(Arg.Is<AssignRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
+		sender.ReceivedCount<AssignRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author").Should().Be(1);
 		cut.WaitForAssertion(() => cut.Markup.Should().Contain("Admin, Author"));
 	}
 
@@ -708,7 +708,7 @@ public class RazorSmokeTests : BunitContext
 	public void ManageRolesRemoveButtonSendsCommandAndRefreshesUsers()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var users = new[]
 		{
 						new UserWithRolesDto("user-1", "admin@example.com", "Admin User", ["Admin", "Author"])
@@ -723,16 +723,14 @@ public class RazorSmokeTests : BunitContext
 						new RoleDto("role-author", "Author")
 				};
 
-		sender.Send(Arg.Any<GetUsersWithRolesQuery>(), Arg.Any<CancellationToken>())
-				.Returns(
-						Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(users)),
-						Task.FromResult(Result.Ok<IReadOnlyList<UserWithRolesDto>>(refreshedUsers)));
-		sender.Send(Arg.Any<GetAvailableRolesQuery>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok<IReadOnlyList<RoleDto>>(roles)));
-		sender.Send(Arg.Any<RemoveRoleCommand>(), Arg.Any<CancellationToken>())
-				.Returns(Task.FromResult(Result.Ok()));
+		sender.RegisterSequence<GetUsersWithRolesQuery, Result<IReadOnlyList<UserWithRolesDto>>>(
+			Result.Ok<IReadOnlyList<UserWithRolesDto>>(users),
+			Result.Ok<IReadOnlyList<UserWithRolesDto>>(refreshedUsers));
+		sender.Register<GetAvailableRolesQuery, Result<IReadOnlyList<RoleDto>>>(
+			Result.Ok<IReadOnlyList<RoleDto>>(roles));
+		sender.Register<RemoveRoleCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<ManageRoles>(CreatePrincipal("Admin User", ["Admin"]));
@@ -740,7 +738,7 @@ public class RazorSmokeTests : BunitContext
 		cut.FindAll("button").First(button => string.Equals(button.TextContent.Trim(), "Author: Active (Remove)", StringComparison.Ordinal)).Click();
 
 		// Assert
-		sender.Received(1).Send(Arg.Is<RemoveRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author"), Arg.Any<CancellationToken>());
+		sender.ReceivedCount<RemoveRoleCommand>(command => command.UserId == "user-1" && command.RoleId == "role-author").Should().Be(1);
 		cut.WaitForAssertion(() =>
 		{
 			cut.Markup.Should().Contain("Author: Inactive (Add)");
