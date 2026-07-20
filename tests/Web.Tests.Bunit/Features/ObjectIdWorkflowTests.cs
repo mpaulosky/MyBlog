@@ -67,6 +67,7 @@ public class ObjectIdWorkflowTests : BunitContext
 		// Assert
 		await sender.Received(1).Send(
 			Arg.Is<CreateBlogPostCommand>(command =>
+				command != null &&
 				command.Title == "ObjectId create flow" &&
 				command.CategoryId == selectedCategoryId),
 			Arg.Any<CancellationToken>());
@@ -102,6 +103,7 @@ public class ObjectIdWorkflowTests : BunitContext
 		act.Should().NotThrow();
 		await sender.Received(1).Send(
 			Arg.Is<CreateBlogPostCommand>(command =>
+				command != null &&
 				command.Title == "Draft without category" &&
 				command.CategoryId == null &&
 				!command.IsPublished),
@@ -143,7 +145,7 @@ public class ObjectIdWorkflowTests : BunitContext
 	public void EditPost_Submits_SelectedCategoryString_As_ObjectId_CommandValue()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var initialCategoryId = ObjectId.GenerateNewId();
 		var selectedCategoryId = ObjectId.GenerateNewId();
@@ -167,14 +169,13 @@ public class ObjectIdWorkflowTests : BunitContext
 			false,
 			initialCategoryId);
 
-		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(categories)));
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
-		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok()));
+		sender.Register<GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>(categories));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
+		sender.Register<EditBlogPostCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
 		// Act
@@ -185,11 +186,9 @@ public class ObjectIdWorkflowTests : BunitContext
 		cut.Find("form").Submit();
 
 		// Assert
-		sender.Received(1).Send(
-			Arg.Is<EditBlogPostCommand>(command =>
-				command.Id == postId &&
-				command.CategoryId == selectedCategoryId),
-			Arg.Any<CancellationToken>());
+		sender.ReceivedCount<EditBlogPostCommand>(command =>
+			command.Id == postId &&
+			command.CategoryId == selectedCategoryId).Should().Be(1);
 		navigation.Uri.Should().EndWith("/blog");
 	}
 
@@ -197,7 +196,7 @@ public class ObjectIdWorkflowTests : BunitContext
 	public void EditPost_ClearingCategory_Submits_CommandThatRemovesCategoryAssociation()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var postId = ObjectId.GenerateNewId();
 		var initialCategoryId = ObjectId.GenerateNewId();
 		const string OwnerSub = "auth0|owner-user";
@@ -219,14 +218,13 @@ public class ObjectIdWorkflowTests : BunitContext
 			false,
 			initialCategoryId);
 
-		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(categories)));
-		sender.Send(Arg.Any<GetBlogPostByIdQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<BlogPostDto?>(post)));
-		sender.Send(Arg.Any<EditBlogPostCommand>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok()));
+		sender.Register<GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>(categories));
+		sender.Register<GetBlogPostByIdQuery, Result<BlogPostDto?>>(
+			Result.Ok<BlogPostDto?>(post));
+		sender.Register<EditBlogPostCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 		var navigation = Services.GetRequiredService<NavigationManager>();
 
 		// Act
@@ -237,12 +235,10 @@ public class ObjectIdWorkflowTests : BunitContext
 		cut.Find("form").Submit();
 
 		// Assert
-		sender.Received(1).Send(
-			Arg.Is<EditBlogPostCommand>(command =>
-				command.Id == postId &&
-				command.CategoryId == null &&
-				command.ClearCategory),
-			Arg.Any<CancellationToken>());
+		sender.ReceivedCount<EditBlogPostCommand>(command =>
+			command.Id == postId &&
+			command.CategoryId == null &&
+			command.ClearCategory).Should().Be(1);
 		navigation.Uri.Should().EndWith("/blog");
 	}
 
@@ -250,15 +246,14 @@ public class ObjectIdWorkflowTests : BunitContext
 	public void CategoryIndex_Submits_EditCategoryCommand_With_Category_ObjectId()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var category = new CategoryDto(ObjectId.GenerateNewId(), "Technology", "Tech posts.");
 
-		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>([category])));
-		sender.Send(Arg.Any<EditCategoryCommand>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok()));
+		sender.Register<GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>([category]));
+		sender.Register<EditCategoryCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<MyBlog.Web.Features.Categories.List.Index>(
@@ -269,26 +264,22 @@ public class ObjectIdWorkflowTests : BunitContext
 		cut.Find("tbody form").Submit();
 
 		// Assert
-		sender.Received(1).Send(
-			Arg.Is<EditCategoryCommand>(command => command.Id == category.Id),
-			Arg.Any<CancellationToken>());
+		sender.ReceivedCount<EditCategoryCommand>(command => command.Id == category.Id).Should().Be(1);
 	}
 
 	[Fact]
 	public void CategoryIndex_Submits_DeleteCategoryCommand_With_Category_ObjectId()
 	{
 		// Arrange
-		var sender = Substitute.For<ISender>();
+		var sender = new TestSender();
 		var category = new CategoryDto(ObjectId.GenerateNewId(), "Technology", "Tech posts.");
 
-		sender.Send(Arg.Any<GetCategoriesQuery>(), Arg.Any<CancellationToken>())
-			.Returns(
-				Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>([category])),
-				Task.FromResult(Result.Ok<IReadOnlyList<CategoryDto>>(Array.Empty<CategoryDto>())));
-		sender.Send(Arg.Any<DeleteCategoryCommand>(), Arg.Any<CancellationToken>())
-			.Returns(Task.FromResult(Result.Ok()));
+		sender.RegisterSequence<GetCategoriesQuery, Result<IReadOnlyList<CategoryDto>>>(
+			Result.Ok<IReadOnlyList<CategoryDto>>([category]),
+			Result.Ok<IReadOnlyList<CategoryDto>>(Array.Empty<CategoryDto>()));
+		sender.Register<DeleteCategoryCommand, Result>(Result.Ok());
 
-		Services.AddSingleton(sender);
+		Services.AddSingleton<ISender>(sender);
 
 		// Act
 		var cut = RenderWithUser<MyBlog.Web.Features.Categories.List.Index>(
@@ -301,9 +292,7 @@ public class ObjectIdWorkflowTests : BunitContext
 			.Click();
 
 		// Assert
-		sender.Received(1).Send(
-			Arg.Is<DeleteCategoryCommand>(command => command.Id == category.Id),
-			Arg.Any<CancellationToken>());
+		sender.ReceivedCount<DeleteCategoryCommand>(command => command.Id == category.Id).Should().Be(1);
 		cut.WaitForAssertion(() => cut.Markup.Should().Contain("No categories yet."));
 	}
 

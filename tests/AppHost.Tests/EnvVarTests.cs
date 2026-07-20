@@ -3,7 +3,7 @@
 // File Name :     EnvVarTests.cs
 // Company :       mpaulosky
 // Author :        Matthew Paulosky
-// Solution Name : IssueManager
+// Solution Name : MyBlog
 // Project Name :  AppHost.Tests
 // =============================================
 
@@ -13,7 +13,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Tests for environment variable resolution in the web resource.

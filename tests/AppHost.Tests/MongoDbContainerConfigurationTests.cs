@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 using FluentAssertions;
 
-namespace AppHost.Tests;
+namespace AppHost;
 
 /// <summary>
 /// Regression coverage for MongoDB AppHost container configuration.
