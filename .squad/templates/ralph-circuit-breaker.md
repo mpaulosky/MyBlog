@@ -9,9 +9,8 @@ When running multiple Ralph instances across repos, Copilot model rate limits ca
 All Ralphs fail simultaneously when the preferred model (e.g., `claude-sonnet-4.6`) hits quota.
 
 Premium models burn quota fast:
-
 | Model | Multiplier | Risk |
-| ------- | ----------- | ------ |
+|-------|-----------|------|
 | `claude-sonnet-4.6` | 1x | Moderate with many Ralphs |
 | `claude-opus-4.6` | 10x | High |
 | `gpt-5.4` | 50x | Very high |
@@ -36,13 +35,11 @@ Premium models burn quota fast:
 ```
 
 ### CLOSED (normal operation)
-
 - Use preferred model from config
 - Every successful response confirms circuit stays closed
 - On rate limit error → transition to OPEN
 
 ### OPEN (rate limited — fallback active)
-
 - Fall back through the free-tier model chain:
   1. `gpt-5.4-mini`
   2. `gpt-5-mini`
@@ -51,7 +48,6 @@ Premium models burn quota fast:
 - When cooldown expires → transition to HALF-OPEN
 
 ### HALF-OPEN (testing recovery)
-
 - Try preferred model again
 - If 2 consecutive successes → transition to CLOSED
 - If rate limit error → back to OPEN, reset cooldown
@@ -296,7 +292,7 @@ while ($true) {
 Override defaults by editing `.squad/ralph-circuit-breaker.json`:
 
 | Field | Default | Description |
-| ------- | --------- | ------------- |
+|-------|---------|-------------|
 | `preferredModel` | `claude-sonnet-4.6` | Model to use when circuit is closed |
 | `fallbackChain` | `["gpt-5.4-mini", "gpt-5-mini", "gpt-4.1"]` | Ordered fallback models (all free-tier) |
 | `cooldownMinutes` | `10` | How long to wait before testing recovery |
@@ -311,7 +307,6 @@ The state file tracks operational metrics:
 - **lastRecoveryAt** — ISO timestamp of last successful recovery
 
 Query metrics with:
-
 ```powershell
 $cb = Get-Content .squad/ralph-circuit-breaker.json | ConvertFrom-Json
 Write-Host "Fallbacks: $($cb.metrics.totalFallbacks) | Recoveries: $($cb.metrics.totalRecoveries)"

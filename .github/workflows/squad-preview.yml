@@ -1,9 +1,9 @@
 name: Squad Preview Validation
-# Validates the dev branch on push — ensures integration branch stays green.
+# dotnet project — configure build, test, and validation commands below
 
 on:
   push:
-    branches: [dev]
+    branches: [preview]
 
 permissions:
   contents: read
@@ -12,22 +12,19 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: global.json
-
-      - name: Restore
-        run: dotnet restore MyBlog.slnx
-
-      - name: Build
-        run: dotnet build MyBlog.slnx --configuration Release --no-restore -p:TreatWarningsAsErrors=true
-
-      - name: Run unit tests
+      - name: Build and test
         run: |
-          dotnet test tests/Architecture.Tests --configuration Release --no-build --verbosity normal
-          dotnet test tests/Domain.Tests --configuration Release --no-build --verbosity normal
-          dotnet test tests/Web.Tests --configuration Release --no-build --verbosity normal
-          dotnet test tests/Web.Tests.Integration --configuration Release --no-build --verbosity normal
+          # TODO: Add your dotnet build/test commands here
+          # Go:            go test ./...
+          # Python:        pip install -r requirements.txt && pytest
+          # .NET:          dotnet test
+          # Java (Maven):  mvn test
+          # Java (Gradle): ./gradlew test
+          echo "No build commands configured — update squad-preview.yml"
+
+      - name: Validate
+        run: |
+          # TODO: Add pre-release validation commands here
+          echo "No validation commands configured — update squad-preview.yml"

@@ -5,7 +5,7 @@
 ## Design Review
 
 | Field | Value |
-| ------- | ------- |
+|-------|-------|
 | **Trigger** | auto |
 | **When** | before |
 | **Condition** | multi-agent task involving 2+ agents modifying shared systems |
@@ -15,7 +15,6 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
-
 1. Review the task and requirements
 2. Agree on interfaces and contracts between components
 3. Identify risks and edge cases
@@ -23,34 +22,10 @@
 
 ---
 
-## Sprint Planning
-
-| Field | Value |
-| ------- | ------- |
-| **Trigger** | auto |
-| **When** | on plan creation or material update |
-| **Condition** | any `plan.md` created or materially updated |
-| **Facilitator** | Ralph (decompose) + Aragorn (GH artifacts) |
-| **Participants** | Ralph, Aragorn, Boromir |
-| **Time budget** | focused |
-| **Enabled** | ✅ yes |
-
-**Agenda:**
-
-1. Ralph reviews `plan.md` and SQL todos, groups into logical sprints (3–6 issues each)
-2. Aragorn creates one GitHub milestone per sprint (`Sprint N: {Theme}`)
-3. Aragorn creates GitHub issues per todo, assigned to milestones, triaged with `squad:{member}` label
-4. Aragorn adds all issues to the **MyBlog** GitHub Project board (Backlog column)
-5. Boromir creates `sprint/{N}-{slug}` branch and `../MyBlog-sprint-{N}/` worktree per sprint
-
-**See:** `.squad/playbooks/sprint-planning.md`
-
----
-
 ## Retrospective
 
 | Field | Value |
-| ------- | ------- |
+|-------|-------|
 | **Trigger** | auto |
 | **When** | after |
 | **Condition** | build failure, test failure, or reviewer rejection |
@@ -60,8 +35,35 @@
 | **Enabled** | ✅ yes |
 
 **Agenda:**
-
 1. What happened? (facts only)
 2. Root cause analysis
 3. What should change?
 4. Action items for next iteration
+
+
+---
+
+## Retrospective with Enforcement
+
+| Field | Value |
+|-------|-------|
+| **Trigger** | auto |
+| **When** | weekly |
+| **Condition** | No *retrospective* log in .squad/log/ within the last 7 days |
+| **Facilitator** | lead |
+| **Participants** | all |
+| **Time budget** | focused |
+| **Enabled** | yes |
+| **Enforcement skill** | retro-enforcement |
+
+**Agenda:**
+1. What shipped this week? (closed issues, merged PRs)
+2. What did not ship? (open issues, blockers)
+3. Root cause on any failures
+4. Action items -- each MUST become a GitHub Issue labeled retro-action
+
+**Coordinator integration:**
+At round start, call Test-RetroOverdue (see skill retro-enforcement). If overdue, run this ceremony before the work queue.
+
+**Why GitHub Issues, not markdown:**
+Production data: 0% completion across 6 retros using markdown checklists, 100% after switching to GitHub Issues.

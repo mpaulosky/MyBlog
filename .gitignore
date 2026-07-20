@@ -37,3 +37,4 @@ src/Web/wwwroot/**/*.gz
 .fake
 *.lscache
 .directory
+.squad/.cache/
