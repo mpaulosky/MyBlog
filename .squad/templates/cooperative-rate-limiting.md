@@ -20,7 +20,7 @@ These patterns layer on top of the existing circuit breaker. Each is independent
 Map GitHub API `X-RateLimit-Remaining` to traffic light states:
 
 | State | Remaining % | Behavior |
-| ------- | ------------ | ---------- |
+|-------|------------|----------|
 | 🟢 GREEN | >20% | Normal operation |
 | 🟡 AMBER | 5–20% | Only P0 agents proceed |
 | 🔴 RED | <5% | Block all except emergency P0 |
@@ -59,7 +59,6 @@ A shared JSON file (`~/.squad/rate-pool.json`) distributes API quota:
 ```
 
 **Rules:**
-
 - P0 agents (Lead) get 40% of quota
 - P1 agents (specialists) get 35%
 - P2 agents (Ralph, Scribe) get 25%
@@ -149,7 +148,7 @@ class PredictiveCircuitBreaker {
 Non-overlapping jitter windows prevent thundering herd:
 
 | Priority | Retry Window | Description |
-| ---------- | ------------- | ------------- |
+|----------|-------------|-------------|
 | P0 (Lead) | 500ms–5s | Recovers first |
 | P1 (Specialists) | 2s–30s | Moderate delay |
 | P2 (Ralph/Scribe) | 5s–60s | Most patient |

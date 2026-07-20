@@ -1,4 +1,3 @@
----
 name: Squad Label Enforce
 
 on:
@@ -13,10 +12,10 @@ jobs:
   enforce:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Enforce mutual exclusivity
-        uses: actions/github-script@v9
+        uses: actions/github-script@v7
         with:
           script: |
             const issue = context.payload.issue;
@@ -40,6 +39,7 @@ jobs:
               );
 
               if (otherGoLabels.length > 0) {
+                // Remove conflicting go: labels
                 for (const label of otherGoLabels) {
                   await github.rest.issues.removeLabel({
                     owner: context.repo.owner,
@@ -50,6 +50,7 @@ jobs:
                   core.info(`Removed conflicting label: ${label}`);
                 }
 
+                // Post update comment
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -58,6 +59,7 @@ jobs:
                 });
               }
 
+              // Auto-apply release:backlog if go:yes and no release target
               if (appliedLabel === 'go:yes') {
                 const hasReleaseLabel = allLabels.some(l => l.startsWith('release:'));
                 if (!hasReleaseLabel) {
@@ -79,6 +81,7 @@ jobs:
                 }
               }
 
+              // Remove release: labels if go:no
               if (appliedLabel === 'go:no') {
                 const releaseLabels = allLabels.filter(l => l.startsWith('release:'));
                 if (releaseLabels.length > 0) {
@@ -102,6 +105,7 @@ jobs:
               );
 
               if (otherReleaseLabels.length > 0) {
+                // Remove conflicting release: labels
                 for (const label of otherReleaseLabels) {
                   await github.rest.issues.removeLabel({
                     owner: context.repo.owner,
@@ -112,6 +116,7 @@ jobs:
                   core.info(`Removed conflicting label: ${label}`);
                 }
 
+                // Post update comment
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,

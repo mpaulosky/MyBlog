@@ -2,6 +2,20 @@
 
 You are working on a project that uses **Squad**, an AI team framework. When picking up issues autonomously, follow these guidelines.
 
+## Coordinator Canary Check
+
+**IMPORTANT — run this check on EVERY session start, before doing any work:**
+
+Look for the exact token `SQUAD_COORDINATOR_CANARY_a8f3` in your `agent_instructions`. This token is placed at the end of `squad.agent.md`. If it is missing, the coordinator file is missing or truncated.
+
+**When the token is missing, you MUST:**
+1. **STOP** — do not proceed with standard Squad behavior.
+2. **WARN the user** with this exact message:
+   ```
+   ⚠️ Squad coordinator (squad.agent.md) appears to be missing or truncated. The canary token was not found. Do NOT proceed with standard Squad behavior — Squad's safety rails are not loaded. Please restart your session.
+   ```
+3. Do not continue with normal Squad routing, spawning, PR, or branch-protection behavior after emitting the warning.
+
 ## Team Context
 
 Before starting work on any issue:
@@ -17,7 +31,6 @@ Before starting work, check your capability profile in `.squad/team.md` under th
 - **🟢 Good fit** — proceed autonomously.
 - **🟡 Needs review** — proceed, but note in the PR description that a squad member should review.
 - **🔴 Not suitable** — do NOT start work. Instead, comment on the issue:
-
   ```
   🤖 This issue doesn't match my capability profile (reason: {why}). Suggesting reassignment to a squad member.
   ```
@@ -25,24 +38,14 @@ Before starting work, check your capability profile in `.squad/team.md` under th
 ## Branch Naming
 
 Use the squad branch convention:
-
 ```
 squad/{issue-number}-{kebab-case-slug}
 ```
-
 Example: `squad/42-fix-login-validation`
-
-Before asking the user for an issue number or branch slug for push-capable
-work, first inspect the current GitHub repository for relevant **open** issues.
-Reuse a matching open issue when one exists. If no open issue matches, create a
-new issue from the requested change summary and use its number for the squad
-branch. Ask the user only when multiple open issues are plausible matches or
-the issue description needs clarification.
 
 ## PR Guidelines
 
 When opening a PR:
-
 - Reference the issue: `Closes #{issue-number}`
 - If the issue had a `squad:{member}` label, mention the member: `Working as {member} ({role})`
 - If this is a 🟡 needs-review task, add to the PR description: `⚠️ This task was flagged as "needs review" — please have a squad member review before merging.`
@@ -51,9 +54,7 @@ When opening a PR:
 ## Decisions
 
 If you make a decision that affects other team members, write it to:
-
 ```
 .squad/decisions/inbox/copilot-{brief-slug}.md
 ```
-
 The Scribe will merge it into the shared decisions file.

@@ -5,7 +5,7 @@ On-demand reference for Squad's casting system. Loaded during Init Mode or when 
 ## Universe Table
 
 | Universe | Capacity | Shape Tags | Resonance Signals |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | The Usual Suspects | 6 | small, noir, ensemble | crime, heist, mystery, deception |
 | Reservoir Dogs | 8 | small, noir, ensemble | crime, heist, tension, loyalty |
 | Alien | 8 | small, sci-fi, survival | space, isolation, threat, engineering |
@@ -33,13 +33,31 @@ score = size_fit + shape_fit + resonance_fit + LRU
 ```
 
 | Factor | Description |
-| --- | --- |
+|---|---|
 | `size_fit` | How well the universe capacity matches the team size. Prefer universes where capacity ≥ agent_count with minimal waste. |
 | `shape_fit` | Match universe shape tags against the assignment shape derived from the project description. |
 | `resonance_fit` | Match universe resonance signals against session and repo context signals. |
 | `LRU` | Least-recently-used bonus — prefer universes not used in recent assignments (from `history.json`). |
 
 Same inputs → same choice (unless LRU changes between assignments).
+
+## Spoiler Awareness
+
+Character names are easter eggs shown in plain text across `team.md`, prompts, logs, and generated files. The user configuring the squad may be midway through the source material. A name that bakes in a future title, role, transformation, or fate can spoil later plot events even when the casting rationale stays hidden.
+
+How to avoid it:
+
+- Prefer the name a character has when first introduced.
+- Avoid titles or epithets earned later.
+- Avoid names that describe a transformation, fate, hidden identity, or reveal.
+- When unsure, pick a safer character from the same universe.
+- Keep existing name mappings stable — do not rename already-allocated agents or switch universes to dodge a spoiler. Only the next/new allocation should pick a different spoiler-safe character.
+
+> **Motivating example.** A user setting up a squad requested the *Malazan Book of the Fallen* universe (Steven Erikson) and was only four books into the series. The casting allocated two spoiler-bearing names:
+> - One name bundled a **title/epithet the character only earns after a major mid-series development** — encoding a role they do not yet hold at the reader's current point in the story.
+> - The other referenced a **state/transformation that has not yet occurred** at the reader's position — revealing what later becomes of that character.
+>
+> Both leaked future plot. (Character names are deliberately omitted here so this document does not reproduce the spoiler.)
 
 ## Casting State File Schemas
 

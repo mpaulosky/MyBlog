@@ -7,7 +7,7 @@
 ### {timestamp} — {task summary}
 
 | Field | Value |
-| ------- | ------- |
+|-------|-------|
 | **Agent routed** | {Name} ({Role}) |
 | **Why chosen** | {Routing rationale — what in the request matched this agent} |
 | **Mode** | {`background` / `sync`} |
